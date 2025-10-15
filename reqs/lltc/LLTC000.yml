@@ -1,0 +1,15 @@
+ASIL: C
+Verification Method: Unit Test
+active: true
+derived: false
+header: |
+  LLTC000: Unit test for Hall driver
+level: 1.0
+links:
+- SWD000: null
+normative: true
+ref: ''
+reviewed: null
+status: Draft
+text: |
+  Unit test to verify that the Hall sensor driver computes speed correctly for a set of simulated pulse inputs.
