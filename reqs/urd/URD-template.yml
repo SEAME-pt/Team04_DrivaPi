@@ -1,0 +1,14 @@
+active: true
+derived: false
+header: "URD: Top-level requirement - Wheel speed"
+level: 1.0
+links: []
+normative: true
+ref: ''
+reviewed: ''
+text: |
+  The system SHALL provide wheel speed measurements with sufficient
+  accuracy to support vehicle control and telemetry features.
+status: Draft
+ASIL: C
+Verification Method: Inspection

@@ -1,0 +1,15 @@
+active: true
+derived: false
+header: "SRD: System requirement - Speed acquisition"
+level: 1.0
+links:
+  - URD001: null
+normative: true
+ref: ''
+reviewed: ''
+text: |
+  The sensor acquisition subsystem SHALL aggregate Hall sensor readings
+  and provide filtered speed values to the control software.
+status: Draft
+ASIL: C
+Verification Method: Integration Test

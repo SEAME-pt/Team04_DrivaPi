@@ -358,6 +358,12 @@ def move_bad_to_backups():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--auto', action='store_true', help='run non-interactive with example values')
+    sub = ap.add_argument_group('create', 'create single or multiple items for any prefix')
+    sub.add_argument('--create', metavar='PREFIX', help='create an item for PREFIX (e.g. URD, SRD, SWD, LLTC)')
+    sub.add_argument('-n', '--count', type=int, default=1, help='number of items to create when using --create')
+    sub.add_argument('--header', help='optional header/title for created items')
+    sub.add_argument('--link', help='parent UID to link the created item(s) to')
+    sub.add_argument('--interactive-shell', action='store_true', help='enter interactive creation shell to create arbitrary items')
     args = ap.parse_args()
 
     if args.auto:
@@ -394,6 +400,35 @@ def main():
         link(srd_uid, urd_uid)
         link(swd_uid, srd_uid)
         link(lltc_uid, swd_uid)
+    elif args.create:
+        # create arbitrary items (non-interactive)
+        prefix = args.create
+        created = []
+        for i in range(args.count):
+            defaults = {
+                'header': args.header or f'{prefix}: <title>',
+                'text': '',
+                'links': []
+            }
+            uid, path = create_item(prefix, build_fields_from_defaults(prefix, defaults))
+            created.append(uid)
+            # link if parent provided
+            if args.link:
+                link(uid, args.link)
+        print('Created:', ', '.join(created))
+        return
+    elif args.interactive_shell:
+        print('Entering interactive creation shell. Type "quit" to exit.')
+        while True:
+            pfx = input('Prefix (or quit): ').strip()
+            if not pfx or pfx.lower() in ('quit', 'exit'):
+                break
+            fields = build_fields_interactive(pfx)
+            uid, path = create_item(pfx, fields)
+            link_to = input('Link this item to (parent UID) or ENTER to skip: ').strip()
+            if link_to:
+                link(uid, link_to)
+        return
     else:
         print('Interactive mode: you will be prompted for URD, SRD, SWD and LLTC fields.')
         urd_fields = build_fields_interactive('URD')

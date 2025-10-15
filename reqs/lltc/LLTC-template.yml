@@ -1,0 +1,16 @@
+active: true
+derived: false
+header: "SWD: ThreadX Sensor Reading Module"
+level: 1.0
+links:
+  - SRD005: null
+normative: true
+ref: ''
+reviewed: ''
+text: |
+  The speed sensor driver module (ThreadX RTOS) SHALL compute wheel
+  speed from the Hall sensor pulses and publish the result on the CAN
+  bus within 10 ms.
+status: Draft
+ASIL: C
+Verification Method: Unit Test
