@@ -1,0 +1,10 @@
+text: |
+  Unit test: when speed=55.0, turn_signal='left', and alerts=['low_fuel'], the `GET /display/state` endpoint shall return matching fields and respond within 100ms.
+links:
+  - SWD-001
+ASIL: QM
+Verification Method: Test
+normative: false
+reviewers:
+  - Melanie
+reviewed: null

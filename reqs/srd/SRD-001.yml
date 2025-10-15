@@ -1,0 +1,11 @@
+text: |
+  The Display Controller shall expose an API to fetch current vehicle speed, turn indicator state and active alert list with a maximum latency of 100ms.
+links:
+  - URD-001
+ASIL: QM
+Verification Method: Unit Test
+normative: true
+reviewers:
+  - Melanie
+  - Bernardo
+reviewed: null

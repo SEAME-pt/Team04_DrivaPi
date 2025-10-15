@@ -19,11 +19,20 @@ except Exception:
 ROOT = Path(__file__).resolve().parents[1]
 REQS = ROOT / "reqs"
 
-required_fields = ["text", "links", "ASIL", "Verification Method", "reviewed"]
+required_fields = ["text", "links", "ASIL", "Verification Method", "reviewed", "reviewers"]
 
 # Allowed enumerations
 ASIL_ALLOWED = {"A", "B", "C", "D", "QM"}
 VERIF_ALLOWED = {"Unit Test", "Integration Test", "Review", "Formal Analysis", "Test"}
+
+# map ASIL level to allowed Verification Methods
+ASIL_VERIF_MAP = {
+    "A": {"Unit Test", "Integration Test", "Review", "Formal Analysis"},
+    "B": {"Unit Test", "Integration Test", "Review"},
+    "C": {"Integration Test", "Review"},
+    "D": {"Review", "Formal Analysis"},
+    "QM": {"Review", "Test", "Unit Test"},
+}
 
 def is_git_sha(s: str) -> bool:
     if not isinstance(s, str):
@@ -91,16 +100,22 @@ def main():
         vm = data.get("Verification Method")
         if vm is None or not isinstance(vm, str) or vm not in VERIF_ALLOWED:
             problems.append((p, f"Verification Method invalid or missing (expected one of {sorted(VERIF_ALLOWED)})"))
+        else:
+            # check ASIL->Verification mapping
+            if isinstance(asil, str) and asil in ASIL_VERIF_MAP:
+                allowed = ASIL_VERIF_MAP[asil]
+                if vm not in allowed:
+                    problems.append((p, f"Verification Method '{vm}' not permitted for ASIL '{asil}' (allowed: {sorted(allowed)})"))
 
         # reviewed validation (allow null or git sha)
         reviewed = data.get("reviewed")
         if reviewed is not None and reviewed != "null" and not is_git_sha(str(reviewed)):
             problems.append((p, f"reviewed field not a git SHA or null: {reviewed!r}"))
 
-        # optional reviewers list
+        # reviewers must be a non-empty list
         reviewers = data.get("reviewers")
-        if reviewers is not None and not isinstance(reviewers, list):
-            problems.append((p, "reviewers field present but not a list"))
+        if not isinstance(reviewers, list) or len(reviewers) == 0:
+            problems.append((p, "reviewers field missing or empty; expected a non-empty list of reviewer names"))
 
     if not problems:
         print("OK: No issues found in reqs/ YAML files.")
