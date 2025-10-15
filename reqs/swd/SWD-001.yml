@@ -1,11 +1,11 @@
-text: |
-  The Display Service shall implement an endpoint `GET /display/state` returning JSON with fields: {speed: float, turn_signal: string, alerts: [string]} and shall conform to the latency requirement defined in SRD-001.
-links:
-  - SRD-001
-ASIL: QM
-Verification Method: Unit Test
-normative: true
-reviewers:
-  - Joao
-  - Bernardo
-reviewed: null
+SWD-001:
+  active: true
+  derived: false
+  header: ''
+  level: 1.0
+  links: []
+  normative: true
+  ref: ''
+  reviewed: 331a183
+  text: ''
+
