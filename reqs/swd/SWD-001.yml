@@ -1,8 +1,0 @@
-text: |
-  The software shall read the CAN message ID 0x100 and update the internal vehicle speed variable within 50 ms.
-links:
-  - SRD-001
-ASIL: B
-Verification Method: Unit Test
-normative: true
-reviewed: null

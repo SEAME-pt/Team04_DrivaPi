@@ -1,8 +1,0 @@
-text: |
-  Unit test: when CAN message ID 0x100 is received, the vehicle speed variable shall be updated with the payload-derived value within 50 ms.
-links:
-  - SWD-001
-ASIL: B
-Verification Method: Test
-normative: true
-reviewed: null

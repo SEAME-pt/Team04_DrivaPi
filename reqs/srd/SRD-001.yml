@@ -1,8 +1,0 @@
-text: |
-  The system shall expose a CAN message with vehicle speed at 10 Hz to the driver assistance module.
-links:
-  - URD-000
-ASIL: B
-Verification Method: Integration Test
-normative: true
-reviewed: null
