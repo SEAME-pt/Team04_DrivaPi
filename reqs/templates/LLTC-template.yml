@@ -1,0 +1,13 @@
+LLTC-000:
+  header: "<short title>"
+  text: |
+    <Low level technical component or testable description>
+  level: 1.0
+  active: true
+  derived: false
+  normative: true
+  links: []
+  ref: "LLTC-000"
+  reviewers:
+    - name: "TODO: reviewer"
+  reviewed: null

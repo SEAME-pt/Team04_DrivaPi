@@ -1,0 +1,13 @@
+SWD-000:
+  header: "<short title>"
+  text: |
+    <Full software-level requirement description>
+  level: 1.0
+  active: true
+  derived: false
+  normative: true
+  links: []
+  ref: "SWD-000"
+  reviewers:
+    - name: "TODO: reviewer"
+  reviewed: null
