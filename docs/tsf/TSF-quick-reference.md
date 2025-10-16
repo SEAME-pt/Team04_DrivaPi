@@ -25,29 +25,66 @@ SWD-001:
   ref: "SWD-001"
   reviewers:
     - name: "Reviewer Name"
-      email: "reviewer@example.com"
   reviewed: ""  # filled by trudag upon approval
 ```
 
 See [TSF requirement template](TSF-requirement-template.md) for a field-by-field explanation, examples and validation tips.
 
-Approval flow (manual)
+TSF Quick Reference — one page
 
-- Edit the YAML and add a `reviewers` entry.
-- Run `trudag --door manage set-item reqs/swd/SWD-001.yml` to set the `reviewed` provenance field (see trudag docs).
-- Commit the updated YAML and tag the baseline release.
+Purpose
+-------
+Quick cheat-sheet for authors and reviewers working with `reqs/` and the Trustable workflow.
 
-Traceability tips
+Core concepts
+-------------
+- File layout: `reqs/<category>/<ID>.yml` (categories: `urd/`, `srd/`, `swd/`, `lltc/`)
+- ID: stable top-level mapping key and filename stem (e.g. `SWD-001`)
+- Minimal required fields: `header`, `text`, `ref`, `reviewers` (with `name`), `reviewed` (null until approved)
 
-- Always set `ref` to match the top-level key and file name.
-- Use `links` to reference upstream/downstream requirement refs (e.g., `SRD-001`).
+Minimal YAML example
+--------------------
+```yaml
+SWD-001:
+  header: "Short title"
+  text: |
+    One-sentence clear, unambiguous requirement.
+  level: 1.0
+  active: true
+  derived: false
+  normative: true
+  links: []
+  ref: SWD-001
+  reviewers:
+    - name: "Jane Doe"
+  reviewed: null
+```
+
+Quick rules
+-----------
+- `ref:` value must equal the file ID and be parsable by tooling.
+- `reviewers:` must include at least one `name:` entry (email optional).
+- Avoid markdown fences (```) in YAML files.
+
+Traceability & approvals
+------------------------
+- Use `links:` to reference related requirement IDs (upstream/downstream).
+- Example approval flow:
+  1. Author updates YAML and adds reviewer name.
+  2. Reviewer runs validation, reviews the artifact, and records the approval.
+  3. Record approval by setting `reviewed:` to the approving commit SHA (automated with trudag or manually).
 
 Useful commands
+---------------
+- Lint YAMLs: `python3 scripts/reqs_lint.py reqs --verbose`
+- trudag migrate (Doorstop backend): `trudag --door manage migrate`
+- trudag set review: `trudag --door manage set-item <path-to-yml>`
 
-- Validate YAMLs: `python3 scripts/reqs_lint.py reqs --verbose` (project linter)
-- Migrate requirements (trudag): `trudag --door manage migrate` (see trudag docs)
-- Approve / set review (trudag): `trudag --door manage set-item <path>` (see trudag docs)
+References
+----------
+- Full template and field explanations: `docs/tsf/TSF-requirement-template.md`
+- Training and TSF methodology: `docs/tsf/TSF-training.md`
 
-How to cite sources
-
-This cheat sheet is based on the Trustable methodology and common automotive guidance. See `docs/tsf/SOURCES.md` for the primary references (Trustable docs, ISO 26262, ASPICE).
+Notes
+-----
+This cheat-sheet is intentionally concise. For full TSF compliance and confidence scoring, follow the training pack and use trudag to produce a Trustable Report.
