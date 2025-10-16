@@ -10,4 +10,5 @@ LLTC-000:
   ref: "LLTC-000"
   reviewers:
     - name: "TODO: reviewer"
-  reviewed: null
+  reviewed: ''
+  acceptance: []

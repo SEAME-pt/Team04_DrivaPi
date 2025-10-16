@@ -10,4 +10,5 @@ URD-000:
   ref: "URD-000"
   reviewers:
     - name: "TODO: reviewer"
-  reviewed: null
+  reviewed: ''
+  acceptance: []

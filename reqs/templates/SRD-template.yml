@@ -10,4 +10,5 @@ SRD-000:
   ref: "SRD-000"
   reviewers:
     - name: "TODO: reviewer"
-  reviewed: null
+  reviewed: ''
+  acceptance: []

@@ -10,6 +10,7 @@ Usage: python3 scripts/reqs_lint.py <reqs_dir> [--verbose]
 """
 import sys
 from pathlib import Path
+import re
 
 
 def check_file(path: Path, verbose: bool = False):
@@ -104,6 +105,7 @@ def main(argv):
     reqs_dir = Path(argv[1])
     verbose = '--verbose' in argv or '-v' in argv
     ignore_templates = '--ignore-templates' in argv
+    check_links = '--check-links' in argv
 
     if not reqs_dir.exists():
         print('Path not found:', reqs_dir)
@@ -128,6 +130,52 @@ def main(argv):
             print(f'-- {p}:')
             for it in issues:
                 print('   -', it)
+
+    # optional link checking: gather IDs and verify links
+    if check_links:
+        # gather all defined IDs
+        ids = set()
+        id_re = re.compile(r'^([A-Za-z0-9_\-]+):\s*$')
+        for p in files:
+            for ln in p.read_text(encoding='utf-8').splitlines():
+                m = id_re.match(ln.strip())
+                if m:
+                    ids.add(m.group(1))
+
+        # scan files for links: entries
+        broken = []
+        link_re = re.compile(r'\blinks\s*:\s*\[?\s*([A-Za-z0-9_\-,\s]+)\]?')
+        # match list items that are a single ID on the line (optionally quoted)
+        # This avoids matching reviewer entries like '- name: "..."'
+        list_item_re = re.compile(r'^\s*-\s*["\']?([A-Za-z0-9_\-]+)["\']?\s*$')
+        for p in files:
+            text = p.read_text(encoding='utf-8')
+            # inline list
+            for m in link_re.finditer(text):
+                for iid in re.split(r'[\s,]+', m.group(1).strip()):
+                    iid = iid.strip().strip('[],')
+                    if iid and iid not in ids:
+                        broken.append((p, iid))
+            # block list
+            lines = text.splitlines()
+            for i, ln in enumerate(lines):
+                if ln.strip().startswith('links:'):
+                    for following in lines[i+1:]:
+                        if not following.strip():
+                            continue
+                        if following and not following.startswith((' ', '\t', '-')):
+                            break
+                        m2 = list_item_re.match(following)
+                        if m2:
+                            iid = m2.group(1)
+                            if iid not in ids:
+                                broken.append((p, iid))
+
+        if broken:
+            print('\nBroken link(s) found:')
+            for p, iid in broken:
+                print(f' - {p}: references unknown ID `{iid}`')
+            total_issues += len(broken)
 
     if total_issues == 0:
         print('OK: no issues found')
