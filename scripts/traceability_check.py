@@ -89,6 +89,7 @@ def main(argv):
     report_md = Path('artifacts/traceability-report.md')
     fail_on_unlinked = False
     include_templates = False
+    by_category = False
     if '--output' in argv:
         try:
             out_path = Path(argv[argv.index('--output') + 1])
@@ -99,6 +100,8 @@ def main(argv):
         fail_on_unlinked = True
     if '--include-templates' in argv:
         include_templates = True
+    if '--by-category' in argv:
+        by_category = True
 
     if not reqs_dir.exists():
         print('Path not found:', reqs_dir)
@@ -112,13 +115,24 @@ def main(argv):
     records = []
     req_ids = set()
     links_found = 0
+    # map category (top-level folder under reqs_dir) -> records list
+    category_map = {}
 
     for f in files:
         rid, links = parse_req_file(f)
         req_ids.add(rid)
         if links:
             for target, ltype in links:
-                records.append({'req_id': rid, 'target_id': target, 'link_type': ltype, 'source_file': str(f)})
+                rec = {'req_id': rid, 'target_id': target, 'link_type': ltype, 'source_file': str(f)}
+                records.append(rec)
+                # determine category by locating folder directly under reqs_dir
+                try:
+                    rel = f.relative_to(reqs_dir)
+                    parts = rel.parts
+                    category = parts[0] if parts else 'root'
+                except Exception:
+                    category = 'root'
+                category_map.setdefault(category, []).append(rec)
                 links_found += 1
 
     # Ensure artifact dir exists
@@ -129,6 +143,17 @@ def main(argv):
         writer.writeheader()
         for r in records:
             writer.writerow(r)
+
+    # optionally write per-category matrices
+    if by_category:
+        for cat, recs in category_map.items():
+            cat_path = out_path.parent / f'traceability-matrix-{cat}.csv'
+            with cat_path.open('w', newline='', encoding='utf-8') as cf:
+                w = csv.DictWriter(cf, fieldnames=['req_id', 'target_id', 'link_type', 'source_file'])
+                w.writeheader()
+                for r in recs:
+                    w.writerow(r)
+        print(f'per-category matrices written for {len(category_map)} categories')
 
     print(f'Found {len(files)} requirements files; {links_found} links extracted; matrix written to {out_path}')
 
@@ -163,6 +188,11 @@ def main(argv):
         else:
             for o in orphaned:
                 md.write(f'- {o}\n')
+
+        if by_category:
+            md.write('\n## Per-category summary\n\n')
+            for cat in sorted(category_map.keys()):
+                md.write(f'- {cat}: {len(category_map.get(cat, []))} links\n')
 
     print(f'markdown report written to {report_md}')
 
