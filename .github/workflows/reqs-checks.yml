@@ -36,3 +36,24 @@ jobs:
           path: |
             artifacts/traceability-matrix.csv
             artifacts/traceability-report.md
+
+      - name: Configure AWS credentials (optional)
+        if: ${{ secrets.AWS_ACCESS_KEY_ID && secrets.AWS_SECRET_ACCESS_KEY && secrets.TRACEABILITY_S3_BUCKET }}
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+
+      - name: Upload traceability artifacts to S3 (optional)
+        if: ${{ secrets.AWS_ACCESS_KEY_ID && secrets.AWS_SECRET_ACCESS_KEY && secrets.TRACEABILITY_S3_BUCKET }}
+        env:
+          TRACEABILITY_S3_BUCKET: ${{ secrets.TRACEABILITY_S3_BUCKET }}
+          TRACEABILITY_S3_PREFIX: ${{ secrets.TRACEABILITY_S3_PREFIX || 'traceability' }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          TIMESTAMP=$(date -u +%Y%m%dT%H%M%SZ)
+          KEY_PREFIX="${TRACEABILITY_S3_PREFIX}/${REF_NAME}-${TIMESTAMP}"
+          echo "Uploading artifacts to s3://${TRACEABILITY_S3_BUCKET}/${KEY_PREFIX}/"
+          aws s3 cp artifacts/traceability-matrix.csv s3://${TRACEABILITY_S3_BUCKET}/${KEY_PREFIX}/traceability-matrix.csv --acl bucket-owner-full-control || exit 1
+          aws s3 cp artifacts/traceability-report.md s3://${TRACEABILITY_S3_BUCKET}/${KEY_PREFIX}/traceability-report.md --acl bucket-owner-full-control || exit 1
