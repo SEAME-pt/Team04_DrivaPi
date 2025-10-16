@@ -5,15 +5,8 @@ SWD-001:
   level: 1.0
   links: []
   normative: true
-  ref: ''
-  reviewed: 331a183
+  ref: SWD-001
+  reviewed: null
+  reviewers:
+    - name: "TODO: add reviewer"
   text: ''
-active: true
-derived: false
-header: ''
-level: 1.0
-links: []
-normative: true
-ref: ''
-reviewed: rZevx3sG_e4od7H_93cD7ybmMqvMBcwFYmQP_rtCwHI=
-text: ''
