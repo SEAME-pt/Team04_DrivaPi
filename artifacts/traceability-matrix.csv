@@ -1,0 +1,9 @@
+req_id,target_id,link_type,source_file
+LLTC-001,LLTC-001,ref,reqs/lltc/LLTC-001.yml
+SRD-001,SRD-001,ref,reqs/srd/SRD-001.yml
+SWD-001,SWD-001,ref,reqs/swd/SWD-001.yml
+LLTC-000,LLTC-000,ref,reqs/templates/LLTC-template.yml
+SRD-000,SRD-000,ref,reqs/templates/SRD-template.yml
+SWD-000,SWD-000,ref,reqs/templates/SWD-template.yml
+URD-000,URD-000,ref,reqs/templates/URD-template.yml
+URD-001,URD-001,ref,reqs/urd/URD-001.yml
