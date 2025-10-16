@@ -53,6 +53,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
 
       - name: Upload traceability artifacts to S3 (optional)
+        id: upload_to_s3
         if: ${{ (secrets.TRACEABILITY_ROLE_ARN) || (secrets.AWS_ACCESS_KEY_ID && secrets.AWS_SECRET_ACCESS_KEY && secrets.TRACEABILITY_S3_BUCKET) }}
         env:
           TRACEABILITY_S3_BUCKET: ${{ secrets.TRACEABILITY_S3_BUCKET }}
@@ -77,3 +78,16 @@ jobs:
           MANIFEST_FILE=artifacts/traceability-manifest.json
           echo "{\"ref\": \"${REF_NAME}\", \"timestamp\": \"${TIMESTAMP}\", \"s3_prefix\": \"${KEY_PREFIX}\", \"matrix\": \"${KEY_PREFIX}/traceability-matrix.csv\", \"report\": \"${KEY_PREFIX}/traceability-report.md\"}" > ${MANIFEST_FILE}
           aws s3 cp ${MANIFEST_FILE} s3://${TRACEABILITY_S3_BUCKET}/${KEY_PREFIX}/traceability-manifest.json ${S3_FLAGS} || exit 1
+          # expose the manifest URL as a step output for downstream steps
+          echo "manifest_url=s3://${TRACEABILITY_S3_BUCKET}/${KEY_PREFIX}/traceability-manifest.json" >> $GITHUB_OUTPUT
+
+      - name: Comment PR with traceability manifest link
+        if: ${{ github.event_name == 'pull_request' && (secrets.TRACEABILITY_ROLE_ARN || (secrets.AWS_ACCESS_KEY_ID && secrets.AWS_SECRET_ACCESS_KEY && secrets.TRACEABILITY_S3_BUCKET)) }}
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            Traceability artifacts uploaded for this run:
+
+            - Manifest (S3): `${{ steps.upload_to_s3.outputs.manifest_url }}`
