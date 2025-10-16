@@ -28,3 +28,11 @@ jobs:
       - name: Run traceability checker
         run: |
           python3 scripts/traceability_check.py reqs --fail-on-unlinked
+
+      - name: Upload traceability matrix and report
+        uses: actions/upload-artifact@v4
+        with:
+          name: traceability-artifacts
+          path: |
+            artifacts/traceability-matrix.csv
+            artifacts/traceability-report.md
