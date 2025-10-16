@@ -61,6 +61,19 @@ Contributing
 - The script is intentionally small and dependency-free. Contributions to the linter should keep that constraint where possible.
 - When you update the linter, add a short note here explaining the rationale and run the linter against existing `reqs/` files to avoid regressions.
 
+Creating new requirement files
+----------------------------
+You can bootstrap new requirement files from templates using `scripts/new_req.py`.
+
+Example:
+
+```bash
+# create SWD-002 from the SWD template
+python3 scripts/new_req.py swd SWD-002
+```
+
+If you prefer not to use Makefiles, stick to the Python helper above. The `scripts/new_req.py` command is the supported way to bootstrap new requirement files; you can add your own project helpers if your team prefers a different workflow.
+
 Contact
 -------
 For questions about TSF workflow integration or the linter rules, link to `docs/tsf/TSF-requirement-template.md` and the Trustable docs in `docs/tsf/`.
