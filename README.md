@@ -3,7 +3,7 @@
 Documentation of our journey building an autonomous vehicle platform using PiRacer as part of the SEAME automotive program.
 
 ## Team: DrivaPi (Team04)
-Hugo, João, Bernardo, Miguel, Melanie
+Hugo, Gaspar, Bernardo, Miguel, Melanie
 
 ## What We're Building
 
@@ -30,6 +30,9 @@ An autonomous 1/10 scale vehicle with:
 - GUI: Qt framework
 - Standards: AUTOSAR and ISO 26262 principles
 
+**Also investigating:**
+- TSF: Trustable Software Framework (investigation and planned integration)
+
 ## Repository Structure
 
 ```
@@ -49,7 +52,7 @@ We conduct two daily sessions to stay synchronized:
 - **Morning:** Quick sync when team is complete (~10 min)
 - **Evening:** Progress review before departure (~15 min)
 - **Facilitator:** Melanie
-- **Scribe rotation:** João → Hugo → Melanie → Bernardo → Miguel
+- **Scribe rotation:** Gaspar → Hugo → Melanie → Bernardo → Miguel
 
 All stand-ups documented in `/documents/standups/`
 
@@ -58,16 +61,22 @@ See our [Stand-Up Guide](documents/standups/stand-up-guide.md) for details.
 ## Progress Timeline
 
 **Day 1 (Oct 8, 2025):** Hardware setup, assembly started, technology research
-*[Log: documents/october08.md] | [Stand-up: documents/standups/2025-10-08.md]*
+*[Stand-up: documents/standups/2025-10-08.md]*
 
 **Day 2 (Oct 9, 2025):** Hardware assembly finalized with custom parts
-*[Log: documents/october09.md] | [Stand-up: documents/standups/2025-10-09.md]*
+*[Stand-up: documents/standups/2025-10-09.md]*
 
 **Day 3 (Oct 10, 2025):** Custom builds (acrylic/steel mounts), Qt app created, ThreadX selected
-*[Log: documents/october10.md] | [Stand-up: documents/standups/2025-10-10.md]*
+*[Stand-up: documents/standups/2025-10-10.md]*
 
 **Day 4 (Oct 13, 2025):** Sprint 1 begins, stand-up process launched, AGL deployment
-*[Log: documents/october14.md] | [Stand-up: documents/standups/2025-10-14.md]*
+*[Stand-up: documents/standups/2025-10-14.md]*
+
+**Day 5 (Oct 14, 2025):** Speed sensor fitting test (hole misalignment), powered car via expansion board, migrated docs to GitHub, continued AGL setup and Qt deployment.
+*[Stand-up: documents/standups/2025-10-14.md]*
+
+**Day 6 (Oct 15, 2025):** AGL running (Wi‑Fi pending), camera connected, Qt deployment and TSF→SDV automation in progress.
+*[Stand-up: documents/standups/2025-10-15.md]*
 
 ## Current Sprint
 
@@ -84,13 +93,16 @@ See our [Stand-Up Guide](documents/standups/stand-up-guide.md) for details.
 ## Current Status
 
 **Hardware:** ~90% complete
-- Speed sensor mount design in progress
-- Display integration ongoing
+- Speed sensor mount nearly finished; print file sent to Maria.
+- Display integration ongoing.
+- Camera connected and tested.
+- Expansion board powering devices; observed low-voltage warnings — power distribution plan required.
 
-**Software:** Development environment setup
-- AGL build ready for deployment
-- Qt application restructuring
-- GitHub project structure established
+**Software:** Development environment & deployment
+- AGL build ready for deployment; AGL is running on a device but Wi‑Fi requires missing binaries and follow-up.
+- Qt application restructuring and deployment pipeline (cross‑compile + SSH flashing) in progress.
+- TSF → SDV: active investigation (Doorstop, Trudag) and initial automation plans via GitHub Actions.
+- GitHub project structure established.
 
 **Process:** Stand-up system launched (Week 1)
 - Daily morning + evening sessions
@@ -106,11 +118,11 @@ See our [Stand-Up Guide](documents/standups/stand-up-guide.md) for details.
 
 ## Team Roles
 
-- **Hugo:** Hardware assembly and custom fabrication
-- **João:** Operating system and development environment
-- **Bernardo:** Hardware integration and testing
-- **Miguel:** GitHub project, Agile/Scrum methodologies
-- **Melanie:** GUI development and team coordination
+- **Hugo:** Hardware assembly and custom fabrication, Qt deployment
+- **Gaspar:** AGL lead (OS deployment and debugging).
+- **Bernardo:** Hardware integration lead, power & wiring troubleshooting.
+- **Miguel:** GitHub project, Agile/Scrum methodologies, TSF lead — mapping TSF tenets/assertions into SDV, and GitHub Actions automation for TSF→SDV.
+- **Melanie:** GUI lead and TSF implementation support; documentation and team coordination
 
 ---
 

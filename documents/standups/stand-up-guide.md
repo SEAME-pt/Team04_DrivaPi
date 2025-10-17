@@ -1,6 +1,6 @@
 # Daily Stand-Up Guide - DrivaPi Team
 
-**Team:** Hugo, João, Bernardo, Miguel, Melanie
+**Team:** Hugo, Gaspar, Bernardo, Miguel, Melanie
 
 ---
 
@@ -63,11 +63,11 @@
 
 | Day | Scribe | Backup |
 |-----|--------|--------|
-| Monday | João | Hugo |
+| Monday | Gaspar | Hugo |
 | Tuesday | Hugo | Melanie |
 | Wednesday | Melanie | Bernardo |
 | Thursday | Bernardo | Miguel |
-| Friday | Miguel | João |
+| Friday | Miguel | Gaspar |
 
 ---
 
