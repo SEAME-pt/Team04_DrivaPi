@@ -1,0 +1,12 @@
+{
+	"evidence_patterns": [
+		"artifacts/verification",
+		"artifacts/verification/tests",
+		"test",
+		"junit",
+		"report",
+		"coverage",
+		".xml",
+		".json"
+	]
+}
