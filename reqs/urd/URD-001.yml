@@ -1,9 +1,24 @@
-active: true
-derived: false
-header: ''
-level: 1.0
-links: []
-normative: true
-ref: ''
-reviewed: null
-text: ''
+## System Requirement (SRD-001)
+SRD-001:
+  ref: SRD-001
+  header: "Read vehicle speed from CAN bus"
+  text: |
+    The system SHALL read vehicle speed data from the CAN bus at 10Hz.
+
+    This requirement defines how the system obtains speed data for display.
+  ASIL: B
+  Verification Method: System Test
+  links:
+    - URD-001
+  reviewers:
+    - name: "Bob Technical"
+      email: "bob@example.com"
+  reviewed: ''
+  active: true
+  derived: false
+  normative: true
+  level: 2.0
+  acceptance:
+    - GIVEN: CAN bus active
+      WHEN: request speed message
+      THEN: receive valid speed data within 100ms

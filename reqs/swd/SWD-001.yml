@@ -1,10 +1,24 @@
-active: true
-derived: false
-header: ''
-level: 1.0
-links:
-- URD-001: null
-normative: true
-ref: ''
-reviewed: null
-text: ''
+## Software Requirement (SWD-001)
+SWD-001:
+  ref: SWD-001
+  header: "Convert CAN speed data for display"
+  text: |
+    The software SHALL convert raw CAN speed data (0.1 km/h units) to
+    integer km/h and update the display module within 50ms of receipt.
+
+  ASIL: B
+  Verification Method: Unit Test
+  links:
+    - SRD-001
+  reviewers:
+    - name: "Carol Developer"
+      email: "carol@example.com"
+  reviewed: ''
+  active: true
+  derived: false
+  normative: true
+  level: 3.0
+  acceptance:
+    - GIVEN: raw CAN value 123
+      WHEN: conversion executed
+      THEN: software yields 12 km/h and calls display update

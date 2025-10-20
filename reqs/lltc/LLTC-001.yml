@@ -1,10 +1,36 @@
-active: true
-derived: false
-header: ''
-level: 1.1
-links:
-- SRD-001: null
-normative: true
-ref: ''
-reviewed: null
-text: ''
+## Low-Level Test Case (LLTC-001)
+LLTC-001:
+  ref: LLTC-001
+  header: "Test speed conversion logic"
+  text: |
+    Test case to verify SWD-001 conversion from raw CAN data to km/h.
+
+  ASIL: B
+  Verification Method: Unit Test
+  links:
+    - SWD-001
+  reviewers:
+    - name: "Dave QA"
+      email: "dave@example.com"
+  reviewed: ''
+  active: true
+  derived: false
+  normative: true
+  level: 4.0
+  test_type: Unit Test
+  test_procedure:
+    setup:
+      - Initialize conversion module
+    test_steps:
+      - step: 1
+        action: Provide raw value 200
+        expected: Converts to 20 km/h
+      - step: 2
+        action: Provide raw value 0
+        expected: Converts to 0 km/h
+    postconditions:
+      - No errors thrown
+  acceptance:
+    - GIVEN: conversion module initialized
+      WHEN: raw value processed
+      THEN: correct integer km/h output
