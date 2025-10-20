@@ -4,7 +4,7 @@
 settings:
   digits: 3              # Use 3 digits for numbering (URD-001, URD-002, etc.)
   itemformat: yaml       # Store requirements as YAML files
-  parent: null           # No parent (top of hierarchy)
+  # No parent (top of hierarchy)
   prefix: URD            # Prefix for all user requirements
   sep: '-'               # Separator between prefix and number
 
