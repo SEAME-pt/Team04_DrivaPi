@@ -1,14 +1,64 @@
 SRD-000:
-  header: "<short title>"
+  ref: SRD-000
+  header: "System requirement short title"
   text: |
-    <Full system-level requirement description>
-  level: 1.0
+    The system SHALL [specific system behavior].
+
+    This requirement describes HOW the system provides the capability
+    described in the parent user requirement. Include technical details
+    about system-level behavior, interfaces, and performance.
+
+    Be specific about:
+    - What the system does
+    - When it does it
+    - Performance requirements (timing, accuracy)
+    - Error handling
+
+  # ASIL Level: QM (no safety) / A (lowest) / B / C / D (highest)
+  ASIL: B
+
+  # Verification Method: System Test / Integration Test / Review / Inspection
+  Verification Method: System Test
+
+  # Links to parent URD requirement(s)
+  links:
+    - URD-001
+
+  # Reviewers (at least one required, preferably 2 for ASIL B+)
+  reviewers:
+    - name: "Technical Reviewer"
+      email: "tech.reviewer@example.com"
+    - name: "Domain Expert"
+      email: "domain.expert@example.com"
+
+  # Reviewed: empty until approved
+  reviewed: ''
+
+  # Standard Doorstop fields
   active: true
   derived: false
   normative: true
-  links: []
-  ref: "SRD-000"
-  reviewers:
-    - name: "TODO: reviewer"
-  reviewed: ''
-  acceptance: []
+  level: 1.0
+
+  # Acceptance criteria (highly recommended)
+  acceptance:
+    - GIVEN: system in [state]
+      WHEN: [condition occurs]
+      THEN: system SHALL [response] within [timing]
+
+  # Rationale
+  rationale: |
+    Technical justification for this system-level design choice.
+    How it fulfills the parent user requirement.
+
+  # Assumptions
+  assumptions:
+    - Hardware capabilities (sensors, actuators, compute)
+    - Operating environment constraints
+    - Interface specifications
+
+  # Optional: Link to artifacts (design docs, diagrams)
+  artifact:
+    - type: design
+      path: docs/architecture/system-design.md
+      description: System architecture overview
