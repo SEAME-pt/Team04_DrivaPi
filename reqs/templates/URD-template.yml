@@ -1,14 +1,47 @@
 URD-000:
-  header: "<short title>"
+  ref: URD-000
+  header: "User requirement short title"
   text: |
-    <Full user-level description of the need>
-  level: 1.0
+    The user SHALL be able to [action/capability].
+
+    This requirement describes what the end user needs from the system.
+    Use clear, non-technical language that stakeholders can understand.
+
+  # ASIL Level: QM (no safety) / A (lowest) / B / C / D (highest)
+  ASIL: QM
+
+  # Verification Method: Review / User Acceptance Test / Demonstration
+  Verification Method: User Acceptance Test
+
+  # Links to parent requirements (URD has no parent - top of V-model)
+  links: []
+
+  # Reviewers (at least one required)
+  reviewers:
+    - name: "Reviewer Name"
+      email: "reviewer@example.com"
+
+  # Reviewed: empty until approved, then filled with git commit SHA
+  reviewed: ''
+
+  # Standard Doorstop fields
   active: true
   derived: false
   normative: true
-  links: []
-  ref: "URD-000"
-  reviewers:
-    - name: "TODO: reviewer"
-  reviewed: ''
-  acceptance: []
+  level: 1.0
+
+  # Optional: Acceptance criteria (recommended)
+  acceptance:
+    - GIVEN: initial system state
+      WHEN: user performs action
+      THEN: expected result
+
+  # Optional: Rationale
+  rationale: |
+    Why this requirement exists and what problem it solves.
+
+  # Optional: Assumptions
+  assumptions:
+    - List any assumptions about the operating environment
+    - Hardware availability
+    - User capabilities
