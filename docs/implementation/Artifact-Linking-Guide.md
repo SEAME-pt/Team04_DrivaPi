@@ -1,8 +1,6 @@
 # Artifact Linking Implementation Guide
 
-**Purpose:** Step-by-step guide to link requirements to design documents, source code, and tests  
-**Target:** DrivaPi Team04  
-**Version:** 1.0
+**Purpose:** Step-by-step guide to link requirements to design documents, source code, and tests
 
 ---
 
@@ -13,9 +11,6 @@
 - Enables impact analysis (change propagation)
 - Required for TSF compliance
 - Closes gaps identified in `gap-report.csv`
-
-**Current Gap:**
-All 8 existing requirements show missing `artifact` links in the gap report.
 
 ---
 
@@ -53,11 +48,11 @@ artifact:
   - type: design
     path: docs/architecture/battery-monitoring.md
     description: Battery voltage monitoring architecture
-  
+
   - type: code
     path: src/sensors/battery_voltage.cpp
     description: ADC reading implementation
-  
+
   - type: test
     path: tests/unit/test_battery_voltage.py
     description: Unit tests for battery voltage reading
@@ -153,15 +148,15 @@ artifact:
   - type: design
     path: docs/architecture/sensor-interface-design.md
     description: Sensor interface detailed design
-  
+
   - type: code
     path: src/sensors/battery_voltage.cpp
     description: Battery voltage ADC reading implementation
-  
+
   - type: code
     path: src/sensors/battery_voltage.h
     description: Battery voltage sensor interface header
-  
+
   - type: config
     path: config/adc_channels.yaml
     description: ADC channel configuration
@@ -182,14 +177,14 @@ Create `tests/specs/test-spec-battery-voltage.md`:
 ```markdown
 # Test Specification: Battery Voltage Reading
 
-**Requirement:** SWD-001  
+**Requirement:** SWD-001
 **ASIL Level:** B
 
 ## Test Cases
 
 ### TC-BV-001: Nominal Voltage Reading
 - **Precondition:** Battery voltage = 12.5V
-- **Steps:** 
+- **Steps:**
   1. Initialize ADC
   2. Read channel 0
   3. Convert to voltage
@@ -215,11 +210,11 @@ artifact:
   - type: test
     path: tests/specs/test-spec-battery-voltage.md
     description: Detailed test specification
-  
+
   - type: test
     path: tests/unit/test_battery_voltage.py
     description: Unit test implementation
-  
+
   - type: test
     path: tests/integration/test_sensor_interface.py
     description: Integration tests for sensor interface
@@ -249,11 +244,11 @@ artifact:
   - type: design
     path: docs/design/component-name.md
     description: Detailed design document
-  
+
   - type: code
     path: src/module/implementation.cpp
     description: Source code implementation
-  
+
   - type: test
     path: tests/unit/test_implementation.py
     description: Unit tests
@@ -293,16 +288,16 @@ from pathlib import Path
 def check_artifacts(req_file):
     with open(req_file) as f:
         req = yaml.safe_load(f)
-    
+
     if 'artifact' not in req:
         return True
-    
+
     errors = []
     for artifact in req['artifact']:
         path = Path(artifact['path'])
         if not path.exists():
             errors.append(f"Missing: {path}")
-    
+
     return errors
 
 # Run for all requirements...
@@ -363,7 +358,7 @@ header: HMI Speed Display Rendering
 text: |
   The software shall render vehicle speed on the Qt HMI display
   with refresh rate of 10Hz and latency < 100ms from sensor read
-  
+
   Acceptance Criteria:
   - Display updated within 100ms of new sensor data
   - Font size: 48pt for speed value
@@ -374,47 +369,47 @@ rationale: |
   Users need real-time speed feedback for safe driving.
   10Hz refresh provides smooth display updates without flicker.
 
-links: 
+links:
   - SRD-003  # Parent: Display vehicle speed on HMI
 
 artifact:
   - type: design
     path: docs/design/hmi-display-components.md
     description: HMI component architecture and Qt widget hierarchy
-  
+
   - type: design
     path: docs/design/display-performance-analysis.md
     description: Latency analysis and optimization strategy
-  
+
   - type: code
     path: src/hmi/speedometer_widget.cpp
     description: Qt speedometer widget implementation
-  
+
   - type: code
     path: src/hmi/speedometer_widget.h
     description: Speedometer widget interface
-  
+
   - type: code
     path: src/hmi/display_manager.cpp
     description: Display update manager with 10Hz timer
-  
+
   - type: test
     path: tests/specs/hmi-display-test-spec.md
     description: Comprehensive display test specification
-  
+
   - type: test
     path: tests/unit/test_speedometer_widget.cpp
     description: Unit tests for speedometer rendering
-  
+
   - type: test
     path: tests/performance/test_display_latency.py
     description: Display latency measurement tests
-  
+
   - type: config
     path: config/hmi_theme.yaml
     description: Display theme configuration (fonts, colors)
 
-reviewers: 
+reviewers:
   - ui-designer
   - software-lead
   - qa-engineer
