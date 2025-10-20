@@ -13,7 +13,7 @@ Our Project Board (GitHub Project) consists of 6 columns, representing the workf
 |**In Progress** | Items that are being actively worked on by a team member | The developer has started the work (code, research, or documentation) and assigned themselves to the Issue | Monitor active work and prevent developer overload (WIP) |
 |**Blockers** | Development is blocked. The item needs immediate attention to identify and resolve the impediment | The Issue cannot move forward due to external dependencies, unresolved technical problems, or missing decisions | Visibly and urgently flag critical impediments for the team |
 |**In Review** | The work item (code, documentation) is finished and awaiting review (Code Review / Testing) | The associated Pull Request (PR) has been created, and all local tests have passed | Ensure code quality through formal review |
-|**Done** | The item is entirely completed | completed.	The PR has been approved and merged into the main branch, and the Issue can be closed | Measure team progress and throughput |
+|**Done** | The item is entirely completed | The PR has been approved and merged into the main branch, and the Issue can be closed | Measure team progress and throughput |
 
 #
 
