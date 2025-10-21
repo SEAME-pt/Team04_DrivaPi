@@ -1,115 +1,35 @@
-LLTC-000:
-  ref: LLTC-000
-  header: "Test case for SWD-000"
-  text: |
-    Test case to verify [SWD-000].
+---
+ref: <REF>
+header: "<HEADER>"
+text: |
+  <DESCRIPTION>
 
-    This test case SHALL verify that the software requirement is correctly
-    implemented by executing specific test procedures and validating results.
+# TSF Type: Premise (A Claim, but not a Request)
 
-    Test Procedure:
-    1. Setup: Initialize test environment
-    2. Preconditions: Set initial state
-    3. Test steps: Execute test actions
-    4. Validation: Check expected results
-    5. Cleanup: Restore system state
+ASIL: <ASIL>
+Verification Method: <VERIFICATION_METHOD>
 
-    Pass Criteria:
-    - All assertions pass
-    - Performance within specified limits
-    - No unexpected errors or warnings
+# Links: Connects to the SWD it provides evidence for
+links:
+  - <PARENT_REF>
 
-  # TSF Type: Premise (A Claim, but not a Request)
-  # When "validated" by the artifacts below, this Premise becomes Evidence.
+reviewers:
+  - name: "<REVIEWER_NAME>"
+    email: "<REVIEWER_EMAIL>"
+reviewed: ''  # Auto-fill on PR approval
 
-  # ASIL Level: Must match parent SWD requirement
-  ASIL: B
-
-  # Verification Method: Unit Test / Integration Test / System Test
-  Verification Method: Unit Test
-
-  # Links to parent SWD requirement(s) being tested
-  # Corrected to link to SWD-000 for a consistent chain
-  links:
-    - SWD-000
-
-  # Reviewers
-  reviewers:
-    - name: "Test Engineer"
-      email: "test.engineer@example.com"
-    - name: "QA Lead"
-      email: "qa.lead@example.com"
-
-  # Reviewed: Empty string means "Suspect"
-  reviewed: ''
-
-  # Standard Doorstop fields
-  active: true
-  derived: false
-  normative: true
-  level: 1.0
-
-  # Test details
-  test_type: Unit Test  # Unit / Integration / System / Acceptance
-
-  # Test procedure (detailed steps)
-  test_procedure:
-    setup:
-      - Initialize test harness
-      - Mock dependencies
-      - Set initial conditions
-
-    preconditions:
-      - Module under test is compiled
-      - Test data files available
-      - Mock objects configured
-
-    test_steps:
-      - step: 1
-        action: Call function with valid input
-        expected: Function returns expected value
-
-      - step: 2
-        action: Call function with boundary value
-        expected: Function handles correctly
-
-      - step: 3
-        action: Call function with invalid input
-        expected: Function returns error code
-
-    postconditions:
-      - No memory leaks
-      - All resources released
-      - System state restored
-
-  # Acceptance criteria (what makes test pass)
-  acceptance:
-    - GIVEN: test environment initialized
-      WHEN: test procedure executed
-      THEN: all assertions SHALL pass
-
-    - GIVEN: valid test inputs
-      WHEN: function under test called
-      THEN: SHALL return expected outputs within timing constraints
-
-  # Test coverage
-  coverage:
-    - Nominal case (happy path)
-    - Boundary conditions
-    - Error conditions
-    - Performance requirements
-
-  # TSF Artifact Type: Validation / Reference (forms Evidence)
-  # These artifacts provide the "Evidence" that this Premise is True.
-  artifact:
-    - type: test
-      path: tests/unit/test_temperature_reader.cpp
-      description: Test implementation (Reference)
-
-    - type: test
-      path: artifacts/verification/tests/LLTC-000-results.xml
-      description: Test execution results (Validation)
-
-    - type: test
-      path: artifacts/verification/reports/LLTC-000-coverage.html
-      description: Code coverage report (Validation)
+active: true
+derived: false
+normative: true
+level: 4.0
+test_type: <TEST_TYPE>
+test_procedure:
+  setup:
+    - <SETUP_STEPS>
+  test_steps:
+    - step: 1
+      action: <STEP_ACTION>
+      expected: <EXPECTED_RESULT>
+  postconditions:
+    - <POSTCONDITIONS>
+---

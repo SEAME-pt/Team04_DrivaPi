@@ -4,56 +4,82 @@ on:
   pull_request:
   push:
     branches: [ main, master, development ]
+  pull_request_review:
+    types: [submitted]
 
 jobs:
   tsf-validation:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
+      # 2️⃣ Setup Python
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
+      # 3️⃣ Cache pip
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # 4️⃣ Install TSF/trudag tools
       - name: Install official TSF tools
         run: |
           python -m pip install --upgrade pip
-          pip install doorstop pyyaml
-
-          # Clone and install Trustable official
+          pip install pyyaml
           git clone https://gitlab.com/CodethinkLabs/trustable/trustable.git /tmp/trustable
           cd /tmp/trustable
-          git checkout 2025.9.16 || echo "Using latest main branch"
+          git fetch --tags || true
+          git checkout 2025.9.16 || git checkout main || echo "Using available branch"
           pip install .
           cd -
 
+      # 5️⃣ Verify tools
       - name: Verify tools installation
         run: |
-          doorstop --version
-          trudag --version
-          echo "TSF tools installed successfully"
+          echo "trudag version:"
+          trudag --version || true
 
-      - name: Run Doorstop validation
-        run: |
-          doorstop || echo "Doorstop validation completed"
-
-      - name: Run trudag official lint
-        run: |
-          trudag manage lint
-
-      - name: Migrate Doorstop structure
-        run: |
-          trudag manage migrate
-
-      - name: Generate Trustable report (optional)
-        continue-on-error: true
+      # 6️⃣ Run trudag lint (capture output)
+      - name: Run trudag lint
+        id: lint
         run: |
           mkdir -p artifacts
-          trudag report export --output artifacts/trustable-report.zip || echo "Report export not configured"
+          echo "=== trudag manage lint START ===" > artifacts/trudag-lint.txt
+          if trudag manage lint 2>&1 | tee -a artifacts/trudag-lint.txt; then
+            echo "LINT_OK=true" >> $GITHUB_OUTPUT
+          else
+            echo "LINT_OK=false" >> $GITHUB_OUTPUT
+            exit 2
+          fi
 
+      # 7️⃣ Generate Trustable report
+      - name: Generate Trustable report (publish)
+        continue-on-error: true
+        run: |
+          mkdir -p artifacts/trustable-report
+          trudag publish --output-dir artifacts/trustable-report || trudag publish --no-validate --output-dir artifacts/trustable-report || echo "publish failed or not configured"
+
+      # 8️⃣ List artifacts for debug
+      - name: List artifacts
+        run: |
+          echo "Artifacts directory listing"
+          ls -la artifacts || true
+          echo ".dotstop.dot present?"
+          [ -f .dotstop.dot ] && echo "YES" || echo "NO"
+
+      # 9️⃣ Upload TSF artifacts
       - name: Upload TSF artifacts
         uses: actions/upload-artifact@v4
         if: always()
@@ -62,8 +88,10 @@ jobs:
           path: |
             artifacts/
             .dotstop.dot
+            artifacts/trudag-lint.txt
           retention-days: 30
 
+      # 🔟 Comment PR with validation results
       - name: Comment PR with validation results
         if: github.event_name == 'pull_request'
         uses: peter-evans/create-or-update-comment@v4
@@ -73,14 +101,54 @@ jobs:
           body: |
             ## ✅ TSF Validation Completed
 
-            Validation performed using **official Eclipse TSF tools**:
-            - ✅ Doorstop structure check
-            - ✅ trudag manage lint
-            - ✅ trudag manage migrate
+            **trudag manage lint** result: ${{ steps.lint.outputs.LINT_OK }}
 
-            📦 Check the **Actions artifacts** tab for detailed reports.
+            ### Lint summary (first 200 chars)
+            ```
+            $(head -c 200 artifacts/trudag-lint.txt || echo "no lint output")
+            ```
+
+            📦 Artifacts (see Actions run -> Artifacts) include:
+            - `.dotstop.dot`
+            - `artifacts/trudag-lint.txt` (full lint output)
+            - `artifacts/trustable-report/` (if publish succeeded)
 
             ---
-            **Tools used:**
+            Tools used:
             - `trudag` (Eclipse Trustable)
-            - `doorstop` (Requirements backend)
+            - `trustable` package installed from the official repository
+
+      # 11️⃣ Auto-update reviewed: field on PR approval
+      - name: Auto-update reviewed: field
+        if: github.event_name == 'pull_request_review' && github.event.review.state == 'approved'
+        env:
+          REVIEWER_NAME: ${{ github.event.review.user.login }}
+          REVIEWER_EMAIL: ${{ github.event.review.user.email || github.event.review.user.login + '@users.noreply.github.com' }}
+        run: |
+          TODAY=$(date +%Y-%m-%d)
+          REVIEW_DATE=${GITHUB_EVENT_REVIEW_SUBMITTED_AT:-$TODAY}
+          echo "PR approved by $REVIEWER_NAME <$REVIEWER_EMAIL> on $REVIEW_DATE. Updating reviewed: fields..."
+          for f in $(find . -name "*.yml"); do
+            echo "Checking $f"
+            python3 - << EOF
+import yaml, os
+
+fpath = os.path.abspath("$f")
+with open(fpath, 'r') as file:
+    try:
+        data = yaml.safe_load(file)
+    except Exception as e:
+        print(f"Skipping {fpath}: cannot parse YAML ({e})")
+        data = None
+
+if data and isinstance(data, dict) and 'reviewed' in data and not data['reviewed']:
+    data['reviewed'] = "{date} — Reviewed and approved by {reviewer} <{email}>".format(
+        date=os.environ["REVIEW_DATE"],
+        reviewer=os.environ["REVIEWER_NAME"],
+        email=os.environ["REVIEWER_EMAIL"]
+    )
+    with open(fpath, 'w') as file:
+        yaml.safe_dump(data, file, sort_keys=False)
+    print(f"Updated reviewed: in {fpath}")
+EOF
+          done

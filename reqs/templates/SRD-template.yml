@@ -1,68 +1,25 @@
-SRD-000:
-  ref: SRD-000
-  header: "System requirement short title"
-  text: |
-    The system SHALL [specific system behavior].
+---
+ref: <REF>
+header: "<HEADER>"
+text: |
+  <DESCRIPTION>
 
-    This requirement describes HOW the system provides the capability
-    described in the parent user requirement. Include technical details
-    about system-level behavior, interfaces, and performance.
+# TSF Type: Assertion (Both a Request and a Claim)
 
-    Be specific about:
-    - What the system does
-    - When it does it
-    - Performance requirements (timing, accuracy)
-    - Error handling
+ASIL: <ASIL>
+Verification Method: <VERIFICATION_METHOD>
 
-  # TSF Type: Assertion (Both a Request and a Claim)
+# Links: Connects to parent Expectation
+links:
+  - <PARENT_REF>
 
-  # ASIL Level: QM (no safety) / A (lowest) / B / C / D (highest)
-  ASIL: B
+reviewers:
+  - name: "<REVIEWER_NAME>"
+    email: "<REVIEWER_EMAIL>"
+reviewed: ''  # Auto-fill on PR approval
 
-  # Verification Method: System Test / Integration Test / Review / Inspection
-  Verification Method: System Test
-
-  # Links to parent URD requirement(s)
-  # Corrected to link to URD-000 for a consistent chain
-  links:
-    - URD-000
-
-  # Reviewers (at least one required, preferably 2 for ASIL B+)
-  reviewers:
-    - name: "Technical Reviewer"
-      email: "tech.reviewer@example.com"
-    - name: "Domain Expert"
-      email: "domain.expert@example.com"
-
-  # Reviewed: Empty string means "Suspect"
-  reviewed: ''
-
-  # Standard Doorstop fields
-  active: true
-  derived: false
-  normative: true
-  level: 1.0
-
-  # Acceptance criteria (highly recommended)
-  acceptance:
-    - GIVEN: system in [state]
-      WHEN: [condition occurs]
-      THEN: system SHALL [response] within [timing]
-
-  # Rationale
-  rationale: |
-    Technical justification for this system-level design choice.
-    How it fulfills the parent user requirement.
-
-  # Assumptions
-  assumptions:
-    - Hardware capabilities (sensors, actuators, compute)
-    - Operating environment constraints
-    - Interface specifications
-
-  # TSF Artifact Type: Qualification
-  # These artifacts "Qualify" the Assertion, explaining its reasoning.
-  artifact:
-    - type: design
-      path: docs/architecture/system-design.md
-      description: System architecture overview
+active: true
+derived: false
+normative: true
+level: 2.0
+---

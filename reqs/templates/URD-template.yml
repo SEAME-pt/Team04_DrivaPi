@@ -1,50 +1,24 @@
-URD-000:
-  ref: URD-000
-  header: "User requirement short title"
-  text: |
-    The user SHALL be able to [action/capability].
+---
+ref: <REF>
+header: "<HEADER>"
+text: |
+  <DESCRIPTION>
 
-    This requirement describes what the end user needs from the system.
-    Use clear, non-technical language that stakeholders can understand.
+# TSF Type: Expectation (A Request, but not a Claim)
 
-  # TSF Type: Expectation (A Request, but not a Claim)
+ASIL: <ASIL>
+Verification Method: <VERIFICATION_METHOD>
 
-  # ASIL Level: QM (no safety) / A (lowest) / B / C / D (highest)
-  ASIL: QM
+# Links to derived assertions
+links: []
 
-  # Verification Method: Review / User Acceptance Test / Demonstration
-  Verification Method: User Acceptance Test
+reviewers:
+  - name: "<REVIEWER_NAME>"
+    email: "<REVIEWER_EMAIL>"
+reviewed: ''  # Auto-filled on PR approval
 
-  # Links to parent requirements (URD is a root Expectation, no parents)
-  links: []
-
-  # Reviewers (at least one required)
-  reviewers:
-    - name: "Reviewer Name"
-      email: "reviewer@example.com"
-
-  # Reviewed: Empty string means "Suspect" until reviewed and approved.
-  # TSF tooling fills this with a Git SHA upon review.
-  reviewed: ''
-
-  # Standard Doorstop fields
-  active: true
-  derived: false
-  normative: true
-  level: 1.0
-
-  # Optional: Acceptance criteria (recommended)
-  acceptance:
-    - GIVEN: initial system state
-      WHEN: user performs action
-      THEN: expected result
-
-  # Optional: Rationale
-  rationale: |
-    Why this requirement exists and what problem it solves.
-
-  # Optional: Assumptions
-  assumptions:
-    - List any assumptions about the operating environment
-    - Hardware availability
-    - User capabilities
+active: true
+derived: false
+normative: true
+level: 1.0
+---

@@ -1,85 +1,25 @@
-SWD-000:
-  ref: SWD-000
-  header: "Software requirement short title"
-  text: |
-    The software SHALL [specific software behavior/implementation].
+---
+ref: <REF>
+header: "<HEADER>"
+text: |
+  <DESCRIPTION>
 
-    This requirement describes HOW the software implements the parent
-    system requirement. Include specific implementation details:
+# TSF Type: Assertion (Both a Request and a Claim)
 
-    - Algorithms and data structures
-    - Software interfaces and APIs
-    - Timing and performance constraints
-    - Error handling and recovery
-    - Resource management (memory, CPU)
+ASIL: <ASIL>
+Verification Method: <VERIFICATION_METHOD>
 
-    Example:
-    "The software SHALL read sensor data via I2C interface at address 0x48
-    with 12-bit resolution, sampling at 10Hz, and SHALL timeout after 100ms
-    if no response is received."
+# Links: Connects to parent Assertion
+links:
+  - <PARENT_REF>
 
-  # TSF Type: Assertion (Both a Request and a Claim)
+reviewers:
+  - name: "<REVIEWER_NAME>"
+    email: "<REVIEWER_EMAIL>"
+reviewed: ''  # Auto-fill on PR approval
 
-  # ASIL Level: QM (no safety) / A (lowest) / B / C / D (highest)
-  ASIL: B
-
-  # Verification Method: Unit Test / Integration Test / Code Review / Static Analysis
-  Verification Method: Unit Test
-
-  # Links to parent SRD requirement(s)
-  # Corrected to link to SRD-000 for a consistent chain
-  links:
-    - SRD-000
-
-  # Reviewers (at least 2 for ASIL B+)
-  reviewers:
-    - name: "Software Developer"
-      email: "developer@example.com"
-    - name: "SW Architect"
-      email: "architect@example.com"
-
-  # Reviewed: Empty string means "Suspect"
-  reviewed: ''
-
-  # Standard Doorstop fields
-  active: true
-  derived: false
-  normative: true
-  level: 1.0
-
-  # Acceptance criteria (required for testability)
-  acceptance:
-    - GIVEN: software module initialized
-      WHEN: function X is called with parameter Y
-      THEN: SHALL return Z within 10ms
-
-    - GIVEN: invalid input parameter
-      WHEN: function X is called
-      THEN: SHALL return error code -1 and log warning
-
-  # Rationale
-  rationale: |
-    Why this specific software implementation approach was chosen.
-    Trade-offs considered (performance vs complexity, etc.)
-
-  # Assumptions
-  assumptions:
-    - Compiler version and optimization level
-    - Available memory and CPU resources
-    - Third-party library versions
-    - Hardware abstraction layer APIs
-
-  # TSF Artifact Type: Qualification
-  # These artifacts "Qualify" the Assertion, linking to implementation.
-  artifact:
-    - type: design
-      path: docs/architecture/software-design.md
-      description: Detailed software design
-
-    - type: code
-      path: src/sensors/temperature_reader.cpp
-      description: Implementation
-
-    - type: code
-      path: src/sensors/temperature_reader.h
-      description: Interface header
+active: true
+derived: false
+normative: true
+level: 3.0
+---
