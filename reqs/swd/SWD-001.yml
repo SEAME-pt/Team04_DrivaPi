@@ -1,48 +1,27 @@
 SWD-001:
+  ASIL: B
+  Verification Method: Unit Test
+  active: true
+  derived: false
+  header: Convert CAN speed data for display
+  level: 3.0
+  links:
+  - SRD-001
+  normative: true
   ref: SWD-001
-  header: "Convert CAN speed data for display"
+  reviewed: ''
+  reviewers:
+  - email: carol@example.com
+    name: Carol Developer
   text: |
     The software SHALL convert raw CAN speed data (0.1 km/h units) to
     integer km/h and update the display module within 50ms of receipt.
-
-  # TSF Type: Assertion (Both a Request and a Claim)
-
-  ASIL: B
-  Verification Method: Unit Test
-
-  # Links: Connects to its parent Assertion
-  links:
-    - SRD-001
-
-  reviewers:
-    - name: "Carol Developer"
-      email: "carol@example.com"
-
-  # Reviewed: Empty string means "Suspect"
-  reviewed: ''
-
-  active: true
-  derived: false
-  normative: true
-  level: 3.0
-
-  # --- Added for completeness (based on template) ---
-  rationale: |
-    The raw CAN signal uses a scaling factor (0.1) for precision, which
-    must be converted to a simple integer for the display. The 50ms
-    budget provides sufficient time for processing within the 100ms
-    system-level deadline.
-
-  acceptance:
-    - GIVEN: The software receives raw CAN data '200' (representing 20.0 km/h)
-      WHEN: The conversion function is called
-      THEN: The display module's update function SHALL be called with the integer value '20'
-    - GIVEN: The conversion function is called
-      WHEN: The function is executing
-      THEN: It SHALL complete within its 50ms time budget
-
-  # TSF Artifact Type: Qualification (links to implementation)
-  artifact:
-    - type: code
-      path: src/processing/speed_converter.cpp
-      description: Implementation of the conversion logic.
+active: true
+derived: false
+header: ''
+level: 1.0
+links: []
+normative: true
+ref: ''
+reviewed: rZevx3sG_e4od7H_93cD7ybmMqvMBcwFYmQP_rtCwHI=
+text: ''

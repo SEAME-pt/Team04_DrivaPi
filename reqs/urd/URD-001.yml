@@ -1,37 +1,26 @@
 URD-001:
+  ASIL: B
+  Verification Method: User Acceptance Test
+  active: true
+  derived: false
+  header: User shall be able to view real-time vehicle speed
+  level: 1.0
+  links: []
+  normative: true
   ref: URD-001
-  header: "User shall be able to view real-time vehicle speed"
+  reviewed: ''
+  reviewers:
+  - email: alice@example.com
+    name: Alice Product
   text: |
     The system SHALL provide the user with real-time vehicle speed information
     displayed on the dashboard within 100ms of data receipt.
-
-  # TSF Type: Expectation (A Request, but not a Claim)
-
-  ASIL: B
-  Verification Method: User Acceptance Test
-
-  # Links: Empty, as this is the root Expectation
-  links: []
-
-  reviewers:
-    - name: "Alice Product"
-      email: "alice@example.com"
-
-  # Reviewed: Empty string means "Suspect" until reviewed and approved.
-  reviewed: ''
-
-  active: true
-  derived: false
-  normative: true
-  level: 1.0
-
-  # --- Added for completeness (based on template) ---
-  rationale: |
-    Provides critical real-time feedback to the driver, which is a core
-    function of the instrument cluster. The 100ms deadline ensures the
-    display does not feel laggy.
-
-  acceptance:
-    - GIVEN: The vehicle is in motion
-      WHEN: The vehicle's speed changes
-      THEN: The dashboard display SHALL update to the correct speed within 100ms
+active: true
+derived: false
+header: ''
+level: 1.0
+links: []
+normative: true
+ref: ''
+reviewed: DlcWP47TgXhyQA6bpp24EmR84loBPgk1MM9ak_QmweA=
+text: ''

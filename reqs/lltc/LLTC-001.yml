@@ -1,62 +1,39 @@
 LLTC-001:
-  ref: LLTC-001
-  header: "Test speed conversion logic"
-  text: |
-    Test case to verify SWD-001 conversion from raw CAN data to km/h.
-
-  # TSF Type: Premise (A Claim, but not a Request)
-  # When "validated" by the artifacts below, this Premise becomes Evidence.
-
   ASIL: B
   Verification Method: Unit Test
-
-  # Links: Connects to the SWD it provides evidence for
-  links:
-    - SWD-001
-
-  reviewers:
-    - name: "Dave QA"
-      email: "dave@example.com"
-
-  # Reviewed: Empty string means "Suspect"
-  reviewed: ''
-
   active: true
   derived: false
+  header: Test speed conversion logic
+  level: 4.0
+  links:
+  - SWD-001
   normative: true
-  level: 4.0 # Corrected level to follow the chain
-
-  test_type: Unit Test
-
-  # --- Corrected/Expanded for clarity (based on template) ---
+  ref: LLTC-001
+  reviewed: ''
+  reviewers:
+  - email: dave@example.com
+    name: Dave QA
   test_procedure:
-    setup:
-      - Initialize speed_converter module
-    preconditions:
-      - Mock display module is injected
-    test_steps:
-      - step: 1
-        action: Call speed_converter.update(200)
-        expected: Mock display_module.set_speed() called with value 20
-      - step: 2
-        action: Call speed_converter.update(0)
-        expected: Mock display_module.set_speed() called with value 0
-      - step: 3
-        action: Call speed_converter.update(201)
-        expected: Mock display_module.set_speed() called with value 20 (truncation)
     postconditions:
-      - No errors thrown
-
-  acceptance:
-    - GIVEN: Test procedure is executed
-      WHEN: All test steps complete
-      THEN: All assertions SHALL pass
-
-  # TSF Artifact Type: Validation / Reference (forms Evidence)
-  artifact:
-    - type: test
-      path: tests/unit/test_speed_converter.cpp
-      description: Test implementation (Reference)
-    - type: test
-      path: artifacts/verification/tests/LLTC-001-results.xml
-      description: Test execution results (Validation)
+    - No errors thrown
+    setup:
+    - Initialize conversion module
+    test_steps:
+    - action: Provide raw value 200
+      expected: Converts to 20 km/h
+      step: 1
+    - action: Provide raw value 0
+      expected: Converts to 0 km/h
+      step: 2
+  test_type: Unit Test
+  text: |
+    Test case to verify SWD-001 conversion from raw CAN data to km/h.
+active: true
+derived: false
+header: ''
+level: 1.0
+links: []
+normative: true
+ref: ''
+reviewed: X_Fe7Oq3p3w0ueuzKOANsHkr7pfay4MUtKdLissQDO0=
+text: ''

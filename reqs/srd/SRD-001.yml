@@ -1,45 +1,28 @@
 SRD-001:
+  ASIL: B
+  Verification Method: System Test
+  active: true
+  derived: false
+  header: Read vehicle speed from CAN bus
+  level: 2.0
+  links:
+  - URD-001
+  normative: true
   ref: SRD-001
-  header: "Read vehicle speed from CAN bus"
+  reviewed: ''
+  reviewers:
+  - email: bob@example.com
+    name: Bob Technical
   text: |
     The system SHALL read vehicle speed data from the CAN bus at 10Hz.
 
     This requirement defines how the system obtains speed data for display.
-
-  # TSF Type: Assertion (Both a Request and a Claim)
-
-  ASIL: B
-  Verification Method: System Test
-
-  # Links: Connects to its parent Expectation
-  links:
-    - URD-001
-
-  reviewers:
-    - name: "Bob Technical"
-      email: "bob@example.com"
-
-  # Reviewed: Empty string means "Suspect"
-  reviewed: ''
-
-  active: true
-  derived: false
-  normative: true
-  level: 2.0
-
-  # --- Added for completeness (based on template) ---
-  rationale: |
-    The CAN bus is the standard source for vehicle dynamics data.
-    A 10Hz polling rate (every 100ms) matches the parent URD's
-    latency requirement.
-
-  acceptance:
-    - GIVEN: The system is powered on and connected to the CAN bus
-      WHEN: A valid speed message (e.g., CAN ID 0x123) is broadcast
-      THEN: The system SHALL read and buffer the raw speed data within 100ms
-
-  # TSF Artifact Type: Qualification (explains the reasoning)
-  artifact:
-    - type: design
-      path: docs/architecture/system-design.md
-      description: System architecture showing CAN bus integration.
+active: true
+derived: false
+header: ''
+level: 1.0
+links: []
+normative: true
+ref: ''
+reviewed: JazdowCI51i_C8EZ_mq3azTTPAAJQQS3ibPAHNHHUyU=
+text: ''
