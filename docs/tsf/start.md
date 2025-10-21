@@ -1,17 +1,16 @@
 # Getting Started with DrivaPi TSF
 
-**Version:** 3.0
+**Version:** 4.0
 **Last Updated:** October 2025
-**Time to Complete:** 30 minutes
 
 ---
 
 ## 🎯 What You'll Learn
 
-- Install official TSF tools (`trudag` + `doorstop`)
-- Validate existing requirements
-- Create your first requirement
-- Generate traceability reports
+- Install official TSF tool (`trudag`)
+- Initialize a new TSF project
+- Create and link requirements
+- Validate and publish reports
 
 ---
 
@@ -21,7 +20,6 @@
 - Python 3.11+ installed
 - Git configured
 - Text editor (VS Code recommended)
-- Terminal/command line access
 
 **Check:**
 ```bash
@@ -31,7 +29,7 @@ git --version
 
 ---
 
-## 🚀 Setup (30 minutes)
+## 🚀 Setup (20 minutes)
 
 ### Step 1: Clone Repository (2 min)
 
@@ -58,22 +56,16 @@ source .venv/bin/activate
 which python  # Should show .venv/bin/python
 ```
 
-### Step 3: Install Official Tools (10 min)
+### Step 3: Install trudag (5 min)
 
 ```bash
 # Upgrade pip
 pip install --upgrade pip
 
-# Install Doorstop
-pip install doorstop pyyaml
+# Install dependencies
+pip install pyyaml
 
-# Verify
-doorstop --version
-```
-
-**Install Trustable (trudag):**
-```bash
-# Clone official repository
+# Clone official trustable repository
 git clone https://gitlab.com/CodethinkLabs/trustable/trustable.git /tmp/trustable
 
 # Install from specific tag
@@ -84,62 +76,66 @@ pip install .
 # Return to project
 cd -
 
-# Verify
+# Verify installation
 trudag --version
 ```
 
 **Expected output:**
 ```
 trudag X.X.X
-doorstop, version X.X.X
 ```
 
-### Step 4: Validate Requirements (5 min)
+### Step 4: Initialize Project (if starting fresh) (3 min)
+
+**Note:** Your project is already initialized! Skip this if `.dotstop.dot` exists.
 
 ```bash
-# Run official validations
-trudag manage lint
-doorstop
+# Only for NEW projects:
+trudag --init
+
+# This creates:
+# - .dotstop.dot (graph structure)
+# - .dotstop_extensions/ (custom validators)
 ```
 
-**Expected output:**
-```
+### Step 5: Validate Requirements (2 min)
+
+```bash
+# Run validation
+trudag manage lint
+
+# Expected output:
 ✓ All requirements validated
 ✓ No broken links
-✓ Structure is valid
+
+# Calculate trust scores
+trudag score
 ```
 
-**If errors appear:**
-- Read error messages carefully
-- Fix YAML syntax issues
-- Ensure `ref:` matches filename
-- Re-run validation
-
-### Step 5: Test Traceability (5 min)
+### Step 6: Generate Report (5 min)
 
 ```bash
-# Update Doorstop structure
-trudag manage migrate
+# Create Trustable report
+trudag publish --output-dir artifacts/trustable-report
 
-# Generate traceability report
-trudag report export --output artifacts/test-report.zip
-
-# Check output
-ls -lh artifacts/test-report.zip
+# View results
+ls artifacts/trustable-report/
+# Should show: dashboard.md, URD.md, SRD.md, SWD.md, LLTC.md, etc.
 ```
 
-### Step 6: Verify Project Structure (5 min)
+### Step 7: Verify Project Structure
 
 ```bash
-# Should see this structure:
-tree -L 2 reqs/
+# Check requirements structure
+ls -R reqs/
 
-# Expected:
+# Expected structure:
 # reqs/
-# ├── urd/           ← User Requirements
-# ├── srd/           ← System Requirements
-# ├── swd/           ← Software Requirements
-# └── lltc/          ← Test Cases
+# ├── urd/URD-001.md
+# ├── srd/SRD-001.md
+# ├── swd/SWD-001.md
+# ├── lltc/LLTC-001.md
+# └── templates/
 ```
 
 ---
@@ -150,18 +146,18 @@ Before you start working:
 
 - [ ] Virtual environment activated (`.venv`)
 - [ ] `trudag --version` works
-- [ ] `doorstop --version` works
-- [ ] `trudag manage lint` passes
-- [ ] `doorstop` passes (no errors)
-- [ ] Can see `reqs/urd/`, `reqs/srd/`, etc.
+- [ ] `trudag manage lint` passes with no errors
+- [ ] `trudag score` runs successfully
+- [ ] `.dotstop.dot` file exists
+- [ ] Can see `reqs/urd/`, `reqs/srd/`, `reqs/swd/`, `reqs/lltc/`
 
 ---
 
 ## 🎓 Next Steps
 
-1. **Read Workflows:** `docs/WORKFLOWS.md`
-2. **Quick Reference:** `docs/TSF_REFERENCE.md`
-3. **Training:** `docs/TRAINING.md`
+1. **Read Workflows:** `docs/tsf/workflow.md`
+2. **Quick Reference:** `docs/tsf/reference.md`
+3. **Training:** `docs/tsf/training.md`
 4. **Create First Requirement:** Follow Workflow 1
 
 ---
@@ -177,17 +173,9 @@ source .venv/bin/activate
 
 # Reinstall trustable
 cd /tmp/trustable
+git checkout 2025.9.16
 pip install .
-```
-
-### Issue: `doorstop` shows "no documents found"
-
-**Solution:**
-```bash
-# Check .doorstop.yml files exist
-ls reqs/*/.doorstop.yml
-
-# Should show 4 files (urd, srd, swd, lltc)
+cd -
 ```
 
 ### Issue: `trudag manage lint` fails
@@ -196,58 +184,67 @@ ls reqs/*/.doorstop.yml
 ```bash
 # Read error message carefully
 # Common issues:
-# - Missing 'ref:' field
-# - 'ref:' doesn't match filename
-# - Missing 'reviewers:' block
-# - Invalid YAML syntax
+# - Markdown frontmatter syntax error
+# - Missing required fields (normative, level)
+# - File not listed in .dotstop.dot
 
-# Fix the YAML file, then re-run
-trudag manage lint
+# Check .dotstop.dot contains your requirement
+cat .dotstop.dot
 ```
 
-### Issue: Python version too old
+### Issue: Requirements not showing in report
 
 **Solution:**
 ```bash
-# Install Python 3.11+ from python.org
-# Or use pyenv:
-pyenv install 3.11
-pyenv local 3.11
+# Ensure requirements are marked as reviewed
+trudag manage set-item URD-001
+trudag manage set-item SRD-001
+
+# Recalculate scores
+trudag score
+
+# Regenerate report
+trudag publish --output-dir artifacts/trustable-report
 ```
 
 ---
 
-## 📚 Documentation Map
+## 📚 Key Concepts
+
+### Files Created by trudag
+
+1. **`.dotstop.dot`** - Graph structure tracking all requirements and their links
+2. **`.dotstop_extensions/`** - Custom validators (e.g., license checks)
+3. **`reqs/<type>/<ID>.md`** - Markdown files with YAML frontmatter
+
+### Requirement File Format
+
+```markdown
+---
+normative: true
+level: 1.0
+ASIL: B
+verification_method: "Unit Test"
+reviewers:
+  - name: "Your Name"
+    email: "you@example.com"
+reviewed: ''  # Empty until approved
+---
+The system SHALL do something specific and testable.
+```
+
+### The V-Model Structure
 
 ```
-docs/tsf/
-├── start.md              ← You are here
-├── workflows.md          ← Daily workflows
-├── reference.md          ← Quick reference
-├── training.md           ← Full training guide
-└── evidence.md           ← Evidence collection
+URD (User Requirements)     ← WHAT users need
+  ↓
+SRD (System Requirements)   ← HOW system provides
+  ↓
+SWD (Software Design)       ← HOW software implements
+  ↓
+LLTC (Low Level Tests)      ← HOW to verify
 ```
 
 ---
 
-## 🔗 Official Resources
-
-- **Trustable Docs:** https://codethinklabs.gitlab.io/trustable/trustable/
-- **Doorstop Docs:** https://doorstop.readthedocs.io/
-- **ISO 26262 Overview:** https://www.iso.org/standard/68383.html
-
----
-
-## ✨ You're Ready!
-
-You can now:
-- ✅ Validate requirements
-- ✅ Create new requirements
-- ✅ Generate traceability reports
-- ✅ Participate in reviews
-
-**Start with:** `docs/tsf/workflows.md` to learn common tasks.
-
----
-
-**Questions?** Ask in team standup or check `docs/tsf/training.md`
+**Ready to create your first requirement?** Continue to `docs/tsf/workflow.md`

@@ -1,4 +1,6 @@
 ---
+id: LLTC-001
+type: premise # Define este Statement como uma premissa de baixo nível
 normative: true
 publish:
   group: "LLTC"
@@ -13,6 +15,8 @@ active: true
 derived: false
 level: 4.0
 test_type: "Unit Test"
+parents: # O Test Case suporta o Requisito de Software
+  - SWD-001
 ---
 Test case to verify SWD-001 conversion from raw CAN data to km/h.
 
