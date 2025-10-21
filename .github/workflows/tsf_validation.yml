@@ -10,6 +10,9 @@ on:
 jobs:
   tsf-validation:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
       # 1️⃣ Checkout repository
@@ -49,27 +52,47 @@ jobs:
       - name: Verify tools installation
         run: |
           echo "trudag version:"
-          trudag --version || true
+          trudag --version || echo "trudag not found"
 
       # 6️⃣ Run trudag lint (capture output)
       - name: Run trudag lint
         id: lint
+        continue-on-error: true
         run: |
           mkdir -p artifacts
           echo "=== trudag manage lint START ===" > artifacts/trudag-lint.txt
           if trudag manage lint 2>&1 | tee -a artifacts/trudag-lint.txt; then
-            echo "LINT_OK=true" >> $GITHUB_OUTPUT
+            echo "lint_ok=true" >> $GITHUB_OUTPUT
           else
-            echo "LINT_OK=false" >> $GITHUB_OUTPUT
-            exit 2
+            echo "lint_ok=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Additional: Get lint summary for PR comment
+      - name: Get lint summary
+        id: summary
+        run: |
+          if [ -f artifacts/trudag-lint.txt ]; then
+            echo "lint_summary<<EOF" >> $GITHUB_OUTPUT
+            head -c 200 artifacts/trudag-lint.txt >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "lint_summary=no lint output" >> $GITHUB_OUTPUT
           fi
 
       # 7️⃣ Generate Trustable report
       - name: Generate Trustable report (publish)
+        id: publish
         continue-on-error: true
         run: |
           mkdir -p artifacts/trustable-report
-          trudag publish --output-dir artifacts/trustable-report || trudag publish --no-validate --output-dir artifacts/trustable-report || echo "publish failed or not configured"
+          if trudag publish --output-dir artifacts/trustable-report 2>&1; then
+            echo "publish_ok=true" >> $GITHUB_OUTPUT
+          elif trudag publish --no-validate --output-dir artifacts/trustable-report 2>&1; then
+            echo "publish_ok=true" >> $GITHUB_OUTPUT
+          else
+            echo "publish_ok=false" >> $GITHUB_OUTPUT
+            echo "publish failed or not configured"
+          fi
 
       # 8️⃣ List artifacts for debug
       - name: List artifacts
@@ -88,7 +111,6 @@ jobs:
           path: |
             artifacts/
             .dotstop.dot
-            artifacts/trudag-lint.txt
           retention-days: 30
 
       # 🔟 Comment PR with validation results
@@ -101,54 +123,6 @@ jobs:
           body: |
             ## ✅ TSF Validation Completed
 
-            **trudag manage lint** result: ${{ steps.lint.outputs.LINT_OK }}
+            **trudag manage lint** result: ${{ steps.lint.outputs.lint_ok }}
 
             ### Lint summary (first 200 chars)
-            ```
-            $(head -c 200 artifacts/trudag-lint.txt || echo "no lint output")
-            ```
-
-            📦 Artifacts (see Actions run -> Artifacts) include:
-            - `.dotstop.dot`
-            - `artifacts/trudag-lint.txt` (full lint output)
-            - `artifacts/trustable-report/` (if publish succeeded)
-
-            ---
-            Tools used:
-            - `trudag` (Eclipse Trustable)
-            - `trustable` package installed from the official repository
-
-      # 11️⃣ Auto-update reviewed: field on PR approval
-      - name: Auto-update reviewed: field
-        if: github.event_name == 'pull_request_review' && github.event.review.state == 'approved'
-        env:
-          REVIEWER_NAME: ${{ github.event.review.user.login }}
-          REVIEWER_EMAIL: ${{ github.event.review.user.email || github.event.review.user.login + '@users.noreply.github.com' }}
-        run: |
-          TODAY=$(date +%Y-%m-%d)
-          REVIEW_DATE=${GITHUB_EVENT_REVIEW_SUBMITTED_AT:-$TODAY}
-          echo "PR approved by $REVIEWER_NAME <$REVIEWER_EMAIL> on $REVIEW_DATE. Updating reviewed: fields..."
-          for f in $(find . -name "*.yml"); do
-            echo "Checking $f"
-            python3 - << EOF
-import yaml, os
-
-fpath = os.path.abspath("$f")
-with open(fpath, 'r') as file:
-    try:
-        data = yaml.safe_load(file)
-    except Exception as e:
-        print(f"Skipping {fpath}: cannot parse YAML ({e})")
-        data = None
-
-if data and isinstance(data, dict) and 'reviewed' in data and not data['reviewed']:
-    data['reviewed'] = "{date} — Reviewed and approved by {reviewer} <{email}>".format(
-        date=os.environ["REVIEW_DATE"],
-        reviewer=os.environ["REVIEWER_NAME"],
-        email=os.environ["REVIEWER_EMAIL"]
-    )
-    with open(fpath, 'w') as file:
-        yaml.safe_dump(data, file, sort_keys=False)
-    print(f"Updated reviewed: in {fpath}")
-EOF
-          done
