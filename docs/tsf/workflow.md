@@ -1,756 +1,640 @@
-# TSF Workflow Guide
+# TSF Workflows - DrivaPi
 
-**Version:** 3.0
-**Last Updated:** October 2025
-
----
-
-## 🎯 Core Principle
-
-**Use trudag commands only**
-
-**File Format:** Requirements are `.md` files with YAML frontmatter
+**Purpose:** Step-by-step guides for common TSF tasks
+**Tool Used:** `trudag` (official TSF tool)
+**Evidence-Based:** Every workflow produces verifiable artifacts
 
 ---
 
-## 📂 Repository Structure (Current)
+## 📋 Available Workflows
 
-```
-Team04_DrivaPi/
-├── reqs/
-│   ├── urd/                    # User Requirements
-│   │   └── URD-001.md
-│   ├── srd/                    # System Requirements
-│   │   └── SRD-001.md
-│   ├── swd/                    # Software Requirements
-│   │   └── SWD-001.md
-│   ├── lltc/                   # Test Cases
-│   │   └── LLTC-001.md
-│   └── templates/              # Templates
-│       ├── URD-template.yml
-│       ├── SRD-template.yml
-│       ├── SWD-template.yml
-│       └── LLTC-template.yml
-│
-├── artifacts/
-│   ├── trudag-lint.json        # Validation output
-│   ├── trudag-lint.txt
-│   └── trustable-report/       # Generated reports
-│       ├── URD.md
-│       ├── SRD.md
-│       ├── SWD.md
-│       ├── LLTC.md
-│       └── trustable_report_for_Software.md
-│
-└── docs/
-    └── tsf/                    # TSF documentation
-```
+1. [Create a New Requirement](#workflow-1-create-a-new-requirement)
+2. [Link Requirements (Traceability)](#workflow-2-link-requirements)
+3. [Review & Approve Requirements](#workflow-3-review--approve)
+4. [Generate Traceability Report](#workflow-4-generate-traceability-report)
+5. [Create a Baseline](#workflow-5-create-a-baseline)
+6. [Fix Validation Errors](#workflow-6-fix-validation-errors)
 
 ---
 
-## ✅ Correct Workflow
+## Workflow 1: Create a New Requirement
 
-### Workflow 1: Initialize Project (One Time)
+**Time:** 10-15 minutes
+**Evidence Produced:** Markdown file, updated `.dotstop.dot`, validation logs
+
+### When to Use
+- Starting a new feature
+- Decomposing parent requirements
+- Adding test cases
+
+### Steps
+
+#### Step 1: Create Requirement with trudag
 
 ```bash
-# Initialize trudag in your repo
-cd Team04_DrivaPi
-trudag --init -n "DrivaPi Requirements"
-
-# This creates the necessary structure
-```
-
----
-
-### Workflow 2: Create a New Requirement
-
-#### Step 1: Create the requirement file
-
-```bash
-# Create URD requirement
-trudag manage create-item URD 001 reqs/urd
-
-# Create SRD requirement
-trudag manage create-item SRD 001 reqs/srd
-
-# Create SWD requirement
-trudag manage create-item SWD 001 reqs/swd
-
-# Create LLTC test case
-trudag manage create-item LLTC 001 reqs/lltc
-```
-
-**This creates:** `reqs/urd/URD-001.md` (and similar for others)
-
-#### Step 2: Edit the requirement file
-
-**File format:** Markdown with YAML frontmatter
-
-```bash
-# Edit with your favorite editor
-nano reqs/urd/URD-001.md
-# or
-code reqs/urd/URD-001.md
-```
-
-**Correct file structure:**
-
-```markdown
----
-ref: URD-001
-header: "Display vehicle speed"
-text: |
-  The user SHALL be able to view current vehicle speed on the dashboard
-
-ASIL: B
-Verification Method: User Acceptance Test
-
-links: []
-
-reviewers:
-  - name: "Your Name"
-    email: "you@example.com"
-
-reviewed: ''
-
-active: true
-derived: false
-normative: true
-level: 1.0
----
-
-# URD-001: Display vehicle speed
-
-## Description
-
-The user needs to see the current vehicle speed while driving.
-
-## Rationale
-
-Speed awareness is critical for safe driving and legal compliance.
-
-## Acceptance Criteria
-
-- GIVEN: vehicle is moving
-- WHEN: user views dashboard
-- THEN: current speed SHALL be displayed in km/h ±1 km/h
-
-## Assumptions
-
-- Dashboard display is functional
-- Speed sensor provides accurate data
-```
-
----
-
-### Workflow 3: Create Links (Traceability)
-
-```bash
-# Link SWD-001 to its parent SRD-001
-trudag manage create-link SWD-001 SRD-001
-
-# Link LLTC-001 to its parent SWD-001
-trudag manage create-link LLTC-001 SWD-001
-
-# Link SRD-001 to its parent URD-001
-trudag manage create-link SRD-001 URD-001
-```
-
-**What this does:**
-- Updates the `links:` field in the YAML frontmatter
-- Creates the DAG structure
-- Enables traceability
-
-**Example result in SWD-001.md:**
-
-```markdown
----
-ref: SWD-001
-header: "Qt speed widget implementation"
-text: |
-  The software SHALL implement a Qt widget...
-
-links:
-  - SRD-001    # ← Added by trudag manage create-link
-
-# ... rest of fields
----
-```
-
----
-
-### Workflow 4: Validate Requirements
-
-```bash
-# Validate all requirements (most important command!)
-trudag manage lint
-
-# Check for errors
-# Expected output: No errors, or list of issues to fix
-```
-
-**Common errors:**
-- Missing `ref:` field
-- `ref:` doesn't match filename
-- Invalid YAML syntax
-- Broken links (parent doesn't exist)
-
-**Fix and re-run** until `trudag manage lint` passes cleanly.
-
----
-
-### Workflow 5: Mark as Reviewed (Approve)
-
-```bash
-# After review, mark items as reviewed
-trudag manage set-item URD-001
-trudag manage set-item SRD-001
-trudag manage set-item SWD-001
-trudag manage set-item LLTC-001
-```
-
-**What this does:**
-- Updates `reviewed:` field with git commit SHA
-- Marks the requirement as approved
-- Records who approved and when
-
-**Result in file:**
-
-```markdown
----
-ref: URD-001
-# ... other fields ...
-reviewed: 'abc123def456...'  # ← Git SHA added
----
-```
-
----
-
-### Workflow 6: Generate Reports
-
-```bash
-# Score the requirements (calculate confidence)
-trudag score
-
-# Publish HTML reports
-trudag publish --output-dir artifacts/trustable-report
-
-# Or just validate
-trudag manage lint
-```
-
-**Generated files:**
-```
-artifacts/trustable-report/
-├── URD.md                           # All URD requirements
-├── SRD.md                           # All SRD requirements
-├── SWD.md                           # All SWD requirements
-├── LLTC.md                          # All test cases
-├── dashboard.md                     # Summary dashboard
-├── trustable_report_for_Software.md # Full report
-└── figs/                            # Graphs and charts
-    ├── all_hist.svg
-    ├── evidence_hist.svg
-    └── expectations_hist.svg
-```
-
----
-
-## 🔄 Complete Example: Battery Voltage Feature
-
-### Step 1: Create all requirement files
-
-```bash
-# Create URD
-trudag manage create-item URD 002 reqs/urd
-
-# Create SRD
-trudag manage create-item SRD 002 reqs/srd
-
-# Create SWD
-trudag manage create-item SWD 002 reqs/swd
-
-# Create LLTC
-trudag manage create-item LLTC 002 reqs/lltc
-```
-
-### Step 2: Edit URD-002.md
-
-```bash
-nano reqs/urd/URD-002.md
-```
-
-```markdown
----
-ref: URD-002
-header: "Display battery voltage"
-text: |
-  The user SHALL be able to view current battery voltage on the main dashboard
-  to monitor battery health
-
-ASIL: A
-Verification Method: User Acceptance Test
-
-links: []
-
-reviewers:
-  - name: "Your Name"
-    email: "you@example.com"
-
-reviewed: ''
-
-active: true
-derived: false
-normative: true
-level: 1.0
----
-
-# URD-002: Display Battery Voltage
-
-## Description
-
-Users need to monitor battery voltage to ensure sufficient power and prevent
-unexpected shutdowns.
-
-## Acceptance Criteria
-
-- GIVEN: battery connected and system powered
-- WHEN: user views main dashboard
-- THEN: battery voltage SHALL be visible with unit (V)
-
-## Assumptions
-
-- Battery voltage sensor is available
-- Display has sufficient resolution
-```
-
-### Step 3: Edit SRD-002.md
-
-```bash
-nano reqs/srd/SRD-002.md
-```
-
-```markdown
----
-ref: SRD-002
-header: "HMI battery voltage display"
-text: |
-  The system SHALL display battery voltage on HMI with accuracy ±0.1V,
-  sampled at 1 Hz
-
-ASIL: A
-Verification Method: System Test
-
-links: []  # Will be updated by trudag manage create-link
-
-reviewers:
-  - name: "Your Name"
-    email: "you@example.com"
-
-reviewed: ''
-
-active: true
-derived: false
-normative: true
-level: 1.0
----
-
-# SRD-002: HMI Battery Voltage Display
-
-## Description
-
-System-level requirement for displaying battery voltage on the HMI.
-
-## Acceptance Criteria
-
-- GIVEN: battery voltage is 12.0V
-- WHEN: system reads voltage
-- THEN: display SHALL show 12.0V ±0.1V within 1 second
-```
-
-### Step 4: Edit SWD-002.md
-
-```bash
-nano reqs/swd/SWD-002.md
-```
-
-```markdown
----
-ref: SWD-002
-header: "Battery voltage ADC reader"
-text: |
-  The software SHALL read battery voltage via ADC channel 0 with 12-bit
-  resolution at 1 Hz and update Qt BatteryWidget
-
-ASIL: A
-Verification Method: Unit Test
-
-links: []  # Will be updated
-
-reviewers:
-  - name: "Your Name"
-    email: "you@example.com"
-
-reviewed: ''
-
-active: true
-derived: false
-normative: true
-level: 1.0
----
-
-# SWD-002: Battery Voltage ADC Reader
-
-## Implementation
-
-Software reads ADC channel 0, converts to voltage, updates widget.
-
-## Acceptance Criteria
-
-- GIVEN: ADC configured for channel 0
-- WHEN: readVoltage() called
-- THEN: SHALL return voltage as float within 100ms
-```
-
-### Step 5: Edit LLTC-002.md
-
-```bash
-nano reqs/lltc/LLTC-002.md
-```
-
-```markdown
----
-ref: LLTC-002
-header: "Test battery voltage reader"
-text: |
-  Test SHALL verify battery voltage reader accuracy and timing
-
-ASIL: A
-Verification Method: Unit Test
-
-links: []  # Will be updated
-
-reviewers:
-  - name: "Your Name"
-    email: "you@example.com"
-
-reviewed: ''
-
-active: true
-derived: false
-normative: true
-level: 1.0
----
-
-# LLTC-002: Test Battery Voltage Reader
-
-## Test Procedure
-
-1. Mock ADC with known voltage (12.0V)
-2. Call readVoltage()
-3. Verify returns 12.0V ±0.1V
-4. Verify completes in <100ms
-
-## Test Implementation
-
-```cpp
-TEST(BatteryReader, ReadAccuracy) {
-    MockADC adc;
-    adc.setVoltage(12.0);
-
-    BatteryReader reader(&adc);
-    float voltage = reader.readVoltage();
-
-    EXPECT_NEAR(voltage, 12.0, 0.1);
-}
-```
-
-## Evidence
-
-- Test code: `tests/unit/test_battery_reader.cpp`
-- Test results: `artifacts/verification/tests/LLTC-002-junit.xml`
-```
-
-### Step 6: Create all links
-
-```bash
-# Build the traceability chain
-trudag manage create-link SRD-002 URD-002
-trudag manage create-link SWD-002 SRD-002
-trudag manage create-link LLTC-002 SWD-002
-```
-
-**Result:** Creates full V-Model chain:
-```
-URD-002 (Expectation)
-   ↓
-SRD-002 (Assertion)
-   ↓
-SWD-002 (Assertion)
-   ↓
-LLTC-002 (Premise/Evidence)
-```
-
-### Step 7: Validate
-
-```bash
-# Must pass before committing!
-trudag manage lint
-```
-
-**Expected output:**
-```
-Validating requirements...
-✓ URD-002: OK
-✓ SRD-002: OK (links to URD-002)
-✓ SWD-002: OK (links to SRD-002)
-✓ LLTC-002: OK (links to SWD-002)
-
-All validations passed!
-```
-
-### Step 8: Mark as reviewed
-
-```bash
-# After team review
-trudag manage set-item URD-002
-trudag manage set-item SRD-002
-trudag manage set-item SWD-002
-trudag manage set-item LLTC-002
-```
-
-### Step 9: Generate report
-
-```bash
-# Score requirements
-trudag score
-
-# Generate HTML report
-trudag publish --output-dir artifacts/trustable-report
-
-# View report
-open artifacts/trustable-report/dashboard.md
-```
-
-### Step 10: Commit
-
-```bash
-git add reqs/
-git commit -m "feat: Add URD/SRD/SWD/LLTC-002 battery voltage display
-
-Complete V-Model chain:
-- URD-002: User needs to see battery voltage
-- SRD-002: System displays voltage ±0.1V at 1Hz
-- SWD-002: Software reads ADC channel 0
-- LLTC-002: Test verifies accuracy and timing
-
-Traceability: 100%
-Validation: trudag manage lint passed
-Reviewed: All requirements approved"
-
-git push
-```
-
----
-
-## 🛠️ Essential Commands Summary
-
-```bash
-# === INITIALIZATION (once) ===
-trudag --init -n "Project Name"
-
-# === DAILY WORKFLOW ===
-
-# 1. Create requirements
-trudag manage create-item URD 001 reqs/urd
-trudag manage create-item SRD 001 reqs/srd
-trudag manage create-item SWD 001 reqs/swd
-trudag manage create-item LLTC 001 reqs/lltc
-
-# 2. Edit files (use any editor)
-nano reqs/urd/URD-001.md
-code reqs/srd/SRD-001.md
-
-# 3. Create links
-trudag manage create-link SWD-001 SRD-001
-trudag manage create-link LLTC-001 SWD-001
-trudag manage create-link SRD-001 URD-001
-
-# 4. Validate (DO THIS OFTEN!)
-trudag manage lint
-
-# 5. Mark reviewed (after approval)
-trudag manage set-item URD-001
-trudag manage set-item SRD-001
-trudag manage set-item SWD-001
-trudag manage set-item LLTC-001
-
-# 6. Generate reports
-trudag score
-trudag publish --output-dir artifacts/trustable-report
-
-# 7. Commit
-git add reqs/
-git commit -m "feat: Add requirements..."
-git push
-```
-
----
-
-## ❌ Common Mistakes to Avoid
-
-### 1. Don't mix doorstop commands
-
-```bash
-# ❌ WRONG - Don't use these!
-doorstop add URD
-doorstop edit URD-001
-doorstop link SWD-001 SRD-001
-
-# ✅ CORRECT - Use trudag
-trudag manage create-item URD 001 reqs/urd
-# Edit manually: nano reqs/urd/URD-001.md
-trudag manage create-link SWD-001 SRD-001
-```
-
-### 2. Don't forget to validate
-
-```bash
-# Always run before committing
-trudag manage lint
-```
-
-### 3. Don't skip the frontmatter
-
-Every `.md` file MUST have YAML frontmatter:
-
-```markdown
----
-ref: URD-001
-header: "Title"
-text: |
-  Description...
-# ... other mandatory fields
----
-
-# Rest of markdown content
-```
-
-### 4. Don't manually edit links
-
-```bash
-# ❌ WRONG - Don't edit links: [] manually
-# ✅ CORRECT - Use trudag command
-trudag manage create-link CHILD PARENT
-```
-
----
-
-## 🆘 Troubleshooting
-
-### Issue: "trudag: command not found"
-
-```bash
-# Activate venv
+# Activate environment
 source .venv/bin/activate
 
-# Verify installation
-trudag --version
+# Create new requirement
+# Format: trudag manage create-item <TYPE> <NUMBER> <DIRECTORY>
+trudag manage create-item SWD 042 reqs/swd
+
+# This creates:
+# - reqs/swd/SWD-042.md (markdown file)
+# - Updates .dotstop.dot (graph structure)
 ```
 
-### Issue: "Invalid YAML frontmatter"
+#### Step 2: Edit the Requirement File
+
+```bash
+# Open in your editor
+nano reqs/swd/SWD-042.md
+# or
+code reqs/swd/SWD-042.md
+```
+
+**Required structure:**
+
+```markdown
+---
+normative: true
+level: 3.0
+ASIL: B
+verification_method: "Unit Test"
+reviewers:
+  - name: "Your Name"
+    email: "you@example.com"
+reviewed: ''  # Leave empty until approved
+active: true
+derived: false
+---
+The software SHALL convert raw CAN speed data (0.1 km/h units) to
+integer km/h and update the display module within 50ms of receipt.
+```
+
+**💡 Tips:**
+- Use templates from `reqs/templates/` as reference
+- Be specific and testable ("SHALL do X within Y ms")
+- Include units, timing constraints, ranges
+- One requirement = one testable thing
+
+#### Step 3: Validate
+
+```bash
+# Check syntax and structure
+trudag manage lint
+
+# Expected output:
+✓ All requirements validated
+✓ No syntax errors
+
+# If errors appear, read carefully and fix
+```
+
+#### Step 4: Commit & Push
+
+```bash
+# Stage files
+git add reqs/swd/SWD-042.md .dotstop.dot
+
+# Commit with conventional commit message
+git commit -m "feat(swd): Add SWD-042 temperature monitoring"
+
+# Push to branch
+git push origin feature/swd-042
+```
+
+#### Step 5: Create Pull Request
+
+1. Go to GitHub
+2. Create PR from your branch
+3. Add description
+4. Request 2 reviewers (ASIL B requirement)
+
+### Evidence Checklist
+
+- [x] Markdown file created in `reqs/<type>/`
+- [x] `.dotstop.dot` updated
+- [x] `trudag manage lint` passes
+- [x] Git commit created
+- [x] PR created with reviewers
+
+---
+
+## Workflow 2: Link Requirements
+
+**Time:** 5 minutes
+**Evidence Produced:** Updated `.dotstop.dot`, validation logs
+
+### When to Use
+- Connecting child requirement to parent
+- Completing V-Model traceability chain
+- Adding test cases for software requirements
+
+### Understanding Links
+
+**Rule:** Child links TO parent (upward in V-Model)
+
+```
+URD-001 (User need)
+   ↑ links to
+SRD-001 (System req)
+   ↑ links to
+SWD-042 (Software design)
+   ↑ links to
+LLTC-042 (Test case)
+```
+
+### Steps
+
+```bash
+# Create link: child → parent
+# Format: trudag manage create-link <CHILD-ID> <PARENT-ID>
+
+trudag manage create-link SWD-042 SRD-015
+
+# This updates .dotstop.dot automatically
+```
+
+**What happens:**
+- `.dotstop.dot` updated with new edge
+- Traceability chain established
+- No manual YAML editing needed!
+
+### Validate Links
+
+```bash
+# Check all links are valid
+trudag manage lint
+
+# Expected:
+✓ No broken links
+✓ All parents exist
+```
+
+### Multiple Parents
+
+```bash
+# A requirement can link to multiple parents
+trudag manage create-link SWD-042 SRD-015
+trudag manage create-link SWD-042 SRD-016
+
+# Both links are tracked in .dotstop.dot
+```
+
+### Verify Traceability
+
+```bash
+# Generate report to visualize links
+trudag publish --output-dir artifacts/trustable-report
+
+# Open artifacts/trustable-report/dashboard.md
+# Check that your requirement appears with correct links
+```
+
+### Evidence Checklist
+
+- [x] `.dotstop.dot` updated with new edge
+- [x] `trudag manage lint` shows no broken links
+- [x] Parent requirement exists
+- [x] Traceability visible in published report
+
+---
+
+## Workflow 3: Review & Approve
+
+**Time:** 15-20 minutes
+**Evidence Produced:** Reviewed requirement with git SHA
+
+### When to Use
+- PR review completed
+- All feedback addressed
+- Ready to mark requirement as trustworthy
+
+### Prerequisites
+- [ ] All PR comments resolved
+- [ ] CI checks passing
+- [ ] 2+ reviewers approved (ASIL B+)
+
+### Steps (Reviewer)
+
+#### Step 1: Pull Latest Changes
+
+```bash
+git checkout feature/swd-042
+git pull origin feature/swd-042
+```
+
+#### Step 2: Validate Locally
+
+```bash
+# Activate environment
+source .venv/bin/activate
+
+# Run validation
+trudag manage lint
+
+# Should pass with no errors
+```
+
+#### Step 3: Review Content
 
 **Check:**
-- Starts with `---`
-- Ends with `---`
-- Valid YAML syntax
-- All mandatory fields present
+- ✅ Requirement is clear and testable
+- ✅ ASIL level appropriate
+- ✅ Links to correct parent(s)
+- ✅ No ambiguous language
+- ✅ Includes units/constraints where needed
 
-### Issue: "Reference URD-001 not found"
+#### Step 4: Mark as Reviewed
 
-**Problem:** Parent doesn't exist
+```bash
+# Mark requirement as reviewed
+# This updates the 'reviewed:' field with git commit SHA
+trudag manage set-item SWD-042
+
+# Check the file was updated
+cat reqs/swd/SWD-042.md | grep reviewed
+# Should show: reviewed: '2025-10-21 — Reviewed and approved...'
+```
+
+#### Step 5: Commit Approval
+
+```bash
+# Stage changes
+git add reqs/swd/SWD-042.md
+
+# Commit with review message
+git commit -m "review: Approve SWD-042 temperature monitoring"
+
+# Push
+git push origin feature/swd-042
+```
+
+#### Step 6: Merge PR
+
+1. Approve PR on GitHub
+2. Merge to main branch
+3. Delete feature branch
+
+### Evidence Trail
+
+**What's recorded:**
+1. `reviewed:` field contains approval date + reviewer
+2. Git commit shows who approved and when
+3. PR shows approval discussion
+4. Git SHA provides immutable audit trail
+
+### Evidence Checklist
+
+- [x] `reviewed:` field populated
+- [x] Git commit with approval message
+- [x] PR merged to main
+- [x] Reviewer identity recorded
+
+---
+
+## Workflow 4: Generate Traceability Report
+
+**Time:** 5 minutes
+**Evidence Produced:** HTML/Markdown report, scores
+
+### When to Use
+- Sprint review
+- Audit preparation
+- Progress tracking
+- Identifying coverage gaps
+
+### Steps
+
+#### Step 1: Calculate Scores
+
+```bash
+# Calculate trust scores for all requirements
+trudag score
+
+# Output shows:
+# - Total statements
+# - Reviewed vs unreviewed
+# - Evidence attached
+# - Overall trustability score
+```
+
+#### Step 2: Generate Report
+
+```bash
+# Create full Trustable report
+trudag publish --output-dir artifacts/trustable-report
+
+# Optional: Run with validators (if configured)
+trudag publish --validate --output-dir artifacts/trustable-report
+```
+
+#### Step 3: Review Outputs
+
+```bash
+# Check generated files
+ls artifacts/trustable-report/
+
+# Key files:
+# - dashboard.md              (summary metrics)
+# - trustable_report_for_Software.md  (compliance report)
+# - URD.md, SRD.md, SWD.md, LLTC.md  (requirements by type)
+# - figs/                     (charts and graphs)
+```
+
+#### Step 4: Open Dashboard
+
+```bash
+# View in browser or markdown viewer
+open artifacts/trustable-report/dashboard.md
+
+# Key metrics:
+# - Evidence score distribution
+# - Expectation scores
+# - Total statements reviewed
+# - Orphaned statements (warnings)
+```
+
+### Understanding the Report
+
+**dashboard.md contains:**
+- Number of statements by type
+- Reviewed vs unreviewed counts
+- Score distributions (histograms)
+- Orphaned items
+
+**trustable_report_for_Software.md contains:**
+- Compliance table by requirement level
+- Individual requirement scores
+- Review status
+- Baseline information (commit SHA, date)
+
+### Artifacts to Keep
+
+```bash
+# Save report for audit
+cp -r artifacts/trustable-report artifacts/trustable-report-$(date +%Y%m%d)
+
+# Commit to git
+git add artifacts/trustable-report/
+git commit -m "docs: Add trustable report for Sprint 1"
+```
+
+### Evidence Checklist
+
+- [x] `trudag score` runs successfully
+- [x] Report generated in `artifacts/trustable-report/`
+- [x] Dashboard shows expected metrics
+- [x] All requirements appear in report
+- [x] Report saved for audit trail
+
+---
+
+## Workflow 5: Create a Baseline
+
+**Time:** 10 minutes
+**Evidence Produced:** Git tag, archived report
+
+### When to Use
+- End of sprint
+- Before release
+- Major milestone
+- Audit requirement
+
+### What is a Baseline?
+
+**A baseline is:**
+- A snapshot of requirements at a specific point in time
+- Immutable (git tag)
+- Includes all artifacts (code, tests, docs, reports)
+- Verifiable (git SHA)
+
+### Steps
+
+#### Step 1: Ensure Everything is Reviewed
+
+```bash
+# Check for unreviewed items
+trudag score | grep unreviewed
+
+# If any found, review them first (Workflow 3)
+```
+
+#### Step 2: Generate Final Report
+
+```bash
+# Create clean report
+trudag publish --output-dir artifacts/trustable-report
+
+# Verify report looks correct
+ls artifacts/trustable-report/
+```
+
+#### Step 3: Create Git Tag
+
+```bash
+# Tag format: BASELINE-<VERSION>
+git tag -a BASELINE-V1.0 -m "Sprint 1 baseline - Speed display feature"
+
+# Verify tag
+git tag -l "BASELINE-*"
+```
+
+#### Step 4: Archive Report
+
+```bash
+# Create timestamped archive
+mkdir -p artifacts/baselines
+cp -r artifacts/trustable-report artifacts/baselines/v1.0-$(date +%Y%m%d)
+
+# Create tarball
+tar -czf artifacts/baselines/BASELINE-V1.0.tar.gz artifacts/trustable-report/
+
+# Add to git
+git add artifacts/baselines/BASELINE-V1.0.tar.gz
+git commit -m "baseline: Create V1.0 baseline archive"
+```
+
+#### Step 5: Push Tag
+
+```bash
+# Push commits
+git push origin main
+
+# Push tag
+git push origin BASELINE-V1.0
+```
+
+### Baseline Verification
+
+**Anyone can verify the baseline:**
+
+```bash
+# Checkout specific baseline
+git checkout BASELINE-V1.0
+
+# Regenerate report
+trudag publish --output-dir /tmp/verify-report
+
+# Compare with archived report
+diff -r /tmp/verify-report artifacts/baselines/v1.0-*/
+
+# Should be identical (or minor timestamp differences)
+```
+
+### Evidence Checklist
+
+- [x] All requirements reviewed
+- [x] `trudag score` shows high trustability
+- [x] Git tag created
+- [x] Report archived in `artifacts/baselines/`
+- [x] Tag pushed to remote
+- [x] Baseline is reproducible
+
+---
+
+## Workflow 6: Fix Validation Errors
+
+**Time:** 5-30 minutes (depends on error)
+**Evidence Produced:** Fixed requirements, clean lint output
+
+### Common Errors & Solutions
+
+#### Error: "Markdown frontmatter syntax error"
+
+**Example:**
+```
+Error parsing URD-001.md: YAML syntax error
+```
 
 **Solution:**
 ```bash
-# Create parent first
-trudag manage create-item URD 001 reqs/urd
+# Check YAML syntax
+cat reqs/urd/URD-001.md | head -20
 
-# Then create link
-trudag manage create-link SRD-001 URD-001
-```
+# Common issues:
+# - Missing closing '---'
+# - Unquoted strings with special chars
+# - Incorrect indentation
 
-### Issue: "reviewed field invalid"
-
-```yaml
-# ❌ WRONG
-reviewed: 'approved'
-reviewed: 'yes'
-
-# ✅ CORRECT
-reviewed: ''                    # Not reviewed yet
-reviewed: 'abc123def456...'     # Git SHA (set by trudag manage set-item)
-```
-
+# Fix example:
 ---
-
-## 📊 File Format Reference
-
-### Mandatory YAML Frontmatter Fields
-
-```yaml
----
-ref: <ID>                        # Must match filename
-header: "<Title>"
-text: |
-  <Description with SHALL>
-
-ASIL: <A|B|C|D|QM>
-Verification Method: <Method>
-
-links: []                        # Or list of parents
-
-reviewers:
-  - name: "<Name>"
-    email: "<email>"
-
-reviewed: ''                     # Empty until approved
-
-active: true
-derived: false
 normative: true
 level: 1.0
+reviewers:
+  - name: "Alice"  # Must quote if contains special chars
+    email: "alice@example.com"
 ---
 ```
 
-### Optional Markdown Content
+#### Error: "Missing required field: normative"
 
-After the frontmatter, add:
-- Detailed description
-- Rationale
-- Acceptance criteria
-- Assumptions
-- Implementation notes
-- Test procedures
+**Solution:**
+```bash
+# Add missing field to frontmatter
+nano reqs/swd/SWD-042.md
+
+# Ensure these fields exist:
+---
+normative: true    # Required
+level: 3.0         # Required
+---
+```
+
+#### Error: "Requirement not found in .dotstop.dot"
+
+**Solution:**
+```bash
+# Re-create the requirement using trudag
+trudag manage create-item SWD 042 reqs/swd
+
+# This will update .dotstop.dot correctly
+```
+
+#### Error: "Broken link: parent X not found"
+
+**Solution:**
+```bash
+# Check parent exists
+ls reqs/srd/SRD-015.md
+
+# If parent missing, create it first
+trudag manage create-item SRD 015 reqs/srd
+
+# Then re-link
+trudag manage create-link SWD-042 SRD-015
+```
+
+#### Error: "Unreviewed items"
+
+**This is a warning, not an error.**
+
+**Solution:**
+```bash
+# Review items (Workflow 3)
+trudag manage set-item SWD-042
+
+# Or mark multiple at once
+for id in URD-001 SRD-001 SWD-001 LLTC-001; do
+  trudag manage set-item $id
+done
+```
+
+### General Debug Process
+
+```bash
+# 1. Read error message carefully
+trudag manage lint
+
+# 2. Check file syntax
+cat reqs/<type>/<ID>.md
+
+# 3. Validate frontmatter YAML
+python3 -c "import yaml; print(yaml.safe_load(open('reqs/swd/SWD-042.md').read().split('---')[1]))"
+
+# 4. Check .dotstop.dot
+cat .dotstop.dot | grep SWD-042
+
+# 5. Re-run validation
+trudag manage lint
+```
+
+### Evidence Checklist
+
+- [x] Error message read and understood
+- [x] Root cause identified
+- [x] Fix applied
+- [x] `trudag manage lint` passes
+- [x] Changes committed
 
 ---
 
-## ✅ Success Checklist
+## 🎯 Quick Command Reference
 
-Before committing:
+```bash
+# Create requirement
+trudag manage create-item <TYPE> <NUM> reqs/<type>
 
-- [ ] All files created with `trudag manage create-item`
-- [ ] All files edited with proper YAML frontmatter
-- [ ] All links created with `trudag manage create-link`
-- [ ] `trudag manage lint` passes without errors
-- [ ] Requirements reviewed and marked with `trudag manage set-item`
-- [ ] Reports generated with `trudag publish`
+# Link child → parent
+trudag manage create-link <CHILD-ID> <PARENT-ID>
+
+# Mark as reviewed
+trudag manage set-item <ID>
+
+# Validate
+trudag manage lint
+
+# Calculate scores
+trudag score
+
+# Generate report
+trudag publish --output-dir artifacts/trustable-report
+
+# Create baseline
+git tag -a BASELINE-V1.0 -m "Description"
+```
 
 ---
 
-**Last Updated:** October 2025
-**Version:** 3.0 (trudag native workflow)
-**Format:** Markdown + YAML frontmatter
-
----
-
-**Next:** See `docs/tsf/reference.md` for quick command reference
+**Need help?** Check `docs/tsf/reference.md` for detailed command syntax.
