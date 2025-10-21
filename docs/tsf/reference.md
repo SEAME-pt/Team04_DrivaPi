@@ -1,6 +1,6 @@
 # TSF Quick Reference Card
 
-**Version:** 3.0
+**Version:** 4.0 (trudag-only)
 **Last Updated:** October 2025
 
 ---
@@ -9,92 +9,127 @@
 
 **Trust = Evidence**
 
-Every claim must be backed by verifiable artifacts.
+Every claim must be backed by verifiable artifacts stored in git.
 
 ---
 
 ## 📊 V-Model Structure
 
 ```
-URD (User)      ← WHAT users need
-  ↓ links
-SRD (System)    ← HOW system provides
-  ↓ links
-SWD (Software)  ← HOW software implements
-  ↓ links
-LLTC (Tests)    ← HOW to verify
+URD (User)      ← WHAT users need (Expectations)
+  ↑ links
+SRD (System)    ← HOW system provides (Assertions)
+  ↑ links
+SWD (Software)  ← HOW software implements (Assertions)
+  ↑ links
+LLTC (Tests)    ← HOW to verify (Premises)
 ```
 
-**Rule:** Child always links to parent via `links:` field
+**Rule:** Child always links UP to parent via `trudag manage create-link`
 
 ---
 
 ## 🛠️ Essential Commands
 
-### Daily Validation
+### Setup & Initialization
+
 ```bash
-# Activate environment
+# Activate environment (ALWAYS FIRST)
 source .venv/bin/activate
 
-# Validate requirements
+# Initialize new TSF project (only once)
+trudag --init
+
+# Install/update trudag
+cd /tmp/trustable
+git checkout 2025.9.16
+pip install .
+```
+
+### Daily Validation
+
+```bash
+# Validate all requirements
 trudag manage lint
 
-# Check links
-doorstop
+# Calculate trust scores
+trudag score
 
-# Update structure
-trudag manage migrate
+# Both should run clean before commits!
 ```
 
 ### Create Requirements
-```bash
-# Interactive (RECOMMENDED)
-doorstop add URD
-doorstop edit URD-042
 
-# Manual
-cp reqs/templates/URD-template.yml reqs/urd/URD-042.yml
-nano reqs/urd/URD-042.yml
+```bash
+# Create new requirement
+trudag manage create-item <TYPE> <NUMBER> reqs/<type>
+
+# Examples:
+trudag manage create-item URD 042 reqs/urd   # Creates reqs/urd/URD-042.md
+trudag manage create-item SRD 015 reqs/srd   # Creates reqs/srd/SRD-015.md
+trudag manage create-item SWD 123 reqs/swd   # Creates reqs/swd/SWD-123.md
+trudag manage create-item LLTC 001 reqs/lltc # Creates reqs/lltc/LLTC-001.md
+
+# This command:
+# - Creates markdown file with frontmatter
+# - Updates .dotstop.dot
+# - Uses next available number if exists
 ```
 
-### Link Requirements
+### Link Requirements (Traceability)
+
 ```bash
 # Link child → parent
-doorstop link SWD-042 SRD-015
+trudag manage create-link <CHILD-ID> <PARENT-ID>
 
-# Verify link
-doorstop
+# Examples:
+trudag manage create-link SRD-015 URD-042   # SRD implements URD
+trudag manage create-link SWD-123 SRD-015   # SWD implements SRD
+trudag manage create-link LLTC-001 SWD-123  # Test verifies SWD
+
+# Always flows UPWARD in V-Model
 ```
 
 ### Review & Approve
+
 ```bash
-# Validate first
-trudag manage lint
+# Mark requirement as reviewed
+trudag manage set-item <ID>
 
-# Mark as reviewed (updates 'reviewed:' field)
-trudag manage set-item reqs/swd/SWD-042.yml
+# Examples:
+trudag manage set-item URD-042
+trudag manage set-item SRD-015
 
-# Commit approval
-git add reqs/swd/SWD-042.yml
-git commit -m "review: Approve SWD-042"
+# This updates 'reviewed:' field with:
+# - Current date
+# - Reviewer name (from git config)
+# - Git commit SHA (immutable proof)
 ```
 
 ### Generate Reports
-```bash
-# Traceability matrix
-trudag report export --output artifacts/trace-$(date +%Y%m%d).zip
 
-# HTML report
-doorstop publish all docs/report/
+```bash
+# Calculate scores
+trudag score
+
+# Generate HTML/Markdown report
+trudag publish --output-dir artifacts/trustable-report
+
+# With validation (if custom validators configured)
+trudag publish --validate --output-dir artifacts/trustable-report
+
+# View report
+open artifacts/trustable-report/dashboard.md
 ```
 
 ### Baselines
+
 ```bash
 # Create baseline tag
 git tag -a BASELINE-V1.0 -m "Sprint 1 baseline"
 
-# Export Trustable report
-trudag report export --output artifacts/baselines/v1.0.zip
+# Archive report
+tar -czf artifacts/baselines/v1.0.tar.gz artifacts/trustable-report/
 
 # Push tag
 git push origin BASELINE-V1.0
@@ -102,67 +137,79 @@ git push origin BASELINE-V1.0
 
 ---
 
-## 📝 YAML Template
+## 📝 Markdown File Format
 
 ### Minimal Required Structure
 
-```yaml
-ID-042:                         # Top-level ID
-  ref: ID-042                   # MUST match filename & top-level
-  header: "Short title"         # One-line description
-  text: |                       # Requirement text
-    The system SHALL do X.
-
-  ASIL: B                       # A/B/C/D/QM
-  Verification Method: Unit Test
-
-  links: [PARENT-ID]            # Traceability ([] if URD)
-
-  reviewers:                    # At least 1 required
-    - name: "Full Name"
-      email: "user@example.com"
-
-  reviewed: ''                  # Empty until approved
-
-  active: true                  # Standard fields
-  derived: false
-  normative: true
-  level: 1.0
+```markdown
+---
+normative: true
+level: 1.0
+ASIL: B
+verification_method: "Unit Test"
+reviewers:
+  - name: "Your Name"
+    email: "you@example.com"
+reviewed: ''  # Empty until approved
+active: true
+derived: false
+---
+The system SHALL do something specific and testable with clear
+acceptance criteria and measurable outcomes.
 ```
+
+### Field Reference
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `normative` | bool | ✅ Yes | True for requirements, false for notes |
+| `level` | float | ✅ Yes | V-Model level (1.0=URD, 2.0=SRD, 3.0=SWD, 4.0=LLTC) |
+| `ASIL` | string | ✅ Yes | A/B/C/D/QM (safety level) |
+| `verification_method` | string | ✅ Yes | How to verify (e.g., "Unit Test") |
+| `reviewers` | list | ✅ Yes | At least one reviewer |
+| `reviewed` | string | ✅ Yes | Empty '' until approved |
+| `active` | bool | ✅ Yes | True unless deprecated |
+| `derived` | bool | ✅ Yes | False unless derived from external source |
 
 ### Optional (Recommended) Fields
 
-```yaml
-  # Acceptance criteria (HIGHLY RECOMMENDED)
-  acceptance:
-    - GIVEN: initial condition
-      WHEN: trigger occurs
-      THEN: expected result
+```markdown
+---
+# ... required fields ...
 
-  # Rationale
-  rationale: "Why this requirement exists"
+# Acceptance criteria (HIGHLY RECOMMENDED)
+acceptance:
+  - GIVEN: initial condition
+    WHEN: trigger occurs
+    THEN: expected result
 
-  # Assumptions
-  assumptions:
-    - "Hardware capability X"
-    - "Operating environment Y"
+# Rationale
+rationale: "Why this requirement exists"
 
-  # Evidence links
-  artifact:
-    - type: test
-      path: tests/test_feature.cpp
-    - type: design
-      path: docs/design.md
+# Assumptions
+assumptions:
+  - "Hardware capability X"
+  - "Operating environment Y"
+
+# Evidence links
+artifact:
+  - type: test
+    path: tests/test_feature.cpp
+    description: Unit test implementation
+  - type: design
+    path: docs/design/architecture.md
+    description: Architecture diagram
+---
 ```
 
 ---
 
 ## 🏷️ ASIL Quick Guide
 
-### ASIL Levels
+### ASIL Levels (ISO 26262)
 
-| ASIL | Risk | Examples | Verification |
-|------|------|----------|--------------|
+| ASIL | Risk | Examples | Verification Required |
+|------|------|----------|----------------------|
 | **QM** | None | Radio, themes | Basic review |
 | **A** | Low | Rear lights | + Unit tests |
 | **B** | Low-Med | Brake lights | + Integration tests + 2 reviewers |
@@ -175,18 +222,18 @@ ID-042:                         # Top-level ID
 
 **Example: Speed Display Failure**
 - Severity: S2 (minor injury possible)
-- Exposure: E4 (high)
+- Exposure: E4 (high frequency)
 - Controllability: C2 (normally controllable)
-- **Result: ASIL B**
+- **Result: ASIL B** ✅
 
 ### DrivaPi Typical Assignments
 
 ```
-Display features      → ASIL A
-Sensor processing     → ASIL B
-Motor control         → ASIL B
-Emergency stop        → ASIL C
-Configuration/logs    → QM
+Display UI features    → ASIL A (QM if non-critical)
+Sensor processing      → ASIL B
+Motor control          → ASIL B
+Emergency stop         → ASIL C
+Logs/configuration     → QM
 ```
 
 ---
@@ -196,301 +243,208 @@ Configuration/logs    → QM
 ### DO:
 - ✅ Use "SHALL" for mandatory requirements
 - ✅ Be specific (include units, timing, ranges)
-- ✅ Make testable (clear pass/fail)
+- ✅ Make testable (clear pass/fail criteria)
 - ✅ Link to parent requirement
 - ✅ Include acceptance criteria
-- ✅ Specify ASIL level
+- ✅ One requirement = one testable thing
 
 ### DON'T:
-- ❌ Use vague words ("quickly", "approximately", "fast")
+- ❌ Use "should", "may", "might" (ambiguous)
+- ❌ Use "etc.", "and/or" (incomplete)
 - ❌ Combine multiple requirements
-- ❌ Forget units (km/h, ms, °C, etc.)
-- ❌ Use "should" or "may" (use "SHALL")
-- ❌ Make untestable claims
-- ❌ Leave `reviewed:` field as 'approved' (use git SHA)
+- ❌ Use negative statements ("shall not fail")
+- ❌ Leave units unspecified ("fast", "soon")
+- ❌ Forget to link to parent
 
-### Examples
+### Good Example:
 
-#### ❌ BAD
-```yaml
-text: "System shows speed fast"
-```
-
-**Problems:**
-- No "SHALL"
-- "fast" is vague
-- No units
-- Not testable
-
-#### ✅ GOOD
-```yaml
-text: "The system SHALL display vehicle speed in km/h with accuracy ±1 km/h, updated every 100ms"
+```markdown
+---
+normative: true
+level: 3.0
+ASIL: B
+verification_method: "Unit Test"
+# ... other fields ...
+---
+The software SHALL convert raw CAN speed data (received in 0.1 km/h units)
+to integer km/h format and update the HMI display module within 50
+milliseconds of CAN message receipt.
 
 acceptance:
-  - GIVEN: vehicle speed is 50 km/h
-    WHEN: speed changes to 60 km/h
-    THEN: display SHALL show 60 ±1 km/h within 100ms
+  - GIVEN: CAN message with speed value 1234 (123.4 km/h)
+    WHEN: Message received by speed processing module
+    THEN: Display updated to show "123 km/h" within 50ms
 ```
 
-**Why it's good:**
-- Uses "SHALL"
-- Specific units (km/h, ms)
-- Testable accuracy (±1 km/h)
-- Clear timing (100ms)
-- Acceptance criteria
+### Bad Example:
+
+```markdown
+The system should display speed nicely and update it quickly.
+```
+
+**Why it's bad:**
+- "should" instead of "SHALL"
+- "nicely" is not measurable
+- "quickly" has no timing constraint
+- No acceptance criteria
+- Not testable
 
 ---
 
 ## 🔗 Traceability Rules
 
-### Forward Traceability
+### Valid Links
+
 ```
-URD-001 (User need)
-  ↓ links
-SRD-001 (System design)
-  ↓ links
-SWD-001 (Software implementation)
-  ↓ links
-LLTC-001 (Test case)
+✅ LLTC-001 links to SWD-042    (Test → Design)
+✅ SWD-042 links to SRD-015     (Design → System)
+✅ SRD-015 links to URD-001     (System → User)
 ```
 
-### Bidirectional (Automatic)
-```yaml
-# Child explicitly links parent
-SWD-001:
-  links: [SRD-001]
+### Invalid Links
 
-# Doorstop automatically maintains:
-# SRD-001 knows SWD-001 is a child
+```
+❌ URD-001 links to SRD-015     (Parent → Child = backwards!)
+❌ SWD-042 links to SWD-043     (Sibling = no V-Model flow)
+❌ LLTC-001 links to URD-001    (Skips levels = breaks chain)
 ```
 
-### Verification
+### Multiple Parents
 
-```bash
-# Generate matrix
-trudag report export --output artifacts/trace.zip
-
-# Check for gaps:
-# - Requirements with no children
-# - Requirements with no tests
-# - Broken links
+```
+✅ SWD-042 can link to SRD-015 AND SRD-016
+   (One design can satisfy multiple system requirements)
 ```
 
 ---
 
-## 🚨 Common Errors & Fixes
+## 🐛 Common Errors & Fixes
 
-### Error: "ref does not match filename"
-```
-reqs/swd/SWD-042.yml: ref is 'SWD-041'
-```
+### "YAML syntax error"
 
-**Fix:**
-```yaml
-# Change both places:
-SWD-042:           # Top-level ID
-  ref: SWD-042     # ref field
-```
-
-### Error: "Missing required field: reviewers"
-```yaml
-# Add:
-reviewers:
-  - name: "Your Name"
-    email: "you@example.com"
-```
-
-### Error: "Parent link not found: SRD-999"
 ```bash
-# Option 1: Create parent first
-doorstop add SRD
-doorstop edit SRD-999
+# Check frontmatter
+head -20 reqs/swd/SWD-042.md
 
-# Option 2: Remove invalid link
-# Change: links: [SRD-999]
-# To:     links: []
+# Ensure:
+# - Opening --- exists
+# - Closing --- exists
+# - Proper indentation (2 spaces)
+# - Quoted strings with special chars
 ```
 
-### Error: "reviewed field invalid"
-```yaml
-# WRONG:
-reviewed: 'approved'
-reviewed: 'yes'
+### "Missing required field"
 
-# CORRECT:
-reviewed: ''                    # Not reviewed yet
-reviewed: 'abc123def456...'     # Git SHA (40 chars)
+```bash
+# Add to frontmatter:
+---
+normative: true    # Required
+level: 3.0         # Required
+---
+```
+
+### "Requirement not in .dotstop.dot"
+
+```bash
+# Re-create using trudag
+trudag manage create-item SWD 042 reqs/swd
+```
+
+### "Broken link: parent not found"
+
+```bash
+# Create parent first
+trudag manage create-item SRD 015 reqs/srd
+
+# Then link
+trudag manage create-link SWD-042 SRD-015
 ```
 
 ---
 
-## 📂 File Locations
+## 📦 File Structure
 
-### Requirements
 ```
-reqs/
-├── urd/URD-*.yml       User Requirements
-├── srd/SRD-*.yml       System Requirements
-├── swd/SWD-*.yml       Software Requirements
-└── lltc/LLTC-*.yml     Test Cases
-```
-
-### Templates
-```
-reqs/templates/
-├── URD-template.yml
-├── SRD-template.yml
-├── SWD-template.yml
-└── LLTC-template.yml
-```
-
-### Artifacts
-```
-artifacts/
-├── traceability/       Auto-generated reports
-├── baselines/          Git tags + archives
-└── verification/       Test results, reviews
+Team04_DrivaPi/
+├── .dotstop.dot              # Graph structure (managed by trudag)
+├── .dotstop_extensions/      # Custom validators
+├── reqs/
+│   ├── urd/
+│   │   ├── URD-001.md
+│   │   └── URD-042.md
+│   ├── srd/
+│   │   ├── SRD-001.md
+│   │   └── SRD-015.md
+│   ├── swd/
+│   │   ├── SWD-001.md
+│   │   └── SWD-042.md
+│   ├── lltc/
+│   │   └── LLTC-001.md
+│   └── templates/
+│       ├── URD-template.yml
+│       ├── SRD-template.yml
+│       ├── SWD-template.yml
+│       └── LLTC-template.yml
+├── artifacts/
+│   ├── trustable-report/     # Generated reports
+│   └── baselines/            # Archived baselines
+└── docs/
+    └── tsf/                  # This documentation
 ```
 
 ---
 
-## 🔄 Git Workflow
+## 🔄 Typical Workflow
 
-### Feature Branch
 ```bash
-# Create branch
-git checkout -b feature/swd-042
+# 1. Create requirement
+trudag manage create-item SWD 042 reqs/swd
 
-# Create requirement
-doorstop add SWD
-doorstop edit SWD-042
+# 2. Edit file
+nano reqs/swd/SWD-042.md
 
-# Validate
+# 3. Link to parent
+trudag manage create-link SWD-042 SRD-015
+
+# 4. Validate
 trudag manage lint
 
-# Commit
-git add reqs/swd/SWD-042.yml
-git commit -m "feat(swd): Add SWD-042 temperature monitoring"
+# 5. Commit
+git add reqs/swd/SWD-042.md .dotstop.dot
+git commit -m "feat(swd): Add SWD-042"
 
-# Push
-git push origin feature/swd-042
+# 6. Create PR & get reviews
 
-# Create PR (2 reviewers for ASIL B+)
-```
+# 7. Approve
+trudag manage set-item SWD-042
 
-### Review Branch
-```bash
-# Pull branch
-git checkout feature/swd-042
-git pull
+# 8. Merge PR
 
-# Validate
-trudag manage lint
-doorstop
-
-# Approve
-trudag manage set-item reqs/swd/SWD-042.yml
-
-# Commit
-git add reqs/swd/SWD-042.yml
-git commit -m "review: Approve SWD-042"
-git push
+# 9. Generate report
+trudag publish --output-dir artifacts/trustable-report
 ```
 
 ---
 
-## 📋 Checklists
+## 💡 Pro Tips
 
-### Creating Requirement
-- [ ] Filename matches ID (SWD-042.yml)
-- [ ] `ref:` matches filename
-- [ ] Header is descriptive
-- [ ] Text uses "SHALL"
-- [ ] ASIL level assigned
-- [ ] Verification method specified
-- [ ] Links to parent (if not URD)
-- [ ] Reviewers added
-- [ ] `reviewed:` is empty
-- [ ] Acceptance criteria present
-- [ ] `trudag manage lint` passes
-- [ ] `doorstop` passes
-
-### Reviewing Requirement
-- [ ] Content is clear and unambiguous
-- [ ] Requirement is testable
-- [ ] ASIL level appropriate
-- [ ] Parent link valid
-- [ ] Units/timing specified
-- [ ] No vague words
-- [ ] Acceptance criteria complete
-- [ ] `trudag manage lint` passes
-- [ ] Approved with `trudag manage set-item`
-- [ ] Commit message includes reviewer
-
-### Creating Baseline
-- [ ] All requirements reviewed
-- [ ] No validation errors
-- [ ] Complete traceability
-- [ ] Git tag created
-- [ ] Trustable report exported
-- [ ] Artifacts archived
-- [ ] Tag pushed to GitHub
-- [ ] Release notes written
+1. **Always activate venv first:** `source .venv/bin/activate`
+2. **Run `trudag manage lint` before commits** - catch errors early
+3. **Use templates** from `reqs/templates/` as starting point
+4. **Link as you create** - don't wait until the end
+5. **Review in small batches** - easier than bulk review later
+6. **Tag baselines frequently** - creates audit trail
+7. **Keep .dotstop.dot in git** - tracks traceability history
 
 ---
 
-## 🆘 Help Resources
+## 📞 Getting Help
 
-### Documentation
-
-- **Trustable:** https://codethinklabs.gitlab.io/trustable/trustable/
-- **Doorstop:** https://doorstop.readthedocs.io/
-- **ISO 26262:** https://www.iso.org/standard/68383.html
-
----
-
-## 🎯 One-Page Cheat Sheet
-
-```bash
-# SETUP
-source .venv/bin/activate
-
-# CREATE
-doorstop add SWD
-doorstop edit SWD-042
-doorstop link SWD-042 SRD-015
-
-# VALIDATE
-trudag manage lint
-doorstop
-
-# APPROVE
-trudag manage set-item reqs/swd/SWD-042.yml
-
-# REPORT
-trudag report export --output artifacts/report.zip
-
-# BASELINE
-git tag -a BASELINE-V1.0 -m "Baseline v1.0"
-trudag report export --output artifacts/baselines/v1.0.zip
-git push origin BASELINE-V1.0
-```
-
-**Requirement must have:**
-- `ref:` = filename = top-level ID
-- `header`, `text` (with SHALL)
-- `ASIL`, `Verification Method`
-- `links: [PARENT]`
-- `reviewers:` (name + email)
-- `reviewed: ''` (until approved)
-
-**ASIL:**
-- QM = no safety
-- A = low risk (1 reviewer, unit tests)
-- B = medium risk (2 reviewers, integration tests)
-- C/D = high risk (independent review, system tests)
+- **Validation errors:** Run `trudag manage lint` and read error message
+- **Workflows:** See `docs/tsf/workflow.md`
+- **Training:** See `docs/tsf/training.md`
+- **Evidence:** See `docs/tsf/evidence.md`
 
 ---
 
-**Last Updated:** October 2025
-**Version:** 3.0
+**Remember:** TSF is about building trust through evidence. Every requirement, link, and review is tracked in git for complete traceability.
