@@ -25,4 +25,20 @@ The contribution to the score of a parent item by a suspiciously linked child is
 
 | Item {style="width:10%"} | Summary {style="width:60%"} | Score {style="width:5%"} | Status {style="width:25%"} |
 | ----- | ----- | ----- | ----- |
-| [SRD-002](SRD.md#srd-002) {class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"} 
+| [SRD-002](SRD.md#srd-002) {class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"} | Must read the ADC voltage sensor (pin ADC1_IN1) at a frequency of 1Hz and report the value in millivolts. | 0.00 | :material-check: Item Reviewed<br>:material-check: Children linked<br> |
+
+## Compliance for URD
+
+| Item {style="width:10%"} | Summary {style="width:60%"} | Score {style="width:5%"} | Status {style="width:25%"} |
+| ----- | ----- | ----- | ----- |
+| [URD-002](URD.md#urd-002) {class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"} | must visually alert the user on the dashboard when the battery voltage drops below 10.5V. | 0.00 | :material-check: Item Reviewed<br>:material-check: Children linked<br> |
+
+
+---
+
+_Generated for: Software_
+
+* _Repository root: /home/hugofslopes/formacaochefe/Team04_DrivaPi_
+* _Commit SHA: 9f43ba269986bc83e641b4cc84073059274293f8_
+* _Commit date/time: 1761231293_
+* _Commit tag: 9f43ba2_
