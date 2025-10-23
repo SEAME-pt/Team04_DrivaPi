@@ -8,7 +8,6 @@
 
 ## Workflow 1: Create New Requirement
 
-**Time:** 10 min
 **When:** New feature, decompose parent requirement, add test
 
 ### Steps
@@ -19,27 +18,7 @@ trudag manage create-item SWD 042 reqs/swd
 
 # 2. Edit (copy template from reqs/templates/ if it helps)
 nano reqs/swd/SWD-042.md
-```
 
-**Fill required fields:**
-```markdown
----
-ref: SWD-042
-normative: true
-level: 3.0
-ASIL: B
-verification_method: "Unit Test"
-reviewers:
-  - name: "Your Name"
-    email: "your@email.com"
-reviewed: ''
-active: true
-derived: false
----
-The software SHALL do X within Y ms with Z precision.
-```
-
-```bash
 # 3. Validate
 trudag manage lint
 
@@ -61,7 +40,6 @@ git push origin feature/swd-042
 
 ## Workflow 2: Link, Review and Approve
 
-**Time:** 15 min
 **When:** Requirement created and reviewed
 
 ### Part A: Link (Traceability)
@@ -86,11 +64,11 @@ trudag manage lint
 ### Part C: Approve
 
 ```bash
-# Mark as reviewed (adds git SHA)
+# Mark as reviewed (updates status in tool)
 trudag manage set-item SWD-042
 
-# Verify it was updated
-cat reqs/swd/SWD-042.md | grep reviewed
+# Update manually 'reviewed:' field in markdown for audit trail
+nano reqs/swd/SWD-042.md
 
 # Commit
 git add reqs/swd/SWD-042.md
@@ -106,7 +84,6 @@ git push
 
 ## Workflow 3: Generate Report & Baseline
 
-**Time:** 5 min
 **When:** Sprint review, release, audit
 
 ### Weekly Report
@@ -231,6 +208,12 @@ trudag manage set-item URD-100
 trudag manage set-item SRD-100
 trudag manage set-item SWD-100
 trudag manage set-item LLTC-100
+
+# === UPDATE 'reviewed:' FIELDS MANUALLY ===
+nano reqs/urd/URD-100.md
+nano reqs/srd/SRD-100.md
+nano reqs/swd/SWD-100.md
+nano reqs/lltc/LLTC-100.md
 
 git add reqs/
 git commit -m "review: Approve battery voltage requirements"
