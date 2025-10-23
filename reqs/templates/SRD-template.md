@@ -1,17 +1,20 @@
 ---
-id: <REF>
-header: "<HEADER>"
+id: SRD-template
+header: "short requirement title here"
 text: |
-  <DESCRIPTION>
+  "detailed requirement statement here"
 
 # TSF Type: Assertion (Both a Request and a Claim)
 
-ASIL: <ASIL>
-Verification Method: <VERIFICATION_METHOD>
+ASIL: "ASIL level here"
+Verification Method: "Verification method here"
 
 # Links: Connects to parent Expectation
-links:
-  - <PARENT_REF>
+parents:
+  - id: URD-<PARENT_REF>
+# Links: Connects to child Assertion
+children:
+  - id: SWD-<CHILD_REF>
 
 reviewers:
   - name: "<REVIEWER_NAME>"
@@ -23,3 +26,4 @@ derived: false
 normative: true
 level: 2.0
 ---
+<STATEMENT>

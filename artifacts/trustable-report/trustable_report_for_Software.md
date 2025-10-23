@@ -25,25 +25,25 @@ The contribution to the score of a parent item by a suspiciously linked child is
 
 | Item {style="width:10%"} | Summary {style="width:60%"} | Score {style="width:5%"} | Status {style="width:25%"} |
 | ----- | ----- | ----- | ----- |
-| [LLTC-001](LLTC.md#lltc-001) {class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"} | Test case to verify SWD-001 conversion from raw CAN data to km/h. | 0.00 | ☑ Item Reviewed<br>☑ Children linked<br> |
+| [LLTC-000](LLTC.md#lltc-000) {class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"} | This shall be a test requirement for LLTC template. | 0.00 | ☑ Item Reviewed<br>☑ Children linked<br> |
 
 ## Compliance for SRD
 
 | Item {style="width:10%"} | Summary {style="width:60%"} | Score {style="width:5%"} | Status {style="width:25%"} |
 | ----- | ----- | ----- | ----- |
-| [SRD-001](SRD.md#srd-001) {class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"} | The system SHALL read vehicle speed data from the CAN bus at 10Hz. | 0.00 | ☑ Item Reviewed<br>☑ Children linked<br> |
+| [SRD-000](SRD.md#srd-000) {class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"} | This shall be a test requirement for SRD template. | 0.00 | ☑ Item Reviewed<br>☑ Children linked<br> |
 
 ## Compliance for SWD
 
 | Item {style="width:10%"} | Summary {style="width:60%"} | Score {style="width:5%"} | Status {style="width:25%"} |
 | ----- | ----- | ----- | ----- |
-| [SWD-001](SWD.md#swd-001) {class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"} | The software SHALL convert raw CAN speed data (0.1 km/h units) to integer km/h and update the display module within 50ms of receipt. | 0.00 | ☑ Item Reviewed<br>☑ Children linked<br> |
+| [SWD-000](SWD.md#swd-000) {class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"} | This shall be a test requirement for SWD template. | 0.00 | ☑ Item Reviewed<br>☑ Children linked<br> |
 
 ## Compliance for URD
 
 | Item {style="width:10%"} | Summary {style="width:60%"} | Score {style="width:5%"} | Status {style="width:25%"} |
 | ----- | ----- | ----- | ----- |
-| [URD-001](URD.md#urd-001) {class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"} | The system SHALL provide the user with real-time vehicle speed information displayed on the dashboard within 100ms of data receipt. | 0.00 | ☑ Item Reviewed<br>☑ Children linked<br> |
+| [URD-000](URD.md#urd-000) {class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"} | This shall be a test requirement for URD template. | 0.00 | ☑ Item Reviewed<br>☑ Children linked<br> |
 
 
 ---
@@ -51,6 +51,6 @@ The contribution to the score of a parent item by a suspiciously linked child is
 _Generated for: Software_
 
 * _Repository root: /Users/melaniereis/Documents/GitHub/Team04_DrivaPi_
-* _Commit SHA: 996d39b4cbe1351847bbc7baa571bfcc709ae151_
-* _Commit date/time: 2025-10-21 20:47:57 UTC_
-* _Commit tag: BASELINE-SWD-V1.0-56-g996d39b_
+* _Commit SHA: 920aeaba194ed52fd90a933354d89923e6f99412_
+* _Commit date/time: 2025-10-23 17:14:14 UTC_
+* _Commit tag: BASELINE-SWD-V1.0-122-g920aeab_

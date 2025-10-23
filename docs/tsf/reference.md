@@ -85,9 +85,9 @@ Verification Method: <VERIFICATION_METHOD>
 
 # Links: Connects to parent Assertion
 parents:
-  - ref: <PARENT_REF>
+  - id: <PARENT_REF>
 children:
-  - ref: <CHILD_REF>
+  - id: <CHILD_REF>
 
 reviewers:
   - name: "<REVIEWER_NAME>"

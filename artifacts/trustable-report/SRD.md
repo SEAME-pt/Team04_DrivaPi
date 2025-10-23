@@ -2,10 +2,8 @@
 
 ---
 
-### SRD-001 ### {: .item-element .item-section class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"}
-The system SHALL read vehicle speed data from the CAN bus at 10Hz.
-
-This requirement defines how the system obtains speed data for display.
+### SRD-000 ### {: .item-element .item-section class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"}
+This shall be a test requirement for SRD template.
 {: .expanded-item-element }
 
 **Item Status:**
@@ -14,11 +12,11 @@ This requirement defines how the system obtains speed data for display.
 
 **Supported Requests:**
 
-- [SWD-001](SWD.md#swd-001){.item-element class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"}
+- [SWD-000](SWD.md#swd-000){.item-element class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"}
 
 **Supporting Items:**
 
-- [URD-001](URD.md#urd-001){.item-element class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"}
+- [URD-000](URD.md#urd-000){.item-element class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"}
 
 {% raw %}
 

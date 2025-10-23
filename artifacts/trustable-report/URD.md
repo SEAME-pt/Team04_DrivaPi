@@ -2,9 +2,8 @@
 
 ---
 
-### URD-001 ### {: .item-element .item-section class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"}
-The system SHALL provide the user with real-time vehicle speed information
-displayed on the dashboard within 100ms of data receipt.
+### URD-000 ### {: .item-element .item-section class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"}
+This shall be a test requirement for URD template.
 {: .expanded-item-element }
 
 **Item Status:**
@@ -13,7 +12,7 @@ displayed on the dashboard within 100ms of data receipt.
 
 **Supported Requests:**
 
-- [SRD-001](SRD.md#srd-001){.item-element class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"}
+- [SRD-000](SRD.md#srd-000){.item-element class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"}
 
 **Supporting Items:**
 

@@ -1,17 +1,17 @@
 ---
-id: <REF>
-header: "<HEADER>"
+id: LLTC-template
+header: "short requirement title here"
 text: |
-  <DESCRIPTION>
+  "detailed requirement statement here"
 
 # TSF Type: Premise (A Claim, but not a Request)
 
-ASIL: <ASIL>
-Verification Method: <VERIFICATION_METHOD>
+ASIL: "ASIL level here"
+Verification Method: "Verification method here"
 
 # Links: Connects to the SWD it provides evidence for
-links:
-  - <PARENT_REF>
+parents:
+  - id: SWD-<PARENT_REF>
 
 reviewers:
   - name: "<REVIEWER_NAME>"
@@ -33,3 +33,4 @@ test_procedure:
   postconditions:
     - <POSTCONDITIONS>
 ---
+<STATEMENT>
