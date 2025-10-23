@@ -15,7 +15,7 @@
 
 ```markdown
 ---
-ref: SWD-042
+id: SWD-042
 artifact:
   - type: code
     path: src/sensors/temperature.cpp
@@ -39,7 +39,7 @@ src/
 
 ```markdown
 ---
-ref: LLTC-042
+id: LLTC-042
 artifact:
   - type: test
     path: tests/unit/test_temperature.cpp
@@ -79,7 +79,7 @@ artifacts/verification/tests/
 
 ```markdown
 ---
-ref: SRD-015
+id: SRD-015
 artifact:
   - type: design
     path: docs/design/architecture.puml
@@ -110,7 +110,7 @@ docs/design/
 
 ```markdown
 ---
-ref: SWD-042
+id: SWD-042
 reviewers:
   - name: "Carol Dev"
     email: "carol@example.com"
@@ -136,7 +136,7 @@ artifact:
 
 ```markdown
 ---
-ref: SWD-042
+id: SWD-042
 artifact:
   - type: analysis
     path: artifacts/verification/static-analysis/cppcheck-SWD-042.xml
@@ -166,7 +166,7 @@ artifacts/verification/
 
 ```markdown
 ---
-ref: SWD-042
+id: SWD-042
 ASIL: B
 
 artifact:
@@ -210,7 +210,7 @@ artifact:
 
 ```markdown
 ---
-ref: SWD-042
+id: SWD-042
 header: "Temperature sensor monitoring"
 ASIL: B
 
