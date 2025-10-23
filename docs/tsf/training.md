@@ -1,7 +1,6 @@
 # TSF Training - Theory
 
 **Goal:** Understand the "why" of TSF and ISO 26262
-**Time:** 1-2 hours (read when you have time)
 
 > **To use TSF immediately:** See [workflow.md](workflow.md)
 
