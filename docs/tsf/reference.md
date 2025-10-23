@@ -73,29 +73,46 @@ nano reqs/swd/SWD-123.md
 
 ```markdown
 ---
-ref: SWD-042
-normative: true
-level: 3.0
-ASIL: B
-verification_method: "Unit Test"
+id: <REF>
+header: "<HEADER>"
+text: |
+  <DESCRIPTION>
+
+# TSF Type: Evidence/Assertion/Premise
+
+ASIL: <ASIL>
+Verification Method: <VERIFICATION_METHOD>
+
+# Links: Connects to parent Assertion
+links:
+  - <PARENT_REF>
+
 reviewers:
-  - name: "Your Name"
-    email: "email@example.com"
-reviewed: ''
+  - name: "<REVIEWER_NAME>"
+    email: "<REVIEWER_EMAIL>"
+reviewed: ''  # Manually fill on PR approval
+
 active: true
 derived: false
+normative: true
+level: <LEVEL>
 ---
-The software SHALL do something specific and testable with clear constraints.
 ```
 
 **Required fields:**
-- `ref:` - Requirement ID
-- `normative: true`
-- `level:` - 1.0 (URD), 2.0 (SRD), 3.0 (SWD), 4.0 (LLTC)
+- `id:` - Requirement ID
+- `header:` - Short title
+- `text:` - Full description
+- `TSF Type:` - URD/SRD/SWD = Assertion; LLTC = Premise
 - `ASIL:` - A/B/C/D/QM
 - `verification_method:` - How to test
-- `reviewers:` - At least 1
+- `reviewers:` - At least 1 (2 for ASIL B+)
 - `reviewed: ''` - Empty until approval
+- `links:` - At least 1 parent link (except URD)
+- `normative: true` - Always true (obligatory)
+- `active: true` - Always true (active requirement)
+- `derived:` - if derived from another requirement (usually false)
+- `level:` - 1.0 (URD), 2.0 (SRD), 3.0 (SWD), 4.0 (LLTC)
 
 ---
 
