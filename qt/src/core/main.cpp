@@ -1,0 +1,38 @@
+#include <QGuiApplication>
+#include <QQmlApplicationEngine>
+#include <QQmlContext>
+#include <QScopedPointer>
+#include "vehicledata.h"
+
+int main(int argc, char *argv[])
+{
+    QGuiApplication app(argc, argv);
+
+    // Create QML engine
+    QQmlApplicationEngine engine;
+
+    // Create VehicleData using QScopedPointer for automatic cleanup
+    QScopedPointer<VehicleData> vehicleData(new VehicleData());
+
+    // Expose VehicleData to QML (keep ownership in C++)
+    engine.rootContext()->setContextProperty("vehicleData", vehicleData.data());
+
+    // Load main QML file
+    const QUrl url(QStringLiteral("qrc:/qml/main.qml"));
+
+    QObject::connect(
+        &engine, &QQmlApplicationEngine::objectCreated,
+        &app, [url](QObject *obj, const QUrl &objUrl) {
+            if (!obj && url == objUrl)
+                QCoreApplication::exit(-1);
+        },
+        Qt::QueuedConnection
+    );
+
+    engine.load(url);
+
+    // Keep running until app quits
+    return app.exec();
+
+    // vehicleData will be automatically destroyed when going out of scope
+}
