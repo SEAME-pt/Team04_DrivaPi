@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  hmi-app:
+    build:
+      context: ..
+      dockerfile: docker/production/Dockerfile
+    image: seame-hmi:latest
+    container_name: seame-hmi
+    network_mode: host
+    environment:
+      - QT_QPA_PLATFORM=wayland

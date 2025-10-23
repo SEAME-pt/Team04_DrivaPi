@@ -1,0 +1,33 @@
+<RCC>
+    <qresource prefix="/">
+        <!-- Main QML -->
+        <file>qml/main.qml</file>
+
+        <!-- QML Components -->
+        <file>qml/components/SpeedDisplay.qml</file>
+        <file>qml/components/EnergyDisplay.qml</file>
+        <file>qml/components/GearSelector.qml</file>
+        <file>qml/components/BatteryIndicator.qml</file>
+        <file>qml/components/SimulationControls.qml</file>
+
+        <!-- Main Assets -->
+        <file>assets/InstrumentClusterBase.svg</file>
+        <file>assets/Car.svg</file>
+
+        <!-- Warning Indicators -->
+        <file>assets/thirdRightIcon.svg</file>
+        <file>assets/SecondRightIcon.svg</file>
+        <file>assets/warning.svg</file>
+
+        <!-- Light Indicators -->
+        <file>assets/Low_beam_headlights_white.svg</file>
+
+        <!-- Drive Mode Icons -->
+        <file>assets/navigation.svg</file>
+        <file>assets/steering.svg</file>
+        <file>assets/headphones.svg</file>
+
+        <!-- Road Signs -->
+        <file>assets/roadSigns/Zeichen_274-62.svg.png</file>
+    </qresource>
+</RCC>
