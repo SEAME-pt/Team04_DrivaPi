@@ -1,5 +1,5 @@
 ---
-ref: <REF>
+id: <REF>
 header: "<HEADER>"
 text: |
   <DESCRIPTION>
@@ -16,7 +16,7 @@ links:
 reviewers:
   - name: "<REVIEWER_NAME>"
     email: "<REVIEWER_EMAIL>"
-reviewed: ''  # Auto-fill on PR approval
+reviewed: ''  # Manually fill on PR approval
 
 active: true
 derived: false
