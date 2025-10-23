@@ -28,19 +28,6 @@ cd -
 trudag --version
 ```
 
-### 2. Validate Requirements (2 min)
-
-```bash
-# Validate everything
-trudag manage lint
-
-# Calculate scores
-trudag score
-
-# Generate report
-trudag publish --output-dir artifacts/trustable-report
-```
-
 ---
 
 ## ✅ Verification Checklist

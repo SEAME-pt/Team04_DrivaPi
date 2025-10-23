@@ -62,6 +62,11 @@ trudag manage set-item URD-042
 trudag manage set-item SWD-123
 ```
 
+# After running the above, manually edit the requirement markdown file to fill in the 'reviewed:' field for audit trail:
+```bash
+nano reqs/swd/SWD-123.md
+```
+
 ---
 
 ## 📋 Markdown File Structure
