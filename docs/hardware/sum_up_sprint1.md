@@ -22,9 +22,7 @@
 
 ✅ Organize and secure all cables for optimal layout and safety, including the new custom-made cable with the required length.
 
-🔄 Find solutions for the PiRacer power supply, which is was still having problems after last fix.
-
-🔄 Find solutions for the PiRacer power supply.
+🔄 Find solutions for the PiRacer power supply, which is still having problems after last fix.
 
 ✅ Conducted research and study on the micro-controller.
 
