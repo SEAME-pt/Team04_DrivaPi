@@ -1,1 +1,121 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
 .venv/
+venv/
+ENV/
+env/
+.python-version
+
+# IDEs
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# TSF/Doorstop
+# Note: Keep .dotstop.dot for tracking
+# .dotstop.dot
+
+# Artifacts (generated files - except baselines)
+artifacts/traceability/*.csv
+artifacts/traceability/*.md
+artifacts/traceability/*.json
+!artifacts/traceability/.gitkeep
+artifacts/reports/*.md
+artifacts/reports/*.json
+artifacts/reports/*.csv
+!artifacts/reports/.gitkeep
+
+# Keep baselines (important for audit trail)
+!artifacts/baselines/
+!artifacts/baselines/*.tar.gz
+!artifacts/baselines/*.zip
+
+# Build artifacts
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+*.out
+*.app
+
+# Qt
+*.pro.user
+*.pro.user.*
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+Makefile*
+*-build-*
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Documentation builds
+docs/_build/
+docs/.doctrees/
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Node (if using)
+node_modules/
+package-lock.json
+
+# Secrets
+.env
+.env.local
+*.pem
+*.key
+secrets.yml
+
+# Local dev
+.scratch/
+.local/
+.cache/

@@ -1,129 +1,157 @@
 # SEAME Automotive Journey
 
-Documentation of our journey building an autonomous vehicle platform using PiRacer as part of the SEAME automotive program.
+Autonomous vehicle using PiRacer as part of the SEAME automotive program.
 
 ## Team: DrivaPi (Team04)
-Hugo, Gaspar, Bernardo, Miguel, Melanie
-
-## What We're Building
-
-An autonomous 1/10 scale vehicle with:
-- Computer vision and autonomous driving
-- Real-time control systems (ThreadX RTOS)
-- Professional Qt-based monitoring interface
-- Automotive industry standard architecture
-
-**Platform:** PiRacer with Raspberry Pi 5
-
-## Technology Stack
-
-**Hardware:**
-- Raspberry Pi 5
-- Camera module
-- Speed sensors
-- Custom 3D-printed and laser-cut parts
-
-**Software:**
-- OS: Automotive Grade Linux (AGL)
-- RTOS: ThreadX
-- Programming: C++ with Rust evaluation
-- GUI: Qt framework
-- Standards: AUTOSAR and ISO 26262 principles
-
-**Also investigating:**
-- TSF: Trustable Software Framework (investigation and planned integration)
-
-## Repository Structure
-
-```
-├── documents/
-│   └── standups/          # Daily stand-up notes
-│       ├── daily-log-template.md    # Daily template
-│       ├── stand-up-guide.md
-│       └── YYYY-MM-DD.md  # Daily stand-up notes
-├── photos/                # Progress photos
-└── README.md             # This file
-```
-
-## Team Practices
-
-### Daily Stand-Ups
-We conduct two daily sessions to stay synchronized:
-- **Morning:** Quick sync when team is complete (~10 min)
-- **Evening:** Progress review before departure (~15 min)
-- **Facilitator:** Melanie
-- **Scribe rotation:** Gaspar → Hugo → Melanie → Bernardo → Miguel
-
-All stand-ups documented in `/documents/standups/`
-
-See our [Stand-Up Guide](documents/standups/stand-up-guide.md) for details.
-
-## Progress Timeline
-
-**Day 1 (Oct 8, 2025):** Hardware setup, assembly started, technology research
-*[Stand-up: documents/standups/2025-10-08.md]*
-
-**Day 2 (Oct 9, 2025):** Hardware assembly finalized with custom parts
-*[Stand-up: documents/standups/2025-10-09.md]*
-
-**Day 3 (Oct 10, 2025):** Custom builds (acrylic/steel mounts), Qt app created, ThreadX selected
-*[Stand-up: documents/standups/2025-10-10.md]*
-
-**Day 4 (Oct 13, 2025):** Sprint 1 begins, stand-up process launched, AGL deployment
-*[Stand-up: documents/standups/2025-10-14.md]*
-
-**Day 5 (Oct 14, 2025):** Speed sensor fitting test (hole misalignment), powered car via expansion board, migrated docs to GitHub, continued AGL setup and Qt deployment.
-*[Stand-up: documents/standups/2025-10-14.md]*
-
-**Day 6 (Oct 15, 2025):** AGL running (Wi‑Fi pending), camera connected, Qt deployment and TSF→SDV automation in progress.
-*[Stand-up: documents/standups/2025-10-15.md]*
- 
-## Current Sprint
-
-**Sprint 1:** October 13-25, 2025
-**Goal:** Establish software foundation and complete hardware integration
-
-**Focus Areas:**
-- Deploy AGL on Raspberry Pi 5
-- Complete display integration
-- Finalize speed sensor mounting
-- Restructure Qt application for real-time data
-- Establish development workflow and stand-up routine
-
-## Current Status
-
-**Hardware:** ~90% complete
-- Speed sensor mount nearly finished; print file sent to Maria.
-- Display integration ongoing.
-- Camera connected and tested.
-- Expansion board powering devices; observed low-voltage warnings — power distribution plan required.
-
-**Software:** Development environment & deployment
-- AGL build ready for deployment; AGL is running on a device but Wi‑Fi requires missing binaries and follow-up.
-- Qt application restructuring and deployment pipeline (cross‑compile + SSH flashing) in progress.
-- TSF → SDV: active investigation (Doorstop, Trudag) and initial automation plans via GitHub Actions.
-- GitHub project structure established.
-
-**Process:** Stand-up system launched (Week 1)
-- Daily morning + evening sessions
-- Documentation framework in place
-- Blocker tracking active
-
-## Key Decisions Made
-
-- ✅ **RTOS:** ThreadX selected
-- ✅ **GUI Framework:** Qt confirmed
-- ✅ **OS:** AGL (Automotive Grade Linux) - deployment in progress
-- 🔄 **Language:** C++ vs Rust - prototyping both
-
-## Team Roles
-
-- **Hugo:** Hardware assembly and custom fabrication, Qt deployment
-- **Gaspar:** AGL lead (OS deployment and debugging).
-- **Bernardo:** Hardware integration lead, power & wiring troubleshooting.
-- **Miguel:** GitHub project, Agile/Scrum methodologies, TSF lead — mapping TSF tenets/assertions into SDV, and GitHub Actions automation for TSF→SDV.
-- **Melanie:** GUI lead and TSF implementation support; documentation and team coordination
+Hugo, João, Bernardo, Miguel, Melanie
 
 ---
 
-*Educational project following automotive industry best practices*
+## 🎯 What We're Building
+
+- Computer vision and autonomous driving
+- Real-time control systems (ThreadX RTOS)
+- Qt-based interface
+- Automotive industry standard architecture
+- **Requirements management with TSF**
+
+**Platform:** PiRacer with Raspberry Pi 5
+
+---
+
+## 🛠️ Tech Stack
+
+| Category | Technology |
+|----------|------------|
+| **OS** | Automotive Grade Linux (AGL) |
+| **RTOS** | ThreadX |
+| **Language** | C++ (+ Rust evaluation) |
+| **GUI** | Qt framework |
+| **Requirements** | TSF (Trustable Software Framework) |
+| **Standards** | ISO 26262 |
+
+---
+
+## 📁 Repository Structure
+
+```
+.
+├── reqs/                  # TSF Requirements
+│   ├── urd/              # User Requirements
+│   ├── srd/              # System Requirements
+│   ├── swd/              # Software Design
+│   └── lltc/             # Test Cases
+│
+├── src/                  # Source code
+├── tests/                # Unit/integration/system tests
+├── docs/                 # Documentation
+│   ├── standups/        # Daily stand-ups
+│   └── tsf/             # TSF docs
+│
+├── artifacts/
+│   ├── trustable-report/ # TSF reports
+│   ├── verification/     # Test results, analysis
+│   └── baselines/        # Release snapshots
+│
+└── .dotstop.dot          # TSF traceability graph
+```
+
+## 📋 TSF Documentation
+
+| Doc | When to Use | Time |
+|-----|-------------|------|
+| **[start.md](docs/tsf/start.md)** | First time, setup | 15 min |
+| **[reference.md](docs/tsf/reference.md)** | Cheat sheet, commands | Reference |
+| **[workflow.md](docs/tsf/workflow.md)** | Create requirements, review | Reference |
+| **[training.md](docs/tsf/training.md)** | Understand TSF/ISO 26262 theory | 1-2h |
+| **[evidence.md](docs/tsf/evidence.md)** | Link artifacts | Reference |
+
+---
+
+## 👥 Team Practices
+
+### Daily Stand-Ups
+
+- **Morning:** Quick sync (~10 min)
+- **Evening:** Progress review (~15 min)
+- **Facilitator:** Melanie
+- **Docs:** [documents/standups/](documents/standups/)
+
+### Workflow
+
+1. Create branch
+2. Create requirements (`trudag manage create-item`)
+3. Implement (code, tests, docs)
+4. Link artifacts to requirements
+5. Validate (`trudag manage lint`)
+6. Create PR (2 reviews for ASIL B)
+7. Merge
+
+**Commit format:** `<type>(<scope>): <description>`
+- Types: `feat`, `fix`, `docs`, `test`, `review`
+- Scopes: `urd`, `srd`, `swd`, `lltc`, `hmi`, `sensor`
+
+---
+
+## 📈 Progress
+
+| Date | Achievement |
+|------|-------------|
+| Oct 8 | Hardware setup initiated |
+| Oct 9 | Assembly finalized with custom parts |
+| Oct 10 | Qt app created, ThreadX selected |
+| Oct 13 | Sprint 1 starts, AGL deployment |
+| Oct 14 | TSF framework integrated |
+
+**Current Sprint:** Sprint 1 (Oct 13-25)
+**Status:** ~90% hardware, dev environment setup, TSF operational
+
+---
+
+## 📊 Traceability Status
+
+**Current baseline:** Sprint 1
+- 1 example URD (User Requirements) ✅
+- 1 example SRD (System Requirements) ✅
+- 1 example SWD (Software Design) ✅
+- 1 example LLTC (Test Cases) ✅
+- 100% reviewed ✅
+- Complete V-Model chain ✅
+
+**View report:** [artifacts/trustable-report/dashboard.md](artifacts/trustable-report/dashboard.md)
+
+---
+
+## 📚 Standards Compliance
+
+- **ISO 26262:** Functional safety
+  - ASIL levels assigned
+  - Hazard analysis
+  - V-Model development
+
+- **TSF:** Trustable Software Framework
+  - Requirements traceability
+  - Evidence-based trust
+  - Git audit trail
+
+---
+
+## 👤 Team Roles
+
+| Member | Focus |
+|--------|-------|
+| **Hugo** | Hardware, fabrication, QT deployment |
+| **João** | OS, dev environment |
+| **Bernardo** | Hardware integration, testing |
+| **Miguel** | GitHub, Agile/Scrum |
+| **Melanie** | GUI, coordination, requirements |
+
+---
+
+## 📜 License
+
+Educational project - SEAME Automotive Program
+
+---
+
+*Last update: Oct 21, 2025 | Sprint 1 | Active development*
