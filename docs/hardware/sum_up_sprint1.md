@@ -24,8 +24,6 @@
 
 🔄 Find solutions for the PiRacer power supply, which is was still having problems after last fix.
 
-✅ Solved problems related to 42's Work Experience module while on SEA:ME.
-
 🔄 Find solutions for the PiRacer power supply.
 
 ✅ Conducted research and study on the micro-controller.
