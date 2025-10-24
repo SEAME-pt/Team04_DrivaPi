@@ -1,5 +1,5 @@
 
-## Hardware Documentation - DrivaPi Project (Team04)
+## Hardware Documentation - DrivaPi Pr![alt text](image.png)oject (Team04)
 ### 1. Overview
 This document describes the hardware components and their interconnection in the DrivaPi project, an autonomous vehicle based on the PiRacer platform and Raspberry Pi 5. The architecture includes a main computer (Raspberry Pi), an expansion board for low-level control , sensors, actuators, a secondary microcontroller (STM32) , and communication interfaces such as CAN bus.
 
