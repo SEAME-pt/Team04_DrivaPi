@@ -4,7 +4,9 @@
 This document describes the hardware components and their interconnection in the DrivaPi project, an autonomous vehicle based on the PiRacer platform and Raspberry Pi 5. The architecture includes a main computer (Raspberry Pi), an expansion board for low-level control , sensors, actuators, a secondary microcontroller (STM32) , and communication interfaces such as CAN bus.
 
 ### 2. Bill of Materials (BOM)
-The following diagram lists the main components identified in the SEA_ME WORKBOARD.pdf:
+The following diagram lists the main components identified in the hardware_assembly image:
+
+![alt text](hardware_diagram.png)
 
 ### 3. Component Description
 
