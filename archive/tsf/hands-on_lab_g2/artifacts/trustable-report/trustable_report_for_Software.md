@@ -25,4 +25,4 @@ The contribution to the score of a parent item by a suspiciously linked child is
 
 | Item {style="width:10%"} | Summary {style="width:60%"} | Score {style="width:5%"} | Status {style="width:25%"} |
 | ----- | ----- | ----- | ----- |
-| [SRD-002](SRD.md#srd-002) {class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"} 
+| [SRD-999](SRD.md#srd-999) {class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"}

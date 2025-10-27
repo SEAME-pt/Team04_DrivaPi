@@ -25,13 +25,13 @@ The contribution to the score of a parent item by a suspiciously linked child is
 
 | Item {style="width:10%"} | Summary {style="width:60%"} | Score {style="width:5%"} | Status {style="width:25%"} |
 | ----- | ----- | ----- | ----- |
-| [SRD-002](SRD.md#srd-002) {class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"} | Must read the ADC voltage sensor (pin ADC1_IN1) at a frequency of 1Hz and report the value in millivolts. | 0.00 | :material-check: Item Reviewed<br>:material-check: Children linked<br> |
+| [SRD-999](SRD.md#srd-999) {class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"} | Must read the ADC voltage sensor (pin ADC1_IN1) at a frequency of 1Hz and report the value in millivolts. | 0.00 | :material-check: Item Reviewed<br>:material-check: Children linked<br> |
 
 ## Compliance for URD
 
 | Item {style="width:10%"} | Summary {style="width:60%"} | Score {style="width:5%"} | Status {style="width:25%"} |
 | ----- | ----- | ----- | ----- |
-| [URD-002](URD.md#urd-002) {class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"} | must visually alert the user on the dashboard when the battery voltage drops below 10.5V. | 0.00 | :material-check: Item Reviewed<br>:material-check: Children linked<br> |
+| [URD-999](URD.md#urd-999) {class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"} | must visually alert the user on the dashboard when the battery voltage drops below 10.5V. | 0.00 | :material-check: Item Reviewed<br>:material-check: Children linked<br> |
 
 
 ---

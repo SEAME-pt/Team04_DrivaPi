@@ -12,7 +12,7 @@ must visually alert the user on the dashboard when the battery voltage drops bel
 
 **Supported Requests:**
 
-- [SRD-002](SRD.md#srd-002){.item-element class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"}
+- [SRD-999](SRD.md#srd-999){.item-element class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"}
 
 **Supporting Items:**
 
