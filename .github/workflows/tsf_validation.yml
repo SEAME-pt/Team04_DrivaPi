@@ -44,7 +44,7 @@ jobs:
           git clone https://gitlab.com/CodethinkLabs/trustable/trustable.git /tmp/trustable
           cd /tmp/trustable
           git fetch --tags || true
-          git checkout 2025.9.16 || git checkout main || echo "Using available branch"
+          git checkout 2025.9.16 || git checkout master || echo "Using available branch"
           pip install .
           cd -
 
@@ -160,8 +160,8 @@ jobs:
 
             ### 📚 Documentation
 
-            - [TSF Quick Reference](https://github.com/${{ github.repository }}/blob/main/docs/tsf/reference.md)
-            - [Fix Common Errors](https://github.com/${{ github.repository }}/blob/main/docs/tsf/workflow.md#fix-common-errors)
+            - [TSF Quick Reference](https://github.com/${{ github.repository }}/blob/master/docs/tsf/reference.md)
+            - [Fix Common Errors](https://github.com/${{ github.repository }}/blob/master/docs/tsf/workflow.md#fix-common-errors)
 
             ---
             *Validation run: ${{ github.run_id }} | Commit: ${{ github.sha }}*

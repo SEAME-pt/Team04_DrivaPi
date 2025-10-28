@@ -177,8 +177,8 @@ cat artifacts/trustable-report/dashboard.md
 ```
 
 **What to check in dashboard:**
-- How many reviewed vs unreviewed requirements?
-- How many have evidence links and scores?
+- How many requirements reviewed vs unreviewed requirements?
+- How many requirements have evidence links and scores?
 - Are there orphans (requirements without parent/child links)?
 - What's the average trust score across levels?
 
@@ -221,7 +221,7 @@ head -40 reqs/swd/SWD-042.md
 # - Correct indentation (2 spaces)?
 # - Strings with special chars have "quotes"?
 # - Lists use "- " (dash space)?
-# - references:, score:, evidence: blocks properly indented?
+# - references:, score:, evidence: blocks are properly indented?
 ```
 
 ### "Missing required field: normative" or "level"
