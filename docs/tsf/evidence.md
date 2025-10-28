@@ -519,7 +519,7 @@ speed_widget.lcov
 
 ---
 
-## 🔄 Evidence Workflow (Updated for references:, evidence:, and score:)
+## 🔄 Evidence Workflow
 
 ```bash
 # 1. Create/Edit requirement
