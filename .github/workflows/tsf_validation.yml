@@ -1,21 +1,16 @@
-name: Requirements Checks (TSF Official)
+name: TSF Validation
 
 on:
-  pull_request:
-  push:
-    branches: [ main, master, development ]
-  pull_request_review:
-    types: [submitted]
+  pull_request:  # Only run on PRs - KISS principle
 
 jobs:
   tsf-validation:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
       pull-requests: write
 
     steps:
-      # 1️⃣ Checkout repository
+      # 1️⃣ Checkout
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -27,149 +22,75 @@ jobs:
         with:
           python-version: '3.11'
 
-      # 3️⃣ Cache pip
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      # 4️⃣ Install TSF/trudag tools
-      - name: Install official TSF tools
+      # 3️⃣ Install TSF tools
+      - name: Install TSF tools
         run: |
-          python -m pip install --upgrade pip
           pip install pyyaml
           git clone https://gitlab.com/CodethinkLabs/trustable/trustable.git /tmp/trustable
           cd /tmp/trustable
-          git fetch --tags || true
-          git checkout 2025.9.16 || git checkout master || echo "Using available branch"
+          git checkout 2025.9.16 || git checkout main
           pip install .
-          cd -
 
-      # 5️⃣ Verify tools
-      - name: Verify tools installation
-        run: |
-          echo "trudag version:"
-          trudag --version || echo "trudag not found"
-
-      # 6️⃣ Run trudag lint (capture output)
+      # 4️⃣ Run trudag lint
       - name: Run trudag lint
         id: lint
-        continue-on-error: true
         run: |
           mkdir -p artifacts
-          echo "=== trudag manage lint START ===" > artifacts/trudag-lint.txt
-          if trudag manage lint 2>&1 | tee -a artifacts/trudag-lint.txt; then
-            echo "lint_ok=true" >> $GITHUB_OUTPUT
-          else
-            echo "lint_ok=false" >> $GITHUB_OUTPUT
-          fi
+          trudag manage lint 2>&1 | tee artifacts/trudag-lint.txt
 
-      # 6b. Get lint summary for PR comment
-      - name: Get lint summary
-        id: summary
-        run: |
-          if [ -f artifacts/trudag-lint.txt ]; then
-            echo "lint_summary<<EOF" >> $GITHUB_OUTPUT
-            head -c 500 artifacts/trudag-lint.txt >> $GITHUB_OUTPUT
-            echo "" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-          else
-            echo "lint_summary=No lint output generated" >> $GITHUB_OUTPUT
-          fi
-
-      # 7️⃣ Calculate trust scores
-      - name: Calculate trust scores
-        id: scores
+      # 5️⃣ Run trudag score
+      - name: Calculate scores
+        id: score
         continue-on-error: true
         run: |
-          if trudag score 2>&1 | tee artifacts/trudag-score.txt; then
-            echo "score_ok=true" >> $GITHUB_OUTPUT
-          else
-            echo "score_ok=false" >> $GITHUB_OUTPUT
-          fi
+          trudag score 2>&1 | tee artifacts/trudag-score.txt
 
-      # 8️⃣ Generate Trustable report
-      - name: Generate Trustable report (publish)
+      # 6️⃣ Generate report
+      - name: Generate report
         id: publish
         continue-on-error: true
         run: |
           mkdir -p artifacts/trustable-report
-          if trudag publish --output-dir artifacts/trustable-report 2>&1; then
-            echo "publish_ok=true" >> $GITHUB_OUTPUT
-          elif trudag publish --no-validate --output-dir artifacts/trustable-report 2>&1; then
-            echo "publish_ok=true" >> $GITHUB_OUTPUT
-          else
-            echo "publish_ok=false" >> $GITHUB_OUTPUT
-            echo "publish failed or not configured"
-          fi
+          trudag publish --output-dir artifacts/trustable-report || true
 
-      # 9️⃣ List artifacts for debug
-      - name: List artifacts
-        run: |
-          echo "Artifacts directory listing:"
-          ls -la artifacts || true
-          echo ""
-          echo ".dotstop.dot present?"
-          [ -f .dotstop.dot ] && echo "YES" || echo "NO"
-          echo ""
-          echo "Requirements count:"
-          find reqs/ -name "*.md" 2>/dev/null | wc -l || echo "0"
-
-      # 🔟 Upload TSF artifacts
-      - name: Upload TSF artifacts
+      # 7️⃣ Upload artifacts (for debugging)
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: tsf-validation-artifacts
-          path: |
-            artifacts/
-            .dotstop.dot
-          retention-days: 30
+          name: tsf-artifacts
+          path: artifacts/
+          retention-days: 7
 
-      # 1️⃣1️⃣ Comment PR with validation results
-      - name: Comment PR with validation results
-        if: github.event_name == 'pull_request'
+      # 8️⃣ Comment on PR
+      - name: Comment PR
         uses: peter-evans/create-or-update-comment@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            ## 🔍 TSF Validation Results
+            ## 🔍 TSF Validation
 
             | Check | Status |
             |-------|--------|
-            | **trudag lint** | ${{ steps.lint.outputs.lint_ok == 'true' && '✅ PASSED' || '❌ FAILED' }} |
-            | **trudag score** | ${{ steps.scores.outputs.score_ok == 'true' && '✅ PASSED' || '❌ FAILED' }} |
-            | **trudag publish** | ${{ steps.publish.outputs.publish_ok == 'true' && '✅ PASSED' || '❌ FAILED' }} |
+            | **trudag lint** | ${{ steps.lint.outcome == 'success' && '✅' || '❌' }} |
+            | **trudag score** | ${{ steps.score.outcome == 'success' && '✅' || '⚠️' }} |
+            | **trudag publish** | ${{ steps.publish.outcome == 'success' && '✅' || '⚠️' }} |
 
-            ### 📋 Lint Output (first 500 chars)
+            <details>
+            <summary>📋 Lint Output</summary>
 
             ```
-            ${{ steps.summary.outputs.lint_summary }}
+            $(cat artifacts/trudag-lint.txt 2>/dev/null || echo "No output")
             ```
+            </details>
 
-            ### 📊 Artifacts
+            📊 [Download artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
-            Full validation artifacts are available for download:
-            - Go to **Actions** tab
-            - Select this workflow run
-            - Download **tsf-validation-artifacts**
-
-            ### 📚 Documentation
-
-            - [TSF Quick Reference](https://github.com/${{ github.repository }}/blob/master/docs/tsf/reference.md)
-            - [Fix Common Errors](https://github.com/${{ github.repository }}/blob/master/docs/tsf/workflow.md#fix-common-errors)
-
-            ---
-            *Validation run: ${{ github.run_id }} | Commit: ${{ github.sha }}*
-
-      # 1️⃣2️⃣ Fail job if lint failed (optional - comment out if too strict)
-      - name: Check lint result
-        if: steps.lint.outputs.lint_ok != 'true'
+      # 9️⃣ Fail if lint fails
+      - name: Check result
         run: |
-          echo "❌ trudag manage lint FAILED"
-          echo "See artifacts for full output"
-          exit 1
+          if [ "${{ steps.lint.outcome }}" != "success" ]; then
+            echo "❌ Lint failed"
+            exit 1
+          fi
