@@ -8,7 +8,7 @@ jobs:
   tsf-validation:
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: write
+      contents: read
 
     steps:
       # ========== CHECKOUT ==========
@@ -16,7 +16,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       # ========== ENVIRONMENT ==========
       - name: Setup Python 3.11
@@ -103,65 +102,38 @@ jobs:
           path: artifacts/
           retention-days: 30
 
-      - name: Extract summary
-        id: summary
-        if: always()
-        continue-on-error: true
-        run: |
-          echo "lint<<EOF" >> $GITHUB_OUTPUT
-          head -n 20 artifacts/trudag-lint.txt 2>/dev/null || echo "No lint output"
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Comment PR with validation results
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            ## 🔍 TSF Validation Report
-
-            | Check | Status |
-            |-------|--------|
-            | **Tests** | ${{ steps.tests.outputs.status == 'success' && '✅ PASSED' || (steps.tests.outputs.status == 'skipped' && '⏭️ SKIPPED' || '❌ FAILED') }} |
-            | **Analysis** | ${{ steps.analysis.outputs.status == 'success' && '✅ PASSED' || (steps.analysis.outputs.status == 'skipped' && '⏭️ SKIPPED' || '❌ FAILED') }} |
-            | **TSF Lint** | ${{ steps.tsf.outcome == 'success' && '✅ PASSED' || '❌ FAILED' }} |
-            | **Score** | ${{ steps.score.outcome == 'success' && '✅ CALCULATED' || '⚠️ SKIPPED' }} |
-            | **Report** | ${{ steps.publish.outcome == 'success' && '✅ GENERATED' || '⚠️ FAILED' }} |
-
-            ### 📊 Artifacts Generated
-            ```
-            artifacts/verification/
-            ├── tests/pytest-results.xml
-            ├── static-analysis/cppcheck-results.xml
-            ├── coverage/coverage.xml
-            └── trustable-report/
-            ```
-
-            ### 📋 Lint Validation Output
-            <details>
-            <summary>View TSF validation details</summary>
-
-            ```
-            ${{ steps.summary.outputs.lint }}
-            ```
-            </details>
-
-            ### 📦 Download Artifacts
-            All validation artifacts available: [📦 View Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-            **Next:** This PR requires manual review before merging. Review the validation results above and requirements changes.
-
-      # ========== QUALITY GATE (INFORMATIONAL, NOT BLOCKING) ==========
-      - name: TSF Validation Status
+      # ========== DISPLAY RESULTS ==========
+      - name: Display validation results
         if: always()
         run: |
-          echo "=== TSF Validation Summary ==="
-          echo "Tests: ${{ steps.tests.outputs.status }}"
-          echo "Analysis: ${{ steps.analysis.outputs.status }}"
-          echo "Lint: ${{ steps.tsf.outcome }}"
+          echo "=========================================="
+          echo "🔍 TSF VALIDATION RESULTS"
+          echo "=========================================="
           echo ""
-          if [ "${{ steps.tsf.outcome }}" != "success" ]; then
-            echo "⚠️  TSF requirements need attention (manual review required)"
+          echo "📊 Test Results: ${{ steps.tests.outputs.status }}"
+          echo "📊 Analysis Results: ${{ steps.analysis.outputs.status }}"
+          echo "📊 TSF Lint: ${{ steps.tsf.outcome }}"
+          echo "📊 Score Calculation: ${{ steps.score.outcome }}"
+          echo "📊 Report Generation: ${{ steps.publish.outcome }}"
+          echo ""
+          echo "=========================================="
+          echo "📋 LINT OUTPUT (First 30 lines)"
+          echo "=========================================="
+          head -n 30 artifacts/trudag-lint.txt 2>/dev/null || echo "No lint output available"
+          echo ""
+          echo "=========================================="
+          echo "📦 ARTIFACTS GENERATED"
+          echo "=========================================="
+          find artifacts -type f | sort
+          echo ""
+          echo "=========================================="
+          if [ "${{ steps.tsf.outcome }}" = "success" ]; then
+            echo "✅ TSF VALIDATION PASSED"
           else
-            echo "✅ TSF requirements passed"
+            echo "⚠️  TSF VALIDATION NEEDS ATTENTION"
           fi
+          echo "=========================================="
+          echo ""
+          echo "📥 Download artifacts from Actions tab"
+          echo "🔗 Artifact name: tsf-validation-artifacts"
+		  echo "=========================================="
