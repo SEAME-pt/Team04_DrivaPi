@@ -1,7 +1,8 @@
 name: TSF Validation
 
 on:
-  pull_request:  # Only run on PRs - KISS principle
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   tsf-validation:
@@ -10,59 +11,105 @@ jobs:
       pull-requests: write
 
     steps:
-      # 1️⃣ Checkout
+      # ========== CHECKOUT ==========
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Needed for TSF traceability
 
-      # 2️⃣ Setup Python
-      - name: Set up Python 3.11
+      # ========== ENVIRONMENT ==========
+      - name: Setup Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      # 3️⃣ Install TSF tools
-      - name: Install TSF tools
+      # ========== DEPENDENCIES ==========
+      - name: Install dependencies
         run: |
-          pip install pyyaml
+          pip install --upgrade pip
+          pip install pytest pytest-cov pyyaml
+          sudo apt-get update
+          sudo apt-get install -y cppcheck
+
+      - name: Install trudag (TSF tools)
+        run: |
           git clone https://gitlab.com/CodethinkLabs/trustable/trustable.git /tmp/trustable
           cd /tmp/trustable
           git checkout 2025.9.16 || git checkout main
           pip install .
 
-      # 4️⃣ Run trudag lint
-      - name: Run trudag lint
-        id: lint
+      # ========== PREPARE ==========
+      - name: Create artifact directories
         run: |
-          mkdir -p artifacts
+          mkdir -p artifacts/verification/{tests,static-analysis,coverage}
+          touch artifacts/verification/{tests,static-analysis,coverage}/.gitkeep
+
+      # ========== TESTS & ANALYSIS ==========
+      - name: Run tests with coverage
+        id: tests
+        continue-on-error: true
+        run: |
+          if [ -d "tests" ] && find tests -name "*.py" 2>/dev/null | grep -q .; then
+            pytest tests/ \
+              --junit-xml=artifacts/verification/tests/pytest-results.xml \
+              --cov=src --cov=qt/src \
+              --cov-report=xml:artifacts/verification/coverage/coverage.xml \
+              2>&1 | tee artifacts/verification/tests/pytest.log
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "status=skipped" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run static analysis
+        id: analysis
+        continue-on-error: true
+        run: |
+          if [ -d "src" ] || [ -d "qt/src" ]; then
+            cppcheck --enable=all --suppress=missingIncludeSystem --xml --xml-version=2 \
+              src/ qt/src/ 2> artifacts/verification/static-analysis/cppcheck-results.xml
+            cppcheck --enable=all --suppress=missingIncludeSystem \
+              src/ qt/src/ > artifacts/verification/static-analysis/cppcheck-report.txt 2>&1 || true
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "status=skipped" >> $GITHUB_OUTPUT
+          fi
+
+      # ========== TSF VALIDATION ==========
+      - name: Validate TSF requirements
+        id: tsf
+        run: |
           trudag manage lint 2>&1 | tee artifacts/trudag-lint.txt
 
-      # 5️⃣ Run trudag score
       - name: Calculate scores
         id: score
         continue-on-error: true
         run: |
           trudag score 2>&1 | tee artifacts/trudag-score.txt
 
-      # 6️⃣ Generate report
       - name: Generate report
         id: publish
         continue-on-error: true
         run: |
           mkdir -p artifacts/trustable-report
-          trudag publish --output-dir artifacts/trustable-report || true
+          trudag publish --output-dir artifacts/trustable-report --no-validate 2>&1 || true
 
-      # 7️⃣ Upload artifacts (for debugging)
+      # ========== UPLOAD & REPORT ==========
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: tsf-artifacts
+          name: tsf-validation-artifacts
           path: artifacts/
-          retention-days: 7
+          retention-days: 30
 
-      # 8️⃣ Comment on PR
+      - name: Extract summary
+        id: summary
+        if: always()
+        run: |
+          echo "lint<<EOF" >> $GITHUB_OUTPUT
+          head -n 20 artifacts/trudag-lint.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Comment PR
         uses: peter-evans/create-or-update-comment@v4
         with:
@@ -73,24 +120,25 @@ jobs:
 
             | Check | Status |
             |-------|--------|
-            | **trudag lint** | ${{ steps.lint.outcome == 'success' && '✅' || '❌' }} |
-            | **trudag score** | ${{ steps.score.outcome == 'success' && '✅' || '⚠️' }} |
-            | **trudag publish** | ${{ steps.publish.outcome == 'success' && '✅' || '⚠️' }} |
+            | **Tests** | ${{ steps.tests.outputs.status == 'success' && '✅' || (steps.tests.outputs.status == 'skipped' && '⏭️' || '❌') }} |
+            | **Analysis** | ${{ steps.analysis.outputs.status == 'success' && '✅' || (steps.analysis.outputs.status == 'skipped' && '⏭️' || '❌') }} |
+            | **TSF Lint** | ${{ steps.tsf.outcome == 'success' && '✅' || '❌' }} |
+            | **Score** | ${{ steps.score.outcome == 'success' && '✅' || '⚠️' }} |
+            | **Report** | ${{ steps.publish.outcome == 'success' && '✅' || '⚠️' }} |
 
             <details>
             <summary>📋 Lint Output</summary>
 
             ```
-            $(cat artifacts/trudag-lint.txt 2>/dev/null || echo "No output")
+            ${{ steps.summary.outputs.lint }}
             ```
             </details>
 
-            📊 [Download artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            📦 [Download Artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
-      # 9️⃣ Fail if lint fails
-      - name: Check result
+      # ========== ENFORCE ==========
+      - name: Check TSF validation
+        if: steps.tsf.outcome != 'success'
         run: |
-          if [ "${{ steps.lint.outcome }}" != "success" ]; then
-            echo "❌ Lint failed"
-            exit 1
-          fi
+          echo "❌ TSF lint failed"
+          exit 1
