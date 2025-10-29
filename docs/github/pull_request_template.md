@@ -1,6 +1,6 @@
 # 📦 Pull Request
 
-**This PR resolves Issue(s):** #(Issue number)
+**This PR resolves/refers to Issue(s):** #(Issue number)
 
 **Type of Change:**
 - [ ] Feature (`feat`)
