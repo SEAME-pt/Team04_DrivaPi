@@ -6,13 +6,13 @@ This document defines how artifacts (test results, static analysis, coverage rep
 
 ## Quick Summary
 
-| What | Where | Action |
-|------|-------|--------|
-| **Tests** | `artifacts/verification/tests/` | ✅ Commit |
-| **Analysis** | `artifacts/verification/static-analysis/` | ✅ Commit |
-| **Coverage** | `artifacts/verification/coverage/` | ✅ Commit |
-| **Reports** | `artifacts/trustable-report/` | ✅ Commit |
-| **Transient** | `artifacts/traceability/`, `artifacts/reports/` | ❌ Don't commit |
+| What | Where | Action | Format |
+|------|-------|--------|--------|
+| **Tests** | `artifacts/verification/tests/` | ✅ Commit | JUnit XML, JSON |
+| **Analysis** | `artifacts/verification/static-analysis/` | ✅ Commit | XML, TXT |
+| **Coverage** | `artifacts/verification/coverage/` | ✅ Commit | XML, LCOV |
+| **Reports** | `artifacts/trustable-report/` | ✅ Commit | Markdown, HTML |
+| **Transient** | `artifacts/traceability/`, `artifacts/reports/` | ❌ Don't commit | Auto-generated |
 
 ---
 
@@ -34,245 +34,344 @@ artifacts/
 ## Naming Conventions
 
 ### Tests
+
 ```
 Pattern: LLTC-042-junit.xml
-         ↓         ↓
+         ↑         ↓
       Req ID    Test type
 ```
 
 **Examples:**
 - `LLTC-042-junit.xml` (unit test result)
 - `LLTC-043-integration.json` (integration test)
+- `LLTC-998-junit.xml` (motor speed sensor tests)
 
 ### Static Analysis
+
 ```
 Pattern: cppcheck-SWD-042.xml
-         ↓        ↓
+         ↑        ↑
        Tool    Req ID
 ```
 
 **Examples:**
-- `cppcheck-SWD-042.xml` (code analysis)
+- `cppcheck-SWD-042.xml` (code analysis for SWD)
+- `cppcheck-SWD-998.xml` (motor speed driver analysis)
 - `cppcheck-report.txt` (human-readable summary)
 
 ### Coverage
+
 ```
-Pattern: coverage.xml (overall)
-         or: temperature-B.lcov (module-specific)
+Pattern: coverage-SWD-042.xml (overall)
+         or: coverage-SWD-998.xml (requirement-specific)
 ```
 
----
-
-## How It Works
-
-### 1. GitHub Actions Runs
+### 1. GitHub Actions Generates Artifacts
 
 When you create a PR, GitHub automatically:
 
 ```bash
-# Run tests
-pytest tests/ --junit-xml=artifacts/verification/tests/pytest-results.xml
+# Run tests → generates JUnit XML
+pytest tests/ --junit-xml=artifacts/verification/tests/LLTC-998-junit.xml
 
-# Run analysis
-cppcheck src/ --xml > artifacts/verification/static-analysis/cppcheck-results.xml
+# Run analysis → generates cppcheck XML
+cppcheck src/ --xml > artifacts/verification/static-analysis/cppcheck-SWD-998.xml
 
-# Validate requirements
-trudag manage lint
-trudag score
-trudag publish --output-dir artifacts/trustable-report
+# Measure coverage → generates coverage XML
+gcov src/*.cpp > artifacts/verification/coverage/coverage-SWD-998.xml
 ```
 
-Result: Files appear in `artifacts/verification/`
+**Result:** Artifacts appear in `artifacts/verification/`
 
-### 2. Link in Requirements
-
-Update your requirement file:
+### 2. Link Artifacts in Requirements
 
 ```yaml
 ---
-id: LLTC-042
-header: "Temperature sensor reads valid range"
+id: LLTC-998
+header: "Low-Level Test Cases for Motor Speed"
+text: |
+  "Test cases shall verify RPM calculation, error handling, and range validation."
+
+verification_method: Unit Testing
+
+parents:
+  - id: SWD-998
+
+reviewers:
+  - name: "Test Engineer"
+    email: "test@team.com"
+
+reviewed: '2025-11-05 - Approved by Test Engineer <test@team.com>'
+
+# Link to artifact (only references, NOT evidence)
+references:
+  - type: "file"
+    path: "tests/unit/test_motor_speed.cpp"
+    description: "Test code"
+  - type: "file"
+    path: "artifacts/verification/tests/LLTC-998-junit.xml"
+    description: "Test results: 5/5 PASS"
+
+# ⭐ MANUAL SME SCORE (at LLTC level)
+score:
+  TestEngineer: 0.95
+
+active: true
+derived: false
+normative: true
+level: 4.0
+---
+
+Verifies SWD-998 implementation through unit tests for motor speed functionality.
+```
+
+### 3. Coverage Artifact Linking
+
+```yaml
+---
+id: LLTC-996
+header: "Code Coverage Verification"
+text: |
+  "Unit test coverage for motor speed driver meets project threshold."
+
+verification_method: Coverage analysis
+
+parents:
+  - id: SWD-998
 
 references:
   - type: "file"
-    path: tests/unit/test_temperature.cpp
-  - type: "file"
-    path: artifacts/verification/tests/LLTC-042-junit.xml
+    path: "artifacts/verification/coverage/coverage-SWD-998.xml"
+    description: "Coverage report: 87%"
 
-evidence:
-  type: junit_pass_fail_checker
-  references:
-    - type: "file"
-      path: artifacts/verification/tests/LLTC-042-junit.xml
-
+# ⭐ MANUAL SME SCORE
 score:
-  TestLead: 1.0
+  TestEngineer: 0.87
+
+active: true
+derived: false
+normative: true
+level: 4.0
 ---
+
+Verifies that unit test coverage for the motor speed driver meets the defined project threshold of 80%.
 ```
 
-### 3. Run Trudag
+### 4. Static Analysis Artifact Linking
+
+```yaml
+---
+id: LLTC-997
+header: "Static Analysis Verification (Cppcheck)"
+text: |
+  "The software SHALL pass static analysis (Cppcheck) with zero 'error' severity findings."
+
+verification_method: Static Analysis
+
+parents:
+  - id: SWD-998
+
+references:
+  - type: "file"
+    path: "artifacts/verification/static-analysis/cppcheck-SWD-998.xml"
+    description: "Static analysis report: 0 errors"
+
+# ⭐ MANUAL SME SCORE
+score:
+  QAEngineer: 1.0
+
+active: true
+derived: false
+normative: true
+level: 4.0
+---
+
+Verifies SWD-998 implementation against static analysis rules.
+```
+
+### 5. Run Trudag Commands
 
 ```bash
-trudag manage lint    # Validates syntax
-trudag score          # Calculates scores from evidence
-trudag publish        # Generates reports
-```
+# Step 1: Validate syntax
+trudag manage lint
 
+# Step 2: Calculate scores (UPWARD from LLTC to parents)
+trudag score
+
+# Step 3: Generate report
+trudag publish --output-dir artifacts/trustable-report
+
+# Step 4: Verify output
+cat artifacts/trustable-report/dashboard.md
+```
 ---
 
 ## .gitignore
 
 ```
 # Commit these (evidence & reports)
-!artifacts/verification/
+!artifacts/verification/tests/
+!artifacts/verification/static-analysis/
+!artifacts/verification/coverage/
 !artifacts/trustable-report/
 
 # Don't commit (regenerated each time)
 artifacts/traceability/
 artifacts/reports/
+*.tmp
 ```
 
 ---
 
-## Workflow Flow
+## Workflow: End-to-End
 
 ```
-Code → Commit → Push to PR
-            ↓
-GitHub Actions runs (auto)
-  ├─ Tests: generates pytest-results.xml
-  ├─ Analysis: generates cppcheck-results.xml
-  ├─ Coverage: generates coverage.xml
-            ↓
-You link artifacts in requirements
-  ├─ Add references: blocks
-  ├─ Add evidence: blocks
-  ├─ Add score: blocks
-            ↓
+Code written → Commit → Push to PR
+           ↓
+GitHub Actions runs automatically:
+  ├─ Tests: generates LLTC-998-junit.xml
+  ├─ Analysis: generates cppcheck-SWD-998.xml
+  ├─ Coverage: generates coverage-SWD-998.xml
+           ↓
+You link artifacts in requirements:
+  ├─ Add references: blocks (ONLY)
+  ├─ Add score: at LLTC level
+  └─ NO evidence: blocks
+           ↓
 Run trudag lint
-            ↓
+  └─ Validates syntax
+           ↓
 Run trudag score
-            ↓
+  └─ Propagates scores UPWARD from LLTC
+           ↓
 Run trudag publish
-            ↓
-Commit requirements
-            ↓
+  └─ Generates trustable-report/dashboard.md
+           ↓
+Commit requirements + artifacts
+           ↓
 PR → Review → Merge ✅
-            ↓
+           ↓
 Artifacts stored in Git forever
 ```
 
 ---
 
-## Examples
+## Motor Speed Sensor (SWD-998) Example
 
-### Example 1: Link Test Results
+### Artifacts Generated
+
+```
+artifacts/verification/tests/
+  └─ LLTC-998-junit.xml         (5/5 tests PASS)
+
+artifacts/verification/static-analysis/
+  └─ cppcheck-SWD-998.xml       (0 errors)
+
+artifacts/verification/coverage/
+  └─ coverage-SWD-998.xml       (87% coverage)
+
+artifacts/trustable-report/
+  └─ dashboard.md               (full report)
+```
+
+### SWD-998 Requirements File
 
 ```yaml
 ---
-id: LLTC-042
+id: SWD-998
+header: "Motor speed sensor driver implementation"
+text: |
+  "The motor speed sensor driver SHALL:
+   • Read GPIO pin 17 pulse train at 1Hz minimum
+   • Convert pulses to RPM using formula: RPM = (pulses / 60)
+   • Validate range 0-10000 RPM
+   • Detect and report errors within 1 second
+   • Output RPM value via CAN bus"
 
+ASIL: "A"
+verification_method: "Unit Testing, Static Analysis, Code Review"
+
+parents:
+  - id: SRD-998
+
+children:
+  - id: LLTC-998    # Tests
+  - id: LLTC-996    # Coverage
+  - id: LLTC-997    # Static Analysis
+
+reviewers:
+  - name: "Carol Dev"
+    email: "carol@team.com"
+
+reviewed: '2025-11-05 - Approved by Carol Dev <carol@team.com>'
+
+# Link to all artifacts (only references, NO evidence blocks)
 references:
   - type: "file"
-    path: artifacts/verification/tests/LLTC-042-junit.xml
+    path: "src/sensors/motor_speed.cpp"
+    description: "Implementation (90 LOC)"
+  - type: "file"
+    path: "src/sensors/motor_speed.h"
+    description: "Header declarations"
+  - type: "file"
+    path: "tests/unit/test_motor_speed.cpp"
+    description: "5 unit tests"
+  - type: "file"
+    path: "artifacts/verification/tests/LLTC-998-junit.xml"
+    description: "Test results: 5/5 PASS"
+  - type: "file"
+    path: "artifacts/verification/static-analysis/cppcheck-SWD-998.xml"
+    description: "Analysis: 0 errors"
+  - type: "file"
+    path: "artifacts/verification/coverage/coverage-SWD-998.xml"
+    description: "Coverage: 87%"
+  - type: "file"
+    path: "docs/design/architecture/motor_system_architecture.md"
+    description: "System architecture"
+  - type: "file"
+    path: "docs/design/interfaces/gpio_sensor_interface.md"
+    description: "GPIO interface spec"
+  - type: "file"
+    path: "docs/standards/iso26262/hara-motor-speed.md"
+    description: "HARA: ASIL A determination"
+  - type: "file"
+    path: "docs/standards/iso26262/asil-justification-SWD-998.md"
+    description: "ASIL A justification"
 
-score:
-  TestLead: 1.0
+active: true
+derived: false
+normative: true
+level: 3.0
 ---
+
+Motor speed sensor driver implementation with GPIO pulse reading, RPM conversion, range validation, and error handling. Meets ASIL A requirements for safety-critical lab testing.
 ```
 
-### Example 2: Link Code Analysis
+### LLTC-998 Scoring
 
 ```yaml
 ---
-id: SWD-042
+id: LLTC-998
+# ... (see section above)
 
 references:
   - type: "file"
-    path: src/sensors/temperature.cpp
+    path: "tests/unit/test_motor_speed.cpp"
   - type: "file"
-    path: artifacts/verification/static-analysis/cppcheck-SWD-042.xml
+    path: "artifacts/verification/tests/LLTC-998-junit.xml"
 
-evidence:
-  type: cppcheck_error_validator
-  references:
-    - type: "file"
-      path: artifacts/verification/static-analysis/cppcheck-SWD-042.xml
-  configuration:
-    fail_on_severity: ["error"]
-
+# ⭐ SCORE AT LLTC LEVEL
 score:
-  CodeReviewer: 0.9
+  TestEngineer: 0.95
+
+# Rationale: 5/5 tests pass, comprehensive test cases
+# (normal, boundaries, errors), all scenarios covered
 ---
 ```
-
-### Example 3: Multiple Evidence
-
-```yaml
----
-id: SRD-015
-
-references:
-  - type: "file"
-    path: docs/design/system.md
-  - type: "file"
-    path: src/sensors/temperature.cpp
-  - type: "file"
-    path: artifacts/verification/tests/LLTC-042-junit.xml
-  - type: "file"
-    path: artifacts/verification/coverage/coverage.xml
-
-score:
-  SystemArchitect: 0.85
-  TestLead: 0.9
----
-```
-
----
-
-## Best Practices
-
-1. **Name by requirement ID** → `LLTC-042-junit.xml` ✅
-2. **Use standard formats** → JUnit XML, Cobertura XML ✅
-3. **Commit artifacts** → Part of git history ✅
-4. **Link early** → As you develop ✅
-5. **Update after changes** → Re-run CI if code changes ✅
-
----
-
-## Troubleshooting
-
-### Artifacts not generated?
-```bash
-# Check directories exist
-ls -la src/
-ls -la tests/
-
-# Run manually
-pytest tests/ --junit-xml=artifacts/verification/tests/test.xml
-cppcheck src/ --xml > artifacts/verification/static-analysis/report.xml
-```
-
-### Broken paths in references?
-```bash
-# Verify path exists (from repo root)
-ls -la artifacts/verification/tests/LLTC-042-junit.xml
-
-# Correct format: artifacts/verification/tests/LLTC-042-junit.xml
-# Wrong format: /artifacts/... or ../artifacts/...
-```
-
-### Git showing artifacts as modified?
-```bash
-# This is expected! Commit them:
-git add artifacts/verification/
-git commit -m "ci: Update TSF artifacts"
-```
-
----
 
 ## Related Documentation
 
 - **Evidence Linking:** See `docs/tsf/evidence.md`
+- **ASIL Guidance:** See `docs/tsf/asil_hara_guide.md`
 - **TSF Commands:** See `docs/tsf/reference.md`
-- **GitHub Workflow:** See `.github/workflows/tsf-validation.yml`
+- **Lab 2 Hands-On:** See `docs/tsf/hands-on_lab_2.md`

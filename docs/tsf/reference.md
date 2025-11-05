@@ -40,16 +40,27 @@ trudag manage create-item LLTC 010 reqs/lltc
 ## 🔗 Link Requirements (Traceability)
 
 ```bash
-# Link child → parent (ALWAYS upward in V-Model)
-trudag manage create-link <CHILD> <PARENT>
+# Link parent → child (ALWAYS upward in V-Model)
+trudag manage create-link <PARENT> <CHILD>
 
 # Examples (bottom-up):
-trudag manage create-link SRD-010 URD-010    # System → User
-trudag manage create-link SWD-010 SRD-010    # Software → System
-trudag manage create-link LLTC-010 SWD-010   # Test → Software
+trudag manage create-link URD-010 SRD-010    # User → System
+trudag manage create-link SRD-010 SWD-010    # System → Software
+trudag manage create-link SWD-010 LLTC-010   # Software → Test
 ```
 
 ---
+## Remove Links
+
+```bash
+# Remove link parent → child
+trudag manage remove-link <PARENT> <CHILD>
+# Examples:
+trudag manage remove-link URD-010 SRD-010
+trudag manage remove-link SRD-010 SWD-010
+trudag manage remove-link SWD-010 LLTC-010
+```
+
 
 ## Check Syntax & Integrity
 
@@ -89,7 +100,7 @@ Check reqs/templates/ for full examples.
 | `header:` | ✓ | ✓ | ✓ | ✓ |
 | `text:` | ✓ | ✓ | ✓ | ✓ |
 | `references:` | ✓ | ✓ | ✓ | ✓ |
-| `score:` | ✓ | ✗ | ✗ | ✗ |
+| `score:` | ✗ | ✗ | ✗ | ✓ |
 | `ASIL:` | ✗ | ✗ | ✓ | ✗ |
 | `parents:` | ✗ | ✓ | ✓ | ✓ |
 | `children:` | ✓ | ✓ | ✓ | ✗ |
@@ -143,36 +154,29 @@ LLTC (Tests)    ← Level 4.0 (Evidence/Premise)
 
 ## 💯 Scoring Quick Reference
 
-### Manual SME Scoring (URD ONLY)
+### Manual SME Scoring (LLTC level)
 
 ```yaml
 ---
-id: URD-010
-header: "Motor speed monitoring"
+id: LLTC-010
+header: "Motor speed monitoring test cases"
 text: |
-  "Operators need to monitor motor speed..."
-
-references:
-  - type: "file"
-    path: docs/user_needs_analysis.md
-
-# ✓ ONLY at URD level
+  "Tests to verify motor speed monitoring functionality."
 score:
-  ProductOwner: 0.95      # User need is definitely necessary
-  LabManager: 0.92        # Confirmed by operational data
+  TestEngineer: 0. ninety five5  # SME confidence score (1.0=certain true, 0.5=unc
 ---
 ```
 
 ### Score Propagation (Automatic)
 
 ```
-URD-010: score: 0.95
-   ↓ (trudag automatically propagates)
+URD-010: (NO score) → inherits 0.95
+   ↑
 SRD-010: (NO score) → inherits 0.95
-   ↓
+   ↑
 SWD-010: (NO score) → inherits 0.95
-   ↓
-LLTC-010: (NO score) → inherits 0.95
+   ↑ (trudag automatically propagates)
+LLTC-010: score: 0.95
 ```
 
 ### Score Meaning
@@ -187,7 +191,7 @@ LLTC-010: (NO score) → inherits 0.95
 
 ---
 
-## 📦 Evidence Linking (references: only)
+## 📦 Evidence Linking
 
 **Use `references:`:**
 
@@ -243,7 +247,7 @@ head -40 reqs/swd/SWD-010.md
 # Create parent first
 trudag manage create-item SRD 010 reqs/srd
 # Then link
-trudag manage create-link SWD-010 SRD-010
+trudag manage create-link SRD-010 SWD-010
 ```
 
 **"Score is 0.0 unexpectedly"**

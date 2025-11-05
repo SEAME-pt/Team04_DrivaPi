@@ -46,9 +46,9 @@ LLTC (Tests)               ← HOW to verify
 
 | Type | Links | Example |
 |------|-------|---------|
-| **Expectation** | Has children, no parents | URD (top) |
-| **Assertion** | Has children AND parents | SRD, SWD (middle) |
-| **Premise** | Has parents, no children | LLTC (bottom) |
+| **Expectation** | a request | URD (top) |
+| **Assertion** | a request or a claim | SRD, SWD (middle) |
+| **Evidence** | a premise supported by artifacts | LLTC (bottom) |
 
 **Golden rule:** Child links TO PARENT (bottom-up)
 
@@ -136,23 +136,6 @@ The system should read temperature quickly.
 
 ---
 
-## 📋 Acceptance Criteria (GIVEN-WHEN-THEN)
-
-Makes requirements testable:
-
-```markdown
-acceptance:
-  - GIVEN: Sensor connected at 0x48
-    WHEN: readTemperature() called
-    THEN: Returns temperature ±0.5°C in <10ms
-
-  - GIVEN: Sensor disconnected
-    WHEN: readTemperature() called
-    THEN: Returns error and logs message
-```
-
----
-
 ## 🔗 Traceability (Why Link?)
 
 ### Benefits
@@ -166,18 +149,18 @@ acceptance:
 
 ```
 LLTC-042 (temp sensor test)
-   ↑ proves
+   ↓ proves
 SWD-042 (TempSensor class)
-   ↑ implements
+   ↓ implements
 SRD-015 (system reads temp)
-   ↑ satisfies
+   ↓ satisfies
 URD-001 (user sees temp)
 ```
 
 **In trudag:**
 ```bash
-trudag manage create-link SWD-042 SRD-015
-trudag manage create-link LLTC-042 SWD-042
+trudag manage create-link SRD-015 SWD-042
+trudag manage create-link SWD-042 LLTC-042
 ```
 
 ---
