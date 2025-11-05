@@ -1,39 +1,29 @@
 ---
-id: URD-998
-header: "Motor speed monitoring system"
-text: |
-  "The DrivaPi system shall provide motor speed monitoring and display
-  to enable operators to monitor motor performance during test operations."
+id: LLTC-998
+header: Low-Level Test Cases for Motor Speed
+text: '"Test cases shall verify RPM calculation, error handling, and range validation."
 
-# TSF Type: Expectation (A Request, but not a Claim)
+  '
+  # TSF Type: A Premise
 
-verification_method: "Analysis and Testing"
-
-# Links: Connects to child Assertion
-children:
-  - id: SRD-998
-
+verification_method: Unit Testing
+parents:
+- id: SWD-998
 reviewers:
-  - name: "Product Owner"
-    email: "po@team.com"
-  - name: "Safety Engineer"
-    email: "safety@team.com"
-
+- name: Test Engineer
+  email: test@team.com
 reviewed: ''  # Manually fill on PR approval (YYYY-MM-DD - Approved by Name <email>)
-
-# Evidence Linking
 references:
-  - type: "file"
-    path: "docs/requirements/user_needs_analysis.md"
-    description: "User requirements analysis"
-  - type: "file"
-    path: "docs/standards/iso26262/hara-motor-speed.md"
-    description: "HARA analysis"
+- type: file
+  path: tests/unit/test_motor_speed.cpp
+  description: Test code
+- type: file
+  path: artifacts/verification/tests/LLTC-998-junit.xml
+  description: Test results
 
 active: true
 derived: false
 normative: true
-level: 1.0  # 1.0=URD, 2.0=SRD, 3.0=SWD, 4.0=LLTC
+level: 4.0
 ---
-
-Operators need to monitor motor speed during test operations to ensure tests run within acceptable performance ranges and to detect anomalies.
+Verifies SWD-998 implementation through unit tests for motor speed functionality.

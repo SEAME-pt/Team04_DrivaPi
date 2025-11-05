@@ -11,7 +11,7 @@ parents:
 reviewers:
 - name: Test Engineer
   email: test@team.com
-reviewed: 2025-11-04 - Approved by Test Engineer <test@team.com>
+reviewed: ''  # Manually fill on PR approval (YYYY-MM-DD - Approved by Name <email>)
 references:
 - type: file
   path: artifacts/verification/coverage/coverage-SWD-998.xml
