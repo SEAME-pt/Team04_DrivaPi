@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=61.2", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Team04-DrivaPi"
+version = "1.0.0"
+description = "DrivaPi TSF Implementation"
+
+[project.entry-points."trustable.validator.plugins"]
+junit_pass_rate_validator = "dotstop_extensions.validators:junit_pass_rate_validator"
+cppcheck_error_validator = "dotstop_extensions.validators:cppcheck_error_validator"
+coverage_threshold_validator = "dotstop_extensions.validators:coverage_threshold_validator"
