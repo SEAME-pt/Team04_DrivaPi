@@ -2,7 +2,6 @@
 id: LLTC-998
 header: Low-Level Test Cases for Motor Speed
 text: '"Test cases shall verify RPM calculation, error handling, and range validation."
-
   '
   # TSF Type: A Premise
 
@@ -27,5 +26,7 @@ active: true
 derived: false
 normative: true
 level: 4.0
+score:
+  Hugo Lopes: 0.69
 ---
 Verifies SWD-998 implementation through unit tests for motor speed functionality.

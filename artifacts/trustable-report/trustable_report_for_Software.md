@@ -25,32 +25,34 @@ The contribution to the score of a parent item by a suspiciously linked child is
 
 | Item {style="width:10%"} | Summary {style="width:60%"} | Score {style="width:5%"} | Status {style="width:25%"} |
 | ----- | ----- | ----- | ----- |
-| [LLTC-000](LLTC.md#lltc-000) {class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"} | This shall be a test requirement for LLTC template. | 0.00 | ☑ Item Reviewed<br>☑ Children linked<br> |
+| [LLTC-996](LLTC.md#lltc-996) {class="tsf-score" style="background-color:hsl(1.2, 100%, 64%)"} | Verifies that unit test coverage for the motor speed driver meets the defined project threshold of 80%. | 0.01 | :material-check: Item Reviewed<br>:material-check: Children linked<br> |
+| [LLTC-997](LLTC.md#lltc-997) {class="tsf-score" style="background-color:hsl(114.0, 100%, 31%)"} | Verifies SWD-998 implementation against static analysis rules. | 0.95 | :material-check: Item Reviewed<br>:material-check: Children linked<br> |
+| [LLTC-998](LLTC.md#lltc-998) {class="tsf-score" style="background-color:hsl(82.8, 100%, 40%)"} | Verifies SWD-998 implementation through unit tests for motor speed functionality. | 0.69 | :material-check: Item Reviewed<br>:material-check: Children linked<br> |
 
 ## Compliance for SRD
 
 | Item {style="width:10%"} | Summary {style="width:60%"} | Score {style="width:5%"} | Status {style="width:25%"} |
 | ----- | ----- | ----- | ----- |
-| [SRD-000](SRD.md#srd-000) {class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"} | This shall be a test requirement for SRD template. | 0.00 | ☑ Item Reviewed<br>☑ Children linked<br> |
+| [SRD-998](SRD.md#srd-998) {class="tsf-score" style="background-color:hsl(65.99999999999999, 100%, 45%)"} | The motor speed sensing subsystem shall provide real-time RPM measurements using a GPIO-connected tachometer sensor to support operator monitoring and test validation. | 0.55 | :material-check: Item Reviewed<br>:material-check: Children linked<br> |
 
 ## Compliance for SWD
 
 | Item {style="width:10%"} | Summary {style="width:60%"} | Score {style="width:5%"} | Status {style="width:25%"} |
 | ----- | ----- | ----- | ----- |
-| [SWD-000](SWD.md#swd-000) {class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"} | This shall be a test requirement for SWD template. | 0.00 | ☑ Item Reviewed<br>☑ Children linked<br> |
+| [SWD-998](SWD.md#swd-998) {class="tsf-score" style="background-color:hsl(65.99999999999999, 100%, 45%)"} | ## Software Design Requirement Statement | 0.55 | :material-check: Item Reviewed<br>:material-check: Children linked<br> |
 
 ## Compliance for URD
 
 | Item {style="width:10%"} | Summary {style="width:60%"} | Score {style="width:5%"} | Status {style="width:25%"} |
 | ----- | ----- | ----- | ----- |
-| [URD-000](URD.md#urd-000) {class="tsf-score" style="background-color:hsl(0.0, 100%, 65%)"} | This shall be a test requirement for URD template. | 0.00 | ☑ Item Reviewed<br>☑ Children linked<br> |
+| [URD-998](URD.md#urd-998) {class="tsf-score" style="background-color:hsl(65.99999999999999, 100%, 45%)"} | Operators need to monitor motor speed during test operations to ensure tests run within acceptable performance ranges and to detect anomalies. | 0.55 | :material-check: Item Reviewed<br>:material-check: Children linked<br> |
 
 
 ---
 
 _Generated for: Software_
 
-* _Repository root: /Users/melaniereis/Documents/GitHub/Team04_DrivaPi_
-* _Commit SHA: 920aeaba194ed52fd90a933354d89923e6f99412_
-* _Commit date/time: 2025-10-23 17:14:14 UTC_
-* _Commit tag: BASELINE-SWD-V1.0-122-g920aeab_
+* _Repository root: /home/hugofslopes/seame/Team04_DrivaPi_
+* _Commit SHA: cc0fa61de26df4ea28943f2e77dedda6843460ef_
+* _Commit date/time: 1762959217_
+* _Commit tag: cc0fa61_

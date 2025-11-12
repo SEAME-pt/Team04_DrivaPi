@@ -1,4 +1,4 @@
-# HARA: Motor Speed Sensor
+
 
 **Date:** 2025-11-12 | **Authors/Reviewers:** Miguel/Gaspar | **ASIL Target:** QM
 

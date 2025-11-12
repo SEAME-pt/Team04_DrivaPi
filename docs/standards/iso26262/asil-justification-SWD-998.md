@@ -1,4 +1,5 @@
 # ASIL Justification: SWD-998
+**Date:** 2025-11-12 | **Author/Reviewer:** Bernardo Esteves/Hugo Lopes | **ASIL:** QM
 
 **Date:** 2025-11-12 | **Author/Reviewer:** Miguel/Gaspar | **ASIL Target:** QM
 

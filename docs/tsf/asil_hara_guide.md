@@ -1,6 +1,6 @@
 # ASIL Determination & HARA Documentation Guide - DrivaPi
 
-**Date:** October 30, 2025 | **Updated:** November 3, 2025
+**Date:** October 30, 2025
 
 -----
 

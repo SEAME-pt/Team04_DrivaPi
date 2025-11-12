@@ -72,10 +72,23 @@ cat artifacts/verification/tests/LLTC-998-junit.xml
 cat artifacts/verification/static-analysis/cppcheck-SWD-998.xml
 cat artifacts/verification/coverage/coverage-SWD-998.xml
 
+# Check requirements
+cat reqs/urd/URD-998.md
+cat reqs/srd/SRD-998.md
+cat reqs/swd/SWD-998.md
+cat reqs/lltc/LLTC-998.md
+cat reqs/lltc/LLTC-997.md
+cat reqs/lltc/LLTC-996.md
+
 trudag manage lint
 ```
 
 Note: For this exercise it is not important to understand the code in detail—focus on how it meets requirements. The goal is to write SWD-998 based on this implementation and link the artifacts.
+
+## Quick context — the problem we're solving
+The project provides a working motor-speed monitoring feature (implementation, unit tests, static analysis and coverage results exist and pass), but the software requirement and safety justification are incomplete. Concretely: URD-998 and SRD-998 describe the need and GPIO interface, LLTC tests show the code works (5/5 tests, 0 cppcheck errors, 87% coverage), yet SWD-998 (the software design requirement) is empty and the HARA / ASIL justification documents are not filled.
+
+Goal for the lab: produce a complete, normative SWD-998 (GPIO details, RPM algorithm, ranges, error handling, ASIL), write the HARA and ASIL-justification documents that justify the ASIL assignment, and then record SME scores at the LLTC level so the safety traceability chain is complete.
 
 ---
 

@@ -23,5 +23,7 @@ active: true
 derived: false
 normative: true
 level: 4.0
+score:
+  Hugo Lopes: 0.01
 ---
 Verifies that unit test coverage for the motor speed driver meets the defined project threshold of 80%.

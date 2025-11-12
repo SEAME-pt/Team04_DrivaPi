@@ -25,5 +25,7 @@ active: true
 derived: false
 normative: true
 level: 4.0
+score:
+  Hugo Lopes: 0.95
 ---
 Verifies SWD-998 implementation against static analysis rules.
