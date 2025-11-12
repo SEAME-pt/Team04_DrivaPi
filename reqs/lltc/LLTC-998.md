@@ -9,9 +9,9 @@ verification_method: Unit Testing
 parents:
 - id: SWD-998
 reviewers:
-- name: Hugo Lopes
-  email: hugo.lopes@seame.pt
-reviewed: '2025-11-12 - Approved by Hugo Lopes hugo.lopes@seame.pt' 
+- name: Gaspar
+  email: joao.gaspar@seame.pt
+reviewed: '2025-11-12 - Approved by Gaspar joao.gaspar@seame.pt'
 references:
 - type: file
   path: tests/unit/test_motor_speed.cpp
@@ -20,6 +20,8 @@ references:
   path: artifacts/verification/tests/LLTC-998-junit.xml
   description: Test results
 
+score:
+  Gaspar: 0.95
 active: true
 derived: false
 normative: true

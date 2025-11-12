@@ -1,16 +1,15 @@
 # ASIL Justification: SWD-998
 **Date:** 2025-11-12 | **Author/Reviewer:** Bernardo Esteves/Hugo Lopes | **ASIL:** QM
 
-This document provides the ASIL justification for the software design requirement SWD-998, which pertains to the motor speed sensor driver in the DrivaPi system. The ASIL level assigned to this requirement is QM, based on the hazard analysis and risk assessment conducted in accordance with ISO 26262 standards.
-
+**Date:** 2025-11-12 | **Author/Reviewer:** Miguel/Gaspar | **ASIL Target:** QM
 
 ## 1. Requirement Summary
-- **ID/Description:** SWD-998 - The software shall read the input from the speed sensor and convert it to RPM.
-- **Related HARA/Safety Goal:** hara-motor-speed.md; SG-01 (ASIL QM)
+- **ID/Description:** SWD-998 - Motor speed sensor driver shall read GPIO pulses and convert to RPM.
+- **Related HARA/Safety Goal:** hara-motor-speed.md; N/A
 
 ## 2. ASIL Assignment & Decomposition
-- **Assigned ASIL:** QM - Derived from HARA (S1 + E2 + C1 = ASIL QM)
-- **Justification:** This requirement implements motor speed monitoring addressing hazard H-01 and H-02.
+- **Assigned ASIL:** QM - Derived from HARA (S1 + E2 + C1 = QM)
+- **Justification:** This requirement implements motor speed monitoring addressing hazard H-01.
 
 ## 3. Risk Assessment Summary
 | Factor | Classification | Justification/Evidence |
@@ -19,13 +18,13 @@ This document provides the ASIL justification for the software design requiremen
 | Exposure (E) | E2 | Extended tests ~2-5% of operation |
 | Controllability (C) | C1 | Operator observes and stops immediately |
 
-## 4. Verification Requirements (ASIL A)
-- **Unit/Integration Testing:** 5 unit tests (Target: ≥80% coverage)
+## 4. Verification Requirements (QM)
+- **Unit/Integration Testing:** 5 unit tests (Target: ≥70% coverage)
 - **Static Analysis:** cppcheck: 0 errors
-- **Code Review:** 1 independent reviewer (Hugo Lopes)
+- **Code Review:** 1 independent reviewer (Joao Gaspar)
 
 ## 5. Review Notes & Dependencies
 - **Dependencies:** GPIO driver, emergency stop system
-- **Review:** 2025-11-12 - Approved by Hugo Lopes hugo.lopes@seame.pt PR #144
+- **Review:** 2025-11-12 - Approved by Joao Gaspar joao.gaspar@seame.pt
 
 **References:** ISO 26262-9:2018

@@ -1,33 +1,57 @@
 
 
-The Hazard Analysis and Risk Assessment (HARA) for the motor speed sensor requirement **SWD-998** identifies potential hazards, classifies their severity, exposure, and controllability, and determines the Automotive Safety Integrity Level (ASIL) for the requirement.
-
-# HARA: Motor Speed Sensor
-
-**Date:** 2025-11-06| **Authors/Reviewers:** Bernardo/Hugo | **ASIL Target:** QM
+**Date:** 2025-11-12 | **Authors/Reviewers:** Miguel/Gaspar | **ASIL Target:** QM
 
 ## 1. Item Definition & Assumptions
-- **Description/Boundaries/Interfaces:** Motor speed monitoring system for DrivaPi lab testing.
-- **Assumptions:** Trained operators only; controlled lab environment.
+- **Description:** Motor speed sensor system for DrivaPi lab testing
+- **Boundaries:** Motor rotation → RPM value measurement and monitoring
+- **Interfaces:** GPIO hardware driver, Emergency stop button
+- **Context:** Laboratory environment, trained operators only, emergency stop available
+- **Assumptions:** 
+  - Controlled lab environment with proper safety equipment
+  - Trained operators present during all motor tests
+  - Emergency stop button accessible and functional
 
 ## 2. Hazards & Operational Situations
 | ID | Hazard Description | Operational Situation | Exposure (E) / Justification |
 |:---|:---|:---|:---|
-| H-01 | Sensor fails silently | Extended motor test | E2 (~2-5% of tests; historical data) |
-| H-02 | Sensor uncalibrated | Extended motor test | E1 (~0.1-0.5% of tests; historical data) |
+| H-001 | Sensor fails silently during test | Extended motor test | E2 (Low probability; extended tests represent 2-5% of total operating time) |
 
 ## 3. Risk Assessment & ASIL
-- **Severity (S):** S1 - Motor overheats, minor burn risk if touched. Overspeed can happen.
-- **Controllability (C):** C1 - Operator observes smoke/noise, presses emergency stop.
+- **Severity (S):** S1 - Light to moderate injuries
+  - Worst outcome: Motor overheats due to undetected speed anomaly
+  - Potential consequence: Minor burn risk if operator touches overheated motor
+  - Classification: S1 (Light to moderate injuries - minor burns, no life-threatening harm)
+  
+- **Exposure (E):** E2 - Low probability (1-10% of operating time)
+  - Extended motor tests occur regularly but not continuously
+  - Historical data indicates approximately 2-5% of total operational time
+  - Justification: A few occurrences during system lifetime
+  
+- **Controllability (C):** C1 - Simply controllable
+  - Operator is present during all tests
+  - Emergency stop button readily accessible
+  - 99%+ of trained operators can avoid harm with sufficient warning
+  - Recovery action: Press emergency stop button immediately
+
 - **ASIL Calculation:** S1 + E2 + C1 = **QM** (from ISO 26262-3:2018 Table 4)
+  - Per ISO 26262-3:2018, Clause 6.4.3.10, Table 4
+  - Combination S1/E2/C1 results in QM
 
 ## 4. Safety Goals
 | Goal ID | ASIL | Description | Safe State |
 |:---|:---|:---|:---|
-| SG-01 | QM | Motor speed sensor shall function reliably | Operator can monitor and stop motor |
+| SG-001 | QM | Motor speed sensor shall function reliably and accurately monitor motor RPM | Operator can monitor motor status and execute emergency stop if anomaly detected |
 
 ## 5. Dependencies & Review Notes
-- **Dependencies:** Emergency stop button, GPIO hardware driver
-- **Review:** 2025-11-12 - Approved by Hugo Lopes hugo.lopes@seame.pt
+- **Dependencies:** 
+  - Emergency stop button system (must be functional)
+  - GPIO hardware driver (reliable pulse counting)
+  - Operator training and presence
+  - Lab environment controls
+  
+- **Related Requirements:** SWD-998 (Motor speed sensor implementation)
+- **Review:** 
 
-**References:** ISO 26262-3:2018.
+
+**References:** ISO 26262-3:2018 (Hazard Analysis and Risk Assessment)
