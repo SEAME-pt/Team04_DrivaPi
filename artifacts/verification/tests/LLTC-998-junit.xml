@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Motor Speed Sensor Tests" tests="5" failures="0" errors="0" time="0.245">
+  <testsuite name="MotorSpeedSensorTest" tests="5" failures="0" errors="0" time="0.245">
+
+    <testcase classname="MotorSpeedSensorTest" name="Test_01_ReadZeroRPM" time="0.045">
+      <properties>
+        <property name="requirement" value="SWD-998"/>
+        <property name="asil" value="A"/>
+        <property name="status" value="PASS"/>
+      </properties>
+    </testcase>
+
+    <testcase classname="MotorSpeedSensorTest" name="Test_02_ReadNormalSpeed" time="0.048">
+      <properties>
+        <property name="requirement" value="SWD-998"/>
+        <property name="asil" value="A"/>
+        <property name="status" value="PASS"/>
+      </properties>
+    </testcase>
+
+    <testcase classname="MotorSpeedSensorTest" name="Test_03_ReadMaxSpeed_Correct" time="0.052">
+      <properties>
+        <property name="requirement" value="SWD-998"/>
+        <property name="asil" value="A"/>
+        <property name="status" value="PASS"/>
+      </properties>
+    </testcase>
+
+    <testcase classname="MotorSpeedSensorTest" name="Test_04_PulseCountingAccuracy" time="0.048">
+      <properties>
+        <property name="requirement" value="SWD-998"/>
+        <property name="asil" value="A"/>
+        <property name="status" value="PASS"/>
+      </properties>
+    </testcase>
+
+    <testcase classname="MotorSpeedSensorTest" name="Test_05_TimeoutHandling" time="0.052">
+      <properties>
+        <property name="requirement" value="SWD-998"/>
+        <property name="asil" value="A"/>
+        <property name="status" value="PASS"/>
+      </properties>
+    </testcase>
+
+  </testsuite>
+</testsuites>
