@@ -104,7 +104,7 @@ Example using Copilot CLI Delegation:
 
 ```bash
 copilot /delegate Break this task into 3 sub-issues with titles, descriptions, and acceptance criteria, and generate the 'gh issue create' commands for each.
-``` 
+```
 
 The CLI will return the generated commands for review. After your confirmation, the Issues will be created and properly formatted according to the generated output.
 
@@ -120,7 +120,7 @@ The CLI will return the generated commands for review. After your confirmation, 
 - Use Copilot to draft release notes from merged PRs or commit messages.
 - Example prompt: "Summarize the following merged PRs into a short release note format, grouped by type: features, fixes, docs."
 
-## 6) Drafting Daily Logs and Summaries
+## 6) Drafting Daily Logs and Summaries & Assigning a Issue and PR
 Focus: Automating the final assembly and formatting of the daily progress report using the existing `daily-log-template.md`. This saves time and ensures structural consistency.
 
 - Gather Raw Notes: During or immediately after the daily sync, collect all unformatted progress notes. This input should be simple and structured by person/topic (e.g., "Bernardo: connected CAN bus. Melanie: finished HARA doc. Hugo: ThreadX problem persists.").
@@ -129,7 +129,13 @@ Focus: Automating the final assembly and formatting of the daily progress report
 
 ```bash
 Prompt (Copilot Chat): "Take the following raw notes: [Paste ALL Raw Notes]. Now, strictly format this information into the structure of our daily-log-template.md, ensuring all sections are filled and progress is correctly marked (✅ / 🔄)."
-``` 
+```
+
+- Then, we have to create a sub-issue on the already existing issue called Daily-Log. It should be associated with a pull request, with the name format "docs/#XXX-daily-dd-mm-yyyy".
+
+```bash
+Prompt (Copilot Chat): "Create a sub-issue for the existing parent issue called Daily-Log #[NUMBER], and it should be linked in the Relationships tab. It should be associated with a pull request, which you must create too, with the name format "docs/daily-dd-mm-yyyy" and the existing "documentation" label, then format it according to our pull_request_template.md file and adjusted with the relevant information for today. Also strictly format the sub-issue description into the structure of our sub_issue_template.md file, adding the existing "documentation" label and also the "task" type. Tick the boxes that apply to this daily log and add the relevant information. To finalize, assign the project contributor [REVIEWER NAME] to this Pull Request as a reviewer, and put myself on the task assignees."
+```
 
 
 ## Sample prompts (short)
@@ -153,14 +159,14 @@ Prompt (Copilot Chat): "Take the following raw notes: [Paste ALL Raw Notes]. Now
 - Add PR checklist items that require humans to verify critical things (security, safety, compliance).
 
 ## Example day-to-day flow (summary)
-1. Create branch. 
-2. Implement code with Copilot assistance. 
-3. Ask Copilot for commit message. 
-4. Commit & push. 
+1. Create branch.
+2. Implement code with Copilot assistance.
+3. Ask Copilot for commit message.
+4. Commit & push.
 5. Ask Copilot to populate the existing PR template (or generate text that matches its sections) and save to `.github/pr_body_*.md` or paste directly into the PR body.
-6. Use `gh pr create --body-file` or the web UI to open the PR. 
-7. Create child sub-issues if needed. 
-8. Use Copilot Chat `/review` to pre-review. 
+6. Use `gh pr create --body-file` or the web UI to open the PR.
+7. Create child sub-issues if needed.
+8. Use Copilot Chat `/review` to pre-review.
 9. Run CI and request reviewers.
 
 ---
