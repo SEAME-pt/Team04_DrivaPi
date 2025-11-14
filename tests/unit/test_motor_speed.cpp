@@ -1,14 +1,13 @@
 /**
  * @file test_motor_speed.cpp
  * @brief Unit tests for MotorSpeedSensor
- * @version 1.1 (Corrected)
+ * @version 1.2 (Corrected)
  * @date 2025-11-14
  *
  * Changes:
- * - Includes the REAL "motor_speed.h" and "gpio_interface.h".
- * - MockGPIO now implements the IGpioDriver interface.
- * - The MotorSpeedSensor class definition has been REMOVED from this file.
- * - Tests now instantiate the REAL MotorSpeedSensor and inject the MockGPIO.
+ * - Corrected C++ syntax error in Test_04_PulseCountingAccuracy.
+ * - Array 'test_cases' is now correctly defined as a 2D array.
+ * - Array indices are now correctly used for 'set_pulse_count' and 'ASSERT_EQ'.
  */
 
 #include <gtest/gtest.h>
