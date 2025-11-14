@@ -46,7 +46,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # Needed for gcovr
 
       - name: Ensure artifact directories exist
         run: |
@@ -68,7 +68,7 @@ jobs:
           # libgtest-dev provides sources in /usr/src/gtest; build static libs and move them to /usr/lib
           if [ -d /usr/src/gtest ]; then
             cd /usr/src/gtest
-            sudo cmake .
+            sudo cmake.
             sudo make -j$(nproc)
             sudo mv libgtest*.a /usr/lib/ || true
             cd -
@@ -87,15 +87,20 @@ jobs:
           TEST_FILE="${{ inputs.test_src }}"
           echo "test_file=${TEST_FILE}" >> $GITHUB_OUTPUT
 
-          if [ ! -f "${TEST_FILE}" ]; then
+          if; then
+            echo "::error::Test file not found: ${TEST_FILE}"
             echo "compile_tests=false" >> $GITHUB_OUTPUT
-            echo "warning: test file not found: ${TEST_FILE}" >&2
-            exit 0
+            exit 1 # Fail if test file is missing
           fi
 
+          # If test file contains "class MotorSpeedSensor", it's a mock-in-test
+          # (This is the *wrong* way, but we must detect it)
+          # A *correct* test file (like the one provided) will NOT match this.
           if grep -E "class[[:space:]]+MotorSpeedSensor" -q "${TEST_FILE}"; then
+            echo "::warning::Test file contains its own class definition. Compiling test-only."
             echo "test_compile_mode=test-only" >> $GITHUB_OUTPUT
           else
+            # This is the correct mode: test file includes headers, links against src
             echo "test_compile_mode=test-with-src" >> $GITHUB_OUTPUT
           fi
           echo "compile_tests=true" >> $GITHUB_OUTPUT
@@ -112,30 +117,31 @@ jobs:
           MODE="${{ steps.compile-plan.outputs.test_compile_mode }}"
           echo "Compilation mode: ${MODE}"
 
-          if [ "${MODE}" = "test-only" ]; then
+          # Add include path for src/
+          INCLUDE_PATH="-I."
+
+          if; then
             g++ -std=c++17 -O0 -g --coverage \
-              -I. \
+              ${INCLUDE_PATH} \
               "${TEST_FILE}" \
               -lgtest -lgtest_main -pthread \
               -o "${BUILD_DIR}/motor_speed_test"
           else
             SRC_FILES=$(find "${{ inputs.src_dirs }}" -name "*.cpp" -print | tr '\n' ' ')
-            if [ -z "$SRC_FILES" ]; then
-              echo "No src .cpp files found under '${{ inputs.src_dirs }}' - compiling test-only"
-              g++ -std=c++17 -O0 -g --coverage \
-                -I. "${TEST_FILE}" -lgtest -lgtest_main -pthread \
-                -o "${BUILD_DIR}/motor_speed_test"
+            if; then
+              echo "::error::No src.cpp files found under '${{ inputs.src_dirs }}'"
+              exit 1
             else
               echo "Compiling test with sources: $SRC_FILES"
               g++ -std=c++17 -O0 -g --coverage \
-                -I. ${TEST_FILE} ${SRC_FILES} \
+                ${INCLUDE_PATH} ${TEST_FILE} ${SRC_FILES} \
                 -lgtest -lgtest_main -pthread \
                 -o "${BUILD_DIR}/motor_speed_test"
             fi
           fi
 
           echo "Built binary: ${BUILD_DIR}/motor_speed_test"
-          ls -l "${BUILD_DIR}/motor_speed_test" || true
+          ls -l "${BUILD_DIR}/motor_speed_test"
 
       - name: Run tests -> produce JUnit XML
         id: run-tests
@@ -145,21 +151,16 @@ jobs:
           JUNIT="${{ inputs.junit_output }}"
           mkdir -p "$(dirname "${JUNIT}")"
 
-          if [ -x "${BIN}" ]; then
+          if; then
             echo "Running test binary: ${BIN}"
-            # run but don't fail workflow on test failures; still want artifacts
-            "${BIN}" --gtest_output=xml:"${JUNIT}" || true
+            # CRITICAL: Removed '|| true'. If tests fail, the workflow MUST fail.
+            "${BIN}" --gtest_output=xml:"${JUNIT}"
             echo "JUnit XML written to ${JUNIT}"
           else
-            echo "Test binary not found (${BIN})."
-            if [ -f "artifacts/verification/tests/LLTC-998-junit.xml" ]; then
-              echo "Copying committed JUnit fixture to ${JUNIT}"
-              cp artifacts/verification/tests/LLTC-998-junit.xml "${JUNIT}"
-            else
-              echo "No JUnit available; writing minimal testsuites"
-              echo '<testsuites></testsuites>' > "${JUNIT}"
-            fi
+            echo "::error::Test binary not found (${BIN}). Build failed."
+            exit 1
           fi
+          # CRITICAL: Removed 'else' block that copied stale artifacts.
 
       - name: Generate coverage XML (gcovr)
         id: coverage
@@ -171,17 +172,20 @@ jobs:
 
           if command -v gcovr >/dev/null 2>&1; then
             echo "Running gcovr..."
-            gcovr -r . --object-directory="${BUILD_DIR}" --xml -o "${COVERAGE_PATH}" || true
+            # CRITICAL: Removed '|| true'.
+            # Added filter to only report on 'src' directory.
+            gcovr -r. --object-directory="${BUILD_DIR}" \
+              --filter "${{ inputs.src_dirs }}/.*" \
+              --xml -o "${COVERAGE_PATH}"
+          else
+            echo "::error::gcovr command not found."
+            exit 1
           fi
 
-          if [ ! -s "${COVERAGE_PATH}" ]; then
-            if [ -f "artifacts/verification/coverage/coverage-SWD-998.xml" ]; then
-              echo "Copying committed coverage artifact to ${COVERAGE_PATH}"
-              cp artifacts/verification/coverage/coverage-SWD-998.xml "${COVERAGE_PATH}"
-            else
-              echo "No coverage xml available; writing minimal coverage tag"
-              echo '<?xml version="1.0"?><coverage></coverage>' > "${COVERAGE_PATH}"
-            fi
+          # CRITICAL: Removed check and copy of stale artifact.
+          if; then
+             echo "::error::Coverage XML was not generated or is empty."
+             exit 1
           fi
           echo "Coverage XML at: ${COVERAGE_PATH}"
 
@@ -194,16 +198,16 @@ jobs:
 
           if [ -d "${{ inputs.src_dirs }}" ]; then
             echo "Running cppcheck on '${{ inputs.src_dirs }}' -> ${CPPCHECK_PATH}"
-            cppcheck --enable=all --suppress=missingIncludeSystem --xml --xml-version=2 "${{ inputs.src_dirs }}" 2> "${CPPCHECK_PATH}" || true
+            # CRITICAL: Removed '--suppress=missingIncludeSystem'
+            # CRITICAL: Removed '|| true'.
+            # Added --error-exitcode=1 to fail on errors
+            cppcheck --enable=all --error-exitcode=1 --xml --xml-version=2 \
+              "${{ inputs.src_dirs }}" 2> "${CPPCHECK_PATH}"
           else
-            echo "Source dir '${{ inputs.src_dirs }}' not found"
-            if [ -f "artifacts/verification/static-analysis/cppcheck-SWD-998.xml" ]; then
-              echo "Copying committed cppcheck artifact to ${CPPCHECK_PATH}"
-              cp artifacts/verification/static-analysis/cppcheck-SWD-998.xml "${CPPCHECK_PATH}"
-            else
-              echo '<?xml version="1.0"?><results version="2"><errors/></results>' > "${CPPCHECK_PATH}"
-            fi
+            echo "::error::Source dir '${{ inputs.src_dirs }}' not found."
+            exit 1
           fi
+          # CRITICAL: Removed 'else' block that copied stale artifacts.
 
       - name: Validate and list artifacts
         id: validate
@@ -213,7 +217,7 @@ jobs:
           echo " - JUnit:    ${{ inputs.junit_output }} -> $( [ -f '${{ inputs.junit_output }}' ] && echo yes || echo no )"
           echo " - Coverage: ${{ inputs.coverage_output }} -> $( [ -f '${{ inputs.coverage_output }}' ] && echo yes || echo no )"
           echo " - Cppcheck: ${{ inputs.cppcheck_output }} -> $( [ -f '${{ inputs.cppcheck_output }}' ] && echo yes || echo no )"
-          find artifacts -maxdepth 3 -type f -print || true
+          find artifacts -maxdepth 3 -type f -print
           echo "all_valid=true" >> $GITHUB_OUTPUT
 
       - name: Set outputs

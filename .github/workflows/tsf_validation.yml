@@ -43,19 +43,20 @@ jobs:
           set -euo pipefail
           python -m pip install --upgrade pip setuptools wheel
           if [ -f "pyproject.toml" ] || [ -f "setup.py" ]; then
-            pip install -e .
+            pip install -e.
           fi
           pip install pytest pytest-cov pyyaml gcovr
 
           git clone https://gitlab.com/CodethinkLabs/trustable/trustable.git /tmp/trustable
           cd /tmp/trustable
-          git checkout v2025.09.16 || true
-          pip install .
+          # CRITICAL: Removed '|| true'. If this tag doesn't exist, the build MUST fail.
+          git checkout v2025.09.16
+          pip install.
           cd -
 
       - name: Run trudag lint (optional)
         id: trudag_lint
-        continue-on-error: true
+        continue-on-error: true # Linting is allowed to be optional
         run: |
           set -euo pipefail
           mkdir -p artifacts/trustable-report
@@ -64,7 +65,8 @@ jobs:
 
       - name: Calculate TSF scores (use local tools/tsf_collect.py if present)
         id: score
-        continue-on-error: true
+        # CRITICAL: Removed 'continue-on-error: true'.
+        # If scoring fails, the workflow MUST fail.
         run: |
           set -euo pipefail
           mkdir -p artifacts/trustable-report
@@ -77,21 +79,29 @@ jobs:
           else
             echo "Local tsf_collect not found — using trudag score"
             trudag score 2>&1 | tee artifacts/trustable-report/trudag-score.txt
-            SCORE_EXIT=${PIPESTATUS[0]}
+            SCORE_EXIT=${PIPESTATUS}
             if [ -f artifacts/trustable-report/trudag-score.txt ]; then
               cp artifacts/trustable-report/trudag-score.txt artifacts/trustable-report/tsf_score.txt || true
             fi
           fi
 
           echo "score_exit_code=${SCORE_EXIT}" >> $GITHUB_OUTPUT
-          if [ "${SCORE_EXIT}" != "0" ]; then
+          # This check is good, as 'set -euo pipefail' will catch the non-zero exit
+          if; then
             echo "::error::Score calculation returned non-zero (${SCORE_EXIT})"
             exit 1
           fi
 
+          # ADDED: Basic Quality Gate - check that the score file exists
+          if [! -s "artifacts/trustable-report/tsf_score.txt" ]; then
+            echo "::error::TSF score file not found or is empty!"
+            exit 1
+          fi
+          echo "TSF score generated successfully."
+
       - name: Generate trustable publish (optional)
         id: publish
-        continue-on-error: true
+        continue-on-error: true # Publishing is allowed to be optional
         run: |
           set -euo pipefail
           mkdir -p artifacts/trustable-report
@@ -99,14 +109,14 @@ jobs:
 
       - name: Upload TSF validation artifacts
         uses: actions/upload-artifact@v4
-        if: always()
+        if: always() # Upload artifacts even on failure for debugging
         with:
           name: tsf-validation-artifacts
           path: artifacts/
           retention-days: 30
 
       - name: Display summary
-        if: always()
+        if: always() # Show summary even on failure
         run: |
           echo "=== TSF Validation Summary ==="
           echo "Artifacts:"
