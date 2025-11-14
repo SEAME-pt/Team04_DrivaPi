@@ -12,8 +12,8 @@
  */
 
 #include <gtest/gtest.h>
-#include "src/sensors/motor_speed.h"     // Include the REAL class header
-#include "src/sensors/gpio_interface.h" // Include the interface
+#include "../../src/sensors/motor_speed.h"     // Include the REAL class header
+#include "../../src/sensors/gpio_interface.h" // Include the interface
 
 // Mock GPIO driver that implements the interface
 class MockGPIO : public IGpioDriver {
