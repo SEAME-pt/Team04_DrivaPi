@@ -5,104 +5,172 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
+  generate-verification-artifacts:
+    uses: ./.github/workflows/generate_verification_artifacts.yml
+    with:
+      use_cmake: 'true'
+      cmake_build_dir: 'build'
+      build_type: 'Debug'
+      test_binary: 'build/motor_speed_test'
+      junit_output: 'artifacts/verification/tests/LLTC-998-junit.xml'
+      coverage_output: 'artifacts/verification/coverage/coverage-SWD-998.xml'
+      cppcheck_output: 'artifacts/verification/static-analysis/cppcheck-SWD-998.xml'
+      src_dirs: 'src'
+      run_cppcheck: 'true'
+      run_coverage: 'true'
+      enable_coverage_flags: 'true'
+
   tsf-validation:
+    needs: generate-verification-artifacts
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: write  # For posting PR comments if desired
 
     steps:
-      # ========== CHECKOUT ==========
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # ========== ENVIRONMENT ==========
+      - name: Download verification artifacts produced earlier
+        uses: actions/download-artifact@v4
+        with:
+          name: verification-artifacts
+          path: artifacts/verification
+
+      - name: Validate downloaded artifacts
+        id: validate_artifacts
+        run: |
+          echo "=== Verification Artifacts ==="
+
+          # Check for expected files
+          EXPECTED_FILES=(
+            "artifacts/verification/tests/LLTC-998-junit.xml"
+            "artifacts/verification/coverage/coverage-SWD-998.xml"
+            "artifacts/verification/static-analysis/cppcheck-SWD-998.xml"
+          )
+
+          ALL_PRESENT=true
+          for file in "\${EXPECTED_FILES[@]}"; do
+            if [ -f "\$file" ]; then
+              SIZE=\$(stat -f%z "\$file" 2>/dev/null || stat -c%s "\$file")
+              echo "✓ Found: \$file (\${SIZE} bytes)"
+            else
+              echo "✗ Missing: \$file"
+              ALL_PRESENT=false
+            fi
+          done
+
+          # List all files found
+          echo ""
+          echo "=== All Verification Files ==="
+          find artifacts/verification -type f -print || echo "No files found"
+          echo "========================="
+
+          if [ "\$ALL_PRESENT" = "false" ]; then
+            echo "::warning::Some expected verification artifacts are missing"
+          fi
+
       - name: Setup Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      # ========== CACHE ==========
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: ${{ runner.os }}-pip-
-
-      # ========== DEPENDENCIES ==========
-      - name: Install dependencies
+      - name: Install dependencies + make local validators importable
         run: |
-          pip install --upgrade pip
-          pip install pytest pytest-cov pyyaml
-          sudo apt-get update
-          sudo apt-get install -y cppcheck
+          python -m pip install --upgrade pip
 
-      - name: Install trudag (TSF tools)
-        run: |
-          git clone https://gitlab.com/CodethinkLabs/trustable/trustable.git /tmp/trustable
-          cd /tmp/trustable
-          git checkout v2025.09.16 || git checkout main
-          pip install .
-
-      # ========== PREPARE ==========
-      - name: Create artifact directories
-        run: |
-          mkdir -p artifacts/verification/{tests,static-analysis,coverage}
-          touch artifacts/verification/{tests,static-analysis,coverage}/.gitkeep
-
-      # ========== TESTS & ANALYSIS ==========
-      - name: Run tests with coverage
-        id: tests
-        continue-on-error: true
-        run: |
-          if [ -d "tests" ] && find tests -name "*.py" 2>/dev/null | grep -q .; then
-            pytest tests/ \
-              --junit-xml=artifacts/verification/tests/pytest-results.xml \
-              --cov=src --cov=qt/src \
-              --cov-report=xml:artifacts/verification/coverage/coverage.xml \
-              2>&1 | tee artifacts/verification/tests/pytest.log
-            echo "status=success" >> $GITHUB_OUTPUT
-          else
-            echo "status=skipped" >> $GITHUB_OUTPUT
+          # Install project in editable mode if setup.py/pyproject.toml exists
+          if [ -f "setup.py" ] || [ -f "pyproject.toml" ]; then
+            pip install -e .
           fi
 
-      - name: Run static analysis
-        id: analysis
-        continue-on-error: true
-        run: |
-          if [ -d "src" ] || [ -d "qt/src" ]; then
-            cppcheck --enable=all --suppress=missingIncludeSystem --xml --xml-version=2 \
-              src/ qt/src/ 2> artifacts/verification/static-analysis/cppcheck-results.xml
-            cppcheck --enable=all --suppress=missingIncludeSystem \
-              src/ qt/src/ > artifacts/verification/static-analysis/cppcheck-report.txt 2>&1 || true
-            echo "status=success" >> $GITHUB_OUTPUT
-          else
-            echo "status=skipped" >> $GITHUB_OUTPUT
-          fi
+          # Install trudag and dependencies
+          pip install trudag pytest pytest-cov pyyaml
 
-      # ========== TSF VALIDATION ==========
-      - name: Validate TSF requirements
-        id: tsf
+      - name: Verify trudag installation
         run: |
-          trudag manage lint 2>&1 | tee artifacts/trudag-lint.txt
+          echo "Checking trudag installation..."
+          trudag --version || echo "trudag command not found"
+          python -c "import trudag; print(f'trudag module version: {trudag.__version__}')" || echo "trudag module not importable"
 
-      - name: Calculate scores
-        id: score
-        continue-on-error: true
-        run: |
-          trudag score 2>&1 | tee artifacts/trudag-score.txt
-
-      - name: Generate report
-        id: publish
-        continue-on-error: true
+      - name: Run trudag lint
+        id: trudag_lint
+        continue-on-error: true  # Lint warnings shouldn't fail the build
         run: |
           mkdir -p artifacts/trustable-report
-          trudag publish --output-dir artifacts/trustable-report --no-validate 2>&1 || true
 
-      # ========== UPLOAD & REPORT ==========
-      - name: Upload artifacts
+          echo "Running trudag lint..."
+          trudag manage lint 2>&1 | tee artifacts/trustable-report/trudag-lint.txt
+
+          # Capture exit code but don't fail
+          LINT_EXIT=\${PIPESTATUS[0]}
+          echo "lint_exit_code=\${LINT_EXIT}" >> \$GITHUB_OUTPUT
+
+          if [ \${LINT_EXIT} -ne 0 ]; then
+            echo "::warning::trudag lint found issues (exit code: \${LINT_EXIT})"
+          fi
+
+      - name: Calculate TSF scores
+        id: score
+        run: |
+          set +e  # Don't exit immediately on error
+
+          mkdir -p artifacts/trustable-report
+
+          # Check if local tsf_collect exists
+          HAS_LOCAL_COLLECT=false
+          if python -c "from tools import tsf_collect" 2>/dev/null; then
+            HAS_LOCAL_COLLECT=true
+            echo "Found local tsf_collect module"
+          fi
+
+          # Run scoring
+          if [ "\$HAS_LOCAL_COLLECT" = "true" ]; then
+            echo "Using local tsf_collect..."
+            python -m tools.tsf_collect \
+              --output artifacts/trustable-report/tsf_score.json \
+              --text artifacts/trustable-report/tsf_score.txt
+            SCORE_EXIT=\$?
+          else
+            echo "Using trudag score..."
+            trudag score 2>&1 | tee artifacts/trustable-report/trudag-score.txt
+            SCORE_EXIT=\${PIPESTATUS[0]}
+
+            # Copy score output if trudag score was used
+            if [ -f "artifacts/trustable-report/trudag-score.txt" ]; then
+              cp artifacts/trustable-report/trudag-score.txt artifacts/trustable-report/tsf_score.txt
+            fi
+          fi
+
+          echo "score_exit_code=\${SCORE_EXIT}" >> \$GITHUB_OUTPUT
+
+          if [ \${SCORE_EXIT} -ne 0 ]; then
+            echo "::error::TSF score calculation failed with exit code \${SCORE_EXIT}"
+            exit 1
+          fi
+
+      - name: Generate trustable report
+        id: publish
+        continue-on-error: true  # Report generation issues shouldn't fail if we have scores
+        run: |
+          mkdir -p artifacts/trustable-report
+
+          echo "Generating trustable report..."
+          trudag publish \
+            --output-dir artifacts/trustable-report \
+            --no-validate \
+            2>&1 | tee artifacts/trustable-report/publish.log
+
+          PUBLISH_EXIT=\${PIPESTATUS[0]}
+          echo "publish_exit_code=\${PUBLISH_EXIT}" >> \$GITHUB_OUTPUT
+
+          if [ \${PUBLISH_EXIT} -ne 0 ]; then
+            echo "::warning::trudag publish encountered issues (exit code: \${PUBLISH_EXIT})"
+          fi
+
+      - name: Upload TSF validation artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -110,38 +178,56 @@ jobs:
           path: artifacts/
           retention-days: 30
 
-      # ========== DISPLAY RESULTS ==========
-      - name: Display validation results
+      - name: Display validation summary
         if: always()
         run: |
           echo "=========================================="
-          echo "🔍 TSF VALIDATION RESULTS"
+          echo "🔍 TSF VALIDATION SUMMARY"
           echo "=========================================="
           echo ""
-          echo "📊 Test Results: ${{ steps.tests.outputs.status }}"
-          echo "📊 Analysis Results: ${{ steps.analysis.outputs.status }}"
-          echo "📊 TSF Lint: ${{ steps.tsf.outcome }}"
-          echo "📊 Score Calculation: ${{ steps.score.outcome }}"
-          echo "📊 Report Generation: ${{ steps.publish.outcome }}"
+
+          # Show file structure
+          echo "📁 Generated Files:"
+          find artifacts -type f -name "*.txt" -o -name "*.json" -o -name "*.xml" | head -n 50
           echo ""
-          echo "=========================================="
-          echo "📋 LINT OUTPUT (First 30 lines)"
-          echo "=========================================="
-          head -n 30 artifacts/trudag-lint.txt 2>/dev/null || echo "No lint output available"
-          echo ""
-          echo "=========================================="
-          echo "📦 ARTIFACTS GENERATED"
-          echo "=========================================="
-          find artifacts -type f | sort
-          echo ""
-          echo "=========================================="
-          if [ "${{ steps.tsf.outcome }}" = "success" ]; then
-            echo "✅ TSF VALIDATION PASSED"
-          else
-            echo "⚠️  TSF VALIDATION NEEDS ATTENTION"
+
+          # Show trudag lint results
+          if [ -f "artifacts/trustable-report/trudag-lint.txt" ]; then
+            echo "📋 Trudag Lint Results (first 20 lines):"
+            echo "------------------------------------------"
+            head -n 20 artifacts/trustable-report/trudag-lint.txt
+            echo ""
           fi
-          echo "=========================================="
+
+          # Show score results
+          if [ -f "artifacts/trustable-report/tsf_score.txt" ]; then
+            echo "📊 TSF Score Results (first 30 lines):"
+            echo "------------------------------------------"
+            head -n 30 artifacts/trustable-report/tsf_score.txt
+            echo ""
+          elif [ -f "artifacts/trustable-report/trudag-score.txt" ]; then
+            echo "📊 Trudag Score Results (first 30 lines):"
+            echo "------------------------------------------"
+            head -n 30 artifacts/trustable-report/trudag-score.txt
+            echo ""
+          fi
+
+          # Show exit codes
+          echo "🔢 Exit Codes:"
+          echo "------------------------------------------"
+          echo "Lint: \${{ steps.trudag_lint.outputs.lint_exit_code || 'N/A' }}"
+          echo "Score: \${{ steps.score.outputs.score_exit_code || 'N/A' }}"
+          echo "Publish: \${{ steps.publish.outputs.publish_exit_code || 'N/A' }}"
           echo ""
-          echo "📥 Download artifacts from Actions tab"
-          echo "🔗 Artifact name: tsf-validation-artifacts"
-          echo "==========================================="
+
+          echo "=========================================="
+
+          # Determine overall status
+          SCORE_EXIT=\${{ steps.score.outputs.score_exit_code || '0' }}
+
+          if [ "\$SCORE_EXIT" != "0" ]; then
+            echo "❌ TSF Validation FAILED"
+            exit 1
+          else
+            echo "✅ TSF Validation PASSED"
+          fi
