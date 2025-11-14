@@ -1,64 +1,76 @@
-# .github/workflows/generate_verification_artifacts.yml
-
+# Reusable workflow that builds the project, runs tests, coverage and cppcheck
+# Trigger: called via workflow_call (used as a reusable workflow)
 on:
   workflow_call:
     inputs:
       use_cmake:
-        description: 'Use CMake to build (true/false)'
+        type: boolean
+        description: "Use CMake to build (true/false)"
         required: false
-        default: 'true'
+        default: true
       cmake_build_dir:
-        description: 'CMake build directory'
+        type: string
+        description: "CMake build directory"
         required: false
-        default: 'build'
+        default: "build"
       build_type:
-        description: 'CMake build type (use Coverage for coverage builds)'
+        type: string
+        description: "CMake build type (use Coverage for coverage builds)"
         required: false
-        default: 'Debug'
+        default: "Debug"
       build_cmd:
-        description: 'Fallback build command if not using CMake (shell command)'
+        type: string
+        description: "Fallback build command if not using CMake (shell command)"
         required: false
-        default: ''
+        default: ""
       test_binary:
-        description: 'Path to gtest binary to run (relative to repo root)'
+        type: string
+        description: "Path to gtest binary to run (relative to repo root)"
         required: false
-        default: 'build/motor_speed_test'
+        default: "build/motor_speed_test"
       junit_output:
-        description: 'Path to write JUnit xml'
+        type: string
+        description: "Path to write JUnit xml"
         required: false
-        default: 'artifacts/verification/tests/LLTC-998-junit.xml'
+        default: "artifacts/verification/tests/LLTC-998-junit.xml"
       coverage_output:
-        description: 'Path to write coverage xml (gcovr/cobertura)'
+        type: string
+        description: "Path to write coverage xml (gcovr/cobertura)"
         required: false
-        default: 'artifacts/verification/coverage/coverage-SWD-998.xml'
+        default: "artifacts/verification/coverage/coverage-SWD-998.xml"
       cppcheck_output:
-        description: 'Path to write cppcheck xml'
+        type: string
+        description: "Path to write cppcheck xml"
         required: false
-        default: 'artifacts/verification/static-analysis/cppcheck-SWD-998.xml'
+        default: "artifacts/verification/static-analysis/cppcheck-SWD-998.xml"
       src_dirs:
-        description: 'Source directories or globs to analyze with cppcheck'
+        type: string
+        description: "Source directories or globs to analyze with cppcheck"
         required: false
-        default: 'src'
+        default: "src"
       run_cppcheck:
-        description: 'Run cppcheck (true/false)'
+        type: boolean
+        description: "Run cppcheck (true/false)"
         required: false
-        default: 'true'
+        default: true
       run_coverage:
-        description: 'Run coverage (true/false)'
+        type: boolean
+        description: "Run coverage (true/false)"
         required: false
-        default: 'true'
+        default: true
       enable_coverage_flags:
-        description: 'Add coverage compilation flags (true/false)'
+        type: boolean
+        description: "Add coverage compilation flags (true/false)"
         required: false
-        default: 'true'
+        default: true
 
 jobs:
   generate-artifacts:
     runs-on: ubuntu-latest
     outputs:
-      junit_path: \${{ steps.set_outputs.outputs.junit_path }}
-      coverage_path: \${{ steps.set_outputs.outputs.coverage_path }}
-      cppcheck_path: \${{ steps.set_outputs.outputs.cppcheck_path }}
+      junit_path: ${{ steps.set_outputs.outputs.junit_path }}
+      coverage_path: ${{ steps.set_outputs.outputs.coverage_path }}
+      cppcheck_path: ${{ steps.set_outputs.outputs.cppcheck_path }}
 
     steps:
       - name: Checkout repository
@@ -72,7 +84,7 @@ jobs:
           sudo apt-get install -y build-essential cmake cppcheck
 
       - name: Setup Python tools for coverage
-        if: \${{ inputs.run_coverage == 'true' }}
+        if: ${{ inputs.run_coverage == true }}
         run: |
           python -m pip install --upgrade pip
           pip install gcovr
@@ -86,103 +98,103 @@ jobs:
 
       - name: Build with CMake (with coverage flags if enabled)
         id: build
-        if: \${{ inputs.use_cmake == 'true' }}
+        if: ${{ inputs.use_cmake == true }}
         run: |
           # Determine coverage flags
           COVERAGE_FLAGS=""
-          if [ "\${{ inputs.enable_coverage_flags }}" = "true" ] && [ "\${{ inputs.run_coverage }}" = "true" ]; then
+          if [ "${{ inputs.enable_coverage_flags }}" = "true" ] && [ "${{ inputs.run_coverage }}" = "true" ]; then
             COVERAGE_FLAGS="-DCMAKE_CXX_FLAGS='-g -O0 --coverage' -DCMAKE_C_FLAGS='-g -O0 --coverage' -DCMAKE_EXE_LINKER_FLAGS='--coverage'"
           fi
 
           # Configure and build
-          cmake -S . -B "\${{ inputs.cmake_build_dir }}" \
-            -DCMAKE_BUILD_TYPE="\${{ inputs.build_type }}" \
-            \$COVERAGE_FLAGS
+          cmake -S . -B "${{ inputs.cmake_build_dir }}" \
+            -DCMAKE_BUILD_TYPE="${{ inputs.build_type }}" \
+            $COVERAGE_FLAGS
 
-          cmake --build "\${{ inputs.cmake_build_dir }}" -- -j\$(nproc)
+          cmake --build "${{ inputs.cmake_build_dir }}" -- -j$(nproc)
 
       - name: Build with custom command (fallback)
-        if: \${{ inputs.use_cmake == 'false' && inputs.build_cmd != '' }}
+        if: ${{ inputs.use_cmake == false && inputs.build_cmd != '' }}
         run: |
-          eval "\${{ inputs.build_cmd }}"
+          eval "${{ inputs.build_cmd }}"
 
       - name: Run tests with Google Test and produce JUnit XML
         id: run-tests
         run: |
           set +e  # Don't exit on error, but capture exit code
 
-          JUNIT_PATH="\${{ inputs.junit_output }}"
-          mkdir -p "\$(dirname "\${JUNIT_PATH}")"
+          JUNIT_PATH="${{ inputs.junit_output }}"
+          mkdir -p "$(dirname "${JUNIT_PATH}")"
 
-          TEST_BIN="\${{ inputs.test_binary }}"
+          TEST_BIN="${{ inputs.test_binary }}"
           TEST_EXIT_CODE=0
 
           # Run the Google Test binary with JUnit output
-          if [ -x "\${TEST_BIN}" ]; then
-            echo "Running test binary: \${TEST_BIN}"
-            "\${TEST_BIN}" --gtest_output=xml:"\${JUNIT_PATH}"
-            TEST_EXIT_CODE=\$?
-          elif [ -x "\${{ inputs.cmake_build_dir }}/\${TEST_BIN##*/}" ]; then
+          if [ -x "${TEST_BIN}" ]; then
+            echo "Running test binary: ${TEST_BIN}"
+            "${TEST_BIN}" --gtest_output=xml:"${JUNIT_PATH}"
+            TEST_EXIT_CODE=$?
+          elif [ -x "${{ inputs.cmake_build_dir }}/${TEST_BIN##*/}" ]; then
             echo "Running test binary from build dir"
-            "\${{ inputs.cmake_build_dir }}/\${TEST_BIN##*/}" --gtest_output=xml:"\${JUNIT_PATH}"
-            TEST_EXIT_CODE=\$?
+            "${{ inputs.cmake_build_dir }}/${TEST_BIN##*/}" --gtest_output=xml:"${JUNIT_PATH}"
+            TEST_EXIT_CODE=$?
           else
-            echo "Error: Test binary not found at \${TEST_BIN}"
-            echo "<testsuites><testsuite name='BuildError' tests='1' failures='1'><testcase name='TestBinaryNotFound'><failure>Test binary not found</failure></testcase></testsuite></testsuites>" > "\${JUNIT_PATH}"
+            echo "Error: Test binary not found at ${TEST_BIN}"
+            echo "<testsuites><testsuite name='BuildError' tests='1' failures='1'><testcase name='TestBinaryNotFound'><failure>Test binary not found</failure></testcase></testsuite></testsuites>" > "${JUNIT_PATH}"
             TEST_EXIT_CODE=1
           fi
 
           # Verify JUnit XML was created
-          if [ ! -f "\${JUNIT_PATH}" ]; then
+          if [ ! -f "${JUNIT_PATH}" ]; then
             echo "Warning: JUnit XML was not created"
-            echo "<testsuites></testsuites>" > "\${JUNIT_PATH}"
+            echo "<testsuites></testsuites>" > "${JUNIT_PATH}"
           fi
 
-          echo "Test exit code: \${TEST_EXIT_CODE}"
-          echo "test_exit_code=\${TEST_EXIT_CODE}" >> \$GITHUB_OUTPUT
+          echo "Test exit code: ${TEST_EXIT_CODE}"
+          echo "test_exit_code=${TEST_EXIT_CODE}" >> $GITHUB_OUTPUT
 
           # Don't fail the workflow yet - we want to collect coverage even if tests fail
           exit 0
 
       - name: Generate coverage XML with gcovr
-        if: \${{ inputs.run_coverage == 'true' }}
+        if: ${{ inputs.run_coverage == true }}
         id: coverage
         run: |
-          COVERAGE_PATH="\${{ inputs.coverage_output }}"
-          BUILD_DIR="\${{ inputs.cmake_build_dir }}"
-          mkdir -p "\$(dirname "\${COVERAGE_PATH}")"
+          COVERAGE_PATH="${{ inputs.coverage_output }}"
+          BUILD_DIR="${{ inputs.cmake_build_dir }}"
+          mkdir -p "$(dirname "${COVERAGE_PATH}")"
 
           # Check if coverage data exists
-          GCDA_COUNT=\$(find "\${BUILD_DIR}" -name "*.gcda" 2>/dev/null | wc -l)
-          echo "Found \${GCDA_COUNT} .gcda files"
+          GCDA_COUNT=$(find "${BUILD_DIR}" -name "*.gcda" 2>/dev/null | wc -l)
+          echo "Found ${GCDA_COUNT} .gcda files"
 
-          if [ "\${GCDA_COUNT}" -eq 0 ]; then
+          if [ "${GCDA_COUNT}" -eq 0 ]; then
             echo "Warning: No .gcda files found. Tests may not have run or coverage flags not enabled."
-            echo '<?xml version="1.0"?><coverage line-rate="0.0" branch-rate="0.0" version="1.9"><packages/></coverage>' > "\${COVERAGE_PATH}"
+            echo '<?xml version="1.0"?><coverage line-rate="0.0" branch-rate="0.0" version="1.9"><packages/></coverage>' > "${COVERAGE_PATH}"
           else
             # Run gcovr from the repository root, pointing to build directory for object files
             gcovr -r . \
-              --object-directory="\${BUILD_DIR}" \
+              --object-directory="${BUILD_DIR}" \
               --xml \
               --xml-pretty \
-              --output "\${COVERAGE_PATH}" \
+              --output "${COVERAGE_PATH}" \
               --exclude-unreachable-branches \
               --exclude-throw-branches \
-              || echo '<?xml version="1.0"?><coverage line-rate="0.0" branch-rate="0.0" version="1.9"><packages/></coverage>' > "\${COVERAGE_PATH}"
+              || echo '<?xml version="1.0"?><coverage line-rate="0.0" branch-rate="0.0" version="1.9"><packages/></coverage>' > "${COVERAGE_PATH}"
           fi
 
           # Verify coverage XML was created
-          if [ ! -f "\${COVERAGE_PATH}" ]; then
+          if [ ! -f "${COVERAGE_PATH}" ]; then
             echo "Error: Coverage XML was not created"
-            echo '<?xml version="1.0"?><coverage line-rate="0.0" branch-rate="0.0" version="1.9"><packages/></coverage>' > "\${COVERAGE_PATH}"
+            echo '<?xml version="1.0"?><coverage line-rate="0.0" branch-rate="0.0" version="1.9"><packages/></coverage>' > "${COVERAGE_PATH}"
           fi
 
       - name: Run cppcheck static analysis
-        if: \${{ inputs.run_cppcheck == 'true' }}
+        if: ${{ inputs.run_cppcheck == true }}
         id: cppcheck
         run: |
-          CPPCHECK_PATH="\${{ inputs.cppcheck_output }}"
-          mkdir -p "\$(dirname "\${CPPCHECK_PATH}")"
+          CPPCHECK_PATH="${{ inputs.cppcheck_output }}"
+          mkdir -p "$(dirname "${CPPCHECK_PATH}")"
 
           # Run cppcheck with C++14/17 standard and appropriate checks
           cppcheck \
@@ -192,12 +204,12 @@ jobs:
             --std=c++14 \
             --xml \
             --xml-version=2 \
-            \${{ inputs.src_dirs }} \
-            2> "\${CPPCHECK_PATH}" || true
+            ${{ inputs.src_dirs }} \
+            2> "${CPPCHECK_PATH}" || true
 
           # Verify cppcheck XML was created
-          if [ ! -f "\${CPPCHECK_PATH}" ]; then
-            echo '<?xml version="1.0"?><results version="2"><cppcheck version="2.0"/><errors/></results>' > "\${CPPCHECK_PATH}"
+          if [ ! -f "${CPPCHECK_PATH}" ]; then
+            echo '<?xml version="1.0"?><results version="2"><cppcheck version="2.0"/><errors/></results>' > "${CPPCHECK_PATH}"
           fi
 
       - name: Validate generated artifacts
@@ -205,58 +217,58 @@ jobs:
         run: |
           echo "=== Validating Generated Artifacts ==="
 
-          JUNIT_PATH="\${{ inputs.junit_output }}"
-          COVERAGE_PATH="\${{ inputs.coverage_output }}"
-          CPPCHECK_PATH="\${{ inputs.cppcheck_output }}"
+          JUNIT_PATH="${{ inputs.junit_output }}"
+          COVERAGE_PATH="${{ inputs.coverage_output }}"
+          CPPCHECK_PATH="${{ inputs.cppcheck_output }}"
 
           ALL_VALID=true
 
           # Check JUnit XML
-          if [ -f "\${JUNIT_PATH}" ]; then
-            SIZE=\$(stat -f%z "\${JUNIT_PATH}" 2>/dev/null || stat -c%s "\${JUNIT_PATH}")
-            echo "✓ JUnit XML exists (\${SIZE} bytes): \${JUNIT_PATH}"
+          if [ -f "${JUNIT_PATH}" ]; then
+            SIZE=$(stat -c%s "${JUNIT_PATH}")
+            echo "✓ JUnit XML exists ($${SIZE} bytes): ${JUNIT_PATH}"
             # Basic XML validation
-            if head -1 "\${JUNIT_PATH}" | grep -q "<?xml\|<testsuites"; then
+            if head -1 "${JUNIT_PATH}" | grep -q "<?xml\|<testsuites"; then
               echo "  ✓ Appears to be valid XML"
             else
               echo "  ✗ May not be valid XML"
               ALL_VALID=false
             fi
           else
-            echo "✗ JUnit XML missing: \${JUNIT_PATH}"
+            echo "✗ JUnit XML missing: ${JUNIT_PATH}"
             ALL_VALID=false
           fi
 
           # Check Coverage XML if enabled
-          if [ "\${{ inputs.run_coverage }}" = "true" ]; then
-            if [ -f "\${COVERAGE_PATH}" ]; then
-              SIZE=\$(stat -f%z "\${COVERAGE_PATH}" 2>/dev/null || stat -c%s "\${COVERAGE_PATH}")
-              echo "✓ Coverage XML exists (\${SIZE} bytes): \${COVERAGE_PATH}"
+          if [ "${{ inputs.run_coverage }}" = "true" ]; then
+            if [ -f "${COVERAGE_PATH}" ]; then
+              SIZE=$(stat -c%s "${COVERAGE_PATH}")
+              echo "✓ Coverage XML exists ($${SIZE} bytes): ${COVERAGE_PATH}"
             else
-              echo "✗ Coverage XML missing: \${COVERAGE_PATH}"
+              echo "✗ Coverage XML missing: ${COVERAGE_PATH}"
               ALL_VALID=false
             fi
           fi
 
           # Check Cppcheck XML if enabled
-          if [ "\${{ inputs.run_cppcheck }}" = "true" ]; then
-            if [ -f "\${CPPCHECK_PATH}" ]; then
-              SIZE=\$(stat -f%z "\${CPPCHECK_PATH}" 2>/dev/null || stat -c%s "\${CPPCHECK_PATH}")
-              echo "✓ Cppcheck XML exists (\${SIZE} bytes): \${CPPCHECK_PATH}"
+          if [ "${{ inputs.run_cppcheck }}" = "true" ]; then
+            if [ -f "${CPPCHECK_PATH}" ]; then
+              SIZE=$(stat -c%s "${CPPCHECK_PATH}")
+              echo "✓ Cppcheck XML exists ($${SIZE} bytes): ${CPPCHECK_PATH}"
             else
-              echo "✗ Cppcheck XML missing: \${CPPCHECK_PATH}"
+              echo "✗ Cppcheck XML missing: ${CPPCHECK_PATH}"
               ALL_VALID=false
             fi
           fi
 
-          echo "all_valid=\${ALL_VALID}" >> \$GITHUB_OUTPUT
+          echo "all_valid=${ALL_VALID}" >> $GITHUB_OUTPUT
 
       - name: Set outputs
         id: set_outputs
         run: |
-          echo "junit_path=\${{ inputs.junit_output }}" >> \$GITHUB_OUTPUT
-          echo "coverage_path=\${{ inputs.coverage_output }}" >> \$GITHUB_OUTPUT
-          echo "cppcheck_path=\${{ inputs.cppcheck_output }}" >> \$GITHUB_OUTPUT
+          echo "junit_path=${{ inputs.junit_output }}" >> $GITHUB_OUTPUT
+          echo "coverage_path=${{ inputs.coverage_output }}" >> $GITHUB_OUTPUT
+          echo "cppcheck_path=${{ inputs.cppcheck_output }}" >> $GITHUB_OUTPUT
 
       - name: Upload verification artifacts
         uses: actions/upload-artifact@v4
@@ -269,7 +281,7 @@ jobs:
           retention-days: 30
 
       - name: Fail if tests failed
-        if: \${{ steps.run-tests.outputs.test_exit_code != '0' }}
+        if: ${{ steps.run-tests.outputs.test_exit_code != '0' }}
         run: |
-          echo "Tests failed with exit code \${{ steps.run-tests.outputs.test_exit_code }}"
+          echo "Tests failed with exit code ${{ steps.run-tests.outputs.test_exit_code }}"
           exit 1
