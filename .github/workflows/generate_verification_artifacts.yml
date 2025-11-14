@@ -100,17 +100,33 @@ jobs:
         id: build
         if: ${{ inputs.use_cmake == true }}
         run: |
+          # Locate CMake source directory (where CMakeLists.txt lives). Search up to 4 levels.
+          SRC_DIR="."
+          if [ ! -f "$SRC_DIR/CMakeLists.txt" ]; then
+            FOUND_CMAKE=$(find . -maxdepth 4 -name CMakeLists.txt | head -n 1 || true)
+            if [ -n "$FOUND_CMAKE" ]; then
+              SRC_DIR=$(dirname "$FOUND_CMAKE")
+              echo "Found CMakeLists.txt in: $SRC_DIR"
+            else
+              echo "Error: CMakeLists.txt not found in repository (searched up to 4 levels)."
+              echo "Please set inputs.cmake_build_dir or ensure CMakeLists.txt is present."
+              exit 1
+            fi
+          else
+            echo "Using repository root as CMake source directory"
+          fi
+
           # Configure and build with or without coverage flags to avoid nested-quote issues
           if [ "${{ inputs.enable_coverage_flags }}" = "true" ] && [ "${{ inputs.run_coverage }}" = "true" ]; then
-            echo "Configuring with coverage flags"
-            cmake -S . -B "${{ inputs.cmake_build_dir }}" \
+            echo "Configuring with coverage flags (source: $SRC_DIR)"
+            cmake -S "$SRC_DIR" -B "${{ inputs.cmake_build_dir }}" \
               -DCMAKE_BUILD_TYPE="${{ inputs.build_type }}" \
               -DCMAKE_CXX_FLAGS="-g -O0 --coverage" \
               -DCMAKE_C_FLAGS="-g -O0 --coverage" \
               -DCMAKE_EXE_LINKER_FLAGS="--coverage"
           else
-            echo "Configuring without coverage flags"
-            cmake -S . -B "${{ inputs.cmake_build_dir }}" \
+            echo "Configuring without coverage flags (source: $SRC_DIR)"
+            cmake -S "$SRC_DIR" -B "${{ inputs.cmake_build_dir }}" \
               -DCMAKE_BUILD_TYPE="${{ inputs.build_type }}"
           fi
 
