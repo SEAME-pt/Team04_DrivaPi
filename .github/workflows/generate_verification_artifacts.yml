@@ -57,54 +57,37 @@ jobs:
           mkdir -p artifacts/verification/static-analysis
           mkdir -p artifacts/trustable-report
 
-      - name: Install system packages (g++, google-test build deps, cppcheck)
+      - name: Install system packages (compiler, cppcheck, lcov)
         run: |
           set -euo pipefail
           sudo apt-get update -y
-          sudo apt-get install -y build-essential cmake cppcheck lcov
+          sudo apt-get install -y build-essential cppcheck lcov
 
-      - name: Install python tools (gcovr)
+      - name: Install Python tools (gcovr)
         run: |
           set -euo pipefail
           python -m pip install --upgrade pip
           pip install gcovr
 
-      - name: Decide compilation units (avoid ODR/multiple-defs)
+      - name: Decide compilation mode (avoid ODR/multiple-defs)
         id: compile-plan
         run: |
           set -euo pipefail
           TEST_FILE="${{ inputs.test_src }}"
-          echo "Test file: ${TEST_FILE}"
+          echo "test_file=${TEST_FILE}" >> $GITHUB_OUTPUT
 
           if [ ! -f "${TEST_FILE}" ]; then
-            echo "warning: test file not found: ${TEST_FILE}" >&2
             echo "compile_tests=false" >> $GITHUB_OUTPUT
+            echo "warning: test file not found: ${TEST_FILE}" >&2
             exit 0
           fi
 
-          # If the test file defines a MotorSpeedSensor (or class MotorSpeedSensor), then
-          # build the test file alone (to avoid duplicate definitions with src implementation).
           if grep -E "class[[:space:]]+MotorSpeedSensor" -q "${TEST_FILE}"; then
-            echo "Found class MotorSpeedSensor in test file -> will compile test only"
-            echo "compile_tests=true" >> $GITHUB_OUTPUT
             echo "test_compile_mode=test-only" >> $GITHUB_OUTPUT
           else
-            echo "No MotorSpeedSensor class in test file -> will compile test + src"
-            echo "compile_tests=true" >> $GITHUB_OUTPUT
             echo "test_compile_mode=test-with-src" >> $GITHUB_OUTPUT
           fi
-
-      - name: Build GoogleTest (system lib)
-        if: ${{ always() }}
-        run: |
-          set -euo pipefail
-          # libgtest-dev provides sources; build the static libs and install them
-          sudo apt-get install -y libgtest-dev
-          cd /usr/src/gtest
-          sudo cmake .
-          sudo make
-          sudo mv lib/*.a /usr/lib || true
-          cd -
+          echo "compile_tests=true" >> $GITHUB_OUTPUT
 
       - name: Compile test binary
         if: ${{ steps.compile-plan.outputs.compile_tests == 'true' }}
@@ -115,39 +98,32 @@ jobs:
           mkdir -p "${BUILD_DIR}"
           rm -f "${BUILD_DIR}/motor_speed_test" || true
 
-          echo "Compilation mode: ${{ steps.compile-plan.outputs.test_compile_mode }}"
+          MODE="${{ steps.compile-plan.outputs.test_compile_mode }}"
+          echo "Compilation mode: ${MODE}"
 
-          if [ "${{ steps.compile-plan.outputs.test_compile_mode }}" = "test-only" ]; then
-            # compile only the test file (test contains the implementation / mock)
-            g++ -std=c++17 -O0 -g -fprofile-arcs -ftest-coverage \
+          if [ "${MODE}" = "test-only" ]; then
+            g++ -std=c++17 -O0 -g --coverage \
               -I. \
               "${TEST_FILE}" \
               -lgtest -lgtest_main -pthread \
               -o "${BUILD_DIR}/motor_speed_test"
           else
-            # compile test + src files (so tests exercise the real implementation)
-            # gather source files under inputs.src_dirs
-            SRC_GLOB="${{ inputs.src_dirs }}/**/*.cpp"
-            # find source list (space-separated)
-            SRC_FILES=$(find ${{ inputs.src_dirs }} -name "*.cpp" -print | tr '\n' ' ')
+            SRC_FILES=$(find "${{ inputs.src_dirs }}" -name "*.cpp" -print | tr '\n' ' ')
             if [ -z "$SRC_FILES" ]; then
-              echo "No src .cpp files found under '${{ inputs.src_dirs }}' - fallback to compiling test-only"
-              g++ -std=c++17 -O0 -g -fprofile-arcs -ftest-coverage \
-                -I. \
-                "${TEST_FILE}" \
-                -lgtest -lgtest_main -pthread \
+              echo "No src .cpp files found under '${{ inputs.src_dirs }}' - compiling test-only"
+              g++ -std=c++17 -O0 -g --coverage \
+                -I. "${TEST_FILE}" -lgtest -lgtest_main -pthread \
                 -o "${BUILD_DIR}/motor_speed_test"
             else
               echo "Compiling test with sources: $SRC_FILES"
-              g++ -std=c++17 -O0 -g -fprofile-arcs -ftest-coverage \
-                -I. \
-                ${TEST_FILE} ${SRC_FILES} \
-                -lgtest -lgtest_main -pthread --coverage \
+              g++ -std=c++17 -O0 -g --coverage \
+                -I. ${TEST_FILE} ${SRC_FILES} \
+                -lgtest -lgtest_main -pthread \
                 -o "${BUILD_DIR}/motor_speed_test"
             fi
           fi
 
-          echo "Built: ${BUILD_DIR}/motor_speed_test"
+          echo "Built binary: ${BUILD_DIR}/motor_speed_test"
           ls -l "${BUILD_DIR}/motor_speed_test" || true
 
       - name: Run tests -> produce JUnit XML
@@ -159,44 +135,40 @@ jobs:
           mkdir -p "$(dirname "${JUNIT}")"
 
           if [ -x "${BIN}" ]; then
-            echo "Running tests (binary: ${BIN})"
-            # run but don't fail the job on test failures - we still want artifacts
+            echo "Running test binary: ${BIN}"
+            # run but don't fail workflow on test failures; still want artifacts
             "${BIN}" --gtest_output=xml:"${JUNIT}" || true
-            echo "JUnit written to ${JUNIT}"
+            echo "JUnit XML written to ${JUNIT}"
           else
             echo "Test binary not found (${BIN})."
-            # If repo contains a pre-made junit file, copy it as fallback (no placeholders)
             if [ -f "artifacts/verification/tests/LLTC-998-junit.xml" ]; then
               echo "Copying committed JUnit fixture to ${JUNIT}"
               cp artifacts/verification/tests/LLTC-998-junit.xml "${JUNIT}"
             else
-              echo "No junit available; creating minimal testsuites file"
+              echo "No JUnit available; writing minimal testsuites"
               echo '<testsuites></testsuites>' > "${JUNIT}"
             fi
           fi
 
-      - name: Generate coverage XML (gcovr) -> coverage-SWD-998.xml
+      - name: Generate coverage XML (gcovr)
         id: coverage
         run: |
           set -euo pipefail
           COVERAGE_PATH="${{ inputs.coverage_output }}"
+          BUILD_DIR="${{ inputs.build_dir }}"
           mkdir -p "$(dirname "${COVERAGE_PATH}")"
 
-          # Try to generate with gcovr (requires .gcda files produced by running tests compiled with --coverage)
           if command -v gcovr >/dev/null 2>&1; then
-            echo "Running gcovr to create coverage XML..."
-            # point to build dir for object files
-            gcovr -r . --object-directory="${{ inputs.build_dir }}" --xml -o "${COVERAGE_PATH}" || true
+            echo "Running gcovr..."
+            gcovr -r . --object-directory="${BUILD_DIR}" --xml -o "${COVERAGE_PATH}" || true
           fi
 
-          # If gcovr didn't create a meaningful file, fallback to committed artifact (if present)
           if [ ! -s "${COVERAGE_PATH}" ]; then
-            echo "gcovr did not produce coverage XML or file empty. Checking for committed artifact fallback..."
             if [ -f "artifacts/verification/coverage/coverage-SWD-998.xml" ]; then
               echo "Copying committed coverage artifact to ${COVERAGE_PATH}"
               cp artifacts/verification/coverage/coverage-SWD-998.xml "${COVERAGE_PATH}"
             else
-              echo "No coverage xml available; writing minimal placeholder"
+              echo "No coverage xml available; writing minimal coverage tag"
               echo '<?xml version="1.0"?><coverage></coverage>' > "${COVERAGE_PATH}"
             fi
           fi
@@ -211,8 +183,7 @@ jobs:
 
           if [ -d "${{ inputs.src_dirs }}" ]; then
             echo "Running cppcheck on '${{ inputs.src_dirs }}' -> ${CPPCHECK_PATH}"
-            # cppcheck writes xml to stderr
-            cppcheck --enable=all --suppress=missingIncludeSystem --xml --xml-version=2 ${{ inputs.src_dirs }} 2> "${CPPCHECK_PATH}" || true
+            cppcheck --enable=all --suppress=missingIncludeSystem --xml --xml-version=2 "${{ inputs.src_dirs }}" 2> "${CPPCHECK_PATH}" || true
           else
             echo "Source dir '${{ inputs.src_dirs }}' not found"
             if [ -f "artifacts/verification/static-analysis/cppcheck-SWD-998.xml" ]; then
@@ -223,15 +194,14 @@ jobs:
             fi
           fi
 
-      - name: Validate generated artifacts and list
+      - name: Validate and list artifacts
         id: validate
         run: |
           set -euo pipefail
-          echo "Generated files:"
-          echo "- JUnit:    ${{ inputs.junit_output }} -> exists: $( [ -f '${{ inputs.junit_output }}' ] && echo yes || echo no )"
-          echo "- Coverage: ${{ inputs.coverage_output }} -> exists: $( [ -f '${{ inputs.coverage_output }}' ] && echo yes || echo no )"
-          echo "- Cppcheck: ${{ inputs.cppcheck_output }} -> exists: $( [ -f '${{ inputs.cppcheck_output }}' ] && echo yes || echo no )"
-          echo ""
+          echo "Artifacts:"
+          echo " - JUnit:    ${{ inputs.junit_output }} -> $( [ -f '${{ inputs.junit_output }}' ] && echo yes || echo no )"
+          echo " - Coverage: ${{ inputs.coverage_output }} -> $( [ -f '${{ inputs.coverage_output }}' ] && echo yes || echo no )"
+          echo " - Cppcheck: ${{ inputs.cppcheck_output }} -> $( [ -f '${{ inputs.cppcheck_output }}' ] && echo yes || echo no )"
           find artifacts -maxdepth 3 -type f -print || true
           echo "all_valid=true" >> $GITHUB_OUTPUT
 
