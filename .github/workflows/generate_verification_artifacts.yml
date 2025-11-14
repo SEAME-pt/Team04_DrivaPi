@@ -3,11 +3,6 @@ name: Generate verification artifacts (tests / coverage / cppcheck)
 on:
   workflow_call:
     inputs:
-      test_src:
-        type: string
-        description: "Path to test source file (relative to repo root)"
-        required: false
-        default: "tests/unit/test_motor_speed.cpp"
       src_dirs:
         type: string
         description: "Source directories to include for static analysis / coverage"
@@ -51,28 +46,17 @@ jobs:
       - name: Ensure artifact directories exist
         run: |
           set -euo pipefail
-          mkdir -p artifacts/verification/tests
-          mkdir -p artifacts/verification/coverage
-          mkdir -p artifacts/verification/static-analysis
+          mkdir -p $(dirname "${{ inputs.junit_output }}")
+          mkdir -p $(dirname "${{ inputs.coverage_output }}")
+          mkdir -p $(dirname "${{ inputs.cppcheck_output }}")
           mkdir -p artifacts/trustable-report
 
-      - name: Install system packages (compiler, cppcheck, lcov, libgtest-dev)
+      - name: Install system packages (compiler, cppcheck, lcov)
         run: |
           set -euo pipefail
           sudo apt-get update -y
-          sudo apt-get install -y build-essential cmake cppcheck lcov libgtest-dev
-
-      - name: Build and install GoogleTest static libraries
-        run: |
-          set -euo pipefail
-          # libgtest-dev provides sources in /usr/src/gtest; build static libs and move them to /usr/lib
-          if [ -d /usr/src/gtest ]; then
-            cd /usr/src/gtest
-            sudo cmake.
-            sudo make -j$(nproc)
-            sudo mv libgtest*.a /usr/lib/ || true
-            cd -
-          fi
+          # Note: libgtest-dev is NO LONGER needed, FetchContent handles it.
+          sudo apt-get install -y build-essential cmake cppcheck lcov
 
       - name: Install Python tools (gcovr)
         run: |
@@ -80,87 +64,53 @@ jobs:
           python -m pip install --upgrade pip
           pip install gcovr
 
-      - name: Decide compilation mode (avoid ODR/multiple-defs)
-        id: compile-plan
+      - name: Configure and Build with CMake
         run: |
           set -euo pipefail
-          TEST_FILE="${{ inputs.test_src }}"
-          echo "test_file=${TEST_FILE}" >> $GITHUB_OUTPUT
+          # Configure:
+          # - Set build type to Debug (for coverage)
+          # - Pass coverage flags to C++ compiler
+          cmake -B "${{ inputs.build_dir }}" -S. \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_FLAGS="--coverage"
 
-          if; then
-            echo "::error::Test file not found: ${TEST_FILE}"
-            echo "compile_tests=false" >> $GITHUB_OUTPUT
-            exit 1 # Fail if test file is missing
-          fi
+          # Build:
+          # - This will compile the library and the test executable
+          cmake --build "${{ inputs.build_dir }}"
 
-          # If test file contains "class MotorSpeedSensor", it's a mock-in-test
-          # (This is the *wrong* way, but we must detect it)
-          # A *correct* test file (like the one provided) will NOT match this.
-          if grep -E "class[[:space:]]+MotorSpeedSensor" -q "${TEST_FILE}"; then
-            echo "::warning::Test file contains its own class definition. Compiling test-only."
-            echo "test_compile_mode=test-only" >> $GITHUB_OUTPUT
-          else
-            # This is the correct mode: test file includes headers, links against src
-            echo "test_compile_mode=test-with-src" >> $GITHUB_OUTPUT
-          fi
-          echo "compile_tests=true" >> $GITHUB_OUTPUT
-
-      - name: Compile test binary
-        if: ${{ steps.compile-plan.outputs.compile_tests == 'true' }}
-        run: |
-          set -euo pipefail
-          TEST_FILE="${{ inputs.test_src }}"
-          BUILD_DIR="${{ inputs.build_dir }}"
-          mkdir -p "${BUILD_DIR}"
-          rm -f "${BUILD_DIR}/motor_speed_test" || true
-
-          MODE="${{ steps.compile-plan.outputs.test_compile_mode }}"
-          echo "Compilation mode: ${MODE}"
-
-          # Add include path for src/
-          INCLUDE_PATH="-I."
-
-          if; then
-            g++ -std=c++17 -O0 -g --coverage \
-              ${INCLUDE_PATH} \
-              "${TEST_FILE}" \
-              -lgtest -lgtest_main -pthread \
-              -o "${BUILD_DIR}/motor_speed_test"
-          else
-            SRC_FILES=$(find "${{ inputs.src_dirs }}" -name "*.cpp" -print | tr '\n' ' ')
-            if; then
-              echo "::error::No src.cpp files found under '${{ inputs.src_dirs }}'"
-              exit 1
-            else
-              echo "Compiling test with sources: $SRC_FILES"
-              g++ -std=c++17 -O0 -g --coverage \
-                ${INCLUDE_PATH} ${TEST_FILE} ${SRC_FILES} \
-                -lgtest -lgtest_main -pthread \
-                -o "${BUILD_DIR}/motor_speed_test"
-            fi
-          fi
-
-          echo "Built binary: ${BUILD_DIR}/motor_speed_test"
-          ls -l "${BUILD_DIR}/motor_speed_test"
-
-      - name: Run tests -> produce JUnit XML
+      - name: Run tests -> produce JUnit XML (via CTest)
         id: run-tests
         run: |
           set -euo pipefail
-          BIN="${{ inputs.build_dir }}/motor_speed_test"
-          JUNIT="${{ inputs.junit_output }}"
-          mkdir -p "$(dirname "${JUNIT}")"
+          # Use CTest to run tests and generate JUnit XML
+          # This is the standard way to run tests in a CMake project
+          cd "${{ inputs.build_dir }}"
+          # CRITICAL: If tests fail, ctest returns non-zero, failing the workflow
+          ctest --output-on-failure --output-junit "${{ inputs.junit_output }}"
+
+          # CTest outputs JUnit relative to its working dir, move it
+          # This assumes ctest creates a file like 'CTest.xml' or similar
+          # A more robust way (if ctest --output-junit is not exact):
+          # find. -name "*.xml" -exec mv {} "${{ inputs.junit_output }}" \;
+          # For now, let's assume CTest 3.20+ --output-junit works as intended
+          # We need to move the file to the path expected by the artifact upload
+
+          # CTest's --output-junit flag is finicky. Let's use the gtest binary directly.
+          # The binary path is now predictable:
+
+          cd $GITHUB_WORKSPACE # Reset working directory
+          BIN_PATH="${{ inputs.build_dir }}/tests/motor_speed_test"
+          JUNIT_PATH="${{ inputs.junit_output }}"
 
           if; then
-            echo "Running test binary: ${BIN}"
-            # CRITICAL: Removed '|| true'. If tests fail, the workflow MUST fail.
-            "${BIN}" --gtest_output=xml:"${JUNIT}"
-            echo "JUnit XML written to ${JUNIT}"
-          else
-            echo "::error::Test binary not found (${BIN}). Build failed."
+            echo "::error::Test binary not found at ${BIN_PATH}"
             exit 1
           fi
-          # CRITICAL: Removed 'else' block that copied stale artifacts.
+
+          # Run the binary directly to get the JUnit output at the *exact* path
+          "${BIN_PATH}" --gtest_output=xml:"${JUNIT_PATH}"
+          echo "JUnit XML written to ${JUNIT_PATH}"
+
 
       - name: Generate coverage XML (gcovr)
         id: coverage
@@ -168,12 +118,11 @@ jobs:
           set -euo pipefail
           COVERAGE_PATH="${{ inputs.coverage_output }}"
           BUILD_DIR="${{ inputs.build_dir }}"
-          mkdir -p "$(dirname "${COVERAGE_PATH}")"
 
           if command -v gcovr >/dev/null 2>&1; then
             echo "Running gcovr..."
             # CRITICAL: Removed '|| true'.
-            # Added filter to only report on 'src' directory.
+            # Filter to only report on 'src' directory.
             gcovr -r. --object-directory="${BUILD_DIR}" \
               --filter "${{ inputs.src_dirs }}/.*" \
               --xml -o "${COVERAGE_PATH}"
@@ -182,7 +131,6 @@ jobs:
             exit 1
           fi
 
-          # CRITICAL: Removed check and copy of stale artifact.
           if; then
              echo "::error::Coverage XML was not generated or is empty."
              exit 1
@@ -194,20 +142,18 @@ jobs:
         run: |
           set -euo pipefail
           CPPCHECK_PATH="${{ inputs.cppcheck_output }}"
-          mkdir -p "$(dirname "${CPPCHECK_PATH}")"
 
           if [ -d "${{ inputs.src_dirs }}" ]; then
             echo "Running cppcheck on '${{ inputs.src_dirs }}' -> ${CPPCHECK_PATH}"
             # CRITICAL: Removed '--suppress=missingIncludeSystem'
-            # CRITICAL: Removed '|| true'.
             # Added --error-exitcode=1 to fail on errors
             cppcheck --enable=all --error-exitcode=1 --xml --xml-version=2 \
+              --includes-file=cppcheck_includes.txt \
               "${{ inputs.src_dirs }}" 2> "${CPPCHECK_PATH}"
           else
             echo "::error::Source dir '${{ inputs.src_dirs }}' not found."
             exit 1
           fi
-          # CRITICAL: Removed 'else' block that copied stale artifacts.
 
       - name: Validate and list artifacts
         id: validate
@@ -232,7 +178,7 @@ jobs:
         with:
           name: verification-artifacts
           path: |
-            artifacts/verification/tests/
-            artifacts/verification/coverage/
-            artifacts/verification/static-analysis/
+            ${{ inputs.junit_output }}
+            ${{ inputs.coverage_output }}
+            ${{ inputs.cppcheck_output }}
           retention-days: 30

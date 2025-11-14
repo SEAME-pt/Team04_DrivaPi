@@ -9,8 +9,6 @@
  * - MockGPIO now implements the IGpioDriver interface.
  * - The MotorSpeedSensor class definition has been REMOVED from this file.
  * - Tests now instantiate the REAL MotorSpeedSensor and inject the MockGPIO.
- * - This file NO LONGER contains "class MotorSpeedSensor", so the
- *   CI build script will correctly compile it with the real source.
  */
 
 #include <gtest/gtest.h>
