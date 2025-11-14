@@ -41,11 +41,17 @@ jobs:
       - name: Install project (editable) and tools
         run: |
           set -euo pipefail
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip setuptools wheel
+          # Install local package in editable mode if present
           if [ -f "pyproject.toml" ] || [ -f "setup.py" ]; then
             pip install -e .
           fi
-          pip install trudag pytest pytest-cov pyyaml
+
+          # Install test tooling
+          pip install pytest pytest-cov pyyaml
+
+          # Install trudag (Trustable) from GitLab (pin to a tag/commit you trust)
+          pip install "git+https://gitlab.com/CodethinkLabs/trustable/trustable.git@v2025.09.16#egg=trudag"
 
       - name: Run trudag lint (optional)
         id: trudag_lint
