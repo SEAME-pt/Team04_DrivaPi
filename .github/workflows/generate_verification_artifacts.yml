@@ -1,66 +1,55 @@
-# Reusable workflow that builds the project, runs tests, coverage and cppcheck
-# Trigger: called via workflow_call (used as a reusable workflow)
+# .github/workflows/generate_verification_artifacts.yml
+# Reusable workflow: build + run tests + run cppcheck + (optional) coverage
+# Caller must ensure either: use_cmake=true and CMakeLists.txt exists OR provide build_cmd.
 on:
   workflow_call:
     inputs:
       use_cmake:
         type: boolean
-        description: "Use CMake to build (true/false)"
         required: false
         default: true
       cmake_build_dir:
         type: string
-        description: "CMake build directory"
         required: false
-        default: "build"
+        default: build
       build_type:
         type: string
-        description: "CMake build type (use Coverage for coverage builds)"
         required: false
-        default: "Debug"
+        default: Debug
       build_cmd:
         type: string
-        description: "Fallback build command if not using CMake (shell command)"
+        required: false
+        default: ""
+      test_cmd:
+        type: string
         required: false
         default: ""
       test_binary:
         type: string
-        description: "Path to gtest binary to run (relative to repo root)"
         required: false
-        default: "build/motor_speed_test"
+        default: build/motor_speed_test
       junit_output:
         type: string
-        description: "Path to write JUnit xml"
         required: false
-        default: "artifacts/verification/tests/LLTC-998-junit.xml"
+        default: artifacts/verification/tests/LLTC-998-junit.xml
       coverage_output:
         type: string
-        description: "Path to write coverage xml (gcovr/cobertura)"
         required: false
-        default: "artifacts/verification/coverage/coverage-SWD-998.xml"
+        default: artifacts/verification/coverage/coverage-SWD-998.xml
       cppcheck_output:
         type: string
-        description: "Path to write cppcheck xml"
         required: false
-        default: "artifacts/verification/static-analysis/cppcheck-SWD-998.xml"
+        default: artifacts/verification/static-analysis/cppcheck-SWD-998.xml
       src_dirs:
         type: string
-        description: "Source directories or globs to analyze with cppcheck"
         required: false
-        default: "src"
-      run_cppcheck:
-        type: boolean
-        description: "Run cppcheck (true/false)"
-        required: false
-        default: true
+        default: src
       run_coverage:
         type: boolean
-        description: "Run coverage (true/false)"
         required: false
         default: true
-      enable_coverage_flags:
+      run_cppcheck:
         type: boolean
-        description: "Add coverage compilation flags (true/false)"
         required: false
         default: true
 
@@ -73,214 +62,116 @@ jobs:
       cppcheck_path: ${{ steps.set_outputs.outputs.cppcheck_path }}
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Install system packages
+      - name: Install system deps
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential cmake cppcheck
 
-      - name: Setup Python tools for coverage
+      - name: Setup tools (coverage)
         if: ${{ inputs.run_coverage == true }}
         run: |
           python -m pip install --upgrade pip
           pip install gcovr
 
-      - name: Create artifact directories
+      - name: Create artifact dirs
         run: |
           mkdir -p artifacts/verification/tests
           mkdir -p artifacts/verification/coverage
           mkdir -p artifacts/verification/static-analysis
-          mkdir -p artifacts/trustable-report
+          mkdir -p ${{ inputs.cmake_build_dir }}
 
-      - name: Build with CMake (with coverage flags if enabled)
+      - name: Build (CMake or build_cmd)
         id: build
-        if: ${{ inputs.use_cmake == true }}
         run: |
-          # Locate CMake source directory (where CMakeLists.txt lives). Search up to 4 levels.
-          SRC_DIR="."
-          if [ ! -f "$SRC_DIR/CMakeLists.txt" ]; then
-            FOUND_CMAKE=$(find . -maxdepth 4 -name CMakeLists.txt | head -n 1 || true)
-            if [ -n "$FOUND_CMAKE" ]; then
-              SRC_DIR=$(dirname "$FOUND_CMAKE")
-              echo "Found CMakeLists.txt in: $SRC_DIR"
+          set -euo pipefail
+          if [ "${{ inputs.use_cmake }}" = "true" ]; then
+            FOUND=$(find . -maxdepth 3 -name CMakeLists.txt | head -n 1 || true)
+            if [ -n "$FOUND" ]; then
+              SRC_DIR=$(dirname "$FOUND")
+              echo "Using CMake from: $SRC_DIR"
+              cmake -S "$SRC_DIR" -B "${{ inputs.cmake_build_dir }}" -DCMAKE_BUILD_TYPE="${{ inputs.build_type }}"
+              cmake --build "${{ inputs.cmake_build_dir }}" -- -j$(nproc)
             else
-              echo "Error: CMakeLists.txt not found in repository (searched up to 4 levels)."
-              echo "Please set inputs.cmake_build_dir or ensure CMakeLists.txt is present."
-              exit 1
+              if [ -n "${{ inputs.build_cmd }}" ]; then
+                echo "No CMakeLists found, running build_cmd"
+                eval "${{ inputs.build_cmd }}"
+              else
+                echo "Error: no CMakeLists.txt and no build_cmd provided"
+                exit 1
+              fi
             fi
           else
-            echo "Using repository root as CMake source directory"
+            if [ -n "${{ inputs.build_cmd }}" ]; then
+              echo "use_cmake=false -> running build_cmd"
+              eval "${{ inputs.build_cmd }}"
+            else
+              echo "Error: use_cmake=false but no build_cmd provided"
+              exit 1
+            fi
           fi
 
-          # Configure and build with or without coverage flags to avoid nested-quote issues
-          if [ "${{ inputs.enable_coverage_flags }}" = "true" ] && [ "${{ inputs.run_coverage }}" = "true" ]; then
-            echo "Configuring with coverage flags (source: $SRC_DIR)"
-            cmake -S "$SRC_DIR" -B "${{ inputs.cmake_build_dir }}" \
-              -DCMAKE_BUILD_TYPE="${{ inputs.build_type }}" \
-              -DCMAKE_CXX_FLAGS="-g -O0 --coverage" \
-              -DCMAKE_C_FLAGS="-g -O0 --coverage" \
-              -DCMAKE_EXE_LINKER_FLAGS="--coverage"
-          else
-            echo "Configuring without coverage flags (source: $SRC_DIR)"
-            cmake -S "$SRC_DIR" -B "${{ inputs.cmake_build_dir }}" \
-              -DCMAKE_BUILD_TYPE="${{ inputs.build_type }}"
-          fi
-
-          cmake --build "${{ inputs.cmake_build_dir }}" -- -j$(nproc)
-
-      - name: Build with custom command (fallback)
-        if: ${{ inputs.use_cmake == false && inputs.build_cmd != '' }}
+      - name: Run tests -> JUnit XML
+        id: run_tests
         run: |
-          eval "${{ inputs.build_cmd }}"
-
-      - name: Run tests with Google Test and produce JUnit XML
-        id: run-tests
-        run: |
-          set +e  # Don't exit on error, but capture exit code
-
-          JUNIT_PATH="${{ inputs.junit_output }}"
-          mkdir -p "$(dirname "${JUNIT_PATH}")"
-
-          TEST_BIN="${{ inputs.test_binary }}"
-          TEST_EXIT_CODE=0
-
-          # Run the Google Test binary with JUnit output
-          if [ -x "${TEST_BIN}" ]; then
-            echo "Running test binary: ${TEST_BIN}"
-            "${TEST_BIN}" --gtest_output=xml:"${JUNIT_PATH}"
-            TEST_EXIT_CODE=$?
-          elif [ -x "${{ inputs.cmake_build_dir }}/${TEST_BIN##*/}" ]; then
-            echo "Running test binary from build dir"
-            "${{ inputs.cmake_build_dir }}/${TEST_BIN##*/}" --gtest_output=xml:"${JUNIT_PATH}"
-            TEST_EXIT_CODE=$?
+          set -euo pipefail
+          JUNIT="${{ inputs.junit_output }}"
+          mkdir -p "$(dirname "$JUNIT")"
+          if [ -n "${{ inputs.test_cmd }}" ]; then
+            echo "Running test_cmd..."
+            eval "${{ inputs.test_cmd }}"
           else
-            echo "Error: Test binary not found at ${TEST_BIN}"
-            echo "<testsuites><testsuite name='BuildError' tests='1' failures='1'><testcase name='TestBinaryNotFound'><failure>Test binary not found</failure></testcase></testsuite></testsuites>" > "${JUNIT_PATH}"
-            TEST_EXIT_CODE=1
+            BIN="${{ inputs.test_binary }}"
+            if [ -x "$BIN" ]; then
+              "$BIN" --gtest_output=xml:"$JUNIT"
+            elif [ -x "${{ inputs.cmake_build_dir }}/${BIN##*/}" ]; then
+              "${{ inputs.cmake_build_dir }}/${BIN##*/}" --gtest_output=xml:"$JUNIT"
+            else
+              echo "Error: test binary not found ($BIN). Provide test_cmd or correct test_binary."
+              exit 1
+            fi
           fi
-
-          # Verify JUnit XML was created
-          if [ ! -f "${JUNIT_PATH}" ]; then
-            echo "Warning: JUnit XML was not created"
-            echo "<testsuites></testsuites>" > "${JUNIT_PATH}"
+          if [ ! -s "$JUNIT" ]; then
+            echo "Error: junit xml not produced or empty ($JUNIT)"
+            exit 1
           fi
+          echo "junit_created=1" >> $GITHUB_OUTPUT
 
-          echo "Test exit code: ${TEST_EXIT_CODE}"
-          echo "test_exit_code=${TEST_EXIT_CODE}" >> $GITHUB_OUTPUT
-
-          # Don't fail the workflow yet - we want to collect coverage even if tests fail
-          exit 0
-
-      - name: Generate coverage XML with gcovr
+      - name: Generate coverage (gcovr)
         if: ${{ inputs.run_coverage == true }}
         id: coverage
         run: |
-          COVERAGE_PATH="${{ inputs.coverage_output }}"
-          BUILD_DIR="${{ inputs.cmake_build_dir }}"
-          mkdir -p "$(dirname "${COVERAGE_PATH}")"
-
-          # Check if coverage data exists
-          GCDA_COUNT=$(find "${BUILD_DIR}" -name "*.gcda" 2>/dev/null | wc -l)
-          echo "Found ${GCDA_COUNT} .gcda files"
-
-          if [ "${GCDA_COUNT}" -eq 0 ]; then
-            echo "Warning: No .gcda files found. Tests may not have run or coverage flags not enabled."
-            echo '<?xml version="1.0"?><coverage line-rate="0.0" branch-rate="0.0" version="1.9"><packages/></coverage>' > "${COVERAGE_PATH}"
+          set -euo pipefail
+          COV="${{ inputs.coverage_output }}"
+          mkdir -p "$(dirname "$COV")"
+          GCDA_COUNT=$(find "${{ inputs.cmake_build_dir }}" -name "*.gcda" 2>/dev/null | wc -l || true)
+          if [ "$GCDA_COUNT" -gt 0 ]; then
+            gcovr -r . --object-directory="${{ inputs.cmake_build_dir }}" --xml -o "$COV"
           else
-            # Run gcovr from the repository root, pointing to build directory for object files
-            gcovr -r . \
-              --object-directory="${BUILD_DIR}" \
-              --xml \
-              --xml-pretty \
-              --output "${COVERAGE_PATH}" \
-              --exclude-unreachable-branches \
-              --exclude-throw-branches \
-              || echo '<?xml version="1.0"?><coverage line-rate="0.0" branch-rate="0.0" version="1.9"><packages/></coverage>' > "${COVERAGE_PATH}"
+            echo "Error: no .gcda found; coverage cannot be generated (ensure build/tests run with coverage flags)"
+            exit 1
+          fi
+          if [ ! -s "$COV" ]; then
+            echo "Error: coverage xml empty ($COV)"
+            exit 1
           fi
 
-          # Verify coverage XML was created
-          if [ ! -f "${COVERAGE_PATH}" ]; then
-            echo "Error: Coverage XML was not created"
-            echo '<?xml version="1.0"?><coverage line-rate="0.0" branch-rate="0.0" version="1.9"><packages/></coverage>' > "${COVERAGE_PATH}"
-          fi
-
-      - name: Run cppcheck static analysis
+      - name: Run cppcheck
         if: ${{ inputs.run_cppcheck == true }}
         id: cppcheck
         run: |
-          CPPCHECK_PATH="${{ inputs.cppcheck_output }}"
-          mkdir -p "$(dirname "${CPPCHECK_PATH}")"
-
-          # Run cppcheck with C++14/17 standard and appropriate checks
-          cppcheck \
-            --enable=warning,style,performance,portability \
-            --suppress=missingIncludeSystem \
-            --suppress=unmatchedSuppression \
-            --std=c++14 \
-            --xml \
-            --xml-version=2 \
-            ${{ inputs.src_dirs }} \
-            2> "${CPPCHECK_PATH}" || true
-
-          # Verify cppcheck XML was created
-          if [ ! -f "${CPPCHECK_PATH}" ]; then
-            echo '<?xml version="1.0"?><results version="2"><cppcheck version="2.0"/><errors/></results>' > "${CPPCHECK_PATH}"
+          set -euo pipefail
+          CPPCHECK="${{ inputs.cppcheck_output }}"
+          mkdir -p "$(dirname "$CPPCHECK")"
+          cppcheck --enable=all --suppress=missingIncludeSystem --xml --xml-version=2 ${{ inputs.src_dirs }} 2> "$CPPCHECK" || true
+          if [ ! -s "$CPPCHECK" ]; then
+            echo "Error: cppcheck xml empty ($CPPCHECK)"
+            exit 1
           fi
-
-      - name: Validate generated artifacts
-        id: validate
-        run: |
-          echo "=== Validating Generated Artifacts ==="
-
-          JUNIT_PATH="${{ inputs.junit_output }}"
-          COVERAGE_PATH="${{ inputs.coverage_output }}"
-          CPPCHECK_PATH="${{ inputs.cppcheck_output }}"
-
-          ALL_VALID=true
-
-          # Check JUnit XML
-          if [ -f "${JUNIT_PATH}" ]; then
-            SIZE=$(stat -c%s "${JUNIT_PATH}")
-            echo "✓ JUnit XML exists ($${SIZE} bytes): ${JUNIT_PATH}"
-            # Basic XML validation
-            if head -1 "${JUNIT_PATH}" | grep -q "<?xml\|<testsuites"; then
-              echo "  ✓ Appears to be valid XML"
-            else
-              echo "  ✗ May not be valid XML"
-              ALL_VALID=false
-            fi
-          else
-            echo "✗ JUnit XML missing: ${JUNIT_PATH}"
-            ALL_VALID=false
-          fi
-
-          # Check Coverage XML if enabled
-          if [ "${{ inputs.run_coverage }}" = "true" ]; then
-            if [ -f "${COVERAGE_PATH}" ]; then
-              SIZE=$(stat -c%s "${COVERAGE_PATH}")
-              echo "✓ Coverage XML exists ($${SIZE} bytes): ${COVERAGE_PATH}"
-            else
-              echo "✗ Coverage XML missing: ${COVERAGE_PATH}"
-              ALL_VALID=false
-            fi
-          fi
-
-          # Check Cppcheck XML if enabled
-          if [ "${{ inputs.run_cppcheck }}" = "true" ]; then
-            if [ -f "${CPPCHECK_PATH}" ]; then
-              SIZE=$(stat -c%s "${CPPCHECK_PATH}")
-              echo "✓ Cppcheck XML exists ($${SIZE} bytes): ${CPPCHECK_PATH}"
-            else
-              echo "✗ Cppcheck XML missing: ${CPPCHECK_PATH}"
-              ALL_VALID=false
-            fi
-          fi
-
-          echo "all_valid=${ALL_VALID}" >> $GITHUB_OUTPUT
 
       - name: Set outputs
         id: set_outputs
@@ -297,10 +188,3 @@ jobs:
             artifacts/verification/tests/
             artifacts/verification/coverage/
             artifacts/verification/static-analysis/
-          retention-days: 30
-
-      - name: Fail if tests failed
-        if: ${{ steps.run-tests.outputs.test_exit_code != '0' }}
-        run: |
-          echo "Tests failed with exit code ${{ steps.run-tests.outputs.test_exit_code }}"
-          exit 1
