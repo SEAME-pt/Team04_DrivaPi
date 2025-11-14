@@ -94,7 +94,7 @@ TEST(MotorSpeedSensorTest, Test_04_PulseCountingAccuracy) {
     MotorSpeedSensor sensor(&mock_gpio); // Inject mock
 
     // Test various pulse counts
-    int test_cases[1] = {
+    int test_cases[3][2] = {
         {10, 600},   // 10 pulses = 600 RPM
         {50, 3000},  // 50 pulses = 3000 RPM
         {100, 6000}, // 100 pulses = 6000 RPM
