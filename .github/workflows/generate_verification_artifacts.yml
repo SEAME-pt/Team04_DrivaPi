@@ -78,27 +78,10 @@ jobs:
           # - This will compile the library and the test executable
           cmake --build "${{ inputs.build_dir }}"
 
-      - name: Run tests -> produce JUnit XML (via CTest)
+      - name: Run tests -> produce JUnit XML
         id: run-tests
         run: |
           set -euo pipefail
-          # Use CTest to run tests and generate JUnit XML
-          # This is the standard way to run tests in a CMake project
-          cd "${{ inputs.build_dir }}"
-          # CRITICAL: If tests fail, ctest returns non-zero, failing the workflow
-          ctest --output-on-failure --output-junit "${{ inputs.junit_output }}"
-
-          # CTest outputs JUnit relative to its working dir, move it
-          # This assumes ctest creates a file like 'CTest.xml' or similar
-          # A more robust way (if ctest --output-junit is not exact):
-          # find. -name "*.xml" -exec mv {} "${{ inputs.junit_output }}" \;
-          # For now, let's assume CTest 3.20+ --output-junit works as intended
-          # We need to move the file to the path expected by the artifact upload
-
-          # CTest's --output-junit flag is finicky. Let's use the gtest binary directly.
-          # The binary path is now predictable:
-
-          cd $GITHUB_WORKSPACE # Reset working directory
           BIN_PATH="${{ inputs.build_dir }}/tests/motor_speed_test"
           JUNIT_PATH="${{ inputs.junit_output }}"
 
@@ -108,6 +91,7 @@ jobs:
           fi
 
           # Run the binary directly to get the JUnit output at the *exact* path
+          # CRITICAL: If tests fail, this command returns non-zero, failing the workflow
           "${BIN_PATH}" --gtest_output=xml:"${JUNIT_PATH}"
           echo "JUnit XML written to ${JUNIT_PATH}"
 
@@ -147,6 +131,12 @@ jobs:
             echo "Running cppcheck on '${{ inputs.src_dirs }}' -> ${CPPCHECK_PATH}"
             # CRITICAL: Removed '--suppress=missingIncludeSystem'
             # Added --error-exitcode=1 to fail on errors
+            # Note: We must tell cppcheck where to find headers (like gtest)
+            # We create a simple include file for it
+            echo "-I${{ inputs.build_dir }}/_deps/googletest-src/googletest/include" > cppcheck_includes.txt
+            echo "-I${{ inputs.build_dir }}/_deps/googletest-src/googlemock/include" >> cppcheck_includes.txt
+            echo "-Isrc" >> cppcheck_includes.txt
+
             cppcheck --enable=all --error-exitcode=1 --xml --xml-version=2 \
               --includes-file=cppcheck_includes.txt \
               "${{ inputs.src_dirs }}" 2> "${CPPCHECK_PATH}"
