@@ -122,9 +122,7 @@ int MotorSpeedSensor::read_rpm(void) {
     int rpm = pulses * 60;
 
     // Validate range (0-10000 RPM)
-    if (rpm < 0 |
-
-| rpm > 10000) {
+    if (rpm < 0 || rpm > 10000) {
         error_flag = true;
         return -1;
     }
