@@ -1,4 +1,3 @@
-# .github/workflows/tsf_validation.yml
 name: TSF Validation (PR)
 
 on:
