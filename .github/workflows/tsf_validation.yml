@@ -8,7 +8,7 @@ jobs:
   generate-verification-artifacts:
     uses: ./.github/workflows/generate_verification_artifacts.yml
     with:
-      use_cmake: 'true'
+      use_cmake: true
       cmake_build_dir: 'build'
       build_type: 'Debug'
       test_binary: 'build/motor_speed_test'
@@ -16,16 +16,16 @@ jobs:
       coverage_output: 'artifacts/verification/coverage/coverage-SWD-998.xml'
       cppcheck_output: 'artifacts/verification/static-analysis/cppcheck-SWD-998.xml'
       src_dirs: 'src'
-      run_cppcheck: 'true'
-      run_coverage: 'true'
-      enable_coverage_flags: 'true'
+      run_cppcheck: true
+      run_coverage: true
+      enable_coverage_flags: true
 
   tsf-validation:
     needs: generate-verification-artifacts
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write  # For posting PR comments if desired
+      pull-requests: write
 
     steps:
       - name: Checkout repository
@@ -52,12 +52,12 @@ jobs:
           )
 
           ALL_PRESENT=true
-          for file in "\${EXPECTED_FILES[@]}"; do
-            if [ -f "\$file" ]; then
-              SIZE=\$(stat -f%z "\$file" 2>/dev/null || stat -c%s "\$file")
-              echo "✓ Found: \$file (\${SIZE} bytes)"
+          for file in "${EXPECTED_FILES[@]}"; do
+            if [ -f "$file" ]; then
+              SIZE=$(stat -c%s "$file")
+              echo "✓ Found: $file ($${SIZE} bytes)"
             else
-              echo "✗ Missing: \$file"
+              echo "✗ Missing: $file"
               ALL_PRESENT=false
             fi
           done
@@ -68,7 +68,7 @@ jobs:
           find artifacts/verification -type f -print || echo "No files found"
           echo "========================="
 
-          if [ "\$ALL_PRESENT" = "false" ]; then
+          if [ "$ALL_PRESENT" = "false" ]; then
             echo "::warning::Some expected verification artifacts are missing"
           fi
 
@@ -93,11 +93,11 @@ jobs:
         run: |
           echo "Checking trudag installation..."
           trudag --version || echo "trudag command not found"
-          python -c "import trudag; print(f'trudag module version: {trudag.__version__}')" || echo "trudag module not importable"
+          python -c "import trudag; print(f'trudag module available')" || echo "trudag module not importable"
 
       - name: Run trudag lint
         id: trudag_lint
-        continue-on-error: true  # Lint warnings shouldn't fail the build
+        continue-on-error: true
         run: |
           mkdir -p artifacts/trustable-report
 
@@ -105,17 +105,17 @@ jobs:
           trudag manage lint 2>&1 | tee artifacts/trustable-report/trudag-lint.txt
 
           # Capture exit code but don't fail
-          LINT_EXIT=\${PIPESTATUS[0]}
-          echo "lint_exit_code=\${LINT_EXIT}" >> \$GITHUB_OUTPUT
+          LINT_EXIT=${PIPESTATUS[0]}
+          echo "lint_exit_code=${LINT_EXIT}" >> $GITHUB_OUTPUT
 
-          if [ \${LINT_EXIT} -ne 0 ]; then
-            echo "::warning::trudag lint found issues (exit code: \${LINT_EXIT})"
+          if [ ${LINT_EXIT} -ne 0 ]; then
+            echo "::warning::trudag lint found issues (exit code: ${LINT_EXIT})"
           fi
 
       - name: Calculate TSF scores
         id: score
         run: |
-          set +e  # Don't exit immediately on error
+          set +e
 
           mkdir -p artifacts/trustable-report
 
@@ -127,16 +127,16 @@ jobs:
           fi
 
           # Run scoring
-          if [ "\$HAS_LOCAL_COLLECT" = "true" ]; then
+          if [ "$HAS_LOCAL_COLLECT" = "true" ]; then
             echo "Using local tsf_collect..."
             python -m tools.tsf_collect \
               --output artifacts/trustable-report/tsf_score.json \
               --text artifacts/trustable-report/tsf_score.txt
-            SCORE_EXIT=\$?
+            SCORE_EXIT=$?
           else
             echo "Using trudag score..."
             trudag score 2>&1 | tee artifacts/trustable-report/trudag-score.txt
-            SCORE_EXIT=\${PIPESTATUS[0]}
+            SCORE_EXIT=${PIPESTATUS[0]}
 
             # Copy score output if trudag score was used
             if [ -f "artifacts/trustable-report/trudag-score.txt" ]; then
@@ -144,16 +144,16 @@ jobs:
             fi
           fi
 
-          echo "score_exit_code=\${SCORE_EXIT}" >> \$GITHUB_OUTPUT
+          echo "score_exit_code=${SCORE_EXIT}" >> $GITHUB_OUTPUT
 
-          if [ \${SCORE_EXIT} -ne 0 ]; then
-            echo "::error::TSF score calculation failed with exit code \${SCORE_EXIT}"
+          if [ ${SCORE_EXIT} -ne 0 ]; then
+            echo "::error::TSF score calculation failed with exit code ${SCORE_EXIT}"
             exit 1
           fi
 
       - name: Generate trustable report
         id: publish
-        continue-on-error: true  # Report generation issues shouldn't fail if we have scores
+        continue-on-error: true
         run: |
           mkdir -p artifacts/trustable-report
 
@@ -163,11 +163,11 @@ jobs:
             --no-validate \
             2>&1 | tee artifacts/trustable-report/publish.log
 
-          PUBLISH_EXIT=\${PIPESTATUS[0]}
-          echo "publish_exit_code=\${PUBLISH_EXIT}" >> \$GITHUB_OUTPUT
+          PUBLISH_EXIT=${PIPESTATUS[0]}
+          echo "publish_exit_code=${PUBLISH_EXIT}" >> $GITHUB_OUTPUT
 
-          if [ \${PUBLISH_EXIT} -ne 0 ]; then
-            echo "::warning::trudag publish encountered issues (exit code: \${PUBLISH_EXIT})"
+          if [ ${PUBLISH_EXIT} -ne 0 ]; then
+            echo "::warning::trudag publish encountered issues (exit code: ${PUBLISH_EXIT})"
           fi
 
       - name: Upload TSF validation artifacts
@@ -215,17 +215,17 @@ jobs:
           # Show exit codes
           echo "🔢 Exit Codes:"
           echo "------------------------------------------"
-          echo "Lint: \${{ steps.trudag_lint.outputs.lint_exit_code || 'N/A' }}"
-          echo "Score: \${{ steps.score.outputs.score_exit_code || 'N/A' }}"
-          echo "Publish: \${{ steps.publish.outputs.publish_exit_code || 'N/A' }}"
+          echo "Lint: ${{ steps.trudag_lint.outputs.lint_exit_code || 'N/A' }}"
+          echo "Score: ${{ steps.score.outputs.score_exit_code || 'N/A' }}"
+          echo "Publish: ${{ steps.publish.outputs.publish_exit_code || 'N/A' }}"
           echo ""
 
           echo "=========================================="
 
           # Determine overall status
-          SCORE_EXIT=\${{ steps.score.outputs.score_exit_code || '0' }}
+          SCORE_EXIT=${{ steps.score.outputs.score_exit_code || '0' }}
 
-          if [ "\$SCORE_EXIT" != "0" ]; then
+          if [ "${SCORE_EXIT}" != "0" ]; then
             echo "❌ TSF Validation FAILED"
             exit 1
           else
