@@ -33,22 +33,6 @@ references:
   # - type: "url"
   #   path: https://github.com/SEAME-pt/Team04_DrivaPi/pull/XX  # PR review
 
-# Optional: Manual SME Score
-score:
-  <SME_ID>: <0.0-1.0>  # SME confidence score (1.0=certain true, 0.5=uncertain, 0.0=certain false)
-  # Example for ASIL B (requires 2+ reviewers):
-  # CodeReviewer: 0.95
-  # ArchitectureLead: 0.90
-
-# Optional: Automated Validation
-# evidence:
-#   type: <validator_name>  # e.g., cppcheck_error_validator, clang_tidy_validator
-#   references:
-#     - type: "file"
-#       path: <path/to/artifact/to/validate>  # Static analysis report
-#   configuration:
-#     fail_on_severity: ["error"]
-
 active: true
 derived: false
 normative: true

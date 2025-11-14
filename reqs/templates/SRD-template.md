@@ -33,22 +33,6 @@ references:
   # - type: "url"
   #   path: https://github.com/SEAME-pt/Team04_DrivaPi/pull/XX  # Design review PR
 
-# Optional: Manual SME Score
-score:
-  <SME_ID>: <0.0-1.0>  # SME confidence score (1.0=certain true, 0.5=uncertain, 0.0=certain false)
-  # Example for ASIL B (requires 2+ reviewers):
-  # SystemArchitect: 0.95
-  # DesignLead: 0.90
-
-# Optional: Automated Validation
-# evidence:
-#   type: <validator_name>  # Custom validator for design validation
-#   references:
-#     - type: "file"
-#       path: <path/to/design/artifact>
-#   configuration:
-#     <param>: <value>
-
 active: true
 derived: false
 normative: true

@@ -1,4 +1,4 @@
-# TSF Quick Reference (Cheat Sheet)
+# TSF Quick Reference (Cheat Sheet) - DrivaPi
 
 **One page with all essential commands**
 
@@ -13,7 +13,7 @@ source .venv/bin/activate
 # Validate requirements
 trudag manage lint
 
-# Calculate scores
+# Calculate scores (propagates from URD down)
 trudag score
 
 # Generate report
@@ -29,10 +29,10 @@ trudag publish --output-dir artifacts/trustable-report
 trudag manage create-item <TYPE> <NUM> reqs/<type>
 
 # Examples:
-trudag manage create-item URD 042 reqs/urd
-trudag manage create-item SRD 015 reqs/srd
-trudag manage create-item SWD 123 reqs/swd
-trudag manage create-item LLTC 001 reqs/lltc
+trudag manage create-item URD 010 reqs/urd
+trudag manage create-item SRD 010 reqs/srd
+trudag manage create-item SWD 010 reqs/swd
+trudag manage create-item LLTC 010 reqs/lltc
 ```
 
 ---
@@ -40,15 +40,34 @@ trudag manage create-item LLTC 001 reqs/lltc
 ## 🔗 Link Requirements (Traceability)
 
 ```bash
-# Link child → parent (ALWAYS upward in V-Model)
-trudag manage create-link <CHILD> <PARENT>
+# Link parent → child (ALWAYS upward in V-Model)
+trudag manage create-link <PARENT> <CHILD>
 
 # Examples (bottom-up):
-trudag manage create-link SRD-015 URD-042    # System → User
-trudag manage create-link SWD-123 SRD-015    # Software → System
-trudag manage create-link LLTC-001 SWD-123   # Test → Software
+trudag manage create-link URD-010 SRD-010    # User → System
+trudag manage create-link SRD-010 SWD-010    # System → Software
+trudag manage create-link SWD-010 LLTC-010   # Software → Test
 ```
 
+---
+## Remove Links
+
+```bash
+# Remove link parent → child
+trudag manage remove-link <PARENT> <CHILD>
+# Examples:
+trudag manage remove-link URD-010 SRD-010
+trudag manage remove-link SRD-010 SWD-010
+trudag manage remove-link SWD-010 LLTC-010
+```
+
+
+## Check Syntax & Integrity
+
+```bash
+# Validate requirements (YAML syntax, links, scores)
+trudag manage lint
+```
 ---
 
 ## ✅ Review & Approval
@@ -58,99 +77,51 @@ trudag manage create-link LLTC-001 SWD-123   # Test → Software
 trudag manage set-item <ID>
 
 # Examples:
-trudag manage set-item URD-042
-trudag manage set-item SWD-123
+trudag manage set-item URD-010
+trudag manage set-item SWD-010
 ```
 
 **After running the above, manually edit the requirement markdown file to fill in the `reviewed:` field for audit trail:**
+
 ```bash
-nano reqs/swd/SWD-123.md
+nano reqs/swd/SWD-010.md
 ```
 
 ---
+## 📋 Requirement Structure
 
-## 📋 Markdown File Structure
+Check reqs/templates/ for full examples.
 
-```yaml
----
-id: <REF>
-header: "<HEADER>"
-text: |
-  <DESCRIPTION>
+**Field Requirements:**
 
-# TSF Type: Evidence/Assertion/Premise
-ASIL: <ASIL>
-verification_method: <VERIFICATION_METHOD>
-
-# Links: Connects to parent Assertion
-parents:
-  - id: <PARENT_REF>
-children:
-  - id: <CHILD_REF>
-
-reviewers:
-  - name: "<REVIEWER_NAME>"
-    email: "<REVIEWER_EMAIL>"
-reviewed: ''  # Manually fill on PR approval
-
-# Evidence Linking (use 'references:', NOT 'artifact:')
-references:
-  - type: "file"
-    path: <relative/path/to/artifact>
-
-# Optional: Manual SME Score
-score:
-  <SME_ID>: <0.0-1.0>
-
-# Optional: Automated Validation
-evidence:
-  type: <validator_name>
-  references:
-    - type: "file"
-      path: <path/to/artifact>
-  configuration:
-    <param>: <value>
-
-active: true
-derived: false
-normative: true
-level: <LEVEL>
----
-<STATEMENT>
-```
-
-**Required fields:**
-- `id:` - Requirement ID
-- `header:` - Short title
-- `text:` - Full description
-- TSF Type - URD/SRD/SWD = Assertion; LLTC = Evidence/Premise
-- `ASIL:` - A/B/C/D/QM
-- `verification_method:` - How to test
-- `reviewers:` - At least 1 (2 for ASIL B+)
-- `reviewed: ''` - Empty until approval
-- `parents:` - At least 1 parent requirement (except URD)
-- `children:` - Child requirements (except LLTC)
-- `normative: true` - Always true (obligatory)
-- `active: true` - Always true (active requirement)
-- `derived:` - If derived from another requirement (usually false)
-- `level:` - 1.0 (URD), 2.0 (SRD), 3.0 (SWD), 4.0 (LLTC)
-
-**Evidence & Scoring (NEW - see evidence.md):**
-- `references:` - Links passive artifacts (files, URLs) for human review
-- `score:` - Manual SME confidence scores (0.0-1.0)
-- `evidence:` - Automated validator configuration (requires custom validator)
+| Field | URD | SRD | SWD | LLTC |
+|-------|-----|-----|-----|------|
+| `id:` | ✓ | ✓ | ✓ | ✓ |
+| `header:` | ✓ | ✓ | ✓ | ✓ |
+| `text:` | ✓ | ✓ | ✓ | ✓ |
+| `references:` | ✓ | ✓ | ✓ | ✓ |
+| `score:` | ✗ | ✗ | ✗ | ✓ |
+| `ASIL:` | ✗ | ✗ | ✓ | ✗ |
+| `parents:` | ✗ | ✓ | ✓ | ✓ |
+| `children:` | ✓ | ✓ | ✓ | ✗ |
+| `reviewers:` | ✓ | ✓ | ✓ | ✓ |
+| `reviewed:` | ✓ | ✓ | ✓ | ✓ |
+| `normative:` | ✓ | ✓ | ✓ | ✓ |
+| `active:` | ✓ | ✓ | ✓ | ✓ |
+| `derived:` | ✓ | ✓ | ✓ | ✓ |
+| `level:` | ✓ | ✓ | ✓ | ✓ |
 
 ---
 
 ## 🏷️ ASIL Levels (ISO 26262)
 
-| ASIL | Risk | Example | Reviews |
-|------|------|---------|---------|
+| ASIL | Risk | Example | SME Reviews |
+|------|------|---------|------------|
 | **QM** | None | Radio, configs | 1 |
-| **A** | Low | Rear lights | 1 |
-| **B** | Low-Med | Brake lights | 2+ |
-| **C** | Medium | ABS, ESC | 2+ independent |
-| **D** | High | Airbags | 2+ + formal |
+| **A** | Low | Rear lights, display | 1 |
+| **B** | Low-Med | Brake lights, sensors | 2+ |
+| **C** | Medium | ABS, ESC, emergency stop | 2+ independent |
+| **D** | High | Airbags, steering | 2+ + formal methods |
 
 **DrivaPi typical:**
 - Display features → **A** or **QM**
@@ -164,84 +135,96 @@ level: <LEVEL>
 
 ```
 URD (User)      ← Level 1.0 (Assertion)
-  ↑
+  ↑ (score: block HERE)
 SRD (System)    ← Level 2.0 (Assertion)
-  ↑
-SWD (Software)  ← Level 3.0 (Assertion)
-  ↑
+  ↑ (NO score)
+SWD (Software)  ← Level 3.0 (Assertion, ASIL: here)
+  ↑ (NO score)
 LLTC (Tests)    ← Level 4.0 (Evidence/Premise)
 ```
 
-**Golden rule:** Child always links to PARENT (bottom-up)
+**Golden rules:**
+1. Child always links to PARENT (bottom-up)
+2. Score ONLY in URD
+3. ASIL ONLY in SWD
+4. References at ALL levels
+5. NO `evidence:` blocks (manual SME review only)
 
 ---
 
 ## 💯 Scoring Quick Reference
 
-### Manual SME Scoring
+### Manual SME Scoring (LLTC level)
+
 ```yaml
 ---
-id: LLTC-042
-references:
-  - type: "file"
-    path: tests/unit/test_temp.cpp
-  - type: "file"
-    path: artifacts/verification/tests/LLTC-042-junit.xml
+id: LLTC-010
+header: "Motor speed monitoring test cases"
+text: |
+  "Tests to verify motor speed monitoring functionality."
 score:
-  ReviewerA: 0.9  # 90% confident based on evidence
-  ReviewerB: 0.8  # 80% confident
+  TestEngineer: 0. ninety five5  # SME confidence score (1.0=certain true, 0.5=unc
 ---
 ```
 
-### Automated Validation
-```yaml
----
-id: LLTC-042
-evidence:
-  type: junit_pass_fail_checker
-  references:
-    - type: "file"
-      path: artifacts/verification/tests/LLTC-042-junit.xml
-  configuration:
-    expected_tests: 5
----
+### Score Propagation (Automatic)
+
+```
+URD-010: (NO score) → inherits 0.95
+   ↑
+SRD-010: (NO score) → inherits 0.95
+   ↑
+SWD-010: (NO score) → inherits 0.95
+   ↑ (trudag automatically propagates)
+LLTC-010: score: 0.95
 ```
 
-**Score Meaning:**
-- 1.0 = Certain statement is true
-- 0.5 = Completely uncertain
-- 0.0 = Certain statement is false (or default for unscored)
+### Score Meaning
 
-**Default:** Requirements without `score:` or `evidence:` blocks default to **0.0**
+- **1.0** = Certain statement is true
+- **0.75-0.9** = Very confident, minor doubts
+- **0.5** = Completely uncertain
+- **0.25-0.5** = Low confidence
+- **0.0** = Certain statement is false / Default for unscored
+
+**Default:** Requirements without `score:` block = **0.0** (unless they inherit from parent URD)
 
 ---
 
 ## 📦 Evidence Linking
 
-**Use `references:` block (NOT deprecated `artifact:` block):**
+**Use `references:`:**
 
 ```yaml
 ---
-id: SWD-042
+id: SWD-010
 references:
   - type: "file"
-    path: src/sensors/temperature.cpp
+    path: src/sensors/motor_speed.cpp
+    description: "Implementation"
   - type: "file"
-    path: artifacts/verification/static-analysis/cppcheck-SWD-042.xml
-  - type: "url"  # For PRs, external links
-    path: https://github.com/SEAME-pt/Team04_DrivaPi/pull/142
-score:
-  CodeReviewer: 0.9
+    path: artifacts/verification/static-analysis/cppcheck-SWD-010.xml
+    description: "Static analysis (0 errors)"
+  - type: "file"
+    path: artifacts/verification/coverage/motor-coverage.txt
+    description: "Coverage (87%)"
+  - type: "file"
+    path: docs/standards/iso26262/asil-justification-swd-010.md
+    description: "ASIL A justification"
 ---
 ```
 
-**Common Evidence Types:**
-1. **Code** - `src/` files
-2. **Tests** - `tests/` files + `artifacts/verification/tests/` results
-3. **Design** - `docs/design/` diagrams, specs
-4. **Review** - PR URLs, commit SHAs
-5. **Analysis** - `artifacts/verification/static-analysis/`, coverage reports
-6. **Compliance** - `docs/standards/` ISO 26262 docs
+**Evidence Types (linked in references):**
+
+| Type | Location | Linked In |
+|------|----------|-----------|
+| **Code** | `src/` | SWD |
+| **Tests** | `tests/`, `artifacts/verification/tests/` | LLTC, SWD |
+| **Design** | `docs/design/` | SRD, SWD |
+| **Analysis** | `artifacts/verification/static-analysis/`, `coverage/` | SWD |
+| **Review** | `reviewed:` field + PR links | Any level |
+| **Compliance** | `docs/standards/iso26262/` | SWD (ASIL docs) |
+
 
 ---
 
@@ -255,24 +238,36 @@ source .venv/bin/activate
 **"YAML syntax error"**
 ```bash
 # Check frontmatter (lines 1-40)
-head -40 reqs/swd/SWD-042.md
+head -40 reqs/swd/SWD-010.md
 # Look for: --- at start and end, correct indentation
 ```
 
 **"Broken link: parent not found"**
 ```bash
 # Create parent first
-trudag manage create-item SRD 015 reqs/srd
+trudag manage create-item SRD 010 reqs/srd
 # Then link
-trudag manage create-link SWD-042 SRD-015
+trudag manage create-link SRD-010 SWD-010
 ```
 
-**"Requirement has score 0.0" (unexpected)**
+**"Score is 0.0 unexpectedly"**
 ```bash
-# Add score: block or evidence: block to requirement
-nano reqs/lltc/LLTC-042.md
-# Then recalculate
+# Check URD has score: block
+# SRD/SWD/LLTC should NOT have score: (they inherit)
+nano reqs/urd/URD-010.md
+# Make sure score: block exists at URD level only
 trudag score
+```
+
+**"ASIL field in SRD or LLTC"**
+```bash
+# ✗ WRONG
+id: SRD-010
+ASIL: "A"  # Error! Should be in SWD only
+
+# ✓ CORRECT
+id: SWD-010
+ASIL: "A"  # Correct placement
 ```
 
 ---
@@ -282,85 +277,37 @@ trudag score
 ```
 reqs/
 ├── urd/          # User Requirements (level 1.0, Assertion)
+│   └── URD-010.md
 ├── srd/          # System Requirements (level 2.0, Assertion)
-├── swd/          # Software Design (level 3.0, Assertion)
+│   └── SRD-010.md
+├── swd/          # Software Requirements (level 3.0, Assertion, ASIL here)
+│   └── SWD-010.md
 └── lltc/         # Test Cases (level 4.0, Evidence/Premise)
+    └── LLTC-010.md
 
 artifacts/
-├── trustable-report/          # Generated reports
+├── trustable-report/          # Generated by trudag publish
 └── verification/
     ├── tests/                 # Test results (*.xml)
+    │   └── LLTC-010-junit.xml
     ├── static-analysis/       # Analysis reports
+    │   └── cppcheck-SWD-010.xml
     └── coverage/              # Coverage reports
+        └── motor-coverage.txt
 
 docs/
 ├── design/                    # Architecture, interfaces
-└── standards/                 # ISO 26262, ASIL docs
-```
+│   ├── motor_system_architecture.md
+│   └── gpio_sensor_interface.md
+├── user_needs_analysis.md
+└── standards/iso26262/        # ASIL justification docs
+    └── asil-justification-swd-010.md
 
----
+src/sensors/
+└── motor_speed.cpp            # Implementation
 
-## 🎯 Typical Workflow (7 steps)
-
-```bash
-# 1. Create
-trudag manage create-item SWD 042 reqs/swd
-
-# 2. Edit (add header, text, ASIL, etc.)
-nano reqs/swd/SWD-042.md
-
-# 3. Link to parent
-trudag manage create-link SWD-042 SRD-015
-
-# 4. Add evidence links & score
-nano reqs/swd/SWD-042.md
-# Add references: block with artifact paths
-# Add score: block with SME assessment
-
-# 5. Validate
-trudag manage lint
-
-# 6. Calculate scores
-trudag score
-
-# 7. Commit
-git add reqs/swd/SWD-042.md .dotstop.dot
-git commit -m "feat(swd): Add SWD-042 with evidence and scoring"
-```
-
----
-
-## 🚀 Complete Development Cycle
-
-```bash
-# 1. Implement feature
-nano src/sensors/temperature.cpp
-
-# 2. Write tests
-nano tests/unit/test_temperature.cpp
-
-# 3. Run CI (generates test results, analysis)
-./run_tests.sh > artifacts/verification/tests/LLTC-042-junit.xml
-cppcheck src/sensors/temperature.cpp 2> artifacts/verification/static-analysis/cppcheck-SWD-042.xml
-
-# 4. Create/update requirements with evidence links
-nano reqs/lltc/LLTC-042.md  # Add references: to test files
-nano reqs/swd/SWD-042.md     # Add references: to code, analysis
-
-# 5. Add scores (manual or automated)
-# Edit .md files to add score: or evidence: blocks
-
-# 6. Validate and score
-trudag manage lint
-trudag score
-
-# 7. Generate report
-trudag publish --output-dir artifacts/trustable-report
-
-# 8. Create PR
-git add .
-git commit -m "feat: Implement temperature sensor with full TSF traceability"
-git push origin feature/temperature-sensor
+tests/unit/
+└── test_motor_speed.cpp       # Tests
 ```
 
 ---

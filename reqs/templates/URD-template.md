@@ -5,8 +5,6 @@ text: |
   "Detailed requirement statement here"
 
 # TSF Type: Assertion (Both a Request and a Claim)
-
-ASIL: "ASIL level here (QM/A/B/C/D)"
 verification_method: "Verification method here"
 
 # Links: Connects to child Assertion
@@ -25,21 +23,6 @@ references:
   # Add more references as needed
   # - type: "url"
   #   path: <https://github.com/SEAME-pt/Team04_DrivaPi/pull/XX>
-
-# Manual SME Score
-score:
-  <SME_ID>: <0.0-1.0>  # SME confidence score (1.0=certain true, 0.5=uncertain, 0.0=certain false)
-  # Example:
-  # ProductOwner: 0.95
-
-# Optional: Automated Validation
-# evidence:
-#   type: <validator_name>
-#   references:
-#     - type: "file"
-#       path: <path/to/artifact/to/validate>
-#   configuration: # input parameters for the validator
-#     <param>: <value>
 
 active: true
 derived: false

@@ -47,7 +47,7 @@ git push origin feature/swd-042
 
 ```bash
 # Link child → parent (ALWAYS bottom-up in V-Model)
-trudag manage create-link SWD-042 SRD-015
+trudag manage create-link SRD-042 SWD-015
 
 # Verify links
 trudag manage lint
@@ -241,7 +241,7 @@ level: 3.0  # 1.0=URD, 2.0=SRD, 3.0=SWD, 4.0=LLTC
 trudag manage create-item SRD 015 reqs/srd
 
 # Then link child → parent
-trudag manage create-link SWD-042 SRD-015
+trudag manage create-link SRD-042 SWD-015
 ```
 
 ### "Requirement not in .dotstop.dot"
@@ -325,9 +325,9 @@ nano reqs/lltc/LLTC-100.md
 ### Step 3: Link (Bottom-Up V-Model)
 
 ```bash
-trudag manage create-link SRD-100 URD-100
-trudag manage create-link SWD-100 SRD-100
-trudag manage create-link LLTC-100 SWD-100
+trudag manage create-link URD-100 SRD-100
+trudag manage create-link SRD-100 SWD-100
+trudag manage create-link SWD-100 LLTC-100
 ```
 
 ### Step 4: Validate Structure
