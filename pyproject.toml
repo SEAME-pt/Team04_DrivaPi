@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.2", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "my-trudag-validators"
+version = "0.1.0"
+description = "Local Trustable/Trudag validators for Team04 DrivaPi"
+requires-python = ">=3.9"
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools.package-dir]
+"" = "."
+
+[project.entry-points."trustable.validator.plugins"]
+my_dotstop_validators = "dotstop_extensions.validators"

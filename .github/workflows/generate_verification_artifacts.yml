@@ -1,0 +1,174 @@
+name: Generate verification artifacts (tests / coverage / cppcheck)
+
+on:
+  workflow_call:
+    inputs:
+      src_dirs:
+        type: string
+        description: "Source directories to include for static analysis / coverage"
+        required: false
+        default: "src"
+      junit_output:
+        type: string
+        description: "Path to write JUnit xml"
+        required: false
+        default: "artifacts/verification/tests/LLTC-998-junit.xml"
+      coverage_output:
+        type: string
+        description: "Path to write coverage xml"
+        required: false
+        default: "artifacts/verification/coverage/coverage-SWD-998.xml"
+      cppcheck_output:
+        type: string
+        description: "Path to write cppcheck xml"
+        required: false
+        default: "artifacts/verification/static-analysis/cppcheck-SWD-998.xml"
+      build_dir:
+        type: string
+        description: "Build directory"
+        required: false
+        default: "build"
+
+jobs:
+  generate-artifacts:
+    runs-on: ubuntu-latest
+    outputs:
+      junit_path: ${{ steps.set_outputs.outputs.junit_path }}
+      coverage_path: ${{ steps.set_outputs.outputs.coverage_path }}
+      cppcheck_path: ${{ steps.set_outputs.outputs.cppcheck_path }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Needed for gcovr
+
+      - name: Ensure artifact directories exist
+        run: |
+          set -euo pipefail
+          mkdir -p $(dirname "${{ inputs.junit_output }}")
+          mkdir -p $(dirname "${{ inputs.coverage_output }}")
+          mkdir -p $(dirname "${{ inputs.cppcheck_output }}")
+          mkdir -p artifacts/trustable-report
+
+      - name: Install system packages (compiler, cppcheck, lcov)
+        run: |
+          set -euo pipefail
+          sudo apt-get update -y
+          # Note: libgtest-dev is NO LONGER needed, FetchContent handles it.
+          sudo apt-get install -y build-essential cmake cppcheck lcov
+
+      - name: Install Python tools (gcovr)
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          pip install gcovr
+
+      - name: Configure and Build with CMake
+        run: |
+          set -euo pipefail
+          # Configure:
+          # - Set build type to Debug (for coverage)
+          # - Pass coverage flags to C++ compiler
+          cmake -B "${{ inputs.build_dir }}" -S. \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_FLAGS="--coverage"
+
+          # Build:
+          # - This will compile the library and the test executable
+          cmake --build "${{ inputs.build_dir }}"
+
+      - name: Run tests -> produce JUnit XML
+        id: run-tests
+        run: |
+          set -euo pipefail
+          BIN_PATH="${{ inputs.build_dir }}/tests/motor_speed_test"
+          JUNIT_PATH="${{ inputs.junit_output }}"
+
+          if; then
+            echo "::error::Test binary not found at ${BIN_PATH}"
+            exit 1
+          fi
+
+          # Run the binary directly to get the JUnit output at the *exact* path
+          # CRITICAL: If tests fail, this command returns non-zero, failing the workflow
+          "${BIN_PATH}" --gtest_output=xml:"${JUNIT_PATH}"
+          echo "JUnit XML written to ${JUNIT_PATH}"
+
+
+      - name: Generate coverage XML (gcovr)
+        id: coverage
+        run: |
+          set -euo pipefail
+          COVERAGE_PATH="${{ inputs.coverage_output }}"
+          BUILD_DIR="${{ inputs.build_dir }}"
+
+          if command -v gcovr >/dev/null 2>&1; then
+            echo "Running gcovr..."
+            # CRITICAL: Removed '|| true'.
+            # Filter to only report on 'src' directory.
+            gcovr -r. --object-directory="${BUILD_DIR}" \
+              --filter "${{ inputs.src_dirs }}/.*" \
+              --xml -o "${COVERAGE_PATH}"
+          else
+            echo "::error::gcovr command not found."
+            exit 1
+          fi
+
+          if; then
+             echo "::error::Coverage XML was not generated or is empty."
+             exit 1
+          fi
+          echo "Coverage XML at: ${COVERAGE_PATH}"
+
+      - name: Run cppcheck -> cppcheck-SWD-998.xml
+        id: cppcheck
+        run: |
+          set -euo pipefail
+          CPPCHECK_PATH="${{ inputs.cppcheck_output }}"
+
+          if [ -d "${{ inputs.src_dirs }}" ]; then
+            echo "Running cppcheck on '${{ inputs.src_dirs }}' -> ${CPPCHECK_PATH}"
+            # CRITICAL: Removed '--suppress=missingIncludeSystem'
+            # Added --error-exitcode=1 to fail on errors
+            # Note: We must tell cppcheck where to find headers (like gtest)
+            # We create a simple include file for it
+            echo "-I${{ inputs.build_dir }}/_deps/googletest-src/googletest/include" > cppcheck_includes.txt
+            echo "-I${{ inputs.build_dir }}/_deps/googletest-src/googlemock/include" >> cppcheck_includes.txt
+            echo "-Isrc" >> cppcheck_includes.txt
+
+            cppcheck --enable=all --error-exitcode=1 --xml --xml-version=2 \
+              --includes-file=cppcheck_includes.txt \
+              "${{ inputs.src_dirs }}" 2> "${CPPCHECK_PATH}"
+          else
+            echo "::error::Source dir '${{ inputs.src_dirs }}' not found."
+            exit 1
+          fi
+
+      - name: Validate and list artifacts
+        id: validate
+        run: |
+          set -euo pipefail
+          echo "Artifacts:"
+          echo " - JUnit:    ${{ inputs.junit_output }} -> $( [ -f '${{ inputs.junit_output }}' ] && echo yes || echo no )"
+          echo " - Coverage: ${{ inputs.coverage_output }} -> $( [ -f '${{ inputs.coverage_output }}' ] && echo yes || echo no )"
+          echo " - Cppcheck: ${{ inputs.cppcheck_output }} -> $( [ -f '${{ inputs.cppcheck_output }}' ] && echo yes || echo no )"
+          find artifacts -maxdepth 3 -type f -print
+          echo "all_valid=true" >> $GITHUB_OUTPUT
+
+      - name: Set outputs
+        id: set_outputs
+        run: |
+          echo "junit_path=${{ inputs.junit_output }}" >> $GITHUB_OUTPUT
+          echo "coverage_path=${{ inputs.coverage_output }}" >> $GITHUB_OUTPUT
+          echo "cppcheck_path=${{ inputs.cppcheck_output }}" >> $GITHUB_OUTPUT
+
+      - name: Upload verification artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification-artifacts
+          path: |
+            ${{ inputs.junit_output }}
+            ${{ inputs.coverage_output }}
+            ${{ inputs.cppcheck_output }}
+          retention-days: 30
