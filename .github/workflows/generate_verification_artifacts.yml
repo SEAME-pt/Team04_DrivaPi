@@ -100,16 +100,19 @@ jobs:
         id: build
         if: ${{ inputs.use_cmake == true }}
         run: |
-          # Determine coverage flags
-          COVERAGE_FLAGS=""
+          # Configure and build with or without coverage flags to avoid nested-quote issues
           if [ "${{ inputs.enable_coverage_flags }}" = "true" ] && [ "${{ inputs.run_coverage }}" = "true" ]; then
-            COVERAGE_FLAGS="-DCMAKE_CXX_FLAGS='-g -O0 --coverage' -DCMAKE_C_FLAGS='-g -O0 --coverage' -DCMAKE_EXE_LINKER_FLAGS='--coverage'"
+            echo "Configuring with coverage flags"
+            cmake -S . -B "${{ inputs.cmake_build_dir }}" \
+              -DCMAKE_BUILD_TYPE="${{ inputs.build_type }}" \
+              -DCMAKE_CXX_FLAGS="-g -O0 --coverage" \
+              -DCMAKE_C_FLAGS="-g -O0 --coverage" \
+              -DCMAKE_EXE_LINKER_FLAGS="--coverage"
+          else
+            echo "Configuring without coverage flags"
+            cmake -S . -B "${{ inputs.cmake_build_dir }}" \
+              -DCMAKE_BUILD_TYPE="${{ inputs.build_type }}"
           fi
-
-          # Configure and build
-          cmake -S . -B "${{ inputs.cmake_build_dir }}" \
-            -DCMAKE_BUILD_TYPE="${{ inputs.build_type }}" \
-            $COVERAGE_FLAGS
 
           cmake --build "${{ inputs.cmake_build_dir }}" -- -j$(nproc)
 
