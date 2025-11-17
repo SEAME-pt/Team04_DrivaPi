@@ -41,19 +41,35 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install --upgrade pip setuptools wheel
+
+          echo "=== Installing project in editable mode ==="
           if [ -f "pyproject.toml" ] || [ -f "setup.py" ]; then
-            pip install -e.
+            pip install -e. --verbose
           fi
-          pip install pytest pytest-cov pyyaml gcovr
 
-          # CRITICAL: This is the fix for Risk 2.3
-          # Install 'trustable' from the official GitLab PyPI-style registry
-          # This is secure, versioned, and deterministic.
-          echo "Installing trustable from GitLab package registry..."
-          pip install trustable --index-url https://gitlab.com/api/v4/projects/66600816/packages/pypi/simple
+          echo "=== Listing installed packages ==="
+          pip list
 
-          # Verify installation
+          echo "=== Checking Python sys.path ==="
+          python -c "import sys; print('\n'.join(sys.path))"
+
+          echo "=== Listing src directory contents ==="
+          ls -R src
+
+          pip install pytest pytest-cov pyyaml gcovr --verbose
+
+          echo "=== Installing trustable from GitLab package registry ==="
+          pip install trustable --index-url https://gitlab.com/api/v4/projects/66600816/packages/pypi/simple --verbose
+
+          echo "=== Listing installed packages after trustable install ==="
+          pip list
+
+          echo "=== Verifying trudag installation ==="
+          which trudag
           trudag --version
+
+          echo "=== Listing validators from trustable ==="
+          python -c "import trustable; print('validators:' , getattr(trustable, 'validators', 'NOT FOUND'))"
 
       - name: Run trudag lint (optional)
         id: trudag_lint
