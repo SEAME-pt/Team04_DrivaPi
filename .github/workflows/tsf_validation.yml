@@ -57,6 +57,10 @@ jobs:
           pip install .
           cd -
 
+      - name: Install local validators
+        run: |
+         pip install -e .
+
       # 5️⃣ Verify tools
       - name: Verify tools installation
         run: |

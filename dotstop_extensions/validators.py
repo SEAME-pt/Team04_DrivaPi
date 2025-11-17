@@ -139,12 +139,23 @@ def cppcheck_error_validator(configuration: dict[str, yaml]) -> tuple[float, lis
 
         # Many cppcheck outputs include a top-level <errors> element whose children are <error>.
         errors_element = root.find("errors")
+
+        # determine which severities count as failures (accept single value or list)
+        fail_severities = cfg.get("fail_on_severity", ["error"])
+        if not isinstance(fail_severities, list):
+            fail_severities = [fail_severities]
+
+        # count only errors whose severity is in fail_severities
         if errors_element is not None:
-            # count direct children <error> inside <errors>
-            error_count = len(errors_element.findall("error"))
+            candidates = errors_element.findall("error")
         else:
-            # fallback: find any <error> element anywhere in the document
-            error_count = len(root.findall(".//error"))
+            candidates = root.findall(".//error")
+
+        error_count = 0
+        for err in candidates:
+            severity = err.attrib.get("severity")
+            if severity in fail_severities:
+                error_count += 1
 
         # allowed number of errors (here hard-coded to zero).
         allowed = 0
