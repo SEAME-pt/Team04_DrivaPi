@@ -3,22 +3,11 @@
 ## Summary / Business Objective
 Provide a high-level description of the epic and the business value it delivers. Explain why this work is important.
 
-## Target Users / Stakeholders
-Who will benefit from this epic?
-- 
-- 
-
 ## Priority
 - [ ] critical
 - [ ] high
 - [ ] medium
 - [ ] low
-
-## Timeline
-- **Target completion:** 
-- **Key milestones:**
-  - [ ] Milestone 1
-  - [ ] Milestone 2
 
 ## User Stories (Issues)
 - [ ] # (link to user story 1)
