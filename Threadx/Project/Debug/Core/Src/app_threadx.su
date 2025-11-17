@@ -1,3 +1,8 @@
-../Core/Src/app_threadx.c:61:6:App_ThreadX_Init	56	static
-../Core/Src/app_threadx.c:85:6:MX_ThreadX_Init	8	static
-../Core/Src/app_threadx.c:99:6:ld1_thread_entry	24	static
+../Core/Src/app_threadx.c:84:6:App_ThreadX_Init	64	static
+../Core/Src/app_threadx.c:164:6:MX_ThreadX_Init	8	static
+../Core/Src/app_threadx.c:178:6:ld1_thread_entry	24	static
+../Core/Src/app_threadx.c:188:6:dc_motor	24	static
+../Core/Src/app_threadx.c:198:6:servo_motor	24	static
+../Core/Src/app_threadx.c:208:6:speed_sensor	24	static
+../Core/Src/app_threadx.c:218:6:canTX	24	static
+../Core/Src/app_threadx.c:228:6:canRX	24	static
