@@ -149,43 +149,40 @@ jobs:
           sed -n '1,200p' cppcheck_includes.txt || true
           echo "========================="
 
-          # Run cppcheck and capture exit code, still write xml to file
-          # Note: cppcheck writes xml to stderr when using --xml, so redirect stderr->file
-          # and also tee a human-readable summary to the log.
+          # Run cppcheck: do NOT set --error-exitcode so exit status isn't used as gate
+          # Redirect xml output (cppcheck writes XML to stderr)
           cppcheck --enable=all --xml --xml-version=2 \
             --includes-file=cppcheck_includes.txt \
             "${SRC_DIR}" 2> "${CPPCHECK_PATH}" || true
-          CPPCHECK_EXIT=$?
 
-          echo "Cppcheck run finished (exitcode=${CPPCHECK_EXIT}). Contents of ${CPPCHECK_PATH}:"
-
-          # Print the XML head for quick context
+          echo "Cppcheck run finished. Contents of ${CPPCHECK_PATH}:"
           sed -n '1,200p' "${CPPCHECK_PATH}" || true
 
-          # If xml is empty or missing, fail with helpful diagnostics
+          # Fail if xml missing/empty (indicates cppcheck failed unexpectedly)
           if [ ! -s "${CPPCHECK_PATH}" ]; then
-            echo "::error::cppcheck did not produce xml at ${CPPCHECK_PATH} (file missing or empty). Exit code: ${CPPCHECK_EXIT}"
-            echo "Try running cppcheck locally with the same includes or relax includes for debugging."
+            echo "::error::cppcheck did not produce xml at ${CPPCHECK_PATH} (file missing or empty)."
             exit 1
           fi
 
-          # Print any <error ...> nodes in readable form (filename, line, severity, msg)
-          echo ""
-          echo "=== cppcheck errors (if any) ==="
-          # Portable grep-style extraction of error nodes from xml:
-          grep -oP '<error[^>]*>' "${CPPCHECK_PATH}" | sed -n '1,200p' || true
-          echo "==============================="
-
-          # Count how many error severity nodes exist (severity="error")
+          # Count error-severity nodes in xml (severity="error")
           ERR_COUNT=$(grep -o 'severity="error"' "${CPPCHECK_PATH}" | wc -l)
           echo "cppcheck severity=\"error\" count: ${ERR_COUNT}"
 
           if [ "${ERR_COUNT}" -gt 0 ]; then
             echo "::error::cppcheck found ${ERR_COUNT} error-severity issues. See ${CPPCHECK_PATH} for full details."
+            # show the <error> nodes for quick debugging
+            grep -n "<error " "${CPPCHECK_PATH}" || true
             exit 1
           fi
 
-          # Otherwise exit success
+          # Optionally warn about style/info findings (do not fail)
+          INFO_COUNT=$(grep -o 'severity="information"' "${CPPCHECK_PATH}" | wc -l)
+          STYLE_COUNT=$(grep -o 'severity="style"' "${CPPCHECK_PATH}" | wc -l)
+          echo "cppcheck info-count=${INFO_COUNT} style-count=${STYLE_COUNT}"
+          if [ "${INFO_COUNT}" -gt 0 ] || [ "${STYLE_COUNT}" -gt 0 ]; then
+            echo "::warning::cppcheck reported ${INFO_COUNT} information and ${STYLE_COUNT} style issues. See ${CPPCHECK_PATH}."
+          fi
+
           echo "Cppcheck completed with no error-severity findings."
 
       - name: Validate and list artifacts
