@@ -5,12 +5,13 @@
  * @date 2025-11-14
  *
  * Changes:
- * - Corrected C++ syntax error in Test_04_PulseCountingAccuracy.
- * - Array 'test_cases' is now correctly defined as a 2D array.
- * - Array indices are now correctly used for 'set_pulse_count' and 'ASSERT_EQ'.
+ * - Fixed Test_04_PulseCountingAccuracy to use std::array<std::pair<int,int>>
+ *   and index correctly (pulse_count -> expected_rpm).
  */
 
 #include <gtest/gtest.h>
+#include <array>
+#include <utility> // std::pair
 #include "../../src/sensors/motor_speed.h"     // Include the REAL class header
 #include "../../src/sensors/gpio_interface.h" // Include the interface
 
@@ -93,17 +94,17 @@ TEST(MotorSpeedSensorTest, Test_04_PulseCountingAccuracy) {
     MockGPIO mock_gpio;
     MotorSpeedSensor sensor(&mock_gpio); // Inject mock
 
-    // Test various pulse counts
-    int test_cases[3][2] = {
+    // Test various pulse counts: pair<pulse_count, expected_rpm>
+    std::array<std::pair<int,int>,3> test_cases = {{
         {10, 600},   // 10 pulses = 600 RPM
         {50, 3000},  // 50 pulses = 3000 RPM
         {100, 6000}, // 100 pulses = 6000 RPM
-    };
+    }};
 
-    for (auto& test : test_cases) {
-        mock_gpio.set_pulse_count(test);
+    for (const auto &t : test_cases) {
+        mock_gpio.set_pulse_count(t.first);
         int rpm = sensor.read_rpm();
-        ASSERT_EQ(rpm, test[2]) << "Failed for pulse count: " << test;
+        ASSERT_EQ(rpm, t.second) << "Failed for pulse count: " << t.first;
         ASSERT_FALSE(sensor.has_error());
     }
 }
