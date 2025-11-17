@@ -68,8 +68,13 @@ jobs:
           which trudag
           trudag --version
 
-          echo "=== Listing validators from trustable ==="
-          python -c "import trustable; print('validators:' , getattr(trustable, 'validators', 'NOT FOUND'))"
+          echo "=== Listing validators from trudag ==="
+          python -c "
+          from trudag.dotstop.core.validator import Validator
+          v = Validator()
+          print('Discovered validators:')
+          for name, func in v._validator_functions.items():
+              print(f'  ✓ {name}: {func}')
 
       - name: Run trudag lint (optional)
         id: trudag_lint
