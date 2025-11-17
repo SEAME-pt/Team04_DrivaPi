@@ -1,6 +1,6 @@
 # Raspberry Pi 5 (16GB) System — Power Summary
 
-This document is a cleaned-up, readable version of the power analysis for the Raspberry Pi 5 based system and the supporting microcontroller/motor block. Tables, totals, runtime estimates and recommended protections are included.
+This document is a resume of the power analysis made for the PiRacer system. Tables, totals, runtime estimates and recommended protections are included.
 
 ---
 
@@ -89,7 +89,7 @@ Cons: single point of failure if not properly fused; ensure BMS and wiring sized
 ## Recommended protections, components and wiring
 
 1. BMS
-   - Use a 3S BMS with cell balancing, over/under voltage and overcurrent protection.
+   - Use a 3S BMS with cell balancing, over/under voltage and over current protection.
    - Rated for continuous current above expected continuous draw (recommend ≥10 A) and peak current above expected peaks.
 
 2. Fuses
@@ -106,7 +106,7 @@ Cons: single point of failure if not properly fused; ensure BMS and wiring sized
    - Motor/servo rail: 1000 µF+ low-ESR capacitors near the motors/servo to absorb spikes and prevent brownouts.
 
 5. Current & voltage monitoring
-   - Use a pack voltage monitor and a current sensor (shunt or hall) to log/alert for overcurrent or low-voltage conditions.
+   - Use a pack voltage monitor and a current sensor (shunt or hall) to log/alert for over current or low-voltage conditions.
 
 6. Wiring & connectors
    - Use appropriately sized wires (e.g., 14–12 AWG for 10–15 A runs).
@@ -130,8 +130,3 @@ Cons: single point of failure if not properly fused; ensure BMS and wiring sized
 - Proper gauge wiring (12–14 AWG), connectors and mounting hardware
 
 ---
-
-If you want, I can:
-- produce a printable README.md with this layout and finer formatting,
-- generate a parts list with example model numbers,
-- or create wiring diagrams (text-based) for both single-pack and dual-pack setups.
