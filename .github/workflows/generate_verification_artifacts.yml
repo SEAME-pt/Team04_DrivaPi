@@ -130,22 +130,37 @@ jobs:
         run: |
           set -euo pipefail
           CPPCHECK_PATH="${{ inputs.cppcheck_output }}"
+          BUILD_DIR="${{ inputs.build_dir }}"
+          SRC_DIR="${{ inputs.src_dirs }}"
 
-          if [ -d "${{ inputs.src_dirs }}" ]; then
-            echo "Running cppcheck on '${{ inputs.src_dirs }}' -> ${CPPCHECK_PATH}"
-            # CRITICAL: Removed '--suppress=missingIncludeSystem'
-            # Added --error-exitcode=1 to fail on errors
-            # Note: We must tell cppcheck where to find headers (like gtest)
-            # We create a simple include file for it
-            echo "-I${{ inputs.build_dir }}/_deps/googletest-src/googletest/include" > cppcheck_includes.txt
-            echo "-I${{ inputs.build_dir }}/_deps/googletest-src/googlemock/include" >> cppcheck_includes.txt
-            echo "-Isrc" >> cppcheck_includes.txt
+          if [ -d "${SRC_DIR}" ]; then
+            echo "Running cppcheck on '${SRC_DIR}' -> ${CPPCHECK_PATH}"
 
+            # Create includes file with plain directories (NO '-I' prefix).
+            # Use absolute-ish paths relative to the repository root so cppcheck can find headers.
+            echo "${BUILD_DIR}/_deps/googletest-src/googletest/include" > cppcheck_includes.txt
+            echo "${BUILD_DIR}/_deps/googletest-src/googlemock/include" >> cppcheck_includes.txt
+            echo "src" >> cppcheck_includes.txt
+
+            # Optional: print the includes file for debugging
+            echo "=== cppcheck includes ==="
+            sed -n '1,100p' cppcheck_includes.txt || true
+            echo "========================="
+
+            # Run cppcheck: fail on 'error' severity via --error-exitcode=1
             cppcheck --enable=all --error-exitcode=1 --xml --xml-version=2 \
               --includes-file=cppcheck_includes.txt \
-              "${{ inputs.src_dirs }}" 2> "${CPPCHECK_PATH}"
+              "${SRC_DIR}" 2> "${CPPCHECK_PATH}"
+            CPPCHECK_EXIT=$?
+
+            if [ "${CPPCHECK_EXIT}" -ne 0 ]; then
+              echo "::error::cppcheck returned non-zero (${CPPCHECK_EXIT}). See ${CPPCHECK_PATH}"
+              exit "${CPPCHECK_EXIT}"
+            fi
+
+            echo "Cppcheck XML written to ${CPPCHECK_PATH}"
           else
-            echo "::error::Source dir '${{ inputs.src_dirs }}' not found."
+            echo "::error::Source dir '${SRC_DIR}' not found."
             exit 1
           fi
 
