@@ -1,0 +1,8 @@
+# Enforce LF line endings for all text files
+* text=auto eol=lf
+
+# Explicitly enforce LF for Trudag related files
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+*.dot text eol=lf
