@@ -195,8 +195,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: verification-artifacts
-          path: |
-            ${{ inputs.junit_output }}
-            ${{ inputs.coverage_output }}
-            ${{ inputs.cppcheck_output }}
+          path: artifacts/verification  # Upload the dir (contents only, no dir itself)
           retention-days: 30
