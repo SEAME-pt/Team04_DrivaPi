@@ -40,6 +40,10 @@ int MotorSpeedSensor::read_rpm(void) {
         return -1;
     }
     last_rpm = pulses * 60; // convert Hz -> RPM
+	if (last_rpm < 0 || last_rpm > 10000) {
+		error_flag = true;
+		return -1;
+	}
     return last_rpm;
 }
 
