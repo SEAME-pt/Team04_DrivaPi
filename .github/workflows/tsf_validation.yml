@@ -87,6 +87,7 @@ jobs:
             echo "✗ .dotstop.dot NOT found in repository"
             echo "dot_exists=false" >> $GITHUB_OUTPUT
           fi
+          cat .dotstop.dot || true
 
       - name: Build TSF graph (if .dotstop.dot missing or needs update)
         id: build_graph
