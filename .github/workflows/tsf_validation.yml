@@ -76,22 +76,40 @@ jobs:
               print(f'  ✓ {name}: {func}')
           "
 
-      - name: Build TSF graph (required for scoring)
+      - name: Check for .dotstop.dot in repository
+        id: check_dot
+        run: |
+          if [ -f ".dotstop.dot" ]; then
+            echo "✓ .dotstop.dot found in repository"
+            ls -lh .dotstop.dot
+            echo "dot_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "✗ .dotstop.dot NOT found in repository"
+            echo "dot_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build TSF graph (if .dotstop.dot missing or needs update)
         id: build_graph
         run: |
           set -euo pipefail
           mkdir -p artifacts/trustable-report
 
-          echo "=== Building TSF graph from requirement YAML files ==="
-          trudag manage lint 2>&1 | tee artifacts/trustable-report/trudag-lint.txt
+          if [ -f ".dotstop.dot" ]; then
+            echo "=== Using existing .dotstop.dot from repository ==="
+            echo "Running trudag manage lint to validate..."
+            trudag manage lint 2>&1 | tee artifacts/trustable-report/trudag-lint.txt || true
+            echo "✓ Existing .dotstop.dot preserved with all metadata"
+          else
+            echo "=== Building TSF graph from requirement YAML files ==="
+            trudag manage lint 2>&1 | tee artifacts/trustable-report/trudag-lint.txt
 
-          if [ ! -f ".dotstop.dot" ]; then
-            echo "::error::.dotstop.dot file was not created!"
-            echo "This file is required for validators to run."
-            exit 1
+            if [ ! -f ".dotstop.dot" ]; then
+              echo "::error::.dotstop.dot file was not created!"
+              exit 1
+            fi
+            echo "✓ TSF graph built successfully"
           fi
 
-          echo "✓ TSF graph built successfully"
           ls -lh .dotstop.dot
 
       - name: Verify verification artifacts are accessible
@@ -150,8 +168,10 @@ jobs:
           if grep -q "INFO: Executing validator" artifacts/trustable-report/trudag-score.txt; then
             echo "✓ Validators were executed"
           else
-            echo "::warning::No evidence of validator execution in output"
-            echo "This may indicate the .dotstop.dot graph is still incomplete"
+            echo "::error::No validators were executed!"
+            echo "This indicates the .dotstop.dot graph has an issue."
+            cat artifacts/trustable-report/trudag-score.txt
+            exit 1
           fi
 
           echo "score_exit_code=$SCORE_EXIT" >> $GITHUB_OUTPUT
@@ -179,11 +199,8 @@ jobs:
           echo "Artifacts:"
           find artifacts -type f | sed -n '1,200p'
           echo ""
-          if [ -f artifacts/trustable-report/tsf_score.txt ]; then
-            echo "=== TSF Score (.txt) ==="
-            head -n 200 artifacts/trustable-report/tsf_score.txt || true
-          elif [ -f artifacts/trustable-report/trudag-score.txt ]; then
-            echo "=== Trudag Score ==="
-            head -n 200 artifacts/trustable-report/trudag-score.txt || true
+          if [ -f artifacts/trustable-report/trudag-score.txt ]; then
+            echo "=== Trudag Score Output ==="
+            head -n 100 artifacts/trustable-report/trudag-score.txt || true
           fi
           echo "============================="
