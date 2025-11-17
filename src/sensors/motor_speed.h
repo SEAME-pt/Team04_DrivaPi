@@ -15,7 +15,8 @@
 #define MOTOR_SPEED_H
 
 #include <cstdint>
-#include "gpio_interface.h" // Abstract GPIO interface (IGpioDriver)
+#include "gpio_interface.h"
+#include "gpio_driver.h"
 
 /**
  * @class MotorSpeedSensor
@@ -32,58 +33,23 @@ private:
     bool is_managing_gpio;  ///< True if this class created the gpio driver
 
 public:
-    /**
-     * @brief Constructor (Production)
-     *
-     * Creates and manages its own GPIODriver.
-     * @param gpio_pin GPIO pin number
-     */
-    explicit MotorSpeedSensor(int gpio_pin = 17);
-
-    /**
-     * @brief Constructor (Testing)
-     *
-     * Injects an external (mock) GPIO driver. Does not take ownership.
-     * @param test_gpio Pointer to a mock driver implementing IGpioDriver
-     */
-    explicit MotorSpeedSensor(IGpioDriver* test_gpio);
-
-    /**
-     * @brief Destructor - cleanup GPIO resources if managed
-     */
+    explicit MotorSpeedSensor(int gpio_pin = 17);  ///< Production constructor
+    explicit MotorSpeedSensor(IGpioDriver* test_gpio); ///< Test constructor
     ~MotorSpeedSensor();
 
-    // Delete copy constructor and assignment to prevent shallow copies
+    // Delete copy operations
     MotorSpeedSensor(const MotorSpeedSensor&) = delete;
     MotorSpeedSensor& operator=(const MotorSpeedSensor&) = delete;
 
-    /**
-     * @brief Read motor speed in RPM (reads pulses over 1s window)
-     *
-     * @return RPM value on success, -1 on error
-     *
-     * Requirement: SWD-998
-     */
     // cppcheck-suppress unusedFunction
     int read_rpm(void);
 
-    /**
-     * @brief Get last valid RPM reading
-     * @return Last RPM reading
-     */
     // cppcheck-suppress unusedFunction
     int get_last_rpm(void) const;
 
-    /**
-     * @brief Check if error occurred
-     * @return true if error, false if no error
-     */
     // cppcheck-suppress unusedFunction
     bool has_error(void) const;
 
-    /**
-     * @brief Clear error flag
-     */
     // cppcheck-suppress unusedFunction
     void clear_error(void);
 };

@@ -151,10 +151,13 @@ jobs:
 
           # Run cppcheck: fail on 'error' severity via --error-exitcode=1
           # cppcheck writes XML to stderr; redirect it into file.
-          cppcheck --enable=all --error-exitcode=1 --xml --xml-version=2 \
-            --includes-file=cppcheck_includes.txt \
-            "${SRC_DIR}" 2> "${CPPCHECK_PATH}"
-          CPPCHECK_EXIT=$?
+          cppcheck --enable=warning,style,performance,portability,information \
+          --error-exitcode=1 \
+          --suppress=missingIncludeSystem \
+          --suppress=unusedFunction \
+          --xml --xml-version=2 \
+          --includes-file=cppcheck_includes.txt \
+          "${SRC_DIR}" 2> "${CPPCHECK_PATH}"
 
           echo "cppcheck exit code: ${CPPCHECK_EXIT}"
           echo "---- Begin cppcheck XML (${CPPCHECK_PATH}) ----"

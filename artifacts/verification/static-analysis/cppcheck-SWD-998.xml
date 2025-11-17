@@ -1,67 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <results version="2">
-  <cppcheck version="2.9"/>
-  <errors>
-    <!-- No errors found -->
-  </errors>
-
-  <summary>
-    <error severity="error" count="0"/>
-    <error severity="warning" count="0"/>
-    <error severity="style" count="0"/>
-    <error severity="performance" count="0"/>
-    <error severity="portability" count="0"/>
-    <error severity="information" count="0"/>
-  </summary>
-
-  <file name="src/sensors/motor_speed.cpp">
-    <location file="src/sensors/motor_speed.cpp" line="0"/>
-    <metrics>
-      <complexity avg="2.1" max="4"/>
-      <functions count="6"/>
-      <lines total="90" executable="65"/>
-    </metrics>
-  </file>
-
-  <file name="src/sensors/motor_speed.h">
-    <location file="src/sensors/motor_speed.h" line="0"/>
-    <metrics>
-      <complexity avg="1.0" max="1"/>
-      <functions count="6"/>
-      <lines total="60" executable="0"/>
-    </metrics>
-  </file>
-
-  <analysis-info>
-    <analyzed-files>
-      <file>src/sensors/motor_speed.cpp</file>
-      <file>src/sensors/motor_speed.h</file>
-    </analyzed-files>
-    <check-results>
-      <result id="checkUnusedFunctions" status="passed"/>
-      <result id="checkUnusedVariable" status="passed"/>
-      <result id="checkMemoryLeak" status="passed"/>
-      <result id="checkNullPointer" status="passed"/>
-      <result id="checkUninitVar" status="passed"/>
-      <result id="checkBufferOverrun" status="passed"/>
-      <result id="checkOutOfBounds" status="passed"/>
-      <result id="checkDivByZero" status="passed"/>
-    </check-results>
-  </analysis-info>
-
-  <verification>
-    <requirement id="SWD-998">
-      <metric name="errors" value="0" target="0" status="PASS"/>
-      <metric name="warnings" value="0" target="0" status="PASS"/>
-      <metric name="complexity-max" value="4" target="&lt;10" status="PASS"/>
-      <asil level="A" compliant="true"/>
-    </requirement>
-  </verification>
-
-  <metadata>
-    <timestamp>2025-11-03T10:17:00Z</timestamp>
-    <command>cppcheck --enable=all --xml --xml-version=2 src/sensors/motor_speed.cpp src/sensors/motor_speed.h</command>
-    <project>DrivaPi</project>
-    <version>1.0</version>
-  </metadata>
+    <cppcheck version="2.18.0"/>
+    <errors>
+        <error id="missingIncludeSystem" severity="information" msg="Include file: &lt;cstdint&gt; not found. Please note: Cppcheck does not need standard library headers to get proper results." verbose="Include file: &lt;cstdint&gt; not found. Please note: Cppcheck does not need standard library headers to get proper results.">
+            <location file="src/sensors/motor_speed.h" line="17" column="0"/>
+        </error>
+        <error id="missingIncludeSystem" severity="information" msg="Include file: &lt;chrono&gt; not found. Please note: Cppcheck does not need standard library headers to get proper results." verbose="Include file: &lt;chrono&gt; not found. Please note: Cppcheck does not need standard library headers to get proper results.">
+            <location file="src/sensors/motor_speed.cpp" line="2" column="0"/>
+        </error>
+        <error id="missingIncludeSystem" severity="information" msg="Include file: &lt;thread&gt; not found. Please note: Cppcheck does not need standard library headers to get proper results." verbose="Include file: &lt;thread&gt; not found. Please note: Cppcheck does not need standard library headers to get proper results.">
+            <location file="src/sensors/motor_speed.cpp" line="3" column="0"/>
+        </error>
+        <error id="unusedFunction" severity="style" msg="The function &apos;read_rpm&apos; is never used." verbose="The function &apos;read_rpm&apos; is never used." cwe="561">
+            <location file="src/sensors/motor_speed.cpp" line="32" column="23"/>
+            <symbol>read_rpm</symbol>
+        </error>
+        <error id="unusedFunction" severity="style" msg="The function &apos;get_last_rpm&apos; is never used." verbose="The function &apos;get_last_rpm&apos; is never used." cwe="561">
+            <location file="src/sensors/motor_speed.cpp" line="49" column="23"/>
+            <symbol>get_last_rpm</symbol>
+        </error>
+        <error id="unusedFunction" severity="style" msg="The function &apos;has_error&apos; is never used." verbose="The function &apos;has_error&apos; is never used." cwe="561">
+            <location file="src/sensors/motor_speed.cpp" line="56" column="24"/>
+            <symbol>has_error</symbol>
+        </error>
+        <error id="unusedFunction" severity="style" msg="The function &apos;clear_error&apos; is never used." verbose="The function &apos;clear_error&apos; is never used." cwe="561">
+            <location file="src/sensors/motor_speed.cpp" line="63" column="24"/>
+            <symbol>clear_error</symbol>
+        </error>
+        <error id="checkersReport" severity="information" msg="Active checkers: 169/966 (use --checkers-report=&lt;filename&gt; to see details)" verbose="Active checkers: 169/966 (use --checkers-report=&lt;filename&gt; to see details)"/>
+    </errors>
 </results>
