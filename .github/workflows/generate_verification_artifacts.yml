@@ -103,18 +103,22 @@ jobs:
           set -euo pipefail
           COVERAGE_PATH="${{ inputs.coverage_output }}"
           BUILD_DIR="${{ inputs.build_dir }}"
+          SRC_DIR="${{ inputs.src_dirs }}"
 
           if command -v gcovr >/dev/null 2>&1; then
             echo "Running gcovr..."
-            gcovr -r. --object-directory="${BUILD_DIR}" \
-              --filter "${{ inputs.src_dirs }}/.*" \
+            # Option A: run gcovr filtered to src/ and ignore working-dir errors
+            gcovr -r . \
+              --object-directory="${BUILD_DIR}" \
+              --filter "${SRC_DIR}/.*" \
+              --exclude-directories "${BUILD_DIR}/CMakeFiles" \
+              --gcov-ignore-errors=no_working_dir_found \
               --xml -o "${COVERAGE_PATH}"
           else
             echo "::error::gcovr command not found."
             exit 1
           fi
 
-          # Verify file created and not empty
           if [ ! -s "${COVERAGE_PATH}" ]; then
              echo "::error::Coverage XML was not generated or is empty: ${COVERAGE_PATH}"
              exit 1
