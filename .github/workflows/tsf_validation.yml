@@ -76,45 +76,85 @@ jobs:
               print(f'  ✓ {name}: {func}')
           "
 
-      - name: Run trudag lint (optional)
-        id: trudag_lint
-        continue-on-error: true
+      - name: Build TSF graph (required for scoring)
+        id: build_graph
         run: |
           set -euo pipefail
           mkdir -p artifacts/trustable-report
-          trudag manage lint 2>&1 | tee artifacts/trustable-report/trudag-lint.txt || true
-          echo "lint_done=true" >> $GITHUB_OUTPUT
 
-      - name: Calculate TSF scores (use local tools/tsf_collect.py if present)
+          echo "=== Building TSF graph from requirement YAML files ==="
+          trudag manage lint 2>&1 | tee artifacts/trustable-report/trudag-lint.txt
+
+          if [ ! -f ".dotstop.dot" ]; then
+            echo "::error::.dotstop.dot file was not created!"
+            echo "This file is required for validators to run."
+            exit 1
+          fi
+
+          echo "✓ TSF graph built successfully"
+          ls -lh .dotstop.dot
+
+      - name: Verify verification artifacts are accessible
+        run: |
+          set -euo pipefail
+
+          echo "=== Verifying verification artifacts ==="
+          echo "Working directory: $(pwd)"
+          echo ""
+          echo "Required artifact files:"
+
+          REQUIRED_FILES=(
+            "artifacts/verification/coverage/coverage-SWD-998.xml"
+            "artifacts/verification/static-analysis/cppcheck-SWD-998.xml"
+            "artifacts/verification/tests/LLTC-998-junit.xml"
+          )
+
+          ALL_PRESENT=true
+          for file in "${REQUIRED_FILES[@]}"; do
+            if [ -f "$file" ]; then
+              echo "  ✓ $file"
+            else
+              echo "  ✗ $file (MISSING)"
+              ALL_PRESENT=false
+            fi
+          done
+
+          if [ "$ALL_PRESENT" = false ]; then
+            echo "::error::Some required artifact files are missing!"
+            exit 1
+          fi
+
+      - name: Calculate TSF scores
         id: score
         run: |
           set -euo pipefail
           mkdir -p artifacts/trustable-report
 
-          if python -c "import importlib, pkgutil, sys; sys.path.insert(0,'.'); importlib.import_module('tools.tsf_collect')" 2>/dev/null; then
-            echo "Running local tools.tsf_collect"
-            python -m tools.tsf_collect --output artifacts/trustable-report/tsf_score.json --text artifacts/trustable-report/tsf_score.txt
-            SCORE_EXIT=$?
-          else
-            echo "Local tsf_collect not found — using trudag score"
-            trudag score 2>&1 | tee artifacts/trustable-report/trudag-score.txt
-            SCORE_EXIT=${PIPESTATUS[0]}
-            if [ -f artifacts/trustable-report/trudag-score.txt ]; then
-              cp artifacts/trustable-report/trudag-score.txt artifacts/trustable-report/tsf_score.txt || true
-            fi
-          fi
+          echo "=== Calculating TSF scores ==="
+          echo "Using trudag score to process evidence and run validators"
 
-          echo "score_exit_code=${SCORE_EXIT}" >> $GITHUB_OUTPUT
+          # Run trudag score with output logging
+          trudag score 2>&1 | tee artifacts/trustable-report/trudag-score.txt
+          SCORE_EXIT=${PIPESTATUS[0]}
+
+          echo ""
+          echo "=== Score calculation exit code: $SCORE_EXIT ==="
+
           if [ $SCORE_EXIT -ne 0 ]; then
-            echo "::error::Score calculation returned non-zero (${SCORE_EXIT})"
+            echo "::error::Score calculation failed with exit code $SCORE_EXIT"
+            cat artifacts/trustable-report/trudag-score.txt
             exit 1
           fi
 
-          if [ ! -s "artifacts/trustable-report/tsf_score.txt" ]; then
-            echo "::error::TSF score file not found or is empty!"
-            exit 1
+          # Verify scores were actually calculated (validators were executed)
+          if grep -q "INFO: Executing validator" artifacts/trustable-report/trudag-score.txt; then
+            echo "✓ Validators were executed"
+          else
+            echo "::warning::No evidence of validator execution in output"
+            echo "This may indicate the .dotstop.dot graph is still incomplete"
           fi
-          echo "TSF score generated successfully."
+
+          echo "score_exit_code=$SCORE_EXIT" >> $GITHUB_OUTPUT
 
       - name: Generate trustable publish (optional)
         id: publish
