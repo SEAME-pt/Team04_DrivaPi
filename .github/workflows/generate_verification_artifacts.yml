@@ -85,7 +85,8 @@ jobs:
           BIN_PATH="${{ inputs.build_dir }}/tests/motor_speed_test"
           JUNIT_PATH="${{ inputs.junit_output }}"
 
-          if; then
+          # ensure test binary exists
+          if [ ! -f "${BIN_PATH}" ]; then
             echo "::error::Test binary not found at ${BIN_PATH}"
             exit 1
           fi
@@ -105,8 +106,6 @@ jobs:
 
           if command -v gcovr >/dev/null 2>&1; then
             echo "Running gcovr..."
-            # CRITICAL: Removed '|| true'.
-            # Filter to only report on 'src' directory.
             gcovr -r. --object-directory="${BUILD_DIR}" \
               --filter "${{ inputs.src_dirs }}/.*" \
               --xml -o "${COVERAGE_PATH}"
@@ -115,8 +114,9 @@ jobs:
             exit 1
           fi
 
-          if; then
-             echo "::error::Coverage XML was not generated or is empty."
+          # Verify file created and not empty
+          if [ ! -s "${COVERAGE_PATH}" ]; then
+             echo "::error::Coverage XML was not generated or is empty: ${COVERAGE_PATH}"
              exit 1
           fi
           echo "Coverage XML at: ${COVERAGE_PATH}"
