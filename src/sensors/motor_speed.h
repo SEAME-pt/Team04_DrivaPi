@@ -64,23 +64,27 @@ public:
      *
      * Requirement: SWD-998
      */
+    // cppcheck-suppress unusedFunction
     int read_rpm(void);
 
     /**
      * @brief Get last valid RPM reading
      * @return Last RPM reading
      */
+    // cppcheck-suppress unusedFunction
     int get_last_rpm(void) const;
 
     /**
      * @brief Check if error occurred
      * @return true if error, false if no error
      */
+    // cppcheck-suppress unusedFunction
     bool has_error(void) const;
 
     /**
      * @brief Clear error flag
      */
+    // cppcheck-suppress unusedFunction
     void clear_error(void);
 };
 

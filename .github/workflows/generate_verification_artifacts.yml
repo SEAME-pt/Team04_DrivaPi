@@ -133,33 +133,41 @@ jobs:
           BUILD_DIR="${{ inputs.build_dir }}"
           SRC_DIR="${{ inputs.src_dirs }}"
 
-          if [ -d "${SRC_DIR}" ]; then
-            echo "Running cppcheck on '${SRC_DIR}' -> ${CPPCHECK_PATH}"
-
-            # Create includes file with plain directories (NO '-I' prefix).
-            echo "${BUILD_DIR}/_deps/googletest-src/googletest/include" > cppcheck_includes.txt
-            echo "${BUILD_DIR}/_deps/googletest-src/googlemock/include" >> cppcheck_includes.txt
-            echo "src" >> cppcheck_includes.txt
-
-            echo "=== cppcheck includes ==="
-            sed -n '1,100p' cppcheck_includes.txt || true
-            echo "========================="
-
-            cppcheck --enable=all --error-exitcode=1 --xml --xml-version=2 \
-              --includes-file=cppcheck_includes.txt \
-              "${SRC_DIR}" 2> "${CPPCHECK_PATH}"
-            CPPCHECK_EXIT=$?
-
-            if [ "${CPPCHECK_EXIT}" -ne 0 ]; then
-              echo "::error::cppcheck returned non-zero (${CPPCHECK_EXIT}). See ${CPPCHECK_PATH}"
-              exit "${CPPCHECK_EXIT}"
-            fi
-
-            echo "Cppcheck XML written to ${CPPCHECK_PATH}"
-          else
+          if [ ! -d "${SRC_DIR}" ]; then
             echo "::error::Source dir '${SRC_DIR}' not found."
             exit 1
           fi
+
+          echo "Running cppcheck on '${SRC_DIR}' -> ${CPPCHECK_PATH}"
+
+          # Create includes file with plain directories (NO '-I' prefix).
+          echo "${BUILD_DIR}/_deps/googletest-src/googletest/include" > cppcheck_includes.txt
+          echo "${BUILD_DIR}/_deps/googletest-src/googlemock/include" >> cppcheck_includes.txt
+          echo "src" >> cppcheck_includes.txt
+
+          echo "=== cppcheck includes ==="
+          sed -n '1,200p' cppcheck_includes.txt || true
+          echo "========================="
+
+          # Run cppcheck: fail on 'error' severity via --error-exitcode=1
+          # cppcheck writes XML to stderr; redirect it into file.
+          cppcheck --enable=all --error-exitcode=1 --xml --xml-version=2 \
+            --includes-file=cppcheck_includes.txt \
+            "${SRC_DIR}" 2> "${CPPCHECK_PATH}"
+          CPPCHECK_EXIT=$?
+
+          echo "cppcheck exit code: ${CPPCHECK_EXIT}"
+          echo "---- Begin cppcheck XML (${CPPCHECK_PATH}) ----"
+          sed -n '1,500p' "${CPPCHECK_PATH}" || true
+          echo "---- End cppcheck XML ----"
+
+          # Show the <error> nodes, if any, for quick debugging
+          echo "---- cppcheck <error> nodes ----"
+          grep -n "<error " "${CPPCHECK_PATH}" || true
+          echo "---- end ----"
+
+          # Re-exit with the original cppcheck exit code (0 if ok, non-zero if errors)
+          exit "${CPPCHECK_EXIT}"
 
       - name: Validate and list artifacts
         id: validate
