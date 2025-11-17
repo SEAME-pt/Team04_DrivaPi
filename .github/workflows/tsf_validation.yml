@@ -40,15 +40,23 @@ jobs:
       - name: Install project (editable) and Trustable (from GitLab Registry)
         run: |
           set -euo pipefail
+
+          echo "=== Upgrade pip, setuptools, wheel ==="
           python -m pip install --upgrade pip setuptools wheel
 
           echo "=== Installing project in editable mode ==="
           if [ -f "pyproject.toml" ] || [ -f "setup.py" ]; then
-            pip install -e. --verbose
+            python -m pip install -e . --verbose
           fi
 
+          echo "=== Installing testing dependencies ==="
+          python -m pip install pytest pytest-cov pyyaml gcovr --verbose
+
+          echo "=== Installing trustable from GitLab registry ==="
+          python -m pip install trustable --index-url https://gitlab.com/api/v4/projects/66600816/packages/pypi/simple --verbose
+
           echo "=== Listing installed packages ==="
-          pip list
+          python -m pip list
 
           echo "=== Checking Python sys.path ==="
           python -c "import sys; print('\n'.join(sys.path))"
@@ -56,17 +64,8 @@ jobs:
           echo "=== Listing src directory contents ==="
           ls -R src
 
-          pip install pytest pytest-cov pyyaml gcovr --verbose
-
-          echo "=== Installing trustable from GitLab package registry ==="
-          pip install trustable --index-url https://gitlab.com/api/v4/projects/66600816/packages/pypi/simple --verbose
-
-          echo "=== Listing installed packages after trustable install ==="
-          pip list
-
           echo "=== Verifying trudag installation ==="
-          which trudag
-          trudag --version
+          python -m trudag --version
 
           echo "=== Listing validators from trudag ==="
           python -c "
@@ -75,6 +74,7 @@ jobs:
           print('Discovered validators:')
           for name, func in v._validator_functions.items():
               print(f'  ✓ {name}: {func}')
+          "
 
       - name: Run trudag lint (optional)
         id: trudag_lint
