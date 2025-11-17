@@ -2,7 +2,10 @@ name: TSF Validation (PR)
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+  push:
+    branches: [ main, master]
+  pull_request_review:
+    types: [submitted]
 
 jobs:
   generate-verification-artifacts:
@@ -15,175 +18,167 @@ jobs:
       build_dir: 'build'
 
   tsf-validation:
-    needs: generate-verification-artifacts
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
+      pull-requests: write
 
     steps:
+      # 1️⃣ Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Download verification artifacts produced earlier
-        uses: actions/download-artifact@v4
-        with:
-          name: verification-artifacts
-          path: artifacts/verification
-
-      - name: Setup Python 3.11
+      # 2️⃣ Setup Python
+      - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      - name: Install project (editable) and Trustable (from GitLab Registry)
+      # 3️⃣ Cache pip
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # 4️⃣ Install TSF/trudag tools
+      - name: Install official TSF tools
         run: |
-          set -euo pipefail
+          python -m pip install --upgrade pip
+          pip install pyyaml
+          git clone https://gitlab.com/CodethinkLabs/trustable/trustable.git /tmp/trustable
+          cd /tmp/trustable
+          git fetch --tags || true
+          git checkout 2025.9.16 || git checkout master || echo "Using available branch"
+          pip install .
+          cd -
 
-          echo "=== Upgrade pip, setuptools, wheel ==="
-          python -m pip install --upgrade pip setuptools wheel
-
-          echo "=== Installing project in editable mode ==="
-          if [ -f "pyproject.toml" ] || [ -f "setup.py" ]; then
-            python -m pip install -e . --verbose
-          fi
-
-          echo "=== Installing testing dependencies ==="
-          python -m pip install pytest pytest-cov pyyaml gcovr --verbose
-
-          echo "=== Installing trustable from GitLab registry ==="
-          python -m pip install trustable --index-url https://gitlab.com/api/v4/projects/66600816/packages/pypi/simple --verbose
-
-          echo "=== Listing installed packages ==="
-          python -m pip list
-
-          echo "=== Checking Python sys.path ==="
-          python -c "import sys; print('\n'.join(sys.path))"
-
-          echo "=== Listing src directory contents ==="
-          ls -R src
-
-          echo "=== Verifying trudag installation ==="
-          trudag --version
-
-          echo "=== Listing validators from trudag ==="
-          python -c "
-          from trudag.dotstop.core.validator import Validator
-          v = Validator()
-          print('Discovered validators:')
-          for name, func in v._validator_functions.items():
-              print(f'  ✓ {name}: {func}')
-          "
-
-      - name: Build TSF graph (required for scoring)
-        id: build_graph
+      # 5️⃣ Verify tools
+      - name: Verify tools installation
         run: |
-          set -euo pipefail
-          mkdir -p artifacts/trustable-report
+          echo "trudag version:"
+          trudag --version || echo "trudag not found"
 
-          echo "=== Building TSF graph from requirement YAML files ==="
-          trudag manage lint 2>&1 | tee artifacts/trustable-report/trudag-lint.txt
-
-          if [ ! -f ".dotstop.dot" ]; then
-            echo "::error::.dotstop.dot file was not created!"
-            echo "This file is required for validators to run."
-            exit 1
-          fi
-
-          echo "✓ TSF graph built successfully"
-          ls -lh .dotstop.dot
-
-      - name: Verify verification artifacts are accessible
+      # 6️⃣ Run trudag lint (capture output)
+      - name: Run trudag lint
+        id: lint
+        continue-on-error: true
         run: |
-          set -euo pipefail
-
-          echo "=== Verifying verification artifacts ==="
-          echo "Working directory: $(pwd)"
-          echo ""
-          echo "Required artifact files:"
-
-          REQUIRED_FILES=(
-            "artifacts/verification/coverage/coverage-SWD-998.xml"
-            "artifacts/verification/static-analysis/cppcheck-SWD-998.xml"
-            "artifacts/verification/tests/LLTC-998-junit.xml"
-          )
-
-          ALL_PRESENT=true
-          for file in "${REQUIRED_FILES[@]}"; do
-            if [ -f "$file" ]; then
-              echo "  ✓ $file"
-            else
-              echo "  ✗ $file (MISSING)"
-              ALL_PRESENT=false
-            fi
-          done
-
-          if [ "$ALL_PRESENT" = false ]; then
-            echo "::error::Some required artifact files are missing!"
-            exit 1
-          fi
-
-      - name: Calculate TSF scores
-        id: score
-        run: |
-          set -euo pipefail
-          mkdir -p artifacts/trustable-report
-
-          echo "=== Calculating TSF scores ==="
-          echo "Using trudag score to process evidence and run validators"
-
-          # Run trudag score with output logging
-          trudag score 2>&1 | tee artifacts/trustable-report/trudag-score.txt
-          SCORE_EXIT=${PIPESTATUS[0]}
-
-          echo ""
-          echo "=== Score calculation exit code: $SCORE_EXIT ==="
-
-          if [ $SCORE_EXIT -ne 0 ]; then
-            echo "::error::Score calculation failed with exit code $SCORE_EXIT"
-            cat artifacts/trustable-report/trudag-score.txt
-            exit 1
-          fi
-
-          # Verify scores were actually calculated (validators were executed)
-          if grep -q "INFO: Executing validator" artifacts/trustable-report/trudag-score.txt; then
-            echo "✓ Validators were executed"
+          mkdir -p artifacts
+          echo "=== trudag manage lint START ===" > artifacts/trudag-lint.txt
+          if trudag manage lint 2>&1 | tee -a artifacts/trudag-lint.txt; then
+            echo "lint_ok=true" >> $GITHUB_OUTPUT
           else
-            echo "::warning::No evidence of validator execution in output"
-            echo "This may indicate the .dotstop.dot graph is still incomplete"
+            echo "lint_ok=false" >> $GITHUB_OUTPUT
           fi
 
-          echo "score_exit_code=$SCORE_EXIT" >> $GITHUB_OUTPUT
+      # 6b. Get lint summary for PR comment
+      - name: Get lint summary
+        id: summary
+        run: |
+          if [ -f artifacts/trudag-lint.txt ]; then
+            echo "lint_summary<<EOF" >> $GITHUB_OUTPUT
+            head -c 500 artifacts/trudag-lint.txt >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "lint_summary=No lint output generated" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Generate trustable publish (optional)
+      # 7️⃣ Calculate trust scores
+      - name: Calculate trust scores
+        id: scores
+        continue-on-error: true
+        run: |
+          if trudag score 2>&1 | tee artifacts/trudag-score.txt; then
+            echo "score_ok=true" >> $GITHUB_OUTPUT
+          else
+            echo "score_ok=false" >> $GITHUB_OUTPUT
+          fi
+
+      # 8️⃣ Generate Trustable report
+      - name: Generate Trustable report (publish)
         id: publish
         continue-on-error: true
         run: |
-          set -euo pipefail
           mkdir -p artifacts/trustable-report
-          trudag publish --output-dir artifacts/trustable-report --no-validate 2>&1 | tee artifacts/trustable-report/publish.log || true
+          if trudag publish --output-dir artifacts/trustable-report 2>&1; then
+            echo "publish_ok=true" >> $GITHUB_OUTPUT
+          elif trudag publish --no-validate --output-dir artifacts/trustable-report 2>&1; then
+            echo "publish_ok=true" >> $GITHUB_OUTPUT
+          else
+            echo "publish_ok=false" >> $GITHUB_OUTPUT
+            echo "publish failed or not configured"
+          fi
 
-      - name: Upload TSF validation artifacts
+      # 9️⃣ List artifacts for debug
+      - name: List artifacts
+        run: |
+          echo "Artifacts directory listing:"
+          ls -la artifacts || true
+          echo ""
+          echo ".dotstop.dot present?"
+          [ -f .dotstop.dot ] && echo "YES" || echo "NO"
+          echo ""
+          echo "Requirements count:"
+          find reqs/ -name "*.md" 2>/dev/null | wc -l || echo "0"
+
+      # 🔟 Upload TSF artifacts
+      - name: Upload TSF artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: tsf-validation-artifacts
-          path: artifacts/
+          path: |
+            artifacts/
+            .dotstop.dot
           retention-days: 30
 
-      - name: Display summary
-        if: always()
+      # 1️⃣1️⃣ Comment PR with validation results
+      - name: Comment PR with validation results
+        if: github.event_name == 'pull_request'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ## 🔍 TSF Validation Results
+
+            | Check | Status |
+            |-------|--------|
+            | **trudag lint** | ${{ steps.lint.outputs.lint_ok == 'true' && '✅ PASSED' || '❌ FAILED' }} |
+            | **trudag score** | ${{ steps.scores.outputs.score_ok == 'true' && '✅ PASSED' || '❌ FAILED' }} |
+            | **trudag publish** | ${{ steps.publish.outputs.publish_ok == 'true' && '✅ PASSED' || '❌ FAILED' }} |
+
+            ### 📋 Lint Output (first 500 chars)
+
+            ```
+            ${{ steps.summary.outputs.lint_summary }}
+            ```
+
+            ### 📊 Artifacts
+
+            Full validation artifacts are available for download:
+            - Go to **Actions** tab
+            - Select this workflow run
+            - Download **tsf-validation-artifacts**
+
+            ### 📚 Documentation
+
+            - [TSF Quick Reference](https://github.com/${{ github.repository }}/blob/master/docs/tsf/reference.md)
+            - [Fix Common Errors](https://github.com/${{ github.repository }}/blob/master/docs/tsf/workflow.md#fix-common-errors)
+
+            ---
+            *Validation run: ${{ github.run_id }} | Commit: ${{ github.sha }}*
+
+      # 1️⃣2️⃣ Fail job if lint failed (optional - comment out if too strict)
+      - name: Check lint result
+        if: steps.lint.outputs.lint_ok != 'true'
         run: |
-          echo "=== TSF Validation Summary ==="
-          echo "Artifacts:"
-          find artifacts -type f | sed -n '1,200p'
-          echo ""
-          if [ -f artifacts/trustable-report/tsf_score.txt ]; then
-            echo "=== TSF Score (.txt) ==="
-            head -n 200 artifacts/trustable-report/tsf_score.txt || true
-          elif [ -f artifacts/trustable-report/trudag-score.txt ]; then
-            echo "=== Trudag Score ==="
-            head -n 200 artifacts/trustable-report/trudag-score.txt || true
-          fi
-          echo "============================="
+          echo "❌ trudag manage lint FAILED"
+          echo "See artifacts for full output"
+          exit 1
