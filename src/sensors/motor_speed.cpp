@@ -1,40 +1,39 @@
 /**
  * @file motor_speed.cpp
  * @brief Motor speed sensor driver implementation
- * @version 1.1 (Corrected)
- * @date 2025-11-14
+ * @version 1.1
+ * @date 2025-11-17
  *
  * Requirement: SWD-998
  * ASIL: A
  *
- * Changes:
- * - GPIODriver now implements the IGpioDriver interface.
- * - MotorSpeedSensor constructors are implemented to support
- *   both production and test-injected GPIO drivers.
- * - Ownership of the GPIO driver is now tracked and managed.
+ * Notes:
+ * - Production GPIODriver is minimal and must be replaced with real hardware logic.
+ * - Unit tests should inject a Mock implementing IGpioDriver.
  */
 
 #include "motor_speed.h"
-#include "gpio_interface.h" // Include the abstract interface
+#include "gpio_interface.h"
 #include <cstdint>
 
-// GPIO interface (simplified for Raspberry Pi)
-// This is the concrete implementation used in production.
+// ----------------------------------------------------------------------------
+// Production concrete GPIO driver (minimal, for production builds).
+// ----------------------------------------------------------------------------
 class GPIODriver : public IGpioDriver {
 private:
     int pin;
-    int pulse_count; // Mocked value for this example
     bool is_setup;
 
 public:
-    GPIODriver(int pin_num) : pin(pin_num), pulse_count(0), is_setup(false) {}
+    // Mark constructor explicit to satisfy cppcheck/style rules
+    explicit GPIODriver(int pin_num) : pin(pin_num), is_setup(false) {}
 
     /**
      * Setup GPIO pin for input
      * @return 0 on success, -1 on error
      */
     int setup(void) {
-        // In real implementation, use wiringPi or similar
+        // Implement real GPIO setup here (wiringPi, libgpiod, etc.)
         is_setup = true;
         return 0;
     }
@@ -42,37 +41,22 @@ public:
     /**
      * Read pulse count from GPIO pin over specified duration
      * @param duration_ms Time window in milliseconds
-     * @return Number of pulses, -1 on error
+     * @return Number of pulses, -1 on error / not implemented
      */
     int read_pulse_count(int duration_ms) override {
         if (!is_setup) {
             return -1;
         }
-        // In real implementation:
-        // - Wait for duration_ms
-        // - Count rising edges on pin
-        // - Return count
-
-        // For this file's example, we just return the mock value
-        // To make this *really* work, you would set this value externally
-        // or implement the real hardware logic.
-        return pulse_count;
-    }
-
-    // This method is for simulation/testing of the concrete driver
-    void set_pulse_count(int count) {
-        pulse_count = count;
+        // NOTE: Production implementation should count edges for duration_ms.
+        // This placeholder returns -1 to indicate "not implemented / no data".
+        return -1;
     }
 };
 
-// ============================================================================
-// MotorSpeedSensor Implementation
-// ============================================================================
+// ----------------------------------------------------------------------------
+// MotorSpeedSensor implementation
+// ----------------------------------------------------------------------------
 
-/**
- * @brief Constructor (Production)
- * Creates and manages its own GPIODriver.
- */
 MotorSpeedSensor::MotorSpeedSensor(int gpio_pin)
     : pin(gpio_pin),
       last_rpm(0),
@@ -81,14 +65,11 @@ MotorSpeedSensor::MotorSpeedSensor(int gpio_pin)
       is_managing_gpio(true) // This instance owns the GPIO driver
 {
     GPIODriver* driver = new GPIODriver(gpio_pin);
-    driver->setup();
-    this->gpio = driver; // Store concrete driver as interface pointer
+    // If setup fails, we keep gpio pointer but read_pulse_count will return -1
+    (void)driver->setup();
+    this->gpio = driver;
 }
 
-/**
- * @brief Constructor (Testing)
- * Injects an external (mock) GPIO driver.
- */
 MotorSpeedSensor::MotorSpeedSensor(IGpioDriver* test_gpio)
     : pin(-1), // Pin is irrelevant when injecting
       last_rpm(0),
@@ -96,19 +77,25 @@ MotorSpeedSensor::MotorSpeedSensor(IGpioDriver* test_gpio)
       gpio(test_gpio), // Use the provided mock driver
       is_managing_gpio(false) // This instance does NOT own the driver
 {
-    // Do not setup, the mock is assumed to be ready
+    // Do not setup injected mock: it's assumed ready-to-use
 }
 
 MotorSpeedSensor::~MotorSpeedSensor() {
     // Only delete the driver if this instance created it
     if (is_managing_gpio && gpio) {
         delete gpio;
+        gpio = nullptr;
     }
 }
 
+/* cppcheck-suppress unusedFunction */
 int MotorSpeedSensor::read_rpm(void) {
+    if (!gpio) {
+        error_flag = true;
+        return -1;
+    }
+
     // Read pulses over 1 second window
-    // This now calls the interface, which could be the real or mock driver
     int pulses = gpio->read_pulse_count(1000);
 
     // Check for error from GPIO
@@ -117,11 +104,10 @@ int MotorSpeedSensor::read_rpm(void) {
         return -1;
     }
 
-    // Convert pulses to RPM
-    // 1 pulse per motor revolution
+    // Convert pulses to RPM: pulses per second * 60
     int rpm = pulses * 60;
 
-    // Validate range (0-10000 RPM)
+    // Validate range (0 - 10000 RPM)
     if (rpm < 0 || rpm > 10000) {
         error_flag = true;
         return -1;
@@ -133,14 +119,17 @@ int MotorSpeedSensor::read_rpm(void) {
     return rpm;
 }
 
+/* cppcheck-suppress unusedFunction */
 int MotorSpeedSensor::get_last_rpm(void) const {
     return last_rpm;
 }
 
+/* cppcheck-suppress unusedFunction */
 bool MotorSpeedSensor::has_error(void) const {
     return error_flag;
 }
 
+/* cppcheck-suppress unusedFunction */
 void MotorSpeedSensor::clear_error(void) {
     error_flag = false;
 }

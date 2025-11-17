@@ -133,57 +133,33 @@ jobs:
           BUILD_DIR="${{ inputs.build_dir }}"
           SRC_DIR="${{ inputs.src_dirs }}"
 
-          if [ ! -d "${SRC_DIR}" ]; then
+          if [ -d "${SRC_DIR}" ]; then
+            echo "Running cppcheck on '${SRC_DIR}' -> ${CPPCHECK_PATH}"
+
+            # Create includes file with plain directories (NO '-I' prefix).
+            echo "${BUILD_DIR}/_deps/googletest-src/googletest/include" > cppcheck_includes.txt
+            echo "${BUILD_DIR}/_deps/googletest-src/googlemock/include" >> cppcheck_includes.txt
+            echo "src" >> cppcheck_includes.txt
+
+            echo "=== cppcheck includes ==="
+            sed -n '1,100p' cppcheck_includes.txt || true
+            echo "========================="
+
+            cppcheck --enable=all --error-exitcode=1 --xml --xml-version=2 \
+              --includes-file=cppcheck_includes.txt \
+              "${SRC_DIR}" 2> "${CPPCHECK_PATH}"
+            CPPCHECK_EXIT=$?
+
+            if [ "${CPPCHECK_EXIT}" -ne 0 ]; then
+              echo "::error::cppcheck returned non-zero (${CPPCHECK_EXIT}). See ${CPPCHECK_PATH}"
+              exit "${CPPCHECK_EXIT}"
+            fi
+
+            echo "Cppcheck XML written to ${CPPCHECK_PATH}"
+          else
             echo "::error::Source dir '${SRC_DIR}' not found."
             exit 1
           fi
-
-          echo "Running cppcheck on '${SRC_DIR}' -> ${CPPCHECK_PATH}"
-
-          # Create includes file with plain directories (NO '-I' prefix).
-          echo "${BUILD_DIR}/_deps/googletest-src/googletest/include" > cppcheck_includes.txt
-          echo "${BUILD_DIR}/_deps/googletest-src/googlemock/include" >> cppcheck_includes.txt
-          echo "src" >> cppcheck_includes.txt
-
-          echo "=== cppcheck includes ==="
-          sed -n '1,200p' cppcheck_includes.txt || true
-          echo "========================="
-
-          # Run cppcheck: do NOT set --error-exitcode so exit status isn't used as gate
-          # Redirect xml output (cppcheck writes XML to stderr)
-          cppcheck --enable=all --xml --xml-version=2 \
-            --includes-file=cppcheck_includes.txt \
-            "${SRC_DIR}" 2> "${CPPCHECK_PATH}" || true
-
-          echo "Cppcheck run finished. Contents of ${CPPCHECK_PATH}:"
-          sed -n '1,200p' "${CPPCHECK_PATH}" || true
-
-          # Fail if xml missing/empty (indicates cppcheck failed unexpectedly)
-          if [ ! -s "${CPPCHECK_PATH}" ]; then
-            echo "::error::cppcheck did not produce xml at ${CPPCHECK_PATH} (file missing or empty)."
-            exit 1
-          fi
-
-          # Count error-severity nodes in xml (severity="error")
-          ERR_COUNT=$(grep -o 'severity="error"' "${CPPCHECK_PATH}" | wc -l)
-          echo "cppcheck severity=\"error\" count: ${ERR_COUNT}"
-
-          if [ "${ERR_COUNT}" -gt 0 ]; then
-            echo "::error::cppcheck found ${ERR_COUNT} error-severity issues. See ${CPPCHECK_PATH} for full details."
-            # show the <error> nodes for quick debugging
-            grep -n "<error " "${CPPCHECK_PATH}" || true
-            exit 1
-          fi
-
-          # Optionally warn about style/info findings (do not fail)
-          INFO_COUNT=$(grep -o 'severity="information"' "${CPPCHECK_PATH}" | wc -l)
-          STYLE_COUNT=$(grep -o 'severity="style"' "${CPPCHECK_PATH}" | wc -l)
-          echo "cppcheck info-count=${INFO_COUNT} style-count=${STYLE_COUNT}"
-          if [ "${INFO_COUNT}" -gt 0 ] || [ "${STYLE_COUNT}" -gt 0 ]; then
-            echo "::warning::cppcheck reported ${INFO_COUNT} information and ${STYLE_COUNT} style issues. See ${CPPCHECK_PATH}."
-          fi
-
-          echo "Cppcheck completed with no error-severity findings."
 
       - name: Validate and list artifacts
         id: validate

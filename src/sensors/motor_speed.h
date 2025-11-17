@@ -1,26 +1,21 @@
 /**
  * @file motor_speed.h
  * @brief Motor speed sensor driver header
- * @version 1.1 (Corrected)
- * @date 2025-11-14
+ * @version 1.1
+ * @date 2025-11-17
  *
  * Requirement: SWD-998
  * ASIL: A
  *
- * Changes:
- * - Now includes "gpio_interface.h".
- * - Constructor is overloaded to accept an IGpioDriver* for testing.
- * - Manages GPIO driver ownership to prevent memory leaks.
+ * The MotorSpeedSensor reads pulses from a GPIO tachometer and computes RPM.
+ * For unit testing a mock implementing IGpioDriver may be injected.
  */
 
 #ifndef MOTOR_SPEED_H
 #define MOTOR_SPEED_H
 
 #include <cstdint>
-#include "gpio_interface.h" // Use the abstract interface
-
-// Forward declaration of the concrete driver (PIMPL)
-class GPIODriver;
+#include "gpio_interface.h" // Abstract GPIO interface (IGpioDriver)
 
 /**
  * @class MotorSpeedSensor
@@ -30,11 +25,11 @@ class GPIODriver;
  */
 class MotorSpeedSensor {
 private:
-    int pin;            ///< GPIO pin number
-    int last_rpm;       ///< Last valid RPM reading
-    bool error_flag;    ///< Error status flag
-    IGpioDriver* gpio;  ///< GPIO hardware interface (abstract)
-    bool is_managing_gpio; ///< True if this class created the gpio driver
+    int pin;                ///< GPIO pin number (or -1 if injecting driver)
+    int last_rpm;           ///< Last valid RPM reading
+    bool error_flag;        ///< Error status flag
+    IGpioDriver* gpio;      ///< GPIO hardware interface (abstract)
+    bool is_managing_gpio;  ///< True if this class created the gpio driver
 
 public:
     /**
@@ -63,7 +58,7 @@ public:
     MotorSpeedSensor& operator=(const MotorSpeedSensor&) = delete;
 
     /**
-     * @brief Read motor speed in RPM
+     * @brief Read motor speed in RPM (reads pulses over 1s window)
      *
      * @return RPM value on success, -1 on error
      *
