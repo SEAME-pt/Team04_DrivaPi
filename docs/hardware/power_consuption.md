@@ -130,3 +130,24 @@ Cons: single point of failure if not properly fused; ensure BMS and wiring sized
 - Proper gauge wiring (12–14 AWG), connectors and mounting hardware
 
 ---
+
+## Conclusions — Team decisions
+
+- Primary decision: keep the current two-pack plan as documented.
+  - Pack A → expansion (motors / servo / STM32 / CAN).
+  - Pack B → Raspberry Pi + HATs + display.
+  - Keep all protections and components listed above (3S BMS, main fuse, branch fuses, buck converters, low‑ESR caps, current monitoring, correct wiring gauge).
+
+- Single‑pack / parallel option (alternative):
+  - Use one full 3S pack to power everything with the protections above.
+  - If extra current is needed, add a second identical pack in parallel on the expansion side to increase available amps (effectively 3S2P capacity/current). Ensure packs are matched, balanced and connected safely.
+  - Required notes when paralleling packs: only parallel identical, same‑state packs; use BMSs rated for parallel operation or a single BMS designed for the combined configuration; include pre‑charge/current limiting when connecting packs to avoid large inrush; fuse each pack individually.
+
+- Testing plan (two‑step):
+  1. Documentation check: read the expansion board and individual component datasheets to confirm connector ratings, expected currents and recommended wiring/decoupling.
+  2. Bench tests: measure real current draw directly on the components and on the expansion board under expected loads (idle, nominal, and stall/peak). Verify buck converter regulation, temperature, and that voltage does not brown out under peaks. Log results and adjust fuse / BMS / converter sizing accordingly.
+
+- Action items before final deployment:
+  - Implement recommended protections and fuses.
+  - Perform the documentation check and bench tests described above.
+  - If bench tests show higher draw than estimated, prefer the two‑pack solution or increase pack/current ratings rather than risking undersized wiring/protection.
