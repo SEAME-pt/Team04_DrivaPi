@@ -10,7 +10,7 @@ parents:
 reviewers:
 - name: Test Engineer
   email: test@team.com
-reviewed: 2025-11-04 - Approved by Test Engineer <test@team.com>
+reviewed: 2025-11-17 - Approved by Test Engineer <test@team.com>
 references:
 - type: file
   path: tests/unit/test_motor_speed.cpp

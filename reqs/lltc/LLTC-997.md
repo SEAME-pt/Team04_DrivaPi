@@ -11,7 +11,7 @@ parents:
 reviewers:
 - name: QA Engineer
   email: qa@team.com
-reviewed: 2025-11-04 - Approved by QA Engineer <qa@team.com>
+reviewed: 2025-11-17 - Approved by QA Engineer <qa@team.com>
 references:
 - type: file
   path: artifacts/verification/static-analysis/cppcheck-SWD-998.xml
