@@ -158,6 +158,7 @@ jobs:
           --xml --xml-version=2 \
           --includes-file=cppcheck_includes.txt \
           "${SRC_DIR}" 2> "${CPPCHECK_PATH}"
+          CPPCHECK_EXIT=$?
 
           echo "cppcheck exit code: ${CPPCHECK_EXIT}"
           echo "---- Begin cppcheck XML (${CPPCHECK_PATH}) ----"
