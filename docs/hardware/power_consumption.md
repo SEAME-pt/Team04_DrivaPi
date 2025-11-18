@@ -1,6 +1,6 @@
 # Raspberry Pi 5 (16GB) System — Power Summary
 
-This document is a resume of the power analysis made for the PiRacer system. Tables, totals, runtime estimates and recommended protections are included.
+This document is a summary of the power analysis performed for the PiRacer system. Tables, totals, runtime estimates and recommended protections are included.
 
 ---
 
@@ -10,6 +10,14 @@ This document is a resume of the power analysis made for the PiRacer system. Tab
 - Totals, rail requirements and runtime estimates
 - Battery configuration options
 - Recommended protections, converters and wiring
+
+---
+
+## Assumptions
+- Pack nominal voltage: 11.1 V (3 × 3.7 V cells).  
+- Pack fully charged voltage: 12.6 V (3 × 4.2 V cells).  
+- DC‑DC converter efficiency: 90% (0.9).  
+- Example pack capacity: 4.8 Ah.
 
 ---
 
@@ -24,9 +32,9 @@ Includes: Raspberry Pi 5 (16 GB), Hailo AI HAT, Seeed Dual-CAN HAT, USB SSD (USB
 | Seeed Dual-CAN HAT | 0.45–0.6 W | 0.6 W | 90–120 mA @ 5 V |
 | USB SSD (NVMe via USB3) | 5 W | 7 W | active/peak numbers for NVMe enclosure |
 | Waveshare 7.9" touchscreen | 3 W | 3.5 W | display/backlight dependent |
-| **TOTAL (Block 1)** | **20.1–23.1 W** | **28–30 W** | |
+| **TOTAL (Block 1)** | **21.0–23.1 W** | **28.1–30.1 W** | |
 
-Rail requirement (5 V): 6–8 A recommended (allow for millisecond spikes).  
+Rail requirement (5 V): 5–7 A recommended (allow for millisecond spikes).  
 Practical recommendation: size 5 V buck for 12 A to give margin and account for inrush/peaks.
 
 ---
@@ -49,24 +57,40 @@ Rail recommendation for motors/servo: design for 7 V output (6–7 V nominal), a
 
 ---
 
-## Power conversion & battery input (example: 3S Li-ion pack ~11.1 V nominal)
+## Power conversion & battery input (example: 3S Li-ion pack)
 
-Assume DC‑DC buck converters with ~90% efficiency.
+Assume DC‑DC buck converters with 90% efficiency (0.9). Below are input current calculations for both nominal pack voltage (11.1 V) and fully charged pack voltage (12.6 V).
 
-Block 1 (5 V rail)
-- Peak power to Pi system: 30–40 W
-- Input current from 11.1 V pack (90% eff):
-  - Typical: 33 W → 33 / 11.1 / 0.9 ≈ 3.3 A
-  - Peak: 40 W → 40 / 11.1 / 0.9 ≈ 4.0 A
+Using nominal voltage 11.1 V (11.1 × 0.9 = 9.99 V effective)
+- Block 1 (typical 23.1 W): 23.1 / 9.99 ≈ 2.31 A  
+  - Peak 30.1 W: 30.1 / 9.99 ≈ 3.01 A
+- Block 2 (typical 18.7 W): 18.7 / 9.99 ≈ 1.87 A  
+  - Peak 39.7 W: 39.7 / 9.99 ≈ 3.98 A
+- Combined typical 41.8 W: 41.8 / 9.99 ≈ 4.19 A  
+  - Combined peak 69.8 W: 69.8 / 9.99 ≈ 6.99 A
 
-Block 2 (6–7 V motor rail)
-- Peak power: ~40 W
-- Input current from 11.1 V pack (90% eff): ≈ 4.0 A
+Using fully charged voltage 12.6 V (12.6 × 0.9 = 11.34 V effective)
+- Block 1 (typical 23.1 W): 23.1 / 11.34 ≈ 2.04 A  
+  - Peak 30.1 W: 30.1 / 11.34 ≈ 2.66 A
+- Block 2 (typical 18.7 W): 18.7 / 11.34 ≈ 1.65 A  
+  - Peak 39.7 W: 39.7 / 11.34 ≈ 3.50 A
+- Combined typical 41.8 W: 41.8 / 11.34 ≈ 3.69 A  
+  - Combined peak 69.8 W: 69.8 / 11.34 ≈ 6.16 A
 
-Pack energy example
-- 3S pack (11.1 V) × 4.8 Ah ≈ 53 Wh
-- Runtime at 40 W draw ≈ 53 / 40 ≈ 1.3 h (full-load)
-- At average ~20 W system draw ≈ 2.5 h
+Pack energy examples
+- At nominal 11.1 V: 11.1 × 4.8 Ah ≈ 53.3 Wh
+  - Runtime at combined peak 69.8 W: 53.3 / 69.8 ≈ 0.76 h (≈ 46 min)
+  - Runtime at combined typical 41.8 W: 53.3 / 41.8 ≈ 1.27 h (≈ 1 h 16 min)
+  - Runtime at 20 W average: 53.3 / 20 ≈ 2.67 h
+- At fully charged 12.6 V: 12.6 × 4.8 Ah = 60.48 Wh
+  - Runtime at combined peak 69.8 W: 60.48 / 69.8 ≈ 0.87 h (≈ 52 min)
+  - Runtime at combined typical 41.8 W: 60.48 / 41.8 ≈ 1.45 h (≈ 1 h 27 min)
+  - Runtime at 20 W average: 60.48 / 20 ≈ 3.02 h
+
+Notes
+- Use nominal (11.1 V) values for conservative continuous-current sizing. Use fully charged (12.6 V) values to check peak inrush and voltage stress.
+- All currents above are input currents at pack voltage before converter losses; rail currents at 5 V or 6–7 V are higher by the appropriate voltage division.
+- Use the worst-case typical values when sizing continuous supplies; use peak combined values when sizing fuses, transient handling and wiring for short-duration events.
 
 ---
 
@@ -93,12 +117,12 @@ Cons: single point of failure if not properly fused; ensure BMS and wiring sized
    - Rated for continuous current above expected continuous draw (recommend ≥10 A) and peak current above expected peaks.
 
 2. Fuses
-   - Main pack fuse (fast-blow or automotive blade): ~12–15 A recommended depending on expected peaks.
+   - Main pack fuse (time‑delay/slow‑blow recommended for motor inrush): ~12–15 A depending on expected peaks.
    - Optional branch fuses for Pi rail and motor rail.
 
 3. Buck converters
    - Pi rail: 5 V, choose a converter rated ~12 A (or higher) to allow margin.
-   - Motor/servo rail: 6–7 V, choose converter rated ~10 A (or higher).
+   - Motor/servo rail: 6–7 V, choose a converter rated ~10 A (or higher).
    - Prefer modules with thermal shutdown and current limiting.
 
 4. Capacitors / decoupling
@@ -109,7 +133,7 @@ Cons: single point of failure if not properly fused; ensure BMS and wiring sized
    - Use a pack voltage monitor and a current sensor (shunt or hall) to log/alert for over current or low-voltage conditions.
 
 6. Wiring & connectors
-   - Use appropriately sized wires (e.g., 14–12 AWG for 10–15 A runs).
+   - Use appropriately sized wires (e.g., 14–12 AWG for 10–15 A runs). Derate for length and temperature.
    - Secure crimped/soldered connections and use heatshrink.
    - Route motor wires away from sensitive signal lines to reduce EMI.
 
