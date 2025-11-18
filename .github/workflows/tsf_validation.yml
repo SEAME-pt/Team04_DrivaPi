@@ -31,6 +31,33 @@ jobs:
         with:
           fetch-depth: 0
 
+      # 1b️⃣ Download verification artifacts from previous job
+      - name: Download verification artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: verification-artifacts
+          path: artifacts/verification
+
+      # 1c️⃣ Verify artifacts were downloaded
+      - name: Verify downloaded artifacts
+        run: |
+          echo "=== Checking for required artifacts ==="
+          ls -lR artifacts/verification/ || echo "No artifacts directory"
+
+          echo ""
+          echo "=== Checking specific files ==="
+          for f in \
+            "artifacts/verification/tests/LLTC-998-junit.xml" \
+            "artifacts/verification/coverage/coverage-SWD-998.xml" \
+            "artifacts/verification/static-analysis/cppcheck-SWD-998.xml"
+          do
+            if [ -f "$f" ]; then
+              echo "✅ Found: $f ($(stat -f%z "$f" 2>/dev/null || stat -c%s "$f") bytes)"
+            else
+              echo "❌ MISSING: $f"
+            fi
+          done
+
       # 2️⃣ Setup Python
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
@@ -58,9 +85,13 @@ jobs:
           pip install .
           cd -
 
+      # 4b️⃣ Install local validators
       - name: Install local validators
         run: |
-         pip install -e .
+          pip install -e .
+          echo ""
+          echo "=== Testing validator import ==="
+          python -c "from dotstop_extensions.validators import coverage_threshold_validator, cppcheck_error_validator, junit_pass_rate_validator; print('✅ All validators loaded successfully')"
 
       # 5️⃣ Verify tools
       - name: Verify tools installation
