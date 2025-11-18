@@ -32,168 +32,47 @@ on:
 jobs:
   generate-artifacts:
     runs-on: ubuntu-latest
-    outputs:
-      junit_path: ${{ steps.set_outputs.outputs.junit_path }}
-      coverage_path: ${{ steps.set_outputs.outputs.coverage_path }}
-      cppcheck_path: ${{ steps.set_outputs.outputs.cppcheck_path }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Needed for gcovr
 
-      - name: Ensure artifact directories exist
+      - name: Install system packages
         run: |
-          set -euo pipefail
-          mkdir -p $(dirname "${{ inputs.junit_output }}")
-          mkdir -p $(dirname "${{ inputs.coverage_output }}")
-          mkdir -p $(dirname "${{ inputs.cppcheck_output }}")
-          mkdir -p artifacts/trustable-report
-
-      - name: Install system packages (compiler, cppcheck, lcov)
-        run: |
-          set -euo pipefail
           sudo apt-get update -y
-          # Note: libgtest-dev is NO LONGER needed, FetchContent handles it.
           sudo apt-get install -y build-essential cmake cppcheck lcov
 
       - name: Install Python tools (gcovr)
         run: |
-          set -euo pipefail
           python -m pip install --upgrade pip
           pip install gcovr
 
       - name: Configure and Build with CMake
         run: |
-          set -euo pipefail
-          # Configure:
-          # - Set build type to Debug (for coverage)
-          # - Pass coverage flags to C++ compiler
-          cmake -B "${{ inputs.build_dir }}" -S. \
-            -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_CXX_FLAGS="--coverage"
-
-          # Build:
-          # - This will compile the library and the test executable
+          cmake -B "${{ inputs.build_dir }}" -S . -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage"
           cmake --build "${{ inputs.build_dir }}"
 
       - name: Run tests -> produce JUnit XML
-        id: run-tests
         run: |
-          set -euo pipefail
-          BIN_PATH="${{ inputs.build_dir }}/tests/motor_speed_test"
-          JUNIT_PATH="${{ inputs.junit_output }}"
-
-          # ensure test binary exists
-          if [ ! -f "${BIN_PATH}" ]; then
-            echo "::error::Test binary not found at ${BIN_PATH}"
-            exit 1
-          fi
-
-          # Run the binary directly to get the JUnit output at the *exact* path
-          # CRITICAL: If tests fail, this command returns non-zero, failing the workflow
-          "${BIN_PATH}" --gtest_output=xml:"${JUNIT_PATH}"
-          echo "JUnit XML written to ${JUNIT_PATH}"
-
+          mkdir -p $(dirname "${{ inputs.junit_output }}")
+          "${{ inputs.build_dir }}/tests/motor_speed_test" --gtest_output=xml:"${{ inputs.junit_output }}"
 
       - name: Generate coverage XML (gcovr)
-        id: coverage
         run: |
-          set -euo pipefail
-          COVERAGE_PATH="${{ inputs.coverage_output }}"
-          BUILD_DIR="${{ inputs.build_dir }}"
-          SRC_DIR="${{ inputs.src_dirs }}"
+          mkdir -p $(dirname "${{ inputs.coverage_output }}")
+          gcovr -r . --object-directory="${{ inputs.build_dir }}" --filter "${{ inputs.src_dirs }}/.*" --exclude-directories "${{ inputs.build_dir }}/CMakeFiles" --gcov-ignore-errors=no_working_dir_found --xml -o "${{ inputs.coverage_output }}"
 
-          if command -v gcovr >/dev/null 2>&1; then
-            echo "Running gcovr..."
-            # Option A: run gcovr filtered to src/ and ignore working-dir errors
-            gcovr -r . \
-              --object-directory="${BUILD_DIR}" \
-              --filter "${SRC_DIR}/.*" \
-              --exclude-directories "${BUILD_DIR}/CMakeFiles" \
-              --gcov-ignore-errors=no_working_dir_found \
-              --xml -o "${COVERAGE_PATH}"
-          else
-            echo "::error::gcovr command not found."
-            exit 1
-          fi
-
-          if [ ! -s "${COVERAGE_PATH}" ]; then
-             echo "::error::Coverage XML was not generated or is empty: ${COVERAGE_PATH}"
-             exit 1
-          fi
-          echo "Coverage XML at: ${COVERAGE_PATH}"
-
-      - name: Run cppcheck -> cppcheck-SWD-998.xml
-        id: cppcheck
+      - name: Run cppcheck
         run: |
-          set -euo pipefail
-          CPPCHECK_PATH="${{ inputs.cppcheck_output }}"
-          BUILD_DIR="${{ inputs.build_dir }}"
-          SRC_DIR="${{ inputs.src_dirs }}"
-
-          if [ ! -d "${SRC_DIR}" ]; then
-            echo "::error::Source dir '${SRC_DIR}' not found."
-            exit 1
-          fi
-
-          echo "Running cppcheck on '${SRC_DIR}' -> ${CPPCHECK_PATH}"
-
-          # Create includes file with plain directories (NO '-I' prefix).
-          echo "${BUILD_DIR}/_deps/googletest-src/googletest/include" > cppcheck_includes.txt
-          echo "${BUILD_DIR}/_deps/googletest-src/googlemock/include" >> cppcheck_includes.txt
+          mkdir -p $(dirname "${{ inputs.cppcheck_output }}")
+          echo "${{ inputs.build_dir }}/_deps/googletest-src/googletest/include" > cppcheck_includes.txt
+          echo "${{ inputs.build_dir }}/_deps/googletest-src/googlemock/include" >> cppcheck_includes.txt
           echo "src" >> cppcheck_includes.txt
-
-          echo "=== cppcheck includes ==="
-          sed -n '1,200p' cppcheck_includes.txt || true
-          echo "========================="
-
-          # Run cppcheck: fail on 'error' severity via --error-exitcode=1
-          # cppcheck writes XML to stderr; redirect it into file.
-          cppcheck --enable=warning,style,performance,portability,information \
-          --error-exitcode=1 \
-          --suppress=missingIncludeSystem \
-          --suppress=unusedFunction \
-          --xml --xml-version=2 \
-          --includes-file=cppcheck_includes.txt \
-          "${SRC_DIR}" 2> "${CPPCHECK_PATH}"
-          CPPCHECK_EXIT=$?
-
-          echo "cppcheck exit code: ${CPPCHECK_EXIT}"
-          echo "---- Begin cppcheck XML (${CPPCHECK_PATH}) ----"
-          sed -n '1,500p' "${CPPCHECK_PATH}" || true
-          echo "---- End cppcheck XML ----"
-
-          # Show the <error> nodes, if any, for quick debugging
-          echo "---- cppcheck <error> nodes ----"
-          grep -n "<error " "${CPPCHECK_PATH}" || true
-          echo "---- end ----"
-
-          # Re-exit with the original cppcheck exit code (0 if ok, non-zero if errors)
-          exit "${CPPCHECK_EXIT}"
-
-      - name: Validate and list artifacts
-        id: validate
-        run: |
-          set -euo pipefail
-          echo "Artifacts:"
-          echo " - JUnit:    ${{ inputs.junit_output }} -> $( [ -f '${{ inputs.junit_output }}' ] && echo yes || echo no )"
-          echo " - Coverage: ${{ inputs.coverage_output }} -> $( [ -f '${{ inputs.coverage_output }}' ] && echo yes || echo no )"
-          echo " - Cppcheck: ${{ inputs.cppcheck_output }} -> $( [ -f '${{ inputs.cppcheck_output }}' ] && echo yes || echo no )"
-          find artifacts -maxdepth 3 -type f -print
-          echo "all_valid=true" >> $GITHUB_OUTPUT
-
-      - name: Set outputs
-        id: set_outputs
-        run: |
-          echo "junit_path=${{ inputs.junit_output }}" >> $GITHUB_OUTPUT
-          echo "coverage_path=${{ inputs.coverage_output }}" >> $GITHUB_OUTPUT
-          echo "cppcheck_path=${{ inputs.cppcheck_output }}" >> $GITHUB_OUTPUT
+          cppcheck --enable=warning,style,performance,portability,information --error-exitcode=1 --suppress=missingIncludeSystem --suppress=unusedFunction --xml --xml-version=2 --includes-file=cppcheck_includes.txt "${{ inputs.src_dirs }}" 2> "${{ inputs.cppcheck_output }}"
 
       - name: Upload verification artifacts
         uses: actions/upload-artifact@v4
         with:
           name: verification-artifacts
-          path: artifacts/verification  # Upload the dir (contents only, no dir itself)
+          path: artifacts/verification
           retention-days: 30
