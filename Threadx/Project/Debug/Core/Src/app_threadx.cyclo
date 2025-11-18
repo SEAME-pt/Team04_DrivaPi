@@ -1,8 +1,2 @@
-../Core/Src/app_threadx.c:84:6:App_ThreadX_Init	13
-../Core/Src/app_threadx.c:164:6:MX_ThreadX_Init	1
-../Core/Src/app_threadx.c:178:6:ld1_thread_entry	1
-../Core/Src/app_threadx.c:188:6:dc_motor	1
-../Core/Src/app_threadx.c:198:6:servo_motor	1
-../Core/Src/app_threadx.c:208:6:speed_sensor	1
-../Core/Src/app_threadx.c:218:6:canTX	1
-../Core/Src/app_threadx.c:228:6:canRX	1
+../Core/Src/app_threadx.c:64:6:App_ThreadX_Init	1
+../Core/Src/app_threadx.c:95:6:MX_ThreadX_Init	1

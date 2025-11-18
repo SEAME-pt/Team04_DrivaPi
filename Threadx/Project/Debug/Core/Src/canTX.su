@@ -1,0 +1,3 @@
+../Core/Src/canTX.c:3:6:make_speed_status_msg	16	static
+../Core/Src/canTX.c:11:6:can_send	16	static
+../Core/Src/canTX.c:16:6:canTX	48	static
