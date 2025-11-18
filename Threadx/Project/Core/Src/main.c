@@ -204,40 +204,76 @@ static void SystemPower_Config(void)
   */
 static void MX_FDCAN1_Init(void)
 {
+    char *msg;
 
-  /* USER CODE BEGIN FDCAN1_Init 0 */
+    FDCAN_FilterTypeDef sFilterConfig;
 
-  /* USER CODE END FDCAN1_Init 0 */
+    hfdcan1.Instance = FDCAN1;
+    hfdcan1.Init.ClockDivider = FDCAN_CLOCK_DIV1;
+    hfdcan1.Init.FrameFormat = FDCAN_FRAME_CLASSIC;
+    hfdcan1.Init.Mode = FDCAN_MODE_NORMAL;
+    hfdcan1.Init.AutoRetransmission = ENABLE;
+    hfdcan1.Init.TransmitPause = DISABLE;
+    hfdcan1.Init.ProtocolException = ENABLE;
 
-  /* USER CODE BEGIN FDCAN1_Init 1 */
+    // Timing: 36 MHz CAN clock → ~500 kbps nominal bit rate
+    hfdcan1.Init.NominalPrescaler = 4;
+    hfdcan1.Init.NominalSyncJumpWidth = 1;
+    hfdcan1.Init.NominalTimeSeg1 = 15;
+    hfdcan1.Init.NominalTimeSeg2 = 2;
 
-  /* USER CODE END FDCAN1_Init 1 */
-  hfdcan1.Instance = FDCAN1;
-  hfdcan1.Init.ClockDivider = FDCAN_CLOCK_DIV1;
-  hfdcan1.Init.FrameFormat = FDCAN_FRAME_CLASSIC;
-  hfdcan1.Init.Mode = FDCAN_MODE_NORMAL;
-  hfdcan1.Init.AutoRetransmission = DISABLE;
-  hfdcan1.Init.TransmitPause = DISABLE;
-  hfdcan1.Init.ProtocolException = DISABLE;
-  hfdcan1.Init.NominalPrescaler = 16;
-  hfdcan1.Init.NominalSyncJumpWidth = 1;
-  hfdcan1.Init.NominalTimeSeg1 = 1;
-  hfdcan1.Init.NominalTimeSeg2 = 1;
-  hfdcan1.Init.DataPrescaler = 1;
-  hfdcan1.Init.DataSyncJumpWidth = 1;
-  hfdcan1.Init.DataTimeSeg1 = 1;
-  hfdcan1.Init.DataTimeSeg2 = 1;
-  hfdcan1.Init.StdFiltersNbr = 0;
-  hfdcan1.Init.ExtFiltersNbr = 0;
-  hfdcan1.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
-  if (HAL_FDCAN_Init(&hfdcan1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN FDCAN1_Init 2 */
+    // Data phase (not used in classic CAN)
+    hfdcan1.Init.DataPrescaler = 1;
+    hfdcan1.Init.DataSyncJumpWidth = 1;
+    hfdcan1.Init.DataTimeSeg1 = 1;
+    hfdcan1.Init.DataTimeSeg2 = 1;
 
-  /* USER CODE END FDCAN1_Init 2 */
+    hfdcan1.Init.StdFiltersNbr = 1;
+    hfdcan1.Init.ExtFiltersNbr = 0;
+    hfdcan1.Init.TxFifoQueueMode = FDCAN_TX_QUEUE_OPERATION;
 
+    // Initialize FDCAN
+    if (HAL_FDCAN_Init(&hfdcan1) != HAL_OK)
+    {
+        msg = "FDCAN Init Failed\r\n";
+        HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+        Error_Handler();
+    }
+    else
+    {
+        msg = "FDCAN Init OK\r\n";
+        HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+    }
+
+    // Configure filter to accept all standard IDs into RX FIFO 0
+    sFilterConfig.IdType = FDCAN_STANDARD_ID;
+    sFilterConfig.FilterIndex = 0;
+    sFilterConfig.FilterType = FDCAN_FILTER_RANGE;
+    sFilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+    sFilterConfig.FilterID1 = 0x000;
+    sFilterConfig.FilterID2 = 0x7FF;
+    if (HAL_FDCAN_ConfigFilter(&hfdcan1, &sFilterConfig) != HAL_OK)
+    {
+        msg = "FDCAN Filter Config Failed\r\n";
+        HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+        Error_Handler();
+    }
+
+    // Activate notifications
+    HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
+
+    // Start the CAN controller
+    if (HAL_FDCAN_Start(&hfdcan1) != HAL_OK)
+    {
+        msg = "FDCAN Start Failed\r\n";
+        HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+        Error_Handler();
+    }
+    else
+    {
+        msg = "FDCAN Started OK\r\n";
+        HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+    }
 }
 
 /**
