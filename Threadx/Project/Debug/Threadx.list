@@ -1444,6 +1444,7 @@ VOID canRX(ULONG initial_input)
 080009f4 <make_speed_status_msg>:
 #include "app_threadx.h"
 
+
 void make_speed_status_msg(t_can_message *msg, float speed)
 {
  80009f4:	b480      	push	{r7}
