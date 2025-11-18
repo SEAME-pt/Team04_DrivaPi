@@ -42,7 +42,7 @@ jobs:
       - name: Verify downloaded artifacts
         run: |
           echo "=== Checking for required artifacts ==="
-          ls -lR artifacts/ 2>/dev/null || echo "No artifacts directory"
+          ls -lR artifacts/verification/ || echo "No artifacts directory"
 
           echo ""
           echo "=== Checking specific files ==="
@@ -52,10 +52,7 @@ jobs:
             "artifacts/verification/static-analysis/cppcheck-SWD-998.xml"
           do
             if [ -f "$f" ]; then
-              echo "✅ Found: $f ($(stat -c%s "$f" 2>/dev/null || stat -f%z "$f") bytes)"
-              echo "   First 200 chars:"
-              head -c 200 "$f"
-              echo ""
+              echo "✅ Found: $f ($(stat -f%z "$f" 2>/dev/null || stat -c%s "$f") bytes)"
             else
               echo "❌ MISSING: $f"
             fi
@@ -95,6 +92,7 @@ jobs:
           echo ""
           echo "=== Testing validator import ==="
           python -c "from dotstop_extensions.validators import coverage_threshold_validator, cppcheck_error_validator, junit_pass_rate_validator; print('✅ All validators loaded successfully')"
+          cat .dotstop.dot
 
       # 5️⃣ Verify tools
       - name: Verify tools installation
@@ -102,60 +100,13 @@ jobs:
           echo "trudag version:"
           trudag --version || echo "trudag not found"
 
-      # 5b️⃣ Debug: Test validators manually
-      - name: Debug validator execution
-        run: |
-          echo "=== Testing validators directly ==="
-          python3 << 'EOPYTHON'
-          from dotstop_extensions.validators import (
-              junit_pass_rate_validator,
-              coverage_threshold_validator,
-              cppcheck_error_validator
-          )
-          import os
-
-          # Test each validator
-          print("\n1. Testing JUnit validator:")
-          junit_path = "artifacts/verification/tests/LLTC-998-junit.xml"
-          print(f"   File exists: {os.path.exists(junit_path)}")
-          if os.path.exists(junit_path):
-              config = {
-                  "min_pass_rate": 100,
-                  "references": [{"path": junit_path}]
-              }
-              score, errors = junit_pass_rate_validator(config)
-              print(f"   Score: {score}, Errors: {errors}")
-
-          print("\n2. Testing Coverage validator:")
-          cov_path = "artifacts/verification/coverage/coverage-SWD-998.xml"
-          print(f"   File exists: {os.path.exists(cov_path)}")
-          if os.path.exists(cov_path):
-              config = {
-                  "min_line_rate": 80,
-                  "references": [{"path": cov_path}]
-              }
-              score, errors = coverage_threshold_validator(config)
-              print(f"   Score: {score}, Errors: {errors}")
-
-          print("\n3. Testing Cppcheck validator:")
-          cpp_path = "artifacts/verification/static-analysis/cppcheck-SWD-998.xml"
-          print(f"   File exists: {os.path.exists(cpp_path)}")
-          if os.path.exists(cpp_path):
-              config = {
-                  "fail_on_severity": ["error"],
-                  "references": [{"path": cpp_path}]
-              }
-              score, errors = cppcheck_error_validator(config)
-              print(f"   Score: {score}, Errors: {errors}")
-          EOPYTHON
-
       # 6️⃣ Run trudag lint (capture output)
       - name: Run trudag lint
         id: lint
         continue-on-error: true
         run: |
           mkdir -p artifacts
-          echo "=== trudag manage lint (second pass for validation) ===" > artifacts/trudag-lint.txt
+          echo "=== trudag manage lint START ===" > artifacts/trudag-lint.txt
           if trudag manage lint 2>&1 | tee -a artifacts/trudag-lint.txt; then
             echo "lint_ok=true" >> $GITHUB_OUTPUT
           else
