@@ -29,7 +29,7 @@ We follow these trust principles:
 ## What We Cover
 - RPi5 + HAILO (AI perception and planning)
 - STM32 + ThreadX (real-time control)
-- CAN communication between computers
+- CAN communication between components
 - Safety monitoring and fault handling
 
 ## Standards We Follow
