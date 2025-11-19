@@ -7,9 +7,9 @@ doc:
   title: DrivaPi Trustable Software Framework
 level: 1.0
 links: []
-normative: false
+normative: true
 ref: ''
-reviewed: ''
+reviewed: 094a2fcde0054c62020bdab6e8543fbc093abf9ebda653430a9dc41401acc601
 ---
 
 # Trustable Software Framework - DrivaPi
