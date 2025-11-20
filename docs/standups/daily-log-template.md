@@ -1,6 +1,7 @@
 # Day [X] - SEAME Automotive Journey
 
-**Date:** [Month DD, YYYY]
+**Date:** [Weekday, Month DD, YYYY]
+
 **Team:** Bernardo, Gaspar, Hugo, Melanie, Miguel
 
 ---
