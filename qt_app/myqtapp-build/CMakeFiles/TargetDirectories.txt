@@ -1,0 +1,9 @@
+/home/drivapi/qt_app/myqtapp-build/CMakeFiles/myqtapp.dir
+/home/drivapi/qt_app/myqtapp-build/CMakeFiles/edit_cache.dir
+/home/drivapi/qt_app/myqtapp-build/CMakeFiles/rebuild_cache.dir
+/home/drivapi/qt_app/myqtapp-build/CMakeFiles/list_install_components.dir
+/home/drivapi/qt_app/myqtapp-build/CMakeFiles/install.dir
+/home/drivapi/qt_app/myqtapp-build/CMakeFiles/install/local.dir
+/home/drivapi/qt_app/myqtapp-build/CMakeFiles/install/strip.dir
+/home/drivapi/qt_app/myqtapp-build/CMakeFiles/myqtapp_autogen_timestamp_deps.dir
+/home/drivapi/qt_app/myqtapp-build/CMakeFiles/myqtapp_autogen.dir

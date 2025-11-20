@@ -1,0 +1,43 @@
+<RCC>
+    <qresource prefix="/">
+        <!-- QML -->
+        <file>qml/main.qml</file>
+        <file>qml/components/BatteryIndicator.qml</file>
+        <file>qml/components/EnergyDisplay.qml</file>
+        <file>qml/components/GearSelector.qml</file>
+        <file>qml/components/SimulationControls.qml</file>
+        <file>qml/components/SpeedDisplay.qml</file>
+
+        <!-- Assets -->
+        <file>assets/Low beam headlights.svg</file>
+        <file>assets/Vector 1.svg</file>
+        <file>assets/Vector 2.svg</file>
+        <file>assets/Lights.svg</file>
+        <file>assets/Parking lights.svg</file>
+        <file>assets/Rare fog lights.svg</file>
+        <file>assets/SecondRightIcon.svg</file>
+        <file>assets/thirdRightIcon.svg</file>
+        <file>assets/speedometer.svg</file>
+        <file>assets/background.svg</file>
+        <file>assets/newcar.svg</file>
+        <file>assets/Car.svg</file>
+        <file>assets/Model 3.svg</file>
+        <file>assets/Model 3.png</file>
+        <file>assets/Light_White.svg</file>
+        <file>assets/Parking_lights_white.svg</file>
+        <file>assets/Low_beam_headlights_white.svg</file>
+        <file>assets/Rare_fog_lights_red.svg</file>
+        <file>assets/SecondRightIcon_red.svg</file>
+        <file>assets/thirdRightIcon_red.svg</file>
+        <file>assets/InstrumentClusterBase.svg</file>
+        <file>assets/roadSigns/Zeichen_274-62.svg.png</file>
+        <file>assets/headphones.svg</file>
+        <file>assets/headphones_orange.svg</file>
+        <file>assets/navigation.svg</file>
+        <file>assets/navigation_orange.svg</file>
+        <file>assets/steering.svg</file>
+        <file>assets/steering_orange.svg</file>
+        <file>assets/warning.svg</file>
+        <file>assets/warning_red.svg</file>
+    </qresource>
+</RCC>

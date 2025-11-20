@@ -1,7 +1,0 @@
-build/
-.git/
-.vscode/
-*.md
-scripts/
-docs/
-tests/
