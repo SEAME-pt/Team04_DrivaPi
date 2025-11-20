@@ -37,6 +37,7 @@ env/
 *.swo
 *~
 .DS_Store
+.settings
 
 # TSF/Doorstop
 # Note: Keep .dotstop.dot for tracking
