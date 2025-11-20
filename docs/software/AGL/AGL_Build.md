@@ -80,11 +80,25 @@ This script will create the `build` directory and the `conf/local.conf` file. Th
 
 ### 2.2. Image Features
 
-The following features are included in the build configuration:
+The `aglsetup` script configures the build with a set of high-level features. For this build, these include:
 
-*   **`agl-all-features`**: This is a meta-feature that includes a comprehensive set of AGL features for a rich in-vehicle experience.
-*   **`agl-devel`**: This feature includes development and debugging tools in the image, which is useful for on-target development.
-*   **`agl-ic`**: This feature provides the necessary components for an Instrument Cluster display.
+*   **`agl-all-features`**: A meta-feature that includes a comprehensive set of AGL features.
+*   **`agl-devel`**: Includes development and debugging tools in the image.
+*   **`agl-ic`**: Provides components for an Instrument Cluster display.
+
+In addition to these, the `local.conf` file is customized to include more packages for development and debugging through the `EXTRA_IMAGE_FEATURES` variable:
+
+```
+EXTRA_IMAGE_FEATURES ?= "debug-tweaks package-management"
+EXTRA_IMAGE_FEATURES += " dev-pkgs tools-sdk dbg-pkgs staticdev-pkgs tools-debug eclipse-debug"
+```
+
+These settings enrich the target image with:
+*   `package-management`: Enables on-device package management (e.g., `rpm`).
+*   `dev-pkgs`: Installs development headers and libraries.
+*   `tools-sdk`: Adds essential development tools like `gcc` and `make`.
+*   `dbg-pkgs`: Includes debugging symbols for all packages.
+*   `staticdev-pkgs`: Installs static libraries for development.
 
 ### 2.3. Raspberry Pi 5 Specific Configuration
 
@@ -108,3 +122,21 @@ bitbake agl-image-minimal-crosssdk
 ```
 
 The output of the build will be located in the `tmp/deploy/images/raspberrypi5/` directory.
+
+## 4. Layer Configuration (bblayers.conf)
+
+The `bblayers.conf` file defines which Yocto layers are included in the build. This configuration is crucial as it determines which recipes and configurations are available. The AGL build for the Raspberry Pi 5 with Qt support relies on several key layers.
+
+Based on the provided `bblayers.conf`, the following layers are notable:
+
+*   **Core Layers**:
+    *   `meta-poky`, `meta-openembedded`: Standard Yocto Project and OpenEmbedded layers.
+    *   `meta-agl-core`, `meta-agl-bsp`: Core AGL layers.
+
+*   **Board Support Package (BSP) Layer**:
+    *   `bsp/meta-raspberrypi`: Provides support for the Raspberry Pi family of boards, including the Raspberry Pi 5.
+
+*   **Feature and Application Layers**:
+    *   `external/meta-qt6`: This layer provides recipes for Qt.
+    *   `meta-agl-demo`: Contains the AGL demo application and related components.
+    *   Other layers for features like Flutter (`meta-flutter`), security (`meta-selinux`), and more are also included based on the selected features during `aglsetup`.
