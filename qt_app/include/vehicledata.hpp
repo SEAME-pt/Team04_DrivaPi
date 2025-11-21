@@ -25,7 +25,7 @@ public:
     Q_INVOKABLE void resetTrip();
 
     // Getters
-	double     getSpeed() const;
+	double  getSpeed() const;
 	double  getEnergy() const;
 	int     getBattery() const;
 	int     getDistance() const;
@@ -45,11 +45,12 @@ public:
     // Q_INVOKABLE methods - callable from QML
     Q_INVOKABLE void toggleAutonomousMode();
     Q_INVOKABLE void resetValues();
+    Q_INVOKABLE void resetTrip();
     Q_INVOKABLE void changeGearUp();
     Q_INVOKABLE void changeGearDown();
 
 public slots:
-    // CAN message handler
+    // Called by CANReader (queued connection) with raw payload + canId
     void handleCanMessage(const QByteArray &payload, uint32_t canId);
 
 signals:
@@ -61,7 +62,17 @@ signals:
     void gearChanged();
     void autonomousModeChanged();
 
+private slots:
+    // Single watchdog that checks timestamps for all properties
+    void checkStaleProperties();
+
 private:
+
+    // Internal helpers
+    void    updateTimestamp(const QString &propName);
+    qint64  lastUpdate(const QString &propName) const;
+    void    markPropertyStale(const QString &propName);
+
     // Member variables
     double  m_speed;
     double  m_energy;
@@ -73,6 +84,16 @@ private:
 
     // Helper methods
     int getGearIndex() const;
+
+	// timestamps: property name -> last update epoch ms
+    QHash<QString, qint64> m_lastUpdateMs;
+
+    // watchdog timer (single)
+    QTimer *m_watchdogTimer;
+
+    // Stale thresholds (ms)
+    static constexpr qint64 SPEED_STALE_MS = 500;     // speed is high-rate -> short timeout
+    static constexpr qint64 OTHER_STALE_MS = 2000;    // other properties slower
 };
 
 #endif // VEHICLEDATA_HPP

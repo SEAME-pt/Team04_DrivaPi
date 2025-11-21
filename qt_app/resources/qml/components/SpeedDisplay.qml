@@ -3,11 +3,11 @@ import QtQuick 2.15
 Item {
     id: root
 
-    property int speed: 0
+    property real speed: 0.0
 
     Text {
         id: speedNumber
-        text: Math.round(root.speed).toString()
+        text: root.speed.toFixed(1).toString()
         renderType: Text.NativeRendering
         font.pixelSize: 80
         font.family: "SF Pro Display"
@@ -22,7 +22,7 @@ Item {
     }
 
     Text {
-        text: "KM/H"
+        text: "M/S"
         font.pixelSize: 18
         font.family: "SF Pro Display"
         font.weight: Font.Light
