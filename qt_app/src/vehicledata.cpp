@@ -123,3 +123,38 @@ void VehicleData::changeGearDown()
         setGear(gears[currentIndex - 1]);
     }
 }
+
+int VehicleData::getSpeed() const
+{
+	return m_speed;
+}
+
+double VehicleData::getEnergy() const
+{
+	return m_energy;
+}
+
+int VehicleData::getBattery() const
+{
+	return m_battery;
+}
+
+int VehicleData::getDistance() const
+{
+	return m_distance;
+}
+
+int VehicleData::getTemperature() const
+{
+	return m_temperature;
+}
+
+QString VehicleData::getGear() const
+{
+	return m_gear;
+}
+
+bool VehicleData::getAutonomousMode() const
+{
+	return m_autonomousMode;
+}

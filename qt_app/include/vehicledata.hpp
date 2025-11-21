@@ -22,13 +22,13 @@ public:
     Q_INVOKABLE void resetTrip();
 
     // Getters
-    int     speed() const { return m_speed; }
-    double  energy() const { return m_energy; }
-    int     battery() const { return m_battery; }
-    int     distance() const { return m_distance; }
-    int     temperature() const { return m_temperature; }
-    QString gear() const { return m_gear; }
-    bool    autonomousMode() const { return m_autonomousMode; }
+	int     getSpeed() const;
+	double  getEnergy() const;
+	int     getBattery() const;
+	int     getDistance() const;
+    int     getTemperature() const;
+    QString getGear() const;
+    bool    getAutonomousMode() const;
 
     // Setters
     void    setSpeed(int speed);
