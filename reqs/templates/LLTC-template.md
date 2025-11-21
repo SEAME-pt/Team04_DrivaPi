@@ -6,7 +6,6 @@ text: |
 
 # TSF Type: Evidence/Premise (A Claim, but not a Request)
 
-ASIL: "ASIL level here (QM/A/B/C/D)"
 verification_method: "Verification method here"
 
 # Links: Connects to the SWD it provides evidence for
@@ -39,27 +38,15 @@ evidence:
     # fail_on_severity: ["error"]
     # min_coverage: 0.80
 
-# Optional: Manual SME Score (if no evidence: block)
-# score:
-#   <SME_ID>: <0.0-1.0>  # SME confidence score
-#   # Example:
-#   # TestLead: 1.0
+# Manual SME Score
+score:
+  <SME_ID>: <0.0-1.0>  # SME confidence score
+  # Example:
+  # TestLead: 1.0
 
 active: true
 derived: false
 normative: true
 level: 4.0  # 1.0=URD, 2.0=SRD, 3.0=SWD, 4.0=LLTC
-
-test_type: <TEST_TYPE>  # e.g., "Unit", "Integration", "System", "E2E"
-test_procedure:
-  setup:
-    - <SETUP_STEPS>
-  test_steps:
-    - step: 1
-      action: <STEP_ACTION>
-      expected: <EXPECTED_RESULT>
-    # Add more test steps as needed
-  postconditions:
-    - <POSTCONDITIONS>
 ---
 <STATEMENT>
