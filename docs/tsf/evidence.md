@@ -12,7 +12,7 @@
 
 ## 📝 Spike Summary: Clarifying Linking Syntax
 
-**Date:** October 28, 2025 | **Updated:** November 3, 2025
+**Date:** October 28, 2025 | **Updated:** November 5, 2025
 
 Based on analysis and `trudag` CLI documentation, the team clarifies syntax usage:
 
@@ -256,6 +256,19 @@ When assigning a score to URD (0.0 - 1.0), consider:
 - Avoid overconfidence bias
 
 **Team Action:** Define specific scoring rubric.
+
+**Why?** Evidence lives at LLTC level. One SME scores the evidence. That confidence reflects upward showing what we've proven works.
+
+### Interpretation (Probability)
+
+The LLTC score represents confidence that the evidence proves the requirement works:
+- **1.0** = Perfect evidence (0 errors, 100% coverage, all tests pass)
+- **0.95** = Excellent evidence (minor gaps acceptable)
+- **0.87** = Good evidence (meets minimum targets)
+- **0.75-0.9** = Adequate evidence, some concerns
+- **0.5-0.75** = Weak evidence, significant gaps
+- **<0.5** = Poor evidence, cannot trust
+- **0.0** = No evidence, requirement unproven
 
 ---
 

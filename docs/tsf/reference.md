@@ -40,8 +40,8 @@ trudag manage create-item LLTC 010 reqs/lltc
 ## 🔗 Link Requirements (Traceability)
 
 ```bash
-# Link child → parent (ALWAYS upward in V-Model)
-trudag manage create-link <CHILD> <PARENT>
+# Link parent → child (ALWAYS upward in V-Model)
+trudag manage create-link <PARENT> <CHILD>
 
 # Examples (bottom-up):
 trudag manage create-link SRD-010 URD-010    # System → User
@@ -62,9 +62,8 @@ trudag manage lint
 ## ✅ Review & Approval
 
 ```bash
-# Mark as reviewed (adds git SHA automatically)
-trudag manage set-item <ID>
-
+# Remove link parent → child
+trudag manage remove-link <PARENT> <CHILD>
 # Examples:
 trudag manage set-item URD-010
 trudag manage set-item SWD-010
