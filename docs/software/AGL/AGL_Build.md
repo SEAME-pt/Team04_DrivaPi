@@ -140,3 +140,4 @@ Based on the provided `bblayers.conf`, the following layers are notable:
     *   `external/meta-qt6`: This layer provides recipes for Qt.
     *   `meta-agl-demo`: Contains the AGL demo application and related components.
     *   Other layers for features like Flutter (`meta-flutter`), security (`meta-selinux`), and more are also included based on the selected features during `aglsetup`.
+
