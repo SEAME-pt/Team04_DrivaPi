@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage version="1.0" timestamp="2025-11-03T09:54:00Z">
+  <metrics
+    lineRate="0.87"
+    branchRate="0.92"
+    linesCovered="33"
+    linesValid="38"
+    branchesCovered="12"
+    branchesValid="13">
+  </metrics>
+
+  <file name="src/sensors/motor_speed.cpp" filename="src/sensors/motor_speed.cpp">
+    <metrics lineRate="0.87" branchRate="0.92" linesCovered="33" linesValid="38" branchesCovered="12" branchesValid="13"/>
+
+    <class name="MotorSpeedSensor" filename="src/sensors/motor_speed.cpp">
+      <methods>
+        <method name="MotorSpeedSensor::MotorSpeedSensor" signature="(I)V" covered="true" complexity="1.0" lineRate="1.0"/>
+        <method name="MotorSpeedSensor::~MotorSpeedSensor" signature="()V" covered="true" complexity="1.0" lineRate="1.0"/>
+        <method name="MotorSpeedSensor::read_rpm" signature="()I" covered="true" complexity="4.2" lineRate="0.95"/>
+        <method name="MotorSpeedSensor::get_last_rpm" signature="()I" covered="true" complexity="1.0" lineRate="1.0"/>
+        <method name="MotorSpeedSensor::has_error" signature="()Z" covered="true" complexity="1.0" lineRate="1.0"/>
+        <method name="MotorSpeedSensor::clear_error" signature="()V" covered="true" complexity="1.0" lineRate="1.0"/>
+      </methods>
+    </class>
+  </file>
+
+  <summary>
+    <statistics>
+      <coverage type="line" value="87%"/>
+      <coverage type="branch" value="92%"/>
+      <coverage type="method" value="100%"/>
+    </statistics>
+    <requirement id="SWD-998" status="VERIFIED">
+      <rationale>Code coverage 87% exceeds target of 80%. All methods covered.</rationale>
+    </requirement>
+  </summary>
+</coverage>
