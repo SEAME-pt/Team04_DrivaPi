@@ -1,0 +1,78 @@
+name: Generate verification artifacts (tests / coverage / cppcheck)
+
+on:
+  workflow_call:
+    inputs:
+      src_dirs:
+        type: string
+        description: "Source directories to include for static analysis / coverage"
+        required: false
+        default: "src"
+      junit_output:
+        type: string
+        description: "Path to write JUnit xml"
+        required: false
+        default: "artifacts/verification/tests/LLTC-998-junit.xml"
+      coverage_output:
+        type: string
+        description: "Path to write coverage xml"
+        required: false
+        default: "artifacts/verification/coverage/coverage-SWD-998.xml"
+      cppcheck_output:
+        type: string
+        description: "Path to write cppcheck xml"
+        required: false
+        default: "artifacts/verification/static-analysis/cppcheck-SWD-998.xml"
+      build_dir:
+        type: string
+        description: "Build directory"
+        required: false
+        default: "build"
+
+jobs:
+  generate-artifacts:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system packages
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y build-essential cmake cppcheck lcov
+
+      - name: Install Python tools (gcovr)
+        run: |
+          python -m pip install --upgrade pip
+          pip install gcovr
+
+      - name: Configure and Build with CMake
+        run: |
+          cmake -B "${{ inputs.build_dir }}" -S . -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage"
+          cmake --build "${{ inputs.build_dir }}"
+
+      - name: Run tests -> produce JUnit XML
+        run: |
+          mkdir -p $(dirname "${{ inputs.junit_output }}")
+          "${{ inputs.build_dir }}/tests/motor_speed_test" --gtest_output=xml:"${{ inputs.junit_output }}"
+
+      - name: Generate coverage XML (gcovr)
+        run: |
+          mkdir -p $(dirname "${{ inputs.coverage_output }}")
+          gcovr -r . --object-directory="${{ inputs.build_dir }}" --filter "${{ inputs.src_dirs }}/.*" --exclude-directories "${{ inputs.build_dir }}/CMakeFiles" --gcov-ignore-errors=no_working_dir_found --xml -o "${{ inputs.coverage_output }}"
+
+      - name: Run cppcheck
+        run: |
+          mkdir -p $(dirname "${{ inputs.cppcheck_output }}")
+          echo "${{ inputs.build_dir }}/_deps/googletest-src/googletest/include" > cppcheck_includes.txt
+          echo "${{ inputs.build_dir }}/_deps/googletest-src/googlemock/include" >> cppcheck_includes.txt
+          echo "src" >> cppcheck_includes.txt
+          cppcheck --enable=warning,style,performance,portability,information --error-exitcode=1 --suppress=missingIncludeSystem --suppress=unusedFunction --xml --xml-version=2 --includes-file=cppcheck_includes.txt "${{ inputs.src_dirs }}" 2> "${{ inputs.cppcheck_output }}"
+
+      - name: Upload verification artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification-artifacts
+          path: artifacts/verification
+          retention-days: 30
