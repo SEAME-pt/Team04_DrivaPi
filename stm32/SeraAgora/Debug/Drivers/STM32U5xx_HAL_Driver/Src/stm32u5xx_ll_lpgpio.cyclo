@@ -1,6 +1,0 @@
-../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_ll_lpgpio.h:195:22:LL_LPGPIO_SetPinMode	3
-../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_ll_bus.h:1459:22:LL_AHB3_GRP1_ForceReset	1
-../Drivers/STM32U5xx_HAL_Driver/Inc/stm32u5xx_ll_bus.h:1484:22:LL_AHB3_GRP1_ReleaseReset	1
-../Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_ll_lpgpio.c:73:13:LL_LPGPIO_DeInit	2
-../Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_ll_lpgpio.c:103:13:LL_LPGPIO_Init	4
-../Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_ll_lpgpio.c:140:6:LL_LPGPIO_StructInit	1
