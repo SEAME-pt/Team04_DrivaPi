@@ -22,7 +22,7 @@ target_include_directories(myqtapp PRIVATE
 target_sources(myqtapp PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/resources/qml.qrc"
     "${CMAKE_CURRENT_SOURCE_DIR}/resources/resources.qrc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/vehicledata.h"  # ensure automoc
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/vehicledata.hpp"  # ensure automoc
 )
 
 target_link_libraries(myqtapp PRIVATE Qt6::Core Qt6::Gui Qt6::Quick Qt6::Qml Qt6::QuickControls2)

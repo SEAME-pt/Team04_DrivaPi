@@ -2,6 +2,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QScopedPointer>
+#include <QWindow>
 #include "vehicledata.hpp"
 
 int main(int argc, char *argv[])
