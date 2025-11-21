@@ -3,17 +3,20 @@
 
 #include <QObject>
 #include <QString>
+#include <QByteArray>
+#include <QHash>
+#include <QTimer>
 
 class VehicleData : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QString gear READ gear WRITE setGear NOTIFY gearChanged)
-    Q_PROPERTY(int speed READ speed WRITE setSpeed NOTIFY speedChanged)
-    Q_PROPERTY(double energy READ energy WRITE setEnergy NOTIFY energyChanged)
-    Q_PROPERTY(int battery READ battery WRITE setBattery NOTIFY batteryChanged)
-    Q_PROPERTY(int temperature READ temperature WRITE setTemperature NOTIFY temperatureChanged)
-    Q_PROPERTY(int distance READ distance WRITE setDistance NOTIFY distanceChanged)
-    Q_PROPERTY(bool autonomousMode READ autonomousMode WRITE setAutonomousMode NOTIFY autonomousModeChanged)
+    Q_PROPERTY(QString gear READ getGear WRITE setGear NOTIFY gearChanged)
+    Q_PROPERTY(double speed READ getSpeed WRITE setSpeed NOTIFY speedChanged)
+    Q_PROPERTY(double energy READ getEnergy WRITE setEnergy NOTIFY energyChanged)
+    Q_PROPERTY(int battery READ getBattery WRITE setBattery NOTIFY batteryChanged)
+    Q_PROPERTY(int temperature READ getTemperature WRITE setTemperature NOTIFY temperatureChanged)
+    Q_PROPERTY(int distance READ getDistance WRITE setDistance NOTIFY distanceChanged)
+    Q_PROPERTY(bool autonomousMode READ getAutonomousMode WRITE setAutonomousMode NOTIFY autonomousModeChanged)
 
 public:
     explicit VehicleData(QObject *parent = nullptr);
@@ -22,7 +25,7 @@ public:
     Q_INVOKABLE void resetTrip();
 
     // Getters
-	int     getSpeed() const;
+	double     getSpeed() const;
 	double  getEnergy() const;
 	int     getBattery() const;
 	int     getDistance() const;
@@ -45,6 +48,10 @@ public:
     Q_INVOKABLE void changeGearUp();
     Q_INVOKABLE void changeGearDown();
 
+public slots:
+    // CAN message handler
+    void handleCanMessage(const QByteArray &payload, uint32_t canId);
+
 signals:
     void speedChanged();
     void energyChanged();
@@ -56,7 +63,7 @@ signals:
 
 private:
     // Member variables
-    int     m_speed;
+    double  m_speed;
     double  m_energy;
     int     m_battery;
     int     m_distance;
