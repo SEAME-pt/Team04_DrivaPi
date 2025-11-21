@@ -1,2 +1,0 @@
-../Core/Src/app_threadx.c:64:6:App_ThreadX_Init	1
-../Core/Src/app_threadx.c:95:6:MX_ThreadX_Init	1

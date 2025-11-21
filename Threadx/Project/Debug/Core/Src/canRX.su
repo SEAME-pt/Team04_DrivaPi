@@ -1,2 +1,0 @@
-../Core/Src/canRX.c:3:9:can_receive	64	static
-../Core/Src/canRX.c:21:6:canRX	32	static
