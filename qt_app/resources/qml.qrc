@@ -5,7 +5,6 @@
         <file>qml/components/BatteryIndicator.qml</file>
         <file>qml/components/EnergyDisplay.qml</file>
         <file>qml/components/GearSelector.qml</file>
-        <file>qml/components/SimulationControls.qml</file>
         <file>qml/components/SpeedDisplay.qml</file>
 
         <!-- Assets -->

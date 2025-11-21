@@ -322,25 +322,6 @@ Window {
                     }
                 }
             }
-
-            // ============================================
-            // SIMULATION CONTROLS (Top Right) - COMPONENT
-            // ============================================
-            SimulationControls {
-                id: simulationControls
-                anchors.top: parent.top
-                anchors.right: parent.right
-                anchors.margins: 15
-                z: 100
-
-                isRunning: vehicleData.simulationRunning
-                simSpeed: vehicleData.simSpeed
-
-                onStartSimulation: vehicleData.startSimulation()
-                onStopSimulation: vehicleData.stopSimulation()
-                onIncreaseSpeed: vehicleData.increaseSimSpeed()
-                onDecreaseSpeed: vehicleData.decreaseSimSpeed()
-            }
         }
     }
 }

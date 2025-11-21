@@ -1,12 +1,8 @@
-#ifndef VEHICLEDATA_H
-#define VEHICLEDATA_H
+#ifndef VEHICLEDATA_HPP
+#define VEHICLEDATA_HPP
 
 #include <QObject>
 #include <QString>
-#include <QTimer> // <-- add this forward declaration
-#include "can.hpp"
-
-class QTimer; // <-- add this forward declaration
 
 class VehicleData : public QObject
 {
@@ -18,9 +14,6 @@ class VehicleData : public QObject
     Q_PROPERTY(int temperature READ temperature WRITE setTemperature NOTIFY temperatureChanged)
     Q_PROPERTY(int distance READ distance WRITE setDistance NOTIFY distanceChanged)
     Q_PROPERTY(bool autonomousMode READ autonomousMode WRITE setAutonomousMode NOTIFY autonomousModeChanged)
-    Q_PROPERTY(bool simulationRunning READ simulationRunning WRITE setSimulationRunning NOTIFY simulationRunningChanged)
-    Q_PROPERTY(int simSpeed READ simSpeed WRITE setSimSpeed NOTIFY simSpeedChanged)
-
 
 public:
     explicit VehicleData(QObject *parent = nullptr);
@@ -36,8 +29,6 @@ public:
     int     temperature() const { return m_temperature; }
     QString gear() const { return m_gear; }
     bool    autonomousMode() const { return m_autonomousMode; }
-    bool    simulationRunning() const { return m_simulationRunning; }
-    int     simSpeed() const { return m_simSpeed; }
 
     // Setters
     void    setSpeed(int speed);
@@ -47,30 +38,12 @@ public:
     void    setGear(const QString &gear);
     void    setTemperature(int temperature);
     void    setAutonomousMode(bool mode);
-    void    setSimulationRunning(bool running) {
-        if (m_simulationRunning != running) {
-            m_simulationRunning = running;
-            emit simulationRunningChanged();
-        }
-    }
-    void    setSimSpeed(int speed) {
-        if (m_simSpeed != speed) {
-            m_simSpeed = speed;
-            updateTimerInterval();
-            emit simSpeedChanged();
-        }
-    }
 
-    std::string get_can_msg();
     // Q_INVOKABLE methods - callable from QML
-    Q_INVOKABLE void startSimulation();
-    Q_INVOKABLE void stopSimulation();
     Q_INVOKABLE void toggleAutonomousMode();
     Q_INVOKABLE void resetValues();
     Q_INVOKABLE void changeGearUp();
     Q_INVOKABLE void changeGearDown();
-    Q_INVOKABLE void increaseSimSpeed();
-    Q_INVOKABLE void decreaseSimSpeed();
 
 signals:
     void speedChanged();
@@ -80,11 +53,6 @@ signals:
     void temperatureChanged();
     void gearChanged();
     void autonomousModeChanged();
-    void simulationRunningChanged();
-    void simSpeedChanged();
-
-private slots:
-    void updateSimulation();
 
 private:
     // Member variables
@@ -95,15 +63,9 @@ private:
     QString m_gear;
     int     m_temperature;
     bool    m_autonomousMode;
-    bool    m_simulationRunning;
-    int     m_simSpeed;
-    int     m_simulationStep;
-
-    QTimer *m_simulationTimer;
 
     // Helper methods
-    void updateTimerInterval();
     int getGearIndex() const;
 };
 
-#endif // VEHICLEDATA_H
+#endif // VEHICLEDATA_HPP

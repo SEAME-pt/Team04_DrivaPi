@@ -2,7 +2,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QScopedPointer>
-#include "vehicledata.h"
+#include "vehicledata.hpp"
 
 int main(int argc, char *argv[])
 {

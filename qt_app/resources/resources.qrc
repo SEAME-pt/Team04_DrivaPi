@@ -8,7 +8,6 @@
         <file>qml/components/EnergyDisplay.qml</file>
         <file>qml/components/GearSelector.qml</file>
         <file>qml/components/BatteryIndicator.qml</file>
-        <file>qml/components/SimulationControls.qml</file>
 
         <!-- Main Assets -->
         <file>assets/InstrumentClusterBase.svg</file>
