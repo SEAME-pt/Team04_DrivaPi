@@ -44,10 +44,6 @@ To correctly configure a Qt project for cross-compilation with the AGL SDK, you 
 Add the following to your `CMakeLists.txt`:
 
 ```cmake
-# Directly specifies the location of the host-native tools (like moc, rcc)
-# within the SDK's host sysroot. This helps CMake find the right tools for code generation.
-set(QT_HOST_PATH "/opt/agl-sdk/20.0.1-aarch64/sysroots/x86_64-aglsdk-linux/usr/bin/qt5")
-
 # Enables automatic invocation of the Qt Meta-Object Compiler, Resource Compiler,
 # and UI compiler, which is mandatory for C++/QML integration and resource handling.
 set(CMAKE_AUTOMOC ON)
@@ -63,11 +59,6 @@ target_link_libraries(your_target_name PRIVATE Qt6::Core Qt6::Gui Qt6::Qml Qt6::
 ```
 
 ### 2.2. Explanation of CMake Settings
-
--   **`set(QT_HOST_PATH "...")`**
-    -   **Purpose**: Specifies the location of host-native Qt tools (like `moc`, `rcc`, `uic`) required during the build.
-    -   **Why it's needed**: This can help prevent configuration failures where CMake cannot find the host tools for code generation.
-    -   **Action**: Replace `...` with the actual path to the host tools in your installed SDK. You can typically find this by looking for the `qt6` directory within the `sysroots/x86_64-aglsdk-linux/usr/bin/` directory of your SDK. For example: `/opt/agl-sdk/20.0.1-aarch64/sysroots/x86_64-aglsdk-linux/usr/bin/qt6`.
 
 -   **`CMAKE_AUTOMOC, CMAKE_AUTORCC, CMAKE_AUTOUIC`**
     -   **Purpose**: Enables the automatic invocation of the Meta-Object Compiler (`moc`), Resource Compiler (`rcc`), and User Interface Compiler (`uic`).
