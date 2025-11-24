@@ -142,7 +142,7 @@ void VehicleData::changeGearDown()
     }
 }
 
-int VehicleData::getSpeed() const
+double VehicleData::getSpeed() const
 {
 	return m_speed;
 }

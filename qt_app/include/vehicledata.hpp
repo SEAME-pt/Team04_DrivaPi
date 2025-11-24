@@ -22,8 +22,6 @@ public:
     explicit VehicleData(QObject *parent = nullptr);
     ~VehicleData() override;
 
-    Q_INVOKABLE void resetTrip();
-
     // Getters
 	double  getSpeed() const;
 	double  getEnergy() const;
@@ -34,7 +32,7 @@ public:
     bool    getAutonomousMode() const;
 
     // Setters
-    void    setSpeed(int speed);
+    void    setSpeed(double mps);
     void    setEnergy(double energy);
     void    setBattery(int battery);
     void    setDistance(int distance);
