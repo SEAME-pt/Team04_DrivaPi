@@ -109,5 +109,6 @@ void CANReader::handleReadable(int)
     QByteArray payload(reinterpret_cast<const char*>(frame.data), frame.can_dlc);
     uint32_t canId = static_cast<uint32_t>(frame.can_id & CAN_EFF_MASK);
 
+    qDebug() << "Received CAN frame with ID:" << canId << "Payload:" << payload.toHex();
     emit canMessageReceived(payload, canId);
 }

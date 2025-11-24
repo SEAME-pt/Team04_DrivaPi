@@ -4,6 +4,7 @@
 #include <QScopedPointer>
 #include <QWindow>
 #include "vehicledata.hpp"
+#include "canreader.hpp"
 
 int main(int argc, char *argv[])
 {
@@ -14,6 +15,9 @@ int main(int argc, char *argv[])
 
     // Create VehicleData using QScopedPointer for automatic cleanup
     QScopedPointer<VehicleData> vehicleData(new VehicleData());
+
+    // Create CANReader using QScopedPointer for automatic cleanup
+    QScopedPointer<CANReader> canReader(new CANReader("can01"));
 
     // Expose VehicleData to QML (keep ownership in C++)
     engine.rootContext()->setContextProperty("vehicleData", vehicleData.data());
@@ -29,6 +33,14 @@ int main(int argc, char *argv[])
         },
         Qt::QueuedConnection
     );
+
+    // Connect CANReader signals to VehicleData slots
+    QObject::connect(
+        canReader.data(), &CANReader::canMessageReceived,
+        vehicleData.data(), &VehicleData::handleCanMessage,
+        Qt::QueuedConnection
+    );
+    canReader->start();
 
     engine.load(url);
 

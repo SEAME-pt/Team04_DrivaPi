@@ -34,6 +34,7 @@ void VehicleData::setSpeed(double mps)
 {
     if (!qFuzzyCompare(1.0 + mps, 1.0 + m_speed)) {
         m_speed = mps;
+        qDebug() << "Speed set to (m/s):" << m_speed;
         emit speedChanged();
     }
     updateTimestamp(QStringLiteral("speed"));
