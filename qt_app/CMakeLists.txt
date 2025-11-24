@@ -22,7 +22,7 @@ target_include_directories(myqtapp PRIVATE
 target_sources(myqtapp PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/resources/qml.qrc"
     "${CMAKE_CURRENT_SOURCE_DIR}/resources/resources.qrc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/vehicledata.hpp"  # ensure automoc
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/vehicledata.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/canreader.hpp"  
 )
 
