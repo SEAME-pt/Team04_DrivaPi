@@ -6,6 +6,9 @@
 #include <QByteArray>
 #include <QHash>
 #include <QTimer>
+#include <QDebug>
+#include <QDateTime>
+#include <QtMath>
 
 class VehicleData : public QObject
 {
