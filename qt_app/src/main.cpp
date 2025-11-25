@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
     QThread *canThread = new QThread(&app);
 
     // Use a raw pointer for the worker object (we call deleteLater on it)
-    CANReader *canReader = new CANReader(QStringLiteral("can01"));
+    CANReader *canReader = new CANReader(QStringLiteral("vcan0"));
     canReader->moveToThread(canThread);
 
     // Start CANReader when thread starts

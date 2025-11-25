@@ -37,7 +37,7 @@ bool CANReader::openDevice()
 
     connect(m_device, &QCanBusDevice::framesReceived, this, &CANReader::handleFramesReceived);
     connect(m_device, &QCanBusDevice::errorOccurred, this, &CANReader::handleErrorOccurred);
-    
+
     if (!m_device->connectDevice())
     {
         qWarning() << "Failed to connect CAN device:" << m_device->errorString();
