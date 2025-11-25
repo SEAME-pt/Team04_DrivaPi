@@ -23,16 +23,22 @@ int main(int argc, char *argv[])
 
     // Create CANReader and move it to its own thread if needed
     QThread *canThread = new QThread(&app);
-    QScopedPointer<CANReader> canReader(new CANReader(QStringLiteral("can01")));
+
+    // Use a raw pointer for the worker object (we call deleteLater on it)
+    CANReader *canReader = new CANReader(QStringLiteral("can01"));
     canReader->moveToThread(canThread);
 
     // Start CANReader when thread starts
-    QObject::connect(canThread, &QThread::started, canReader.data(), &CANReader::start);
-    // Ensure worker thread is cleaned up on app exit
-    QObject::connect(canThread, &QThread::finished, canReader.data(), &CANReader::deleteLater);
+    QObject::connect(canThread, &QThread::started, canReader, &CANReader::start);
+    // Ensure worker object is deleted when thread finishes (safe because it's a QObject)
+    QObject::connect(canThread, &QThread::finished, canReader, &CANReader::deleteLater);
+
     // Forward CAN messages from thread worker to UI (thread-safe)
-    QObject::connect(canReader, &CANReader::canMessageReceived, vehicleData.data(), &VehicleData::handleCanMessage, Qt::QueuedConnection);
-    // Handle CANReader errors
+    QObject::connect(canReader, &CANReader::canMessageReceived,
+                     vehicleData.data(), &VehicleData::handleCanMessage,
+                     Qt::QueuedConnection);
+
+    // Handle CANReader errors (lambda - no capture needed here)
     QObject::connect(canReader, &CANReader::errorOccurred, [](const QString &msg)
     {
         qWarning() << "CANReader error:" << msg;
@@ -41,18 +47,21 @@ int main(int argc, char *argv[])
     // Start the CAN thread
     canThread->start();
 
-    QObject::connect(&app, &QCoreApplication::aboutToQuit, [canThread]() {
-        // ask the thread worker to stop reading CAN messages
+    // Clean up thread and worker on app exit. Capture raw pointers by value.
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, [canThread, canReader]() {
+        // ask the thread worker to stop reading CAN messages (queued to worker thread)
         QMetaObject::invokeMethod(canReader, "stop", Qt::QueuedConnection);
+
         // request thread to quit its event loop
         canThread->quit();
+
         // wait for thread to finish
         if (!canThread->wait(2000)) {
             qWarning() << "CAN thread did not quit in 2 seconds, terminating";
             canThread->terminate();
             canThread->wait();
         }
-        // delete the thread
+        // delete the thread (worker will be deleted via deleteLater)
         delete canThread;
     });
 
