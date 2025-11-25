@@ -4,6 +4,10 @@
 #include <QObject>
 #include <QByteArray>
 #include <QString>
+#include <QDebug>
+#include <QCanBus>
+#include <QCanBusDevice>
+#include <QCanBusFrame>
 
 class QSocketNotifier;
 
