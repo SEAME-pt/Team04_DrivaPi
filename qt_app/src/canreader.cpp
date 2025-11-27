@@ -1,21 +1,9 @@
 #include "canreader.hpp"
-#include <QSocketNotifier>
-#include <QDebug>
-
-#include <unistd.h>
-#include <sys/socket.h>
-#include <linux/can.h>
-#include <linux/can/raw.h>
-#include <sys/ioctl.h>
-#include <net/if.h>
-#include <cstring>
-#include <errno.h>
 
 CANReader::CANReader(const QString &ifname, QObject *parent)
     : QObject(parent)
     , m_ifname(ifname)
-    , m_sockfd(-1)
-    , m_notifier(nullptr)
+    , m_device(nullptr)
 {
 }
 
@@ -26,89 +14,76 @@ CANReader::~CANReader()
 
 bool CANReader::start()
 {
-    return openSocket();
+    return openDevice();
 }
 
 void CANReader::stop()
 {
-    closeSocket();
+    closeDevice();
 }
 
-bool CANReader::openSocket()
+bool CANReader::openDevice()
 {
-    if (m_sockfd != -1) return true; // already open
+    if (m_device) return true; // already open
 
-    m_sockfd = ::socket(PF_CAN, SOCK_RAW, CAN_RAW);
-    if (m_sockfd < 0) {
-        qWarning() << "CAN socket() failed:" << strerror(errno);
-        m_sockfd = -1;
+    QString errorString;
+    m_device = QCanBus::instance()->createDevice(QStringLiteral("socketcan"), m_ifname, &errorString);
+    if (!m_device)
+    {
+        qWarning() << "Failed to create CAN device:" << errorString;
+        emit errorOccurred(QStringLiteral("createDevice failed: %1").arg(errorString));
         return false;
     }
 
-    struct ifreq ifr;
-    memset(&ifr, 0, sizeof(ifr));
-    QByteArray name = m_ifname.toLocal8Bit();
-    strncpy(ifr.ifr_name, name.constData(), IFNAMSIZ - 1);
+    connect(m_device, &QCanBusDevice::framesReceived, this, &CANReader::handleFramesReceived);
+    connect(m_device, &QCanBusDevice::errorOccurred, this, &CANReader::handleErrorOccurred);
 
-    if (::ioctl(m_sockfd, SIOCGIFINDEX, &ifr) < 0) {
-        qWarning() << "ioctl(SIOCGIFINDEX) failed for" << m_ifname << ":" << strerror(errno);
-        ::close(m_sockfd);
-        m_sockfd = -1;
+    if (!m_device->connectDevice())
+    {
+        qWarning() << "Failed to connect CAN device:" << m_device->errorString();
+        emit errorOccurred(QStringLiteral("connectDevice failed: %1").arg(m_device->errorString()));
+        closeDevice();
         return false;
     }
 
-    struct sockaddr_can addr;
-    memset(&addr, 0, sizeof(addr));
-    addr.can_family = AF_CAN;
-    addr.can_ifindex = ifr.ifr_ifindex;
-
-    if (::bind(m_sockfd, reinterpret_cast<struct sockaddr*>(&addr), sizeof(addr)) < 0) {
-        qWarning() << "bind() failed for" << m_ifname << ":" << strerror(errno);
-        ::close(m_sockfd);
-        m_sockfd = -1;
-        return false;
-    }
-
-    // create a notifier in THIS thread's event loop
-    m_notifier = new QSocketNotifier(m_sockfd, QSocketNotifier::Read, this);
-    connect(m_notifier, &QSocketNotifier::activated, this, &CANReader::handleReadable);
-
-    qInfo() << "CANReader bound to" << m_ifname << "fd=" << m_sockfd;
+    qInfo() << "CAN device opened on interface" << m_ifname;
     return true;
 }
 
-void CANReader::closeSocket()
+void CANReader::closeDevice()
 {
-    if (m_notifier) {
-        m_notifier->setEnabled(false);
-        delete m_notifier;
-        m_notifier = nullptr;
+    if (!m_device) return;
+
+    if (m_device->state() == QCanBusDevice::ConnectedState)
+    {
+        m_device->disconnectDevice();
     }
-    if (m_sockfd != -1) {
-        ::close(m_sockfd);
-        m_sockfd = -1;
+    m_device->deleteLater();
+    m_device = nullptr;
+    qInfo() << "CAN device closed";
+}
+
+void CANReader::handleFramesReceived()
+{
+    if (!m_device) return;
+
+    while (m_device->framesAvailable())
+    {
+        QCanBusFrame frame = m_device->readFrame();
+        QByteArray payload = frame.payload();
+        uint32_t canId = static_cast<uint32_t>(frame.frameId());
+        emit canMessageReceived(payload, canId);
+        qDebug() << "Received CAN frame: ID=0x" << QString::number(canId, 16) << " Payload=" << payload.toHex();
     }
 }
 
-void CANReader::handleReadable(int)
+void CANReader::handleErrorOccurred(QCanBusDevice::CanBusError error)
 {
-    if (m_sockfd < 0) return;
+    Q_UNUSED(error);
+    if (!m_device) return;
 
-    struct can_frame frame;
-    ssize_t nbytes = ::read(m_sockfd, &frame, sizeof(frame));
-    if (nbytes < 0) {
-        qWarning() << "CAN read error:" << strerror(errno);
-        return;
-    }
-    if (static_cast<size_t>(nbytes) < sizeof(struct can_frame)) {
-        qWarning() << "Incomplete CAN frame read";
-        return;
-    }
-
-    // frame.can_dlc is the length (0..8)
-    QByteArray payload(reinterpret_cast<const char*>(frame.data), frame.can_dlc);
-    uint32_t canId = static_cast<uint32_t>(frame.can_id & CAN_EFF_MASK);
-
-    qDebug() << "Received CAN frame with ID:" << canId << "Payload:" << payload.toHex();
-    emit canMessageReceived(payload, canId);
+    QString errorMsg = QStringLiteral("CAN Bus Error: %1")
+                           .arg(m_device->errorString());
+    qWarning() << errorMsg;
+    emit errorOccurred(errorMsg);
 }

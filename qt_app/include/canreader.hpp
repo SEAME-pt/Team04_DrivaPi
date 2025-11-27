@@ -4,6 +4,10 @@
 #include <QObject>
 #include <QByteArray>
 #include <QString>
+#include <QDebug>
+#include <QCanBus>
+#include <QCanBusDevice>
+#include <QCanBusFrame>
 
 class QSocketNotifier;
 
@@ -20,17 +24,18 @@ public slots:
 
 signals:
     void canMessageReceived(const QByteArray &payload, uint32_t canId);
+    void errorOccurred(const QString &msg);
 
 private slots:
-    void handleReadable(int fd);
+    void handleFramesReceived();
+    void handleErrorOccurred(QCanBusDevice::CanBusError error);
 
 private:
-    bool openSocket();
-    void closeSocket();
+    bool openDevice();
+    void closeDevice();
 
     QString m_ifname;
-    int m_sockfd;
-    QSocketNotifier *m_notifier;
+    QCanBusDevice *m_device;
 };
 
 #endif // CANREADER_HPP
