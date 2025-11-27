@@ -34,7 +34,7 @@ void thread_init(void)
 	}
 
 										//SPEED SENSOR THREAD
-	if (tx_thread_create(&threads[speed_sensor_e].thread_ptr, "speedS_thread", ld1_thread_entry, 0, threads[speed_sensor_e].thread_Stack, THREAD_STACK_SIZE,
+	if (tx_thread_create(&threads[speed_sensor_e].thread_ptr, "speedS_thread", speed_sensor, 0, threads[speed_sensor_e].thread_Stack, THREAD_STACK_SIZE,
 	6, 6, TX_NO_TIME_SLICE, TX_AUTO_START) != TX_SUCCESS)
 		status = TX_THREAD_ERROR;
 	if (status == TX_THREAD_ERROR)
