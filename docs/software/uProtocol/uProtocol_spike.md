@@ -7,6 +7,8 @@ The automotive industry is currently navigating a profound architectural inflect
 Objective:
 The primary objective of this investigation was to determine if uProtocol could effectively replace custom Controller Area Network (CAN) parsing logic, thereby decoupling application software from hardware topology. The study followed a strict one-day timebox to review the up-spec core specifications, assess the up-cpp software development kit (SDK) for embedded compatibility (specifically looking for Zenoh and MQTT bindings), prototype a compilation for the STM32 toolchain, and estimate the resulting Resource Access Memory (RAM) and Flash memory footprints.
 
+The Shift from Signal to Service
+To understand the gravity of the decision between uProtocol and legacy CAN parsing, one must examine the broader evolution of Electronic Control Units (ECUs). The automotive electrical/electronic (E/E) architecture is migrating from a flat, distributed network of domain controllers to a zonal architecture centered around high-performance compute (HPC) units. In this new world, the microcontroller is no longer just a signal processor; it is a service provider.
 
 What is uProtocol?
 uProtocol is a lightweight protocol for communication between embedded systems. It provides a simple way to serialize and deserialize data structures for transmission over various transport layers, such as CAN, UART, or TCP/IP.
