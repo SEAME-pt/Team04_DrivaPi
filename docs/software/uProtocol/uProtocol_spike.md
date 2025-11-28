@@ -13,8 +13,10 @@ To understand the gravity of the decision between uProtocol and legacy CAN parsi
 Pure CAN and Signal Paradigm
 For decades, the automotive industry has relied on Pure CAN networks, where ECUs exchange simple, fixed-format data frames identified only by a CAN ID. The protocol does not define the meaning of the data; instead, each signal’s interpretation (e.g., which bit represents a door status) is stored in external .dbc files. This creates strong dependencies between ECUs—any change in how data is packed requires updates across all receivers. While efficient and real-time, this signal-based model provides no semantic context or metadata, limiting flexibility and scalability.
 
-What is uProtocol?
-uProtocol is a lightweight protocol for communication between embedded systems. It provides a simple way to serialize and deserialize data structures for transmission over various transport layers, such as CAN, UART, or TCP/IP.
+Eclipse uProtocol and SOA
+Eclipse uProtocol represents the antithesis of the signal paradigm. Born from the need to standardize communication between the vehicle and the cloud, uProtocol is a Service-Oriented Architecture (SOA) enabler. It abstracts the transport layer, allowing applications to communicate via standardized messages—specifically CloudEvents—regardless of whether the underlying transport is TCP/IP, Zenoh, MQTT, or CAN.
+
+In a uProtocol-enabled system, an ECU does not "broadcast ID 0x123." Instead, it publishes a message to a Uniform Resource Identifier (URI), such as up://vehicle_vin/body_control_module/door/driver_side. The payload is a structured object (often serialized via Protocol Buffers) that describes the event. The receiving application subscribes to this URI, oblivious to the underlying bus topology. This decoupling allows for dynamic routing, where services can move between ECUs without breaking the communication contract, a capability essential for the SDV era.
 
 Another option:
 
