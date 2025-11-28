@@ -16,6 +16,8 @@ extern TIM_HandleTypeDef htim1;
 
 float read_speed_sensor(void)
 {
+
+
     // Static variables preserve values between function calls
     static uint32_t last_count = 0;
     static uint32_t last_tick = 0;
@@ -69,22 +71,34 @@ float read_speed_sensor(void)
     // Calculate Speed: Speed = Distance / Time
     float speed_mps = distance_m / dt;
 
+    // 1. Create a buffer large enough to hold the text + number + null terminator
+
+
     return speed_mps;
 }
 
 VOID speed_sensor(ULONG initial_input)
 {
 	ULONG actual_flags;
-	
-	tx_event_flags_get(&event_flags, FLAG_SENSOR_UPDATE,
-	TX_OR_CLEAR, &actual_flags, TX_WAIT_FOREVER);
+	const char *msg_tick = "Speed\r\n";
 
-	float current_speed = read_speed_sensor();
 
-	tx_mutex_get(&speed_data_mutex, TX_WAIT_FOREVER);
-	g_vehicle_speed = current_speed;
-	tx_mutex_put(&speed_data_mutex);
+	while (1)
+	{
+		HAL_UART_Transmit(&huart1, (uint8_t*)msg_tick, strlen(msg_tick), 10);
+		tx_event_flags_get(&event_flags, FLAG_SENSOR_UPDATE,
+		TX_OR_CLEAR, &actual_flags, TX_NO_WAIT);
 
-	// Notify CAN TX thread that new data is ready
-	tx_event_flags_set(&event_flags, FLAG_SENSOR_UPDATE, TX_OR);
+		float current_speed = read_speed_sensor();
+		char speed[50];
+		snprintf(speed, sizeof(speed), "Speed: %.2f m/s\r\n", current_speed);
+		HAL_UART_Transmit(&huart1, (uint8_t*)speed, strlen(speed), 10);
+		tx_mutex_get(&speed_data_mutex, TX_WAIT_FOREVER);
+		g_vehicle_speed = current_speed;
+		tx_mutex_put(&speed_data_mutex);
+
+		// Notify CAN TX thread that new data is ready
+		tx_event_flags_set(&event_flags, FLAG_SENSOR_UPDATE, TX_OR);
+		tx_thread_sleep(50);
+	}
 }
