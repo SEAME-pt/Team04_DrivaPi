@@ -10,6 +10,9 @@ The primary objective of this investigation was to determine if uProtocol could 
 The Shift from Signal to Service
 To understand the gravity of the decision between uProtocol and legacy CAN parsing, one must examine the broader evolution of Electronic Control Units (ECUs). The automotive electrical/electronic (E/E) architecture is migrating from a flat, distributed network of domain controllers to a zonal architecture centered around high-performance compute (HPC) units. In this new world, the microcontroller is no longer just a signal processor; it is a service provider.
 
+Pure CAN and Signal Paradigm
+For decades, the automotive industry has relied on Pure CAN networks, where ECUs exchange simple, fixed-format data frames identified only by a CAN ID. The protocol does not define the meaning of the data; instead, each signal’s interpretation (e.g., which bit represents a door status) is stored in external .dbc files. This creates strong dependencies between ECUs—any change in how data is packed requires updates across all receivers. While efficient and real-time, this signal-based model provides no semantic context or metadata, limiting flexibility and scalability.
+
 What is uProtocol?
 uProtocol is a lightweight protocol for communication between embedded systems. It provides a simple way to serialize and deserialize data structures for transmission over various transport layers, such as CAN, UART, or TCP/IP.
 
