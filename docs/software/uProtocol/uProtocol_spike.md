@@ -1,6 +1,11 @@
 
 Investigate Eclipse uProtocol as the transport layer. Can it replace our custom CAN parsing? Can it run on the STM32 (ThreadX/Bare metal)?
 
+Context: Why is the spike needed?
+The automotive industry is currently navigating a profound architectural inflection point, transitioning from the traditional, signal-based paradigm that has dominated for three decades toward the Software-Defined Vehicle (SDV). This transition necessitates a re-evaluation of fundamental communication layers, moving away from static, proprietary signal definitions toward standardized, service-oriented architectures (SOA).
+
+
+
 What is uProtocol?
 uProtocol is a lightweight protocol for communication between embedded systems. It provides a simple way to serialize and deserialize data structures for transmission over various transport layers, such as CAN, UART, or TCP/IP.
 
