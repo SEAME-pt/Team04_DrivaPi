@@ -1,54 +1,49 @@
+
 Investigate Eclipse uProtocol as the transport layer. Can it replace our custom CAN parsing? Can it run on the STM32 (ThreadX/Bare metal)?
 
-
 What is uProtocol?
-uProtocol is a lightweight protocol for communication between embedded systems. It provides a simple way to serialize and deserialize data structures for transmission over various transport layers, such as CAN, UART, or TCP/IP
+uProtocol is a lightweight protocol for communication between embedded systems. It provides a simple way to serialize and deserialize data structures for transmission over various transport layers, such as CAN, UART, or TCP/IP.
 
+Another option:
 
-outra opção:
+zenoh-pico:
+2.1 Architecture of Eclipse Zenoh-Pico
+Zenoh-Pico is the "bare-metal" implementation of the Zenoh protocol. Unlike the full Rust implementation (zenoh), which assumes an operating system with advanced memory management and complex threads, Zenoh-Pico is designed to run in simple infinite loops or on minimal RTOSs (such as FreeRTOS or ThreadX).
 
-zenoh pico:
-2.1 Arquitetura do Eclipse Zenoh-Pico
-O Zenoh-Pico é a implementação "bare-metal" do protocolo Zenoh. Ao contrário da implementação completa em Rust (zenoh), que assume um sistema operativo com gestão de memória avançada e threads complexas, o Zenoh-Pico foi desenhado para correr em loops infinitos simples ou com RTOS minimalistas (como FreeRTOS ou ThreadX).
+2.1.1 The Abstract Transport Model
+The feature that makes the user's request viable is the abstraction of the transport layer. Zenoh-Pico does not call socket(), bind() or connect() directly in its protocol logic. Instead, it defines an "interface" (a set of function pointers) known as z_transport_ops_t.
 
-2.1.1 O Modelo de Transporte Abstrato
-A característica que viabiliza o pedido do utilizador é a abstração da camada de transporte. O Zenoh-Pico não chama socket(), bind() ou connect() diretamente na sua lógica de protocolo. Em vez disso, ele define uma "interface" (um conjunto de ponteiros de função) conhecida como z_transport_ops_t.
+This structure defines the atomic operations that the protocol needs:
 
-Esta estrutura define as operações atómicas que o protocolo necessita:
+- send: Send an opaque block of data to a destination.
+- recv: Receive data (either by polling or callback).
+- get_mtu: Query the maximum transmission size to know when to fragment.
 
-send: Enviar um bloco de dados opaco para um destino.
+If the user implements these functions using the hardware registers of their microcontroller's CAN controller (for example, an STM32), the core of Zenoh-Pico will not know the difference between running over a fiber Ethernet cable or a copper CAN pair.
 
-recv: Receber dados (seja por polling ou callback).
+2.1.2 Wire Efficiency of the Protocol
+Zenoh prides itself on "zero overhead" (or minimal overhead). The protocol specification defines a minimal header of 4 to 5 bytes for data messages.
 
-get_mtu: Consultar o tamanho máximo de transmissão para saber quando fragmentar.
+- Frame Header: ~1–2 bytes.
+- Message Header: 1 byte.
+- Resource ID: 1+ bytes (with variable-length encoding).
 
-Se o utilizador implementar estas funções utilizando os registos de hardware do controlador CAN do seu microcontrolador (por exemplo, um STM32), o núcleo do Zenoh-Pico não saberá a diferença entre estar a correr sobre um cabo Ethernet de fibra ótica ou um par de cobre CAN.
+This compactness is critical for CAN. While protocols like HTTP or JSON over MQTT waste hundreds of bytes in text headers, Zenoh is binary and extremely dense, philosophically aligning with CAN's scarce bandwidth.
 
-2.1.2 Eficiência do Protocolo no Cabo (Wire Efficiency)
-O Zenoh orgulha-se do seu "Zero Overhead" (ou overhead mínimo). A especificação do protocolo define um cabeçalho mínimo de 4 a 5 bytes para mensagens de dados.
+2.2 The Physical Challenge: Controller Area Network (CAN)
+CAN is not just a "slow cable"; it is fundamentally different from Ethernet.
 
-Cabeçalho de Frame: ~1-2 bytes.
+2.2.1 Message-Oriented vs. Byte-Oriented
+TCP/IP and Serial are oriented to byte streams. CAN is oriented to atomic frames.
 
-Cabeçalho de Mensagem: 1 byte.
+- Classic CAN: Maximum of 8 bytes of payload per frame.
+- CAN-FD (Flexible Data-Rate): Maximum of 64 bytes of payload.
 
-ID de Recurso: 1+ bytes (com codificação de comprimento variável).
+Zenoh produces variable-size messages (for example: 20 bytes for a "Hello World").
 
-Esta compactação é crítica para o CAN. Enquanto protocolos como HTTP ou JSON sobre MQTT desperdiçam centenas de bytes em cabeçalhos de texto, o Zenoh é binário e extremamente denso, alinhando-se filosoficamente com a escassez de largura de banda do CAN.
+On a TCP socket, we send 20 bytes and the IP stack handles fragmentation.
 
-2.2 O Desafio Físico: Controller Area Network (CAN)
-O CAN não é apenas um "cabo lento"; é um protocolo fundamentalmente diferente do Ethernet.
+On CAN, the hardware rejects any attempt to send 20 bytes in a single frame.
 
-2.2.1 Orientado a Mensagens vs. Orientado a Bytes
-O TCP/IP e o Serial são orientados a streams de bytes. O CAN é orientado a frames atómicos.
-
-Classic CAN: Máximo de 8 bytes de payload por frame.
-
-CAN-FD (Flexible Data-Rate): Máximo de 64 bytes de payload.
-
-O Zenoh gera mensagens de tamanho variável (ex: 20 bytes para um "Hello World").
-
-Num socket TCP, enviamos 20 bytes e a pilha IP trata da fragmentação.
-
-No CAN, o hardware rejeita qualquer tentativa de enviar 20 bytes num só frame.
-
+Therefore, implementing Zenoh over CAN requires an intermediate Adaptation Layer that transforms the stream of Zenoh packets into a sequence of CAN frames.
 Portanto, a implementação do Zenoh sobre CAN exige uma Camada de Adaptação intermédia que transforme o stream de pacotes Zenoh numa sequência de frames CAN.
