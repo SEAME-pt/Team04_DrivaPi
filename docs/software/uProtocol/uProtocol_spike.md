@@ -122,3 +122,46 @@ Latency: End-to-end latency over fast links is reported as low as 15-45 microsec
 
 Memory Footprint: Zenoh-Pico is highly configurable. A minimal build can fit in less than 15KB of Flash, with RAM usage tunable via configuration parameters like BATCH_UNICAST_SIZE and FRAG_MAX_SIZE.
 
+5. Middleware Candidate B: Eclipse uProtocol-Lite
+Eclipse uProtocol approaches the problem from a different angle. It focuses on standardization and interoperability, aiming to create a ubiquitous language for the Software Defined Vehicle that is independent of the underlying transport.
+
+5.1 The uProtocol Data Model and CloudEvents
+uProtocol enforces a strict, rich message structure based on the CloudEvents specification. Every message is a UMessage containing:
+
+UUri (The Address): A hierarchical address consisting of an Authority (device/domain), an Entity (service/process), and a Resource (specific data topic).
+
+UAttributes (The Metadata): A comprehensive set of metadata including a unique message ID (UUID), message type (Publish, Request, Response), priority, time-to-live (TTL), and data format.
+
+Payload: The actual application data.
+
+This rich metadata is the core value proposition of uProtocol. It allows messages to be self-describing and routed intelligently by generic dispatchers anywhere in the cloud-to-edge continuum.
+
+5.2 Serialization: The Cost of Standards
+uProtocol-Lite (up-c) typically employs Protocol Buffers (Protobuf) for serializing the attributes and payload. While Protobuf is efficient compared to JSON or XML, it introduces significant overhead compared to raw bit-packing or Zenoh's optimized VLE.
+
+5.2.1 UUri Serialization Analysis
+A UUri is not just a string; it is a structured object. Even in the "micro" form used for embedded systems (where string names are replaced by integer IDs), the Protobuf serialization adds weight:
+
+Tag-Length-Value (TLV): Each field in the UUri (Authority ID, Entity ID, Resource ID) is preceded by a tag.
+
+UAttributes: The UUID alone is 16 bytes (if binary) or 36 bytes (if string). Even compressed, the attributes block—containing source, sink, type, and priority—can easily consume 20 to 40 bytes.
+
+5.2.2 Impact on CAN-FD
+On a 64-byte CAN-FD frame, a header overhead of ~30 bytes is substantial. It consumes nearly 50% of the available bandwidth.
+
+Fragmentation Necessity: Because the header consumes so much space, even a modest payload (e.g., 40 bytes of sensor data) will push the total message size beyond 64 bytes. This forces the system to use ISO-TP fragmentation for a much larger percentage of traffic than Zenoh or Pure CAN.
+
+Double Serialization: Often, the payload itself is a serialized Protobuf message. This means the ECU burns CPU cycles serializing the payload, then burns more cycles serializing the uProtocol envelope around it.
+
+5.3 Static Allocation and "Lite" Constraints
+The embedded C implementation of uProtocol (up-c) relies on NanoPB, a Protobuf library designed for microcontrollers. NanoPB avoids dynamic heap allocation (malloc) by generating C structs with fixed maximum sizes. This is a critical feature for complying with automotive safety standards (ISO 26262), which generally discourage or forbid dynamic allocation in runtime safety paths.
+
+However, defining these fixed sizes can be challenging. Because Protobuf supports optional and repeated fields, the generated structs must be sized for the worst-case scenario, potentially wasting significant RAM compared to the tightly packed buffers of Zenoh or raw CAN.
+
+5.4 The Transport Agnostic Layer (uP-L1)
+uProtocol is designed to run over other transports. This architectural layering offers flexibility but introduces complexity.
+
+uProtocol over Zenoh: It is possible to run uProtocol on top of Zenoh. In this case, the UMessage is the payload of the Zenoh message. While this provides the routing benefits of Zenoh, it incurs a "double tax" on overhead: the Zenoh header plus the uProtocol header.
+
+uProtocol over CAN (Native): To run uProtocol directly on CAN, an adapter layer is required. This adapter must map the UUri to CAN IDs (potentially using extended 29-bit IDs) and handle the serialization/deserialization and ISO-TP fragmentation.
+
