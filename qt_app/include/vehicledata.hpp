@@ -26,7 +26,7 @@ public:
     ~VehicleData() override;
 
     // Getters
-	double  getSpeed() const;
+	float   getSpeed() const;
 	double  getEnergy() const;
 	int     getBattery() const;
 	int     getDistance() const;
@@ -35,7 +35,7 @@ public:
     bool    getAutonomousMode() const;
 
     // Setters
-    void    setSpeed(double mps);
+    void    setSpeed(float mps);
     void    setEnergy(double energy);
     void    setBattery(int battery);
     void    setDistance(int distance);
@@ -75,7 +75,7 @@ private:
     void    markPropertyStale(const QString &propName);
 
     // Member variables
-    double  m_speed;
+    float   m_speed;
     double  m_energy;
     int     m_battery;
     int     m_distance;

@@ -78,7 +78,7 @@ Window {
 
                 // Left navigation arrow
                 Text {
-                    text: "⬅"
+                    text: "sinistra"
                     font.pixelSize: 50
                     color: "#00D66C"
                     anchors.left: parent.left

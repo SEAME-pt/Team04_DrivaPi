@@ -2,6 +2,7 @@
 #define CANREADER_HPP
 
 #include <QObject>
+#include <QVariant>
 #include <QByteArray>
 #include <QString>
 #include <QDebug>
@@ -15,7 +16,7 @@ class CANReader : public QObject
 {
     Q_OBJECT
 public:
-    explicit CANReader(const QString &ifname = QStringLiteral("can01"), QObject *parent = nullptr);
+    explicit CANReader(const QString &ifname = QStringLiteral("can0"), QObject *parent = nullptr);
     ~CANReader() override;
 
 public slots:
