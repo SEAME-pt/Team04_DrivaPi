@@ -206,6 +206,11 @@ static void SystemPower_Config(void)
   * @param None
   * @retval None
   */
+/**
+  * @brief FDCAN1 Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_FDCAN1_Init(void)
 {
     char *msg;

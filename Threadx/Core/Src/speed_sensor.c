@@ -70,7 +70,6 @@ float read_speed_sensor(void)
 
 VOID speed_sensor(ULONG initial_input)
 {
-    ULONG actual_flags;
     char msg[64];
 
     /* ------------------------------------------------------------- */
@@ -101,7 +100,7 @@ VOID speed_sensor(ULONG initial_input)
         HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), 100);
 
         // Wait 500ms
-        tx_thread_sleep(500);
+        tx_thread_sleep(100);
 
         // Read Speed
         float current_speed = read_speed_sensor();
@@ -114,6 +113,7 @@ VOID speed_sensor(ULONG initial_input)
         g_vehicle_speed = current_speed;
         tx_mutex_put(&speed_data_mutex);
 
+        // Notify CAN TX thread that new data is ready
         tx_event_flags_set(&event_flags, FLAG_SENSOR_UPDATE, TX_OR);
     }
 }
