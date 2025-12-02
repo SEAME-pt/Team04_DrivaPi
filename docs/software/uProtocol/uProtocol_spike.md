@@ -74,3 +74,30 @@ Payload: The Data Length Code (DLC) allows for a maximum payload of only 8 bytes
 Efficiency: A standard CAN frame containing 8 bytes of data consists of roughly 111 to 130 bits, depending on the number of stuff bits inserted for synchronization. This results in a protocol overhead of approximately 40% to 50%. The effective throughput (goodput) is often significantly less than 500 kbps.
 
 The 8-byte payload limit is the primary bottleneck for modern applications. It forces any higher-level protocol attempting to send more than a trivial amount of data—such as a security certificate, a serialized object, or even a complex sensor reading—to engage in fragmentation. This fragmentation is typically handled by the ISO-TP protocol, which introduces significant latency and complexity.
+
+3. The Transport Layer Challenge: ISO-TP and Fragmentation
+Before evaluating higher-level middleware, it is essential to understand the mechanism used to transport messages that exceed the physical frame limit. In the automotive domain, this is almost exclusively handled by ISO-TP (ISO 15765-2).
+
+3.1 Mechanics of ISO-TP
+ISO-TP is a transport protocol defined for diagnostic and data communication over CAN. It handles segmentation, flow control, and reassembly of messages up to 4095 bytes (or larger in newer revisions). When a message payload exceeds the CAN frame capacity (8 bytes for Classic, 64 for FD), ISO-TP engages a multi-frame transmission sequence:
+
+First Frame (FF): The sender transmits a frame containing the first chunk of data and the total length of the message.
+
+Flow Control (FC): The receiver responds with a Flow Control frame. This frame tells the sender two critical parameters:
+
+Block Size (BS): How many consecutive frames can be sent before waiting for another FC.
+
+Separation Time (STmin): The minimum time gap the sender must wait between consecutive frames to avoid overflowing the receiver's buffer.
+
+Consecutive Frames (CF): The sender transmits the remaining data in chunks, adhering to the flow control parameters.
+
+3.2 The Latency and Throughput Penalty
+While ISO-TP enables large messages, it introduces significant overhead and latency, primarily due to the Flow Control mechanism.
+
+Round-Trip Delay: After sending the First Frame, the transmitter must stop and wait for the receiver to process the interrupt, parse the header, check its buffers, and transmit the Flow Control frame. On a loaded bus or a slow MCU, this turnaround time can be several milliseconds. During this time, the transmission logic is blocked.
+
+Protocol Overhead: ISO-TP consumes Protocol Control Information (PCI) bytes within the CAN payload. In Classic CAN, a Consecutive Frame carries only 7 bytes of data (1 byte for PCI). This 12.5% overhead on payload capacity further degrades throughput.
+
+Hardware Limitations: While some advanced CAN controllers have hardware support for ISO-TP (handling FC transmission automatically), many embedded implementations rely on software stacks, which are subject to scheduling jitter and interrupt latency.
+
+Implication for Middleware: Middleware frameworks like uProtocol-Lite that rely on heavy serialization formats (like Protobuf) often produce messages that exceed the 64-byte limit of CAN-FD headers. Consequently, they become heavily dependent on ISO-TP. If the ISO-TP implementation is inefficient, the performance of the middleware collapses, regardless of the theoretical bus speed. In contrast, middleware that can fit its protocol units within a single frame (like Zenoh-Pico often can) avoids the ISO-TP penalty entirely.
