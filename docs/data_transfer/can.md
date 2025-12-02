@@ -223,8 +223,6 @@ graph LR
     CAN_RX -->|CMD_STEERING| Q_STEER
     CAN_RX -->|other| IGNORE
 
-
-
 Notes and mapping to your implementation
 - Event sync: canTX uses tx_event_flags_get(FLAG_SENSOR_UPDATE) to wait for sensor updates.
 - Mutual exclusion: canTX uses tx_mutex_get/put to read g_vehicle_speed safely.
