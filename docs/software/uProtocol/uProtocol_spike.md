@@ -101,3 +101,24 @@ Protocol Overhead: ISO-TP consumes Protocol Control Information (PCI) bytes with
 Hardware Limitations: While some advanced CAN controllers have hardware support for ISO-TP (handling FC transmission automatically), many embedded implementations rely on software stacks, which are subject to scheduling jitter and interrupt latency.
 
 Implication for Middleware: Middleware frameworks like uProtocol-Lite that rely on heavy serialization formats (like Protobuf) often produce messages that exceed the 64-byte limit of CAN-FD headers. Consequently, they become heavily dependent on ISO-TP. If the ISO-TP implementation is inefficient, the performance of the middleware collapses, regardless of the theoretical bus speed. In contrast, middleware that can fit its protocol units within a single frame (like Zenoh-Pico often can) avoids the ISO-TP penalty entirely.
+
+CUs run for hours, this amortized cost is negligible.
+
+On a 64-byte CAN-FD frame, a 5-byte overhead implies that 59 bytes are available for user payload. This allows Zenoh to carry significant application data (e.g., a batch of 10-12 float sensor readings) in a single, atomic frame, completely bypassing the need for ISO-TP fragmentation for many use cases.
+
+4.3 Fragmentation and Batching
+Zenoh implements its own fragmentation layer. If a message exceeds the interface MTU, Zenoh splits it. Crucially, Zenoh's fragmentation is designed to work end-to-end across the routing fabric, whereas ISO-TP is strictly point-to-point.
+
+Batching: Zenoh-Pico supports automatic and manual batching. This is a powerful feature for CAN. Multiple small updates (e.g., "Door Locked," "Window Up," "Mirror Folded") can be aggregated into a single CAN-FD frame. This shared overhead model drastically improves bus utilization compared to sending three separate frames.
+
+Optimization: Recent updates to Zenoh-Pico have optimized the handling of large payloads by removing byte-by-byte serialization in favor of zero-copy buffer operations, resulting in massive throughput improvements for fragmented messages.
+
+4.4 Performance Characteristics
+Benchmarks on embedded platforms (ESP32, STM32) demonstrate Zenoh-Pico's high performance:
+
+Throughput: It can process over 2.5 million messages per second for small payloads on capable hardware. On CAN-FD, the bottleneck will invariably be the bus bandwidth (2-5 Mbps), not the Zenoh stack processing.
+
+Latency: End-to-end latency over fast links is reported as low as 15-45 microseconds. More importantly, the introduction of Peer-to-Peer Unicast has reduced latency by up to 70% compared to routed client modes, making it suitable for direct ECU-to-ECU communication.
+
+Memory Footprint: Zenoh-Pico is highly configurable. A minimal build can fit in less than 15KB of Flash, with RAM usage tunable via configuration parameters like BATCH_UNICAST_SIZE and FRAG_MAX_SIZE.
+
