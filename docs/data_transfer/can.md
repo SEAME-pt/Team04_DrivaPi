@@ -193,15 +193,15 @@ Summary
 - canRX: waits for incoming CAN frames, parses ID, and enqueues messages to either the DC motor queue or servo queue depending on the ID.
 
 graph LR
-    Sensor["SpeedSensor<br>(thread)"]
-    CAN_TX["canTX<br>(thread)"]
+    Sensor["SpeedSensor (thread)"]
+    CAN_TX["canTX (thread)"]
     Build["Build t_can_message"]
     FDCAN_TX["FDCAN TX FIFO"]
-    TRANS["SN65HVD230<br>transceiver"]
-    CANBUS["CAN bus<br>(MCP2518FD on Pi)"]
-    PI["Raspberry Pi<br>(remote)"]
+    TRANS["SN65HVD230 transceiver"]
+    CANBUS["CAN bus (MCP2518FD on Pi)"]
+    PI["Raspberry Pi (remote)"]
     FDCAN_RX["FDCAN RX FIFO"]
-    CAN_RX["canRX<br>(thread)"]
+    CAN_RX["canRX (thread)"]
     Q_SPEED["queue_speed_cmd"]
     Q_STEER["queue_steer_cmd"]
     IGNORE["ignore / log"]
@@ -222,6 +222,7 @@ graph LR
     CAN_RX -->|CMD_SPEED| Q_SPEED
     CAN_RX -->|CMD_STEERING| Q_STEER
     CAN_RX -->|other| IGNORE
+
 
 
 Notes and mapping to your implementation
