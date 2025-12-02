@@ -61,3 +61,16 @@ On CAN, the hardware rejects any attempt to send 20 bytes in a single frame.
 
 Therefore, implementing Zenoh over CAN requires an intermediate Adaptation Layer that transforms the stream of Zenoh packets into a sequence of CAN frames.
 Portanto, a implementação do Zenoh sobre CAN exige uma Camada de Adaptação intermédia que transforme o stream de pacotes Zenoh numa sequência de frames CAN.
+
+2.1 Classic CAN: The Deterministic Constraint
+Developed by Bosch in the 1980s and standardized as ISO 11898-1, Classic CAN is a broadcast bus protocol that uses differential signaling to achieve high noise immunity. Its defining characteristic is its non-destructive bitwise arbitration mechanism. When multiple nodes attempt to transmit simultaneously, the node transmitting a dominant bit ('0') overwrites the recessive bit ('1') on the bus. The node transmitting the recessive bit detects this disparity and immediately ceases transmission, switching to receiving mode. This ensures that the message with the highest priority (lowest arbitration ID) always gains access to the bus without any loss of time or data.
+
+While this mechanism guarantees excellent determinism for high-priority messages, it imposes severe limitations on bandwidth and payload.
+
+Bandwidth: The bit rate is uniform throughout the frame, typically capped at 500 kbps in automotive applications to ensure signal propagation across the length of the bus within a single bit time.
+
+Payload: The Data Length Code (DLC) allows for a maximum payload of only 8 bytes.
+
+Efficiency: A standard CAN frame containing 8 bytes of data consists of roughly 111 to 130 bits, depending on the number of stuff bits inserted for synchronization. This results in a protocol overhead of approximately 40% to 50%. The effective throughput (goodput) is often significantly less than 500 kbps.
+
+The 8-byte payload limit is the primary bottleneck for modern applications. It forces any higher-level protocol attempting to send more than a trivial amount of data—such as a security certificate, a serialized object, or even a complex sensor reading—to engage in fragmentation. This fragmentation is typically handled by the ISO-TP protocol, which introduces significant latency and complexity.
