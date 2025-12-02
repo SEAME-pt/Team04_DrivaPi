@@ -190,3 +190,45 @@ uProtocol over Zenoh: It is possible to run uProtocol on top of Zenoh. In this c
 
 uProtocol over CAN (Native): To run uProtocol directly on CAN, an adapter layer is required. This adapter must map the UUri to CAN IDs (potentially using extended 29-bit IDs) and handle the serialization/deserialization and ISO-TP fragmentation.
 
+
+6. Comparative Analysis and Synthesis
+This section synthesizes the technical data into direct comparisons across critical engineering metrics: Wire Overhead, Latency, Complexity, and Resource Usage.
+
+6.1 Wire Overhead and Bus Utilization (The "Goodput" Metric)
+Goodput is defined here as the ratio of useful application payload to the total bits transmitted on the wire.
+
+Metric,Pure CAN-FD,Zenoh-Pico (on CAN-FD),uProtocol-Lite (on CAN-FD)
+Header Size,~6 bytes (ID + Control + CRC equiv.),~5 bytes (Steady State),~25 - 40 bytes (Protobuf UAttributes)
+Addressing,Flat 29-bit ID,Mapped Integer ID,Hierarchical UUri (Authority/Entity/Resource)
+Max Payload,64 bytes,64 bytes (minus header),64 bytes (minus header)
+Effective Payload,64 bytes (~100%),~59 bytes (~92%),~24-40 bytes (~40-60%)
+Fragmentation,ISO-TP (Manual),Built-in / ISO-TP,ISO-TP (Required Frequently)
+
+Analysis: uProtocol's rich metadata comes at a steep price on CAN-FD. Consuming 40-60% of the frame for headers significantly reduces the effective bandwidth. Zenoh-Pico strikes a highly effective balance, providing modern pub/sub addressing with an overhead that is almost negligible on a 64-byte frame. Pure CAN-FD remains the efficiency king but lacks the semantic richness.
+
+6.2 Latency and Real-Time Determinism
+Pure CAN-FD: The gold standard for determinism. Latency is purely a function of frame length and wire speed. A high-priority frame has immediate access. There is zero software processing overhead beyond the driver.
+
+Zenoh-Pico: Adds a thin layer of software processing. The library must traverse its internal routing tables and serialize the header. However, benchmark reports indicate internal latencies of < 10 µs for unicast. On a CAN bus where a frame takes ~200-300 µs to transmit, this CPU overhead is minor. The minimal header size ensures that messages fit in single frames, maintaining determinism.
+
+uProtocol-Lite: Introduces significant latency variance.
+
+Serialization Latency: Protobuf encoding with NanoPB is efficient but still requires iterating over fields and copying data, consuming CPU cycles.
+
+Fragmentation Latency: The high overhead increases the probability of needing ISO-TP. Once ISO-TP is engaged, latency effectively triples (at minimum) due to the FF -> FC -> CF round-trip requirement. If the receiver is slow to send the Flow Control frame, the latency can spike by milliseconds.
+
+Conclusion: For hard real-time control loops (e.g., 100Hz motor control), Pure CAN-FD is the only safe choice. Zenoh-Pico is a viable contender for soft real-time applications (e.g., body control). uProtocol-Lite is best suited for non-time-critical event processing.
+
+6.3 Complexity and Integration Workflow
+The "DBC" Workflow (Pure CAN): Highly rigid. Requires sharing and merging large text files. Conflicts are common. Changing a signal is a global event. Secure communication requires add-ons like AUTOSAR SecOC, which adds further complexity.
+
+The "Late Binding" Workflow (Zenoh): Decoupled. Publishers and Subscribers do not need to know about each other at compile time. New nodes can be added to the network to "sniff" data without reconfiguring the transmitter. The dynamic mapping of resources to IDs solves the rigidity of the DBC model.
+
+The "Service Mesh" Workflow (uProtocol): Standardized. It abstracts the network entirely. Developers code against a generated API (publish(UUri)). This reduces application complexity but increases system complexity. The reliance on .proto files provides a strong contract, but managing these schemas across an organization is a governance challenge similar to DBCs, albeit more modern.
+
+6.4 Resource Footprint (CPU/RAM/Flash)
+Pure CAN: Negligible.
+
+Zenoh-Pico: Highly optimized. Code size can be stripped down to < 20 KB. RAM usage is static and tunable via macros like BATCH_UNICAST_SIZE. It is designed explicitly to fit on devices where a full DDS stack would be impossible.
+
+uProtocol-Lite: Heavier. The Protobuf generated code, combined with the logic for CloudEvent building and the underlying transport adapter, likely results in a larger footprint than Zenoh. The CPU load for serialization is also higher.
