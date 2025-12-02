@@ -49,10 +49,12 @@ trustable/
 │ ├── tenets/ # Trust principles (TT-)
 │ ├── assertions/ # Framework assertions (TA-A_)
 │ └── TRUSTABLE-SOFTWARE.md
-├── drivapi-expectations/ # Project expectations (DPE-)
-├── drivapi-assertions/ # Project assertions (DPA-)
 ├── assumptions-of-use/ # Operational assumptions (AOU-*)
-└── drivapi_evidence/ # Evidence for assertions
+├── lltc/ # Low-level test cases (LLTC-*)
+├── srd/ # Software requirements (SR-*)
+├── swd/ # Software design (SD-*)
+├── templates/ # Document templates
+└── urd/ # User requirements (UR-*)
 ```
 
 ## Maintenance
@@ -60,3 +62,8 @@ The team reviews this quarterly and updates based on:
 - New safety standards
 - Lessons from testing
 - Technology changes
+
+
+<p>
+	<img src="../../docs/tsf/TSF_Arhitecture.svg" alt="TSF Architecture Diagram" width="700">
+</p>
