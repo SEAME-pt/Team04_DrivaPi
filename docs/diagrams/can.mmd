@@ -1,9 +1,0 @@
-flowchart LR
-  Sensor["SpeedSensor\n(thread)"] -->|FLAG_SENSOR_UPDATE| CAN_TX["canTX\n(thread)"]
-  CAN_TX -->|mutex read g_vehicle_speed| Build["Build t_can_message"]
-  Build -->|HAL_FDCAN_AddMessageToTxFifoQ()| FDCAN_TX["FDCAN TX FIFO"]
-  FDCAN_TX --> TRANS["SN65HVD230\n(transceiver)"] --> CANBUS["CAN bus\n(MCP2518FD on Pi)"] --> PI["Raspberry Pi"]
-  PI -->|optional reply| CANBUS --> TRANS --> FDCAN_RX["FDCAN RX FIFO"] --> CAN_RX["canRX\n(thread)"]
-  CAN_RX -->|CMD_SPEED| Q_SPEED["queue_speed_cmd"]
-  CAN_RX -->|CMD_STEERING| Q_STEER["queue_steer_cmd"]
-  CAN_RX -->|other| IGNORE["ignore / log"]

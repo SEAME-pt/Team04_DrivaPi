@@ -192,8 +192,37 @@ Summary
 - canTX: waits for the speed sensor to update g_vehicle_speed, builds a speed status message, and enqueues it to the FDCAN TX FIFO (sent to the Raspberry Pi).
 - canRX: waits for incoming CAN frames, parses ID, and enqueues messages to either the DC motor queue or servo queue depending on the ID.
 
+graph LR
+    Sensor["SpeedSensor<br>(thread)"]
+    CAN_TX["canTX<br>(thread)"]
+    Build["Build t_can_message"]
+    FDCAN_TX["FDCAN TX FIFO"]
+    TRANS["SN65HVD230<br>transceiver"]
+    CANBUS["CAN bus<br>(MCP2518FD on Pi)"]
+    PI["Raspberry Pi<br>(remote)"]
+    FDCAN_RX["FDCAN RX FIFO"]
+    CAN_RX["canRX<br>(thread)"]
+    Q_SPEED["queue_speed_cmd"]
+    Q_STEER["queue_steer_cmd"]
+    IGNORE["ignore / log"]
 
-![CAN ThreadX integration diagram](../diagrams/can.svg)
+    Sensor -->|FLAG_SENSOR_UPDATE| CAN_TX
+    CAN_TX -->|mutex read g_vehicle_speed| Build
+    Build -->|send to FDCAN| FDCAN_TX
+
+    FDCAN_TX --> TRANS
+    TRANS --> CANBUS
+    CANBUS --> PI
+
+    PI -->|optional reply| CANBUS
+    CANBUS --> TRANS
+    TRANS --> FDCAN_RX
+    FDCAN_RX --> CAN_RX
+
+    CAN_RX -->|CMD_SPEED| Q_SPEED
+    CAN_RX -->|CMD_STEERING| Q_STEER
+    CAN_RX -->|other| IGNORE
+
 
 Notes and mapping to your implementation
 - Event sync: canTX uses tx_event_flags_get(FLAG_SENSOR_UPDATE) to wait for sensor updates.
