@@ -232,3 +232,45 @@ Pure CAN: Negligible.
 Zenoh-Pico: Highly optimized. Code size can be stripped down to < 20 KB. RAM usage is static and tunable via macros like BATCH_UNICAST_SIZE. It is designed explicitly to fit on devices where a full DDS stack would be impossible.
 
 uProtocol-Lite: Heavier. The Protobuf generated code, combined with the logic for CloudEvent building and the underlying transport adapter, likely results in a larger footprint than Zenoh. The CPU load for serialization is also higher.
+
+7. Architectural Recommendations and Future Outlook
+The data suggests that the choice between these protocols is not binary; rather, it is a strategic decision regarding where to place the "signal-to-service" translation boundary in a Zonal Architecture.
+
+7.1 Scenario A: Deep Embedded / Mechatronic Control
+Use Case: Engine control, Braking, Airbag deployment.
+
+Requirement: < 1ms latency, ASIL-D safety, minimal overhead.
+
+Recommendation: Pure CAN-FD.
+
+Rationale: The overhead of uProtocol or even Zenoh is unjustified here. The data relationship is static (Pedal -> Motor), and the reliability of raw arbitration is paramount.
+
+7.2 Scenario B: Zonal Aggregation and Body Electronics
+Use Case: Door modules (windows, locks), Seat control, HVAC, Lighting.
+
+Requirement: Flexibility, aggregation of many small signals, soft real-time.
+
+Recommendation: Zenoh-Pico.
+
+Rationale: The Zone Controller needs to aggregate dozens of small signals. Zenoh's ability to batch these into single frames and route them efficiently makes it superior to managing hundreds of individual CAN signals. The "Late Binding" allows for easier updates and feature additions (e.g., adding a new mood lighting module).
+
+7.3 Scenario C: Cloud Connectivity and High-Level Services
+Use Case: Telemetry upload, Remote commands (Unlock via App), Infotainment integration.
+
+Requirement: Interoperability, standardized addressing, cloud-native format.
+
+Recommendation: uProtocol.
+
+Rationale: The bandwidth cost of the uProtocol header is irrelevant for a message sent once every few seconds. The value lies in the standardized UUri and CloudEvent format, which allows the cloud backend to ingest the message directly without complex translation layers.
+
+7.4 The Hybrid Zonal Architecture
+The most robust architecture for the future SDV is a Hybrid Model:
+
+Leaf Nodes: Run Pure CAN-FD or Zenoh-Pico (for smarter sensors).
+
+Zone Controller: Acts as a Gateway/Translator. It receives raw signals or Zenoh messages, aggregates them, and wraps them into uProtocol envelopes.
+
+Ethernet Backbone: Carries uProtocol messages (over TCP/IP or Zenoh) to the Central Compute.
+
+In this model, the constraints of the edge are respected (using efficient protocols), while the interoperability requirements of the system are met (using uProtocol at the aggregation point). Zenoh-Pico serves as the ideal "middle path," extending the benefits of data-centric networking down to the microcontroller without the crushing weight of enterprise service protocols.
+
