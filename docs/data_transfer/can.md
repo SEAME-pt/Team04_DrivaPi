@@ -43,55 +43,6 @@ General rules
 - Use CAN‑FD when larger payloads are required; document FD DLCs and parsing accordingly.
 - Reserve an ID range for future expansion and versioning.
 
-Assigned IDs (examples, hex, standard 11‑bit)
-- 0x100 — CMD_HEARTBEAT
-  - DLC: 1
-  - Payload: [flags: u8]
-  - Description: periodic heartbeat from remote; car may respond with STATUS.
-- 0x101 — CMD_THROTTLE
-  - DLC: 2
-  - Payload: [uint16_t throttle] (0..1000, big‑endian)
-- 0x102 — CMD_STEER
-  - DLC: 2
-  - Payload: [int16_t steer] (-1000..1000, big‑endian)
-- 0x110 — CMD_DIAGNOSTIC_REQUEST
-  - DLC: 1
-  - Payload: [diag_subcmd: u8]
-- 0x120 — CMD_EMERGENCY_STOP
-  - DLC: 1
-  - Payload: [reserved]
-
-Responses / telemetry (car → remote)
-- 0x200 — STATUS
-  - DLC: 4
-  - Payload: [uint8_t state, uint8_t error_flags, uint16_t uptime_s] (big‑endian)
-- 0x201 — TELEMETRY
-  - DLC: variable (use CAN‑FD for >8 bytes). Define TLV or packed fixed fields per project needs.
-- 0x2FF — ACK (generic acknowledgement)
-  - DLC: 3
-  - Payload: [uint8_t ack_code, uint8_t cmd_id, uint8_t seq]
-
-Sequencing & reliability
-- Include an optional sequence number (u8) in control flows that need loss detection.
-- For critical commands (ARM, EMERGENCY_STOP) implement local watchdogs and require repeated command or explicit ACK.
-
-Payload packing example (C-like)
-- Throttle (2 bytes, big‑endian):
-  - Send: tx_data[0] = (throttle >> 8) & 0xFF; tx_data[1] = throttle & 0xFF;
-  - Parse: throttle = (tx_data[0] << 8) | tx_data[1];
-
-Filter recommendations
-- Configure hardware filters to accept only the ID ranges the node processes (e.g., 0x100..0x12F for commands, 0x200..0x2FF for responses) to reduce ISR load.
-
-Versioning and extensibility
-- Reserve top bits or a dedicated ID range for message set versioning (e.g., 0x1xx = v1 commands, 0x3xx = v2 commands).
-- When changing payloads, increment version and maintain backward compatibility where possible.
-
-Example CAN frame table (quick reference)
-- 0x100 | CMD_HEARTBEAT | DLC 1 | [flags]
-- 0x101 | CMD_ARM       | DLC 1 | [arm]
-- 0x102 | CMD_THROTTLE  | DLC 2 | [throttle hi, throttle lo]
-- 0x200 | STATUS        | DLC 4 | [state, err, uptime hi, uptime lo]
 
 ## Why CAN is used in this vehicle
 - Industry relevance: CAN (and CAN-FD) is widely used in automotive systems; using it mirrors real-world architectures.  
@@ -193,4 +144,77 @@ Practical checklist
 - Use hardware filters, enable DMA for RX where possible, keep ISR minimal.
 - Run stress tests (high load, induced noise) and observe error counters and retransmit rates.
 
-If desired, we can add an explicit step‑by‑step test plan (oscilloscope checks, candump load scripts, metrics to log) to validate the Pi↔STM32 link.
+
+
+
+Overview
+- We implemented CAN as two dedicated ThreadX threads: canTX (transmit) and canRX (receive).
+- Data structure: t_can_message { uint32_t id; uint8_t data[8]; uint8_t len; } is used to pass frames between threads and queues.
+
+Concurrency & IPC
+- TX queues: tx queues are used to deliver parsed command messages to relevant subsystems (queue_speed_cmd, queue_steer_cmd).
+- Event flags: an event_flags group signals sensor updates and message arrivals (e.g., FLAG_SENSOR_UPDATE, FLAG_CAN_SPEED_CMD).
+- Mutex: speed_data_mutex protects the shared float g_vehicle_speed when canTX reads it.
+
+canTX thread (transmit)
+- Waits on FLAG_SENSOR_UPDATE (tx_event_flags_get).
+- Reads g_vehicle_speed under speed_data_mutex.
+- Builds a CAN status message via make_speed_status_msg (copies float into payload) and calls can_send().
+- can_send() prepares an FDCAN_TxHeaderTypeDef and calls HAL_FDCAN_AddMessageToTxFifoQ(). On failure it logs over UART.
+- Thread sleeps (tx_thread_sleep) between iterations.
+
+canRX thread (receive)
+- Polls FDCAN RX FIFO fill level and calls HAL_FDCAN_GetRxMessage() when data is available.
+- Converts HAL headers to t_can_message and routes messages by ID:
+  - CMD_SPEED → enqueue to queue_speed_cmd + set FLAG_CAN_SPEED_CMD
+  - CMD_STEERING → enqueue to queue_steer_cmd + set FLAG_CAN_STEER_CMD
+- Thread sleeps briefly (tx_thread_sleep) between polls.
+
+HAL / FDCAN usage
+- HAL FDCAN APIs are used for TX FIFO enqueue and RX FIFO read.
+- Notifications were enabled (FDCAN_IT_RX_FIFO0_NEW_MESSAGE) in init; current code uses polling in canRX but can be adapted to use HAL callbacks/ISR signaling.
+
+Error handling
+- Transmission failure: can_send() logs "FailTransmitCAN!" via UART and returns (no retransmit logic in software).
+- RX path: unknown IDs are ignored (optionally logged).
+- Recommended: monitor controller error counters and handle bus-off per CAN recovery rules (see the Bus-off section).
+
+Design notes & suggestions
+- Polling in canRX is simple but consider using the FDCAN RX interrupt or HAL callback to signal a thread (faster, lower CPU).
+- Keep ISR work minimal: copy hardware FIFO to a queue/buffer and signal canRX thread for parsing.
+- Ensure TX queue/backpressure and message-buffer lifetime are managed when bus is busy.
+- For critical safety commands implement ACKs, sequence numbers and watchdogs.
+
+## ThreadX integration — CAN (implementation & flow diagrams)
+
+Summary
+- Two dedicated ThreadX threads handle CAN: canTX (transmit) and canRX (receive).
+- canTX: waits for the speed sensor to update g_vehicle_speed, builds a speed status message, and enqueues it to the FDCAN TX FIFO (sent to the Raspberry Pi).
+- canRX: waits for incoming CAN frames, parses ID, and enqueues messages to either the DC motor queue or servo queue depending on the ID.
+
+flowchart TD
+  A[Speed sensor thread] -->|signals FLAG_SENSOR_UPDATE| B[canTX thread]
+  B -->|tx_mutex_get(); read g_vehicle_speed; tx_mutex_put()| C[Build t_can_message]
+  C -->|HAL_FDCAN_AddMessageToTxFifoQ()| D[FDCAN TX FIFO]
+  D --> E[SN65HVD230 transceiver]
+  E --> F[CAN bus (MCP2518FD on Pi)]
+  F --> G[Raspberry Pi (remote)]
+
+  G -->|optional reply| F
+  F --> E
+  E --> H[FDCAN RX FIFO]
+  H --> I[canRX thread]
+  I -->|ID == CMD_SPEED| J[queue_speed_cmd]
+  I -->|ID == CMD_STEERING| K[queue_steer_cmd]
+  I -->|other| L[ignore / log]
+
+Notes and mapping to your implementation
+- Event sync: canTX uses tx_event_flags_get(FLAG_SENSOR_UPDATE) to wait for sensor updates.
+- Mutual exclusion: canTX uses tx_mutex_get/put to read g_vehicle_speed safely.
+- Transmit: can_send() populates FDCAN_TxHeaderTypeDef and calls HAL_FDCAN_AddMessageToTxFifoQ().
+- Receive: can_receive() polls HAL_FDCAN_GetRxFifoFillLevel() and HAL_FDCAN_GetRxMessage(); canRX converts to t_can_message and routes by ID (CMD_SPEED → queue_speed_cmd, CMD_STEERING → queue_steer_cmd).
+- IPC: queues (tx_queue_send) and event flags (tx_event_flags_set) are used to notify consumer threads.
+- Improvements to consider:
+  - Use FDCAN RX interrupt / HAL callback to signal canRX instead of polling for lower latency and lower CPU use.
+  - In ISR only copy the hardware FIFO into a preallocated buffer or message and set an event to unblock canRX for parsing.
+  - Add transmit completion/error handling and monitor FDCAN TEC/REC for bus-off recovery.
