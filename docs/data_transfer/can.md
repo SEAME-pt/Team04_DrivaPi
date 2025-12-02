@@ -224,6 +224,7 @@ graph LR
     CAN_RX -->|other| IGNORE
 
 
+
 Notes and mapping to your implementation
 - Event sync: canTX uses tx_event_flags_get(FLAG_SENSOR_UPDATE) to wait for sensor updates.
 - Mutual exclusion: canTX uses tx_mutex_get/put to read g_vehicle_speed safely.
@@ -234,3 +235,309 @@ Notes and mapping to your implementation
   - Use FDCAN RX interrupt / HAL callback to signal canRX instead of polling for lower latency and lower CPU use.
   - In ISR only copy the hardware FIFO into a preallocated buffer or message and set an event to unblock canRX for parsing.
   - Add transmit completion/error handling and monitor FDCAN TEC/REC for bus-off recovery.
+
+flowchart LR
+  %% DrivaPi Autonomous Vehicle Safety and Functional Requirements Flow
+  %% Layout: left-to-right, grouped and styled for readability
+
+  %% ---------- Group headers (styled nodes to mimic boxed groups) ----------
+  STANDARDS_HDR["STANDARDS & FRAMEWORK\nFOUNDATION"]
+  ASSUMPTIONS_HDR["ASSUMPTIONS\nOF USE"]
+  HARDWARE_HDR["HARDWARE\nARCHITECTURE"]
+  FUNCTIONAL_HDR["FUNCTIONAL\nSAFETY CHAINS"]
+  TELEMETRY_HDR["TELEMETRY &\nNON-SAFETY"]
+  CURRICULUM_HDR["CURRICULUM &\nTOOLCHAIN"]
+  SAFETY_HDR["SAFETY\nGOALS"]
+  TOOLS_HDR["TOOLS &\nVERIFICATION"]
+
+  %% ---------- STANDARDS & FRAMEWORK (left column) ----------
+  subgraph STANDARDS_BLOCK [" "]
+    ISO26262["ISO 26262"]
+    HARA["Hazard Analysis\nand Risk Assessment"]
+    TSF_trace["TSF traceability"]
+    subgraph TSF_Framework["TSF Framework"]
+      TRUSTABLE_SW["TRUSTABLE\nSOFTWARE"]
+      TT_CHANGES["TT CHANGES"]
+      TT_CONFIDENCE["TT CONFIDENCE"]
+      TT_CONSTRUCTION["TT CONSTRUCTION"]
+      TT_EXPECTATIONS["TT EXPECTATIONS"]
+      TT_PROVENANCE["TT PROVENANCE"]
+      TT_RESULTS["TT RESULTS"]
+      TA_A01["TA A 01"]
+      TA_A02["TA A 02"]
+      TA_A03["TA A 03"]
+      TA_A04["TA A 04"]
+      TA_A05["TA A 05"]
+      TA_A06["TA A 06"]
+    end
+  end
+
+  STANDARDS_HDR --> ISO26262
+  STANDARDS_HDR --> TSF_trace
+  STANDARDS_HDR --> HARA
+
+  AOU_details["Assumptions\nDetails"]
+  AOU_001["AOU 001\nPhysical Braking\nReliability"]
+  AOU_002["AOU 002\nHailo Inference\nLatency"]
+  AOU_003["AOU 003\nOperational\nDesign Domain"]
+
+  ASSUMPTIONS_HDR --> AOU_details
+  AOU_details --> AOU_001
+  AOU_details --> AOU_002
+  AOU_details --> AOU_003
+  AOU_details --> TT_EXPECTATIONS
+
+  %% ---------- HARDWARE ARCHITECTURE (right) ----------
+  subgraph HARDWARE_BLOCK ["Dual Computer Architecture"]
+    HLC["HLC"]
+    HLC_HMI["HLC HMI"]
+    HLC_Perception["HLC Perception"]
+    HLC_Planning["HLC Planning"]
+    LLC["LLC"]
+    LLC_SafetyGatekeeper["LLC Safety\nGatekeeper"]
+    LLC_MotorControl["LLC Motor\nControl"]
+    LLC_Watchdog["LLC Watchdog"]
+    CAN_Bus["CAN Bus"]
+  end
+
+  HARDWARE_HDR --> HARDWARE_BLOCK
+
+  %% ---------- FUNCTIONAL SAFETY CHAINS (center) ----------
+  subgraph FUNCTIONAL_BLOCK ["FUNCTIONAL SAFETY CHAINS"]
+    subgraph URD_block ["URD (User Requirements)"]
+      URD_001["URD 001\nEmergency\nBraking"]
+      URD_002["URD 002\nVehicle executes\nautonomous commands"]
+      URD_003["URD 003\nSafe Speed\nLimit"]
+      URD_004["URD 004\nAutonomous path\n& safety response"]
+      URD_005["URD 005\nSystem alive\nmonitoring heartbeat"]
+      URD_006["URD 006\nSystem Watchdog"]
+      URD_007["URD 007\nEnergy management\nmonitoring"]
+      URD_008["URD 008\nActuator\nResponse Time"]
+      URD_009["URD 009\nODD Boundary\nCheck"]
+      URD_010["URD 010\nCAN Bus\nSecurity"]
+    end
+
+    subgraph SRD_block ["SRD (System Requirements)"]
+      SRD_001["SRD 001\nSTM32 Ultrasonic\nMonitor"]
+      SRD_002["SRD 002\nRPi sends drive\ncommand packet\nSTM32 parses"]
+      SRD_003["SRD 003\nSpeed\nGovernor"]
+      SRD_004["SRD 004\nRPi vision lane\nobject CAN command"]
+      SRD_005["SRD 005\nRPi sends\nheartbeat to STM32\nwatchdog"]
+      SRD_006["SRD 006\nSTM32 Temp\nAcquisition"]
+      SRD_007["SRD 007\nVoltage/current\nsense energy calc"]
+      SRD_008["SRD 008\nThreadX Real-\nTime Task"]
+      SRD_009["SRD 009\nRPi GPS\nGeofence"]
+      SRD_010["SRD 010\nSTM32 CAN\nValidator"]
+    end
+
+    subgraph SWD_block ["SWD (Software Design)"]
+      SWD_001["SWD 001\nEmergency Brake\nLogic"]
+      SWD_002["SWD 002\nThreadX controller\ntask"]
+      SWD_003["SWD 003\nSpeed Limiter\nLogic"]
+      SWD_004["SWD 004\nPerception pipeline\nto command mixer"]
+      SWD_005["SWD 005\nThreadX watchdog\ntask"]
+      SWD_006["SWD 006\nWatchdog\nManager"]
+      SWD_007["SWD 007\nSensor Monitor"]
+      SWD_008["SWD 008\nActuator Driver"]
+      SWD_009["SWD 009\nGeofence Logic"]
+      SWD_010["SWD 010\nE2E Protection"]
+    end
+
+    subgraph LLTC_block ["LLTC (Low-level tests)"]
+      LLTC_001["LLTC 001\nObstacle to\nBrake Test"]
+      LLTC_002["LLTC 002\nDrive Command\nIntegration Test"]
+      LLTC_003["LLTC 003\nSpeed\nCompliance Test"]
+      LLTC_004["LLTC 004\nLane Keeping\nTest"]
+      LLTC_005["LLTC 005\nHeartbeat\nTimeout Test"]
+      LLTC_006["LLTC 006\nFault Injection\nWDT"]
+      LLTC_007["LLTC 007\nSensor Fault\nTest"]
+      LLTC_008["LLTC 008\nLatency\nMeasure"]
+      LLTC_009["LLTC 009\nODD Exit\nTest"]
+      LLTC_010["LLTC 010\nCAN Corruption\nTest"]
+    end
+  end
+
+  FUNCTIONAL_HDR --> FUNCTIONAL_BLOCK
+
+  %% URD -> SRD -> SWD -> LLTC (V-model chains)
+  URD_001 --> SRD_001 --> SWD_001 --> LLTC_001
+  URD_002 --> SRD_002 --> SWD_002 --> LLTC_002
+  URD_003 --> SRD_003 --> SWD_003 --> LLTC_003
+  URD_004 --> SRD_004 --> SWD_004 --> LLTC_004
+  URD_005 --> SRD_005 --> SWD_005 --> LLTC_005
+  URD_006 --> SRD_006 --> SWD_006 --> LLTC_006
+  URD_007 --> SRD_007 --> SWD_007 --> LLTC_007
+  URD_008 --> SRD_008 --> SWD_008 --> LLTC_008
+  URD_009 --> SRD_009 --> SWD_009 --> LLTC_009
+  URD_010 --> SRD_010 --> SWD_010 --> LLTC_010
+
+  %% ---------- TELEMETRY & NON-SAFETY (bottom-left) ----------
+  subgraph TELEMETRY_BLOCK ["Telemetry & Non-Safety Functions"]
+    subgraph URT_block ["URT (User req - Telemetry)"]
+      URT_01["UR T01\nDriver Sees\nSpeed"]
+      URT_02["UR T02\nDriver Sees\nTemp"]
+      URT_03["UR T03\nEnergy management\nmonitoring"]
+      URT_04["UR T04\nOdometer\nDistance"]
+      URT_05["UR T05\nReal-time dashboard\nvisualization sink"]
+    end
+
+    subgraph SRT_block ["SR T (Sensor req - Telemetry)"]
+      SRT_01["SR T01\nWheel Pulses\nto CAN"]
+      SRT_02["SR T02\nI2C Temp\nto CAN"]
+      SRT_03["SR T03\nvoltage current\nsense -> energy calc"]
+      SRT_04["SR T04\nCount Pulses\nto CAN"]
+      SRT_05["SR T05\nRPi consumes\nSTM32 telemetry\nfeedback"]
+    end
+
+    subgraph SWT_block ["SW T (Software - Telemetry)"]
+      SWT_01["SW T01\nThreadX Pulse\nCounter"]
+      SWT_02["SW T02\nThreadX ADC\nPolling"]
+      SWT_03["SW T03\npower monitor\ntask"]
+      SWT_04["SW T04\nThreadX persistent\nstorage & accumulator"]
+      SWT_05["SW T05\nQt QML dashboard\nengine"]
+    end
+
+    subgraph LLTCT_block ["LLTC T (Telemetry tests)"]
+      LLTCT_01["LLTC T01\nPulse Test"]
+      LLTCT_02["LLTC T02\nI2C Test"]
+      LLTCT_03["LLTC T03\nADC Test"]
+      LLTCT_04["LLTC T04\nODO Test"]
+      LLTCT_05["LLTC T05\nHMI Data Test"]
+    end
+  end
+
+  TELEMETRY_HDR --> TELEMETRY_BLOCK
+
+  %% Telemetry chains
+  URT_01 --> SRT_01 --> SWT_01 --> LLTCT_01
+  URT_02 --> SRT_02 --> SWT_02 --> LLTCT_02
+  URT_03 --> SRT_03 --> SWT_03 --> LLTCT_03
+  URT_04 --> SRT_04 --> SWT_04 --> LLTCT_04
+  URT_05 --> SRT_05 --> SWT_05 --> LLTCT_05
+
+  %% Map telemetry sensors to HLC/LLC
+  SRT_02 --- HLC_Perception
+  SRT_04 --- HLC_Perception
+  SRT_05 --- HLC_HMI
+
+  %% ---------- CURRICULUM & TOOLCHAIN (left column) ----------
+  subgraph CURRICULUM_BLOCK ["Educational Curriculum & Tools"]
+    SDV["SDV"]
+    RTOS["RTOS"]
+    ADAS["ADAS"]
+    GenAI["GenAI"]
+    MobilityApps["Mobility Apps"]
+    SafetyEng["Safety Engineering"]
+  end
+
+  CURRICULUM_HDR --> CURRICULUM_BLOCK
+
+  %% Curriculum -> Requirements
+  SDV --> SRD_009
+  SDV --> SRT_05
+  RTOS --> SWD_001
+  RTOS --> SWD_003
+  RTOS --> SWD_006
+  RTOS --> SWD_008
+  ADAS --> URD_002
+  ADAS --> SWD_002
+  GenAI --> SWD_002
+  MobilityApps --> SWT_05
+  SafetyEng --> HARA
+  SafetyEng --> TSF_trace
+
+  %% ---------- TOOLS & VERIFICATION (right-bottom) ----------
+  subgraph TOOLS_BLOCK ["Tools & Verification"]
+    SocketCAN["SocketCAN"]
+    Oscilloscope["Oscilloscope"]
+    I2C_Sniffer["I2C Sniffer"]
+    CARLA["CARLA"]
+    Hailo_SDK["Hailo SDK"]
+    Qt_Creator["Qt Creator"]
+    ThreadX_SDK["ThreadX SDK"]
+    GTest["GTest"]
+    CppCheck["CppCheck"]
+    AGL_System["AGL System"]
+  end
+
+  TOOLS_HDR --> TOOLS_BLOCK
+
+  %% Functional safety & telemetry link to tools
+  FUNCTIONAL_HDR --> TOOLS_HDR
+  TELEMETRY_HDR --> TOOLS_HDR
+
+  %% ---------- SAFETY GOALS (small center-left block) ----------
+  SG1["SG1 Prevent\ncollision"]
+  SG2["SG2 Prevent\nrunaway actuator"]
+  SG3["SG3 Maintain\nsafe speed"]
+  SG4["SG4 System\navailability"]
+
+  SAFETY_HDR --> SG1
+  SAFETY_HDR --> SG2
+  SAFETY_HDR --> SG3
+  SAFETY_HDR --> SG4
+
+  %% Safety goals -> URDs
+  SG1 --> URD_001
+  SG1 --> URD_002
+  SG1 --> URD_004
+  SG2 --> URD_008
+  SG3 --> URD_003
+  SG4 --> URD_006
+
+  %% TSF / TA -> URD traceability
+  TA_A01 --> URD_007
+  TA_A03 --> URD_010
+  TT_EXPECTATIONS --> URD_005
+  TT_EXPECTATIONS --> URD_009
+
+  %% Hardware allocation
+  HLC --> HLC_HMI
+  HLC --> HLC_Perception
+  HLC --> HLC_Planning
+
+  LLC --> LLC_SafetyGatekeeper
+  LLC --> LLC_MotorControl
+  LLC --> LLC_Watchdog
+
+  SRD_002 --> LLC_SafetyGatekeeper
+  SRD_003 --> LLC_SafetyGatekeeper
+  SRD_006 --> LLC_Watchdog
+  SRD_007 --> LLC_SafetyGatekeeper
+  SRD_008 --> LLC_MotorControl
+  SRD_010 --> LLC_SafetyGatekeeper
+
+  HLC --- CAN_Bus
+  LLC --- CAN_Bus
+  CAN_Bus --> LLC_SafetyGatekeeper
+  CAN_Bus --> HLC_Planning
+
+  %% ---------- Styling (classDefs + assignments) ----------
+  classDef hdr fill:#0b2233,stroke:#ffffff,stroke-width:1px,color:#ffffff,font-weight:700;
+  classDef groupA fill:#082f2f,stroke:#2be6d6,stroke-width:1px,color:#dffbf7;
+  classDef groupB fill:#2a1630,stroke:#c08bc0,stroke-width:1px,color:#f0dbf6;
+  classDef groupC fill:#23302b,stroke:#8fe3a7,stroke-width:1px,color:#e9fbef;
+  classDef small fill:#111214,stroke:#666666,stroke-width:1px,color:#cfcfcf;
+  class STANDARDS_HDR,ASSUMPTIONS_HDR,HARDWARE_HDR,FUNCTIONAL_HDR,TELEMETRY_HDR,CURRICULUM_HDR,SAFETY_HDR,TOOLS_HDR hdr;
+  class ISO26262,HARA,TSF_trace groupA;
+  class TRUSTABLE_SW,TT_CHANGES,TT_CONFIDENCE,TT_CONSTRUCTION,TT_EXPECTATIONS,TT_PROVENANCE,TT_RESULTS groupA;
+  class AOU_details,AOU_001,AOU_002,AOU_003 small;
+  class HLC,LLC,CAN_Bus,LLC_SafetyGatekeeper,LLC_MotorControl,LLC_Watchdog groupB;
+  class URD_001,URD_002,URD_003,URD_004,URD_005,URD_006,URD_007,URD_008,URD_009,URD_010 groupC;
+  class SRD_001,SRD_002,SRD_003,SRD_004,SRD_005,SRD_006,SRD_007,SRD_008,SRD_009,SRD_010 groupC;
+  class SWD_001,SWD_002,SWD_003,SWD_004,SWD_005,SWD_006,SWD_007,SWD_008,SWD_009,SWD_010 groupC;
+  class LLTC_001,LLTC_002,LLTC_003,LLTC_004,LLTC_005,LLTC_006,LLTC_007,LLTC_008,LLTC_009,LLTC_010 small;
+  class URT_01,URT_02,URT_03,URT_04,URT_05 SRT_block;
+  class SRT_01,SRT_0	2,SRT_03,SRT_04,SRT_05 SWT_block;
+  class SocketCAN,Oscilloscope,I2C_Sniffer,CARLA,Hailo_SDK,Qt_Creator,ThreadX_SDK,GTest,CppCheck,AGL_System small;
+  class SDV,RTOS,ADAS,GenAI,MobilityApps,SafetyEng small;
+  class SG1,SG2,SG3,SG4 small;
+
+  %% ---------- Notes ----------
+  %% - Mermaid does not allow absolute pixel-perfect placement; this layout uses subgraphs,
+  %%   grouping and directional edges to preserve the structure and readability of your original.
+  %% - If you want even closer visual parity with the original image (shadows, rounded boxes,
+  %%   exact spacings), consider exporting as SVG from a diagram tool (Diagrams.net / Eraser)
+  %%   or using multiple smaller Mermaid diagrams stacked in your README.
+
+  %% End of diagram
