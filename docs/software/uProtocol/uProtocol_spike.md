@@ -274,3 +274,32 @@ Ethernet Backbone: Carries uProtocol messages (over TCP/IP or Zenoh) to the Cent
 
 In this model, the constraints of the edge are respected (using efficient protocols), while the interoperability requirements of the system are met (using uProtocol at the aggregation point). Zenoh-Pico serves as the ideal "middle path," extending the benefits of data-centric networking down to the microcontroller without the crushing weight of enterprise service protocols.
 
+CAN bus - Wikipedia, acesso a novembro 28, 2025, https://en.wikipedia.org/wiki/CAN_bus
+Pure Python Implementation — isotp 2.0.7 documentation, acesso a novembro 28, 2025, https://can-isotp.readthedocs.io/en/latest/isotp/implementation.html
+A Tip from an Expert: CAN FD vs. CAN Classic - MicroControl Blog, acesso a novembro 28, 2025, https://blog.microcontrol.net/en/a-tip-from-an-expert-can-fd-vs-can-classic/
+CAN FD Explained (2025): Frames, Bit Rates & Migration Tips - AutoPi.io, acesso a novembro 28, 2025, https://www.autopi.io/blog/can-fd-explained/
+Explore the non-speed-related benefits of CAN FD - Texas Instruments, acesso a novembro 28, 2025, https://www.ti.com/lit/pdf/ssztah3
+CAN FD Explained - A Simple Intro [2023] - CSS Electronics, acesso a novembro 28, 2025, https://www.csselectronics.com/pages/can-fd-flexible-data-rate-intro
+Explore the Non-speed-related Benefits of CAN FD - Texas Instruments, acesso a novembro 28, 2025, https://www.ti.com/document-viewer/lit/html/SSZTAH3
+A Method for Translating Automotive Body-Related CAN Messages Based on Labeled Bits, acesso a novembro 28, 2025, https://www.mdpi.com/2076-3417/13/3/1942
+Merging and working with DBC files - HP Academy, acesso a novembro 28, 2025, https://www.hpacademy.com/forum/efi-wiring-fundamentals/show/merging-and-working-with-dbc-files/
+ByCAN: Reverse Engineering Controller Area Network (CAN) Messages from Bit to Byte Level - arXiv, acesso a novembro 28, 2025, https://arxiv.org/html/2408.09265v1
+ISO 15765-2 (ISO-TP) - The Linux Kernel documentation, acesso a novembro 28, 2025, https://docs.kernel.org/networking/iso15765-2.html
+Implementation — isotp 1.9 documentation, acesso a novembro 28, 2025, https://can-isotp.readthedocs.io/en/v1.x/isotp/implementation.html
+Linux and ISO 15765-2 with CAN FD - CAN-CIA, acesso a novembro 28, 2025, https://can-cia.org/fileadmin/cia/documents/proceedings/2015_hartkopp.pdf
+Eclipse zenoh for pico devices - GitHub, acesso a novembro 28, 2025, https://github.com/eclipse-zenoh/zenoh-pico
+Zenoh-Pico Peer to Peer Improvements · Zenoh - pub/sub, geo distributed storage, query, acesso a novembro 28, 2025, https://zenoh.io/blog/2025-07-11-zenoh-pico-peer-to-peer-unicast/
+There is Land Besides IP: How to Cross It with Zenoh, acesso a novembro 28, 2025, https://zenoh.io/blog/2022-08-12-zenoh-serial/
+Zenoh-Pico: Above and Beyond, acesso a novembro 28, 2025, https://zenoh.io/blog/2022-06-09-zenoh-pico-above-and-beyond/
+Zenoh overhead: a story from our community · Zenoh - pub/sub, geo ..., acesso a novembro 28, 2025, https://zenoh.io/blog/2021-07-05-zenoh-overhead/
+Efficient Support for Deep Sleeping Modes in Embedded Systems: the Case of Zenoh-Pico - AMS Tesi di Laurea, acesso a novembro 28, 2025, https://amslaurea.unibo.it/id/eprint/31250/1/tesi_zanni_definitiva.pdf
+Zenoh-Pico performance improvements, acesso a novembro 28, 2025, https://zenoh.io/blog/2025-04-09-zenoh-pico-performance/
+Eclipse uProtocol, acesso a novembro 28, 2025, https://uprotocol.org/
+Low Latency Event Driven Systems with GRPC and CloudEvents | by Huseyin Kutluca | Software Architecture Foundations | Medium, acesso a novembro 28, 2025, https://medium.com/software-architecture-foundations/low-latency-event-driven-systems-with-grpc-and-cloudevents-ac479b0b4bdc
+Protocol Buffers taken to their Simplest Form - Kevin Cox, acesso a novembro 28, 2025, https://kevincox.ca/2020/04/12/protocol-buffers-simplified/
+Encoding | Protocol Buffers Documentation, acesso a novembro 28, 2025, https://protobuf.dev/programming-guides/encoding/
+Implementing Guardrails around up-rust UUri Protobuf Serialization | plog, acesso a novembro 28, 2025, https://petelevasseur.com/articles/014-rust-protobuf-api-guardrails.html
+小川 清 (Ogawa Kiyoshi) - MISRA-C愛好会 - researchmap, acesso a novembro 28, 2025, https://researchmap.jp/blogs/blog_entries/index/page:5/limit:100?frame_id=445675
+Serialization for Embedded Systems - mbedded.ninja, acesso a novembro 28, 2025, https://blog.mbedded.ninja/programming/serialization-formats/serialization-for-embedded-systems/
+Eclipse uProtocol - GitHub, acesso a novembro 28, 2025, https://github.com/eclipse-uprotocol
+Message Protocols for Small Embedded Devices : r/C_Programming - Reddit, acesso a novembro 28, 2025, https://www.reddit.com/r/C_Programming/comments/aieyeq/message_protocols_for_small_embedded_devices/
