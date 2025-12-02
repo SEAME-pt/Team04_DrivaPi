@@ -41,13 +41,13 @@ To transport a \~40-byte uProtocol message over Classic CAN, the system must emp
 The `up-c` (uProtocol C SDK) relies on dynamic features or complex struct mappings.
 
   * **Flash Usage:** The library + Protobuf (NanoPB) runtime requires \~60-100KB.
-  * **RAM Usage:** ISO-TP reassembly buffers require allocating max message size (e.g., 4096 bytes) per connection to avoid overflow, consuming critical SRAM on the STM32G4.
+  * **RAM Usage:** ISO-TP reassembly buffers require allocating max message size (e.g., 4096 bytes) per connection to avoid overflow, consuming critical SRAM on the STM32.
 
 ### 3.2 CPU Overhead
 
-Serialization using NanoPB on Cortex-M4 takes significant cycles compared to raw register copying. While acceptable for telemetry, it introduces jitter in high-frequency ISRs (Interrupt Service Routines) used for motor commutation.
+Serialization using NanoPB on Cortex-M3 takes significant cycles compared to raw register copying. While acceptable for telemetry, it introduces jitter in high-frequency ISRs (Interrupt Service Routines) used for motor commutation.
 
 ## 4\. Recommendation
 
   * **STM32 (Low-Level):** Retain **Pure CAN** (Raw DBC-based signals). It fits the 8-byte frame perfectly without fragmentation.
-  * **RPi5 (High-Level):** Implement uProtocol here. The RPi5 will act as the "Adapter," converting raw CAN frames into uProtocol messages for the rest of the SDV network.
+  * **RPi5 (High-Level):** Implement uProtocol here. The RPi5 will act as the "Adapter," converting raw CAN frames into uProtocol messages for the rest of the Software Defined Vehicle (SDV) network.
