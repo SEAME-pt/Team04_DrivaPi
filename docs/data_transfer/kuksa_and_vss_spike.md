@@ -34,7 +34,7 @@ Based on our C++ code (vehicledata.hpp), we have mapped our member variables to 
 
 | C++ Variable | Type    | Proposed VSS Path                              | Notes                                                                 |
 |--------------|---------|------------------------------------------------|-----------------------------------------------------------------------|
-| m_speed     | float   | Vehicle.Speed                                  | Standard signal. Unit: km/h.                                          |
+| m_speed     | float   | Vehicle.Speed                                  | Standard signal. Unit: m/s.                                          |
 | m_battery   | int     | Vehicle.Powertrain.TractionBattery.StateOfCharge | Standard. Unit: Percent.                                              |
 | m_energy    | double  | Vehicle.Powertrain.TractionBattery.NetCapacity | Custom mapping required if this represents "Energy Remaining" in kWh. |
 | m_gear      | QString | Vehicle.Powertrain.Transmission.CurrentGear    | Int in VSS, requires mapping (0=P, 1=D, etc.) or custom string overlay. |
@@ -48,8 +48,8 @@ Based on our C++ code (vehicledata.hpp), we have mapped our member variables to 
 {
   "Vehicle": {
     "children": {
-      "Speed": { "datatype": "float", "type": "Sensor", "unit": "km/h" },
-      "TraveledDistance": { "datatype": "float", "type": "Sensor", "unit": "km" },
+      "Speed": { "datatype": "float", "type": "Sensor", "unit": "m/s" },
+      "TraveledDistance": { "datatype": "float", "type": "Sensor", "unit": "m" },
       "Powertrain": {
         "children": {
           "TractionBattery": {
