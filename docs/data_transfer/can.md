@@ -141,8 +141,14 @@ Sample Point (SP) --> 1 + TSEG1 = 16 TQ (~88.9% of bit)
 
 Overview
 - We implemented CAN as two dedicated ThreadX threads: canTX (transmit) and canRX (receive).
-- Data structure: t_can_message { uint32_t id; uint8_t data[8]; uint8_t len; } is used to pass frames between threads and queues.
+- Data structure used to pass frames between threads and queues:
 
+  ```c
+  typedef struct {
+      uint32_t id;
+      uint8_t data[8];
+      uint8_t len;
+  } t_can_message;
 Concurrency & IPC
 - TX queues: tx queues are used to deliver parsed command messages to relevant subsystems (queue_speed_cmd, queue_steer_cmd).
 - Event flags: an event_flags group signals sensor updates and message arrivals (e.g., FLAG_SENSOR_UPDATE, FLAG_CAN_SPEED_CMD).
