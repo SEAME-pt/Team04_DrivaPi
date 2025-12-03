@@ -132,6 +132,8 @@ ghcr.io/eclipse-kuksa/kuksa-databroker:master
 --metadata /etc/kuksa/drivapi.vss.json
 ```
 
+
 6. Risks & Mitigation
+RiskImpactMitigationComplexityHigh. Adds Docker, gRPC, and Feeder service.Use kuksa-client (Python) for the feeder to keep complexity low initially.PerformanceLow. 1.2ms latency is acceptable.Keep "Emergency Stop" functionality on direct CAN/Hardware lines (bypass Kuksa).Stale DataMedium. Broker holds last value even if sensor dies.Implement a "Heartbeat" signal in VSS. If heartbeat stops, UI greys out.
 
 7. Next Steps
