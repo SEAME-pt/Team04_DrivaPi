@@ -126,8 +126,10 @@ hfdcan1.Init.NominalTimeSeg2 = 2;
 ## CAN Bit Timing (500 kbps, 36 MHz clock, 18 TQ per bit)
 
 Time --->
-|--SyncSeg--|--------TSEG1--------|--TSEG2--|
-0 TQ       1 TQ                  16 TQ    18 TQ 
+
+  |--SyncSeg--|--------TSEG1--------|--TSEG2--|
+<p>0 TQ          1 TQ                          16 TQ        18 TQ</p>
+                             
 
 Sample Point (SP) --> 1 + TSEG1 = 16 TQ (~88.9% of bit)
 
