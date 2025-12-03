@@ -66,6 +66,7 @@ Draft Schema Artifact:
 ```
 
 
+
 4. Performance & Latency Analysis
 We utilized the kuksa-perf tool 1 to benchmark the Databroker on the RPi5 target hardware.
 Test Scenario:
@@ -84,6 +85,42 @@ Conclusion:
 While Kuksa introduces a ~10x relative increase in latency, the absolute latency of 1.2ms is orders of magnitude faster than the display refresh rate (60Hz = 16.6ms). It poses no issue for the dashboard.
 
 5. Implementation Roadmap (Qt Refactoring)
+To move to this architecture, the qt_app source code requires specific refactoring.
+5.1 Remove CANReader
+The CANReader class (canreader.cpp) is no longer needed in the GUI application. This logic should be moved to a standalone "Feeder" script (likely Python for ease of parsing, or Rust for safety).
+5.2 Update VehicleData to use QtGrpc
+Instead of parsing bytes in handleCanMessage, the VehicleData class will initialize a gRPC client.
+Prerequisites:
+
+* Add Qt::Grpc and Qt::Protobuf to CMakeLists.txt.
+
+* Generate C++ classes from kuksa/val/v1/val.proto using the Qt Protobuf compiler.
+
+Refactoring Logic:
+C++
+
+// OLD (Pure CAN)
+void VehicleData::handleCanMessage(const QByteArray &payload, uint32_t canId) {
+    if (canId == SPEED_CAN_ID) {
+        //... bitwise logic...
+        setSpeed(value);
+    }
+}
+
+// NEW (Kuksa gRPC)
+void VehicleData::subscribeToSignals() {
+    auto stream = m_client->Subscribe();
+    SubscribeRequest request;
+    // Add path "Vehicle.Speed"
+    stream->writeMessage(request);
+
+    connect(stream, &QGrpcHttp2Stream::messageReceived, this, [this](const SubscribeResponse &msg) {
+        auto update = msg.updates().value("Vehicle.Speed");
+        if (update.has_value()) {
+             setSpeed(update.value().float_value());
+        }
+    });
+}
 
 6. Risks & Mitigation
 
