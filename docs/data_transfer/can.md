@@ -65,7 +65,7 @@ Recommended configuration and practices
 - Sample point: target ~75–90% (common ~80–88%); tune TSEG1/TSEG2 to match cable topology and node clocks.
 - SJW: 1–2 time quanta is typical.
 - Filters & offload: use hardware filters + DMA to reduce ISR load and avoid software bottlenecks.
-- Minimise stubs, use twisted pair and proper shielding/grounding for vehicle harnesses.
+- Minimize stubs, use twisted pair and proper shielding/grounding for vehicle harnesses.
 - Use FD‑capable transceivers when using CAN‑FD data phase high bitrates.
 - Keep ISR work minimal; parse in a dedicated CAN thread.
 
