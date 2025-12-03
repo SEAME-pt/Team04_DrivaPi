@@ -1,9 +1,6 @@
 DrivaPi Architecture Spike #194: Eclipse Kuksa Val & VSS Integration
-
 Status: Draft
-
 Date: December 03, 2025
-
 Context: Migration from "Pure CAN" (Direct QCanBus) to "Data Broker" (Kuksa VSS).
 
 1. Executive Summary
@@ -34,11 +31,36 @@ The architecture splits into two distinct components:
 * Cons: Requires running the Kuksa Databroker container; increases RAM usage by ~10-20MB.
 
 3. VSS Schema Definition (drivapi.vss.json)
-
-4. Performance & Latency Analysis
-
-5. Implementation Roadmap (Qt Refactoring)
-
-6. Risks & Mitigation
-
-7. Next Steps
+Based on your C++ code (vehicledata.hpp), we have mapped your member variables to standard VSS signals.
+C++ VariableTypeProposed VSS PathNotesm_speedfloatVehicle.SpeedStandard signal. Unit: km/h.m_batteryintVehicle.Powertrain.TractionBattery.StateOfChargeStandard. Unit: Percent.m_energydoubleVehicle.Powertrain.TractionBattery.NetCapacityCustom mapping required if this represents "Energy Remaining" in kWh.m_gearQStringVehicle.Powertrain.Transmission.CurrentGearInt in VSS, requires mapping (0=P, 1=D, etc.) or custom string overlay.m_temperatureintVehicle.Cabin.HVAC.AmbientAirTemperatureStandard. Unit: Celsius.m_distanceintVehicle.TraveledDistanceStandard. Odometer.m_autonomousModeboolVehicle.ADAS.ActiveExtension needed.
+Draft Schema Artifact:
+```JSON
+{
+  "Vehicle": {
+    "children": {
+      "Speed": { "datatype": "float", "type": "Sensor", "unit": "m/s" },
+      "TraveledDistance": { "datatype": "float", "type": "Sensor", "unit": "m" },
+      "Powertrain": {
+        "children": {
+          "TractionBattery": {
+            "children": {
+              "StateOfCharge": { "datatype": "float", "type": "Sensor", "unit": "percent" },
+              "NetCapacity": { "datatype": "float", "type": "Sensor", "unit": "kWh" }
+            }
+          },
+          "Transmission": {
+            "children": {
+              "CurrentGear": { "datatype": "int8", "type": "Sensor" }
+            }
+          }
+        }
+      },
+      "ADAS": {
+        "children": {
+          "Active": { "datatype": "boolean", "type": "Actuator", "description": "DrivaPi Auto-Pilot State" }
+        }
+      }
+    }
+  }
+}
+```
