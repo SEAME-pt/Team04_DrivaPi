@@ -23,6 +23,15 @@ Your current architecture allows the Qt application to act as both the Consumer 
 * Cons: "DBC Hell." Changing a sensor on the STM32 requires recompiling the Qt dashboard. The UI logic is tightly coupled to the wire protocol.
 
 2.2 Proposed State (Kuksa VSS)
+The architecture splits into two distinct components:
+
+1. The Feeder (Backend): A background service (C++, Rust, or Python) that reads socketcan and publishes to Kuksa.
+
+2. The Dashboard (Frontend): The Qt application uses gRPC to subscribe to standardized VSS signals (e.g., Vehicle.Speed).
+
+* Pros: The Qt app never sees a CAN ID. It only knows Vehicle.Speed. You can swap the STM32 for a Simulation or a different ECU without touching the UI code.
+
+* Cons: Requires running the Kuksa Databroker container; increases RAM usage by ~10-20MB.
 
 3. VSS Schema Definition (drivapi.vss.json)
 
