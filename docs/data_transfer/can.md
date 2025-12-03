@@ -1,22 +1,20 @@
 # CAN (Controller Area Network)
 
 ## What is CAN
-
-Controller Area Network (CAN) is a multi-master, event-driven, message-oriented serial bus standard widely used in automotive and industrial embedded systems. CAN transmits frames containing an identifier (which encodes message priority) and a payload (classical CAN up to 8 bytes; CAN-FD larger). The protocol provides robust error detection, automatic retransmission, and deterministic arbitration: when multiple nodes transmit simultaneously, the frame with the numerically lower identifier wins arbitration without data corruption.
+Controller Area Network (CAN) is a multi-master, event-driven, message-oriented serial bus standard widely used in automotive and industrial embedded systems. CAN transmits frames containing an identifier (which encodes message priority) and a payload (classical CAN up to 8 bytes, CAN-FD larger). The protocol provides robust error detection, automatic retransmission, and deterministic arbitration: when multiple nodes transmit simultaneously, the frame with the numerically lower identifier wins arbitration without data corruption.
 
 Key properties:
 - Deterministic arbitration for predictable priorities under load.
 - Built-in error handling and fault confinement were suitable for noisy vehicle environments.
 - Error detection and recovery mechanisms:
-  - CRC: a checksum computed over each CAN frame to detect corrupted bits; receivers recompute the CRC and reject frames that don't match.
-  - ACK: after a frame is received correctly, at least one node on the bus drives the ACK bit to tell the sender the frame was accepted.
-  - Bit‑stuffing: to keep clock synchronization, the transmitter inserts the opposite bit after five identical consecutive bits; the receiver removes these stuffed bits and checks stuffing rules to detect framing errors.
+  - CRC(Cyclic Redundancy Check): a checksum computed over each CAN frame to detect corrupted bits. Receivers recompute the CRC and reject frames that don't match.
+  - ACK(Acknowledge bit): after a frame is received correctly, at least one node on the bus drives the ACK bit to tell the sender the frame was accepted.
+  - Bit‑stuffing: to keep clock synchronization, the transmitter inserts the opposite bit after five identical consecutive bits. The receiver removes these stuffed bits and checks stuffing rules to detect framing errors.
   - Automatic retransmission: if a frame is not acknowledged or an error is detected, the controller automatically retries transmission until success or until it moves to error‑passive / bus‑off state.
 - Fault confinement: nodes that repeatedly fail are placed into error-passive or bus-off states to protect the bus.
 - Wide ecosystem: mature transceivers, analyzers, software stacks and kernel support (SocketCAN) make integration and diagnostics straightforward.
 
 ### Physical layer and transceivers — how it works
-
 - Bus wiring: CAN uses a single twisted‑pair differential wire called CAN_H and CAN_L. All nodes share this pair.
 - Differential signaling:
   - Recessive (bus idle / logical 1): both CAN_H and CAN_L sit near the same voltage (approx. mid‑rail). No node is actively driving the bus.
@@ -32,81 +30,16 @@ Simple signal flow:
 - MCU (TXD high/low) → transceiver → drives CAN_H / CAN_L (dominant/recessive) → bus → other transceivers → MCU (their RXD)
 - On receive: bus differential → transceiver converts → RXD toggles → FDCAN peripheral samples bits.
 
-
 ## Message formats and ID map
-
 This section defines the canonical CAN IDs, DLCs (Data Length Code) and payload layouts used for remote→car commands and car→remote responses. Use standard 11‑bit IDs unless explicitly noted. Multi‑byte fields use big‑endian (network) byte order.
 
 General rules
 - ID priority: numerically lower ID = higher bus arbitration priority.
-- Keep messages small and atomic; prefer fixed DLCs for deterministic parsing.
-- Use CAN‑FD when larger payloads are required; document FD DLCs and parsing accordingly.
+- Keep messages small and atomic. Prefer fixed DLCs for deterministic parsing.
+- Use CAN‑FD when larger payloads are required.
 - Reserve an ID range for future expansion and versioning.
 
-## CAN Bit Timing (500 kbps, 36 MHz clock, 18 TQ per bit)
-
-Time --->
-|--SyncSeg--|--------TSEG1--------|--TSEG2--|
-| 0 TQ     | 1 TQ                 | 16 TQ   | 18 TQ |
-
-Sample Point (SP) --> 1 + TSEG1 = 16 TQ (~88.9% of bit)
-
-### Explanation:
-- **SyncSeg:** 1 TQ, used for synchronization
-- **TSEG1:** 15 TQ, before sample point, allows signal propagation
-- **Sample Point (SP):** Moment controller reads bus value
-- **TSEG2:** 2 TQ, after sample point, for edge adjustment before next bit
-
-## Why CAN is used in this vehicle
-- Industry relevance: CAN (and CAN-FD) is widely used in automotive systems; using it mirrors real-world architectures.  
-- Robustness: built-in error handling and fault confinement are suitable for noisy vehicle environments.  
-- Determinism: arbitration by ID gives predictable message delivery ordering under load.  
-- Tooling/ecosystem: many transceivers, analyzers and libraries exist, easing integration with diagnostic/debug tools.
-
-We selected a Raspberry Pi 5 as the remote controller and the B-U585I-IOT02A (STM32U585) as the vehicle node to match typical industry setups (separate gateway/host and MCU node).
-
-## Selected CAN hardware
-- MCU CAN peripheral: STM32U585 internal FDCAN peripheral (supports classical CAN and CAN FD).  
-- STM32 transceiver: SN65HVD230 — a low‑power CAN transceiver that interfaces the STM32 FDCAN TX/RX pins to the bus differential lines (CAN_H / CAN_L).  
-- Remote host: Raspberry Pi 5 with a 2‑Channel CAN‑BUS(FD) Shield for Raspberry Pi (MCP2518FD). The shield contains the MCP2518FD CAN controller (SPI) and on‑board transceivers, providing two CAN‑FD channels for connection to the same CAN bus.
-
-Notes:
-- The MCP2518FD is accessed from the Pi over SPI; use the appropriate kernel driver / device-tree overlay (mcp251xfd or userspace bridge) to expose socketcan interfaces (e.g., can0/can1).  
-
-## Wiring and termination
-- We connected the STM32 transceiver (SN65HVD230) and the Raspberry Pi MCP2518FD shield transceiver on a single differential bus: CAN_H ↔ CAN_H, CAN_L ↔ CAN_L. We used a twisted‑pair cable and kept stubs short.
-- We placed two 120 Ω termination resistors — one at each physical end of the bus.
-- On the STM32 side we connected the FDCAN TX pin to the transceiver TXD and the FDCAN RX pin to the transceiver RXD per the SN65HVD230 datasheet. We powered the transceiver with 3.3 V.
-- On the Raspberry Pi side we connected the MCP2518FD shield CAN_H/CAN_L to the same bus and verified the shield's termination jumpers and SPI link.
-- We ensured a common ground between the Pi and STM32.
-- For EMC we routed the CAN differential pair as a twisted pair, avoided running it alongside noisy power traces, and grounded/shielded cable ends as appropriate for the vehicle environment.
-
-## CAN peripheral configuration (example)
-
-The exact register values depend on your clock tree. Below are settings used in this project (FDCAN source clock = 36 MHz) to obtain ~500 kbps for classical CAN.
-
-Timing calculation (36 MHz)
-- Bit rate = FDCAN_clock / (Prescaler * (1 + TSEG1 + TSEG2))
-- With FDCAN_clock = 36 MHz and the init used in this project:
-  - Prescaler = 4
-  - TSEG1 = 15
-  - TSEG2 = 2
-  - Total time quanta = 1 + 15 + 2 = 18
-  - Bit rate = 36e6 / (4 * 18) = 36e6 / 72 = 500000 bps
-  - Sample point = (1 + TSEG1) / Total ≈ 16 / 18 ≈ 88.9%
-
-Example HAL init excerpt used in this project
-```c
-hfdcan1.Init.FrameFormat = FDCAN_FRAME_CLASSIC;
-hfdcan1.Init.Mode = FDCAN_MODE_NORMAL;
-hfdcan1.Init.NominalPrescaler = 4;        /* 36 MHz / (4 * 18 tq) = 500 kbps */
-hfdcan1.Init.NominalSyncJumpWidth = 1;
-hfdcan1.Init.NominalTimeSeg1 = 15;    
-hfdcan1.Init.NominalTimeSeg2 = 2;
-```
-
 ## CAN speed and stability
-
 Practical data and recommendations about CAN bitrates, bus length and factors that affect stability.
 
 Speed vs. bus length (rules of thumb)
@@ -143,19 +76,68 @@ Monitoring metrics to track stability
 - Bus‑off events: any bus‑off requires immediate diagnostics and recovery.
 - Message age / latency: monitor end‑to‑end latency for control messages and missed heartbeats.
 
-Bus‑off & recovery guidance
-- On BUS_OFF: stop normal transmissions, log and signal failure, enter safe state (e.g., stop actuators).
-- Recovery: perform controlled reinitialization (per ISO11898 or controller docs) — e.g., reinit controller after cooldown, then monitor error counters before normal operation.
-- Report status via STATUS frames and escalate to remote controller.
+## Why CAN is used in this vehicle
+- Industry relevance: CAN (and CAN-FD) is widely used in automotive systems, using it mirrors real-world architectures.  
+- Robustness: built-in error handling and fault confinement are suitable for noisy vehicle environments.  
+- Determinism: arbitration by ID gives predictable message delivery ordering under load.  
+- Tooling/ecosystem: many transceivers, analyzers and libraries exist, easing integration with diagnostic/debug tools.
 
-Practical checklist
-- Verify exactly two 120 Ω terminators at physical ends.
-- Shorten stubs; use twisted pair and shield; keep CAN pair away from noisy lines.
-- Ensure common ground and stable transceiver VCC (3.3 V).
-- Confirm transceivers support chosen mode (classic vs FD) and data phase rates.
-- Tune sample point and verify with oscilloscope against another node.
-- Use hardware filters, enable DMA for RX where possible, keep ISR minimal.
-- Run stress tests (high load, induced noise) and observe error counters and retransmit rates.
+We selected a Raspberry Pi 5 as the "remote controller" and the B-U585I-IOT02A (STM32U585) as the vehicle node to match typical industry setups (separate gateway/host and MCU node).
+
+## Selected CAN hardware
+- MCU CAN peripheral: STM32U585 internal FDCAN peripheral (supports classical CAN and CAN FD).  
+- STM32 transceiver: SN65HVD230 — a low‑power CAN transceiver that interfaces the STM32 FDCAN TX/RX pins to the bus differential lines (CAN_H / CAN_L).  
+- Remote host: Raspberry Pi 5 with a 2‑Channel CAN‑BUS(FD) Shield for Raspberry Pi (MCP2518FD). The shield contains the MCP2518FD CAN controller (SPI) and on‑board transceivers, providing two CAN‑FD channels for connection to the same CAN bus.
+
+Notes:
+- The MCP2518FD is accessed from the Pi over SPI, we use the appropriate kernel driver / device-tree overlay (mcp2518fd) to expose socketcan interfaces (e.g., can0/can1).  
+
+## Wiring and termination
+- We connected the STM32 transceiver (SN65HVD230) and the Raspberry Pi MCP2518FD shield transceiver on a single differential bus: CAN_H ↔ CAN_H, CAN_L ↔ CAN_L. We used a twisted‑pair cable and kept stubs short.
+- We placed two 120 Ω termination resistors — one at each physical end of the bus.
+- On the STM32 side we connected the FDCAN TX pin to the transceiver TXD and the FDCAN RX pin to the transceiver RXD per the SN65HVD230 datasheet. We powered the transceiver with 3.3 V.
+- On the Raspberry Pi side we connected the MCP2518FD shield CAN_H/CAN_L to the same bus and verified the shield's termination jumpers and SPI link.
+- We ensured a common ground between the Pi and STM32.
+- For EMC(Electromagnetic Compatibility) we routed the CAN differential pair as a twisted pair, avoided running it alongside noisy power traces, and grounded/shielded cable ends as appropriate for the vehicle environment.
+
+## CAN peripheral configuration
+
+The exact register values depend on the clock tree. Below are settings used in this project (FDCAN source clock = 36 MHz) to obtain ~500 kbps for classical CAN.
+
+Timing calculation (36 MHz)
+- Bit rate = FDCAN_clock / (Prescaler * (1 + TSEG1 + TSEG2))
+- With FDCAN_clock = 36 MHz and the init used in this project:
+  - Prescaler = 4
+  - TSEG1 = 15
+  - TSEG2 = 2
+  - Total time quanta = 1 + 15 + 2 = 18
+  - Bit rate = 36e6 / (4 * 18) = 36e6 / 72 = 500000 bps
+  - Sample point = (1 + TSEG1) / Total ≈ 16 / 18 ≈ 88.9%
+
+Example HAL init excerpt used in this project
+```c
+hfdcan1.Init.FrameFormat = FDCAN_FRAME_CLASSIC;
+hfdcan1.Init.Mode = FDCAN_MODE_NORMAL;
+hfdcan1.Init.NominalPrescaler = 4;        /* 36 MHz / (4 * 18 tq) = 500 kbps */
+hfdcan1.Init.NominalSyncJumpWidth = 1;
+hfdcan1.Init.NominalTimeSeg1 = 15;    
+hfdcan1.Init.NominalTimeSeg2 = 2;
+```
+## CAN Bit Timing (500 kbps, 36 MHz clock, 18 TQ per bit)
+
+Time --->
+|--SyncSeg--|--------TSEG1--------|--TSEG2--|
+0 TQ       1 TQ                  16 TQ    18 TQ 
+
+Sample Point (SP) --> 1 + TSEG1 = 16 TQ (~88.9% of bit)
+
+### Explanation:
+- **SyncSeg:** 1 TQ, used for synchronization
+- **TSEG1:** 15 TQ, before sample point, allows signal propagation
+- **Sample Point (SP):** Moment controller reads bus value
+- **TSEG2:** 2 TQ, after sample point, for edge adjustment before next bit
+
+## ThreadX integration — CAN (implementation & flow diagrams)
 
 Overview
 - We implemented CAN as two dedicated ThreadX threads: canTX (transmit) and canRX (receive).
@@ -182,20 +164,11 @@ canRX thread (receive)
 
 HAL / FDCAN usage
 - HAL FDCAN APIs are used for TX FIFO enqueue and RX FIFO read.
-- Notifications were enabled (FDCAN_IT_RX_FIFO0_NEW_MESSAGE) in init; current code uses polling in canRX but can be adapted to use HAL callbacks/ISR signaling.
+- Notifications were enabled (FDCAN_IT_RX_FIFO0_NEW_MESSAGE) in init, current code uses polling in canRX but can be adapted to use HAL callbacks/ISR signaling.
 
 Error handling
 - Transmission failure: can_send() logs "FailTransmitCAN!" via UART and returns (no retransmit logic in software).
-- RX path: unknown IDs are ignored (optionally logged).
-- Recommended: monitor controller error counters and handle bus-off per CAN recovery rules (see the Bus-off section).
-
-Design notes & suggestions
-- Polling in canRX is simple but consider using the FDCAN RX interrupt or HAL callback to signal a thread (faster, lower CPU).
-- Keep ISR work minimal: copy hardware FIFO to a queue/buffer and signal canRX thread for parsing.
-- Ensure TX queue/backpressure and message-buffer lifetime are managed when bus is busy.
-- For critical safety commands implement ACKs, sequence numbers and watchdogs.
-
-## ThreadX integration — CAN (implementation & flow diagrams)
+- RX path: unknown IDs are ignored.
 
 Summary
 - Two dedicated ThreadX threads handle CAN: canTX (transmit) and canRX (receive).
@@ -234,14 +207,3 @@ graph LR
     CAN_RX -->|CMD_STEERING| Q_STEER
     CAN_RX -->|other| IGNORE
 ```
-
-Notes and mapping to your implementation
-- Event sync: canTX uses tx_event_flags_get(FLAG_SENSOR_UPDATE) to wait for sensor updates.
-- Mutual exclusion: canTX uses tx_mutex_get/put to read g_vehicle_speed safely.
-- Transmit: can_send() populates FDCAN_TxHeaderTypeDef and calls HAL_FDCAN_AddMessageToTxFifoQ().
-- Receive: can_receive() polls HAL_FDCAN_GetRxFifoFillLevel() and HAL_FDCAN_GetRxMessage(); canRX converts to t_can_message and routes by ID (CMD_SPEED → queue_speed_cmd, CMD_STEERING → queue_steer_cmd).
-- IPC: queues (tx_queue_send) and event flags (tx_event_flags_set) are used to notify consumer threads.
-- Improvements to consider:
-  - Use FDCAN RX interrupt / HAL callback to signal canRX instead of polling for lower latency and lower CPU use.
-  - In ISR only copy the hardware FIFO into a preallocated buffer or message and set an event to unblock canRX for parsing.
-  - Add transmit completion/error handling and monitor FDCAN TEC/REC for bus-off recovery.
