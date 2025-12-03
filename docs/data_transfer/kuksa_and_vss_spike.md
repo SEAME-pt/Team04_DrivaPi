@@ -131,3 +131,7 @@ docker run -d --name kuksa-databroker
 ghcr.io/eclipse-kuksa/kuksa-databroker:master
 --metadata /etc/kuksa/drivapi.vss.json
 ```
+
+6. Risks & Mitigation
+
+7. Next Steps
