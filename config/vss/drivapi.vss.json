@@ -1,0 +1,51 @@
+{
+	"Vehicle": {
+		"children": {
+			"Speed": {
+				"datatype": "float",
+				"type": "Sensor",
+				"unit": "m/s"
+			},
+			"TraveledDistance": {
+				"datatype": "float",
+				"type": "Sensor",
+				"unit": "m"
+			},
+			"Powertrain": {
+				"children": {
+					"TractionBattery": {
+						"children": {
+							"StateOfCharge": {
+								"datatype": "float",
+								"type": "Sensor",
+								"unit": "percent"
+							},
+							"NetCapacity": {
+								"datatype": "float",
+								"type": "Sensor",
+								"unit": "kWh"
+							}
+						}
+					},
+					"Transmission": {
+						"children": {
+							"CurrentGear": {
+								"datatype": "int8",
+								"type": "Sensor"
+							}
+						}
+					}
+				}
+			},
+			"ADAS": {
+				"children": {
+					"Active": {
+						"datatype": "boolean",
+						"type": "Actuator",
+						"description": "DrivaPi Auto-Pilot State"
+					}
+				}
+			}
+		}
+	}
+}
