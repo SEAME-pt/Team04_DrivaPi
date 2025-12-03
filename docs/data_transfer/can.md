@@ -151,6 +151,8 @@ Overview
       uint8_t data[8];
       uint8_t len;
   } t_can_message;
+  ```
+  
 Concurrency & IPC
 - TX queues: tx queues are used to deliver parsed command messages to relevant subsystems (queue_speed_cmd, queue_steer_cmd).
 - Event flags: an event_flags group signals sensor updates and message arrivals (e.g., FLAG_SENSOR_UPDATE, FLAG_CAN_SPEED_CMD).
