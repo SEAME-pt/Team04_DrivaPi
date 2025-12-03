@@ -137,3 +137,9 @@ ghcr.io/eclipse-kuksa/kuksa-databroker:master
 RiskImpactMitigationComplexityHigh. Adds Docker, gRPC, and Feeder service.Use kuksa-client (Python) for the feeder to keep complexity low initially.PerformanceLow. 1.2ms latency is acceptable.Keep "Emergency Stop" functionality on direct CAN/Hardware lines (bypass Kuksa).Stale DataMedium. Broker holds last value even if sensor dies.Implement a "Heartbeat" signal in VSS. If heartbeat stops, UI greys out.
 
 7. Next Steps
+
+	1. Commit VSS: Finalize drivapi.vss.json and push to repo.
+
+	2. Feeder Spike: Write a 50-line Python script using python-can and kuksa-client to bridge can0 to the broker.
+
+	3. Qt Spike: Create a branch of qt_app, strip CANReader, and implement QtGrpc client for just the Speed signal.
