@@ -97,8 +97,7 @@ Prerequisites:
 * Generate C++ classes from kuksa/val/v1/val.proto using the Qt Protobuf compiler.
 
 Refactoring Logic:
-C++
-
+```C++
 // OLD (Pure CAN)
 void VehicleData::handleCanMessage(const QByteArray &payload, uint32_t canId) {
     if (canId == SPEED_CAN_ID) {
@@ -121,7 +120,14 @@ void VehicleData::subscribeToSignals() {
         }
     });
 }
+```
 
-6. Risks & Mitigation
-
-7. Next Steps
+5.3 Deployment Strategy (Docker)
+On the RPi5, deploy the broker using the standard image mapping the config file:
+```bash
+docker run -d --name kuksa-databroker
+-p 55555:55555
+-v $(pwd)/drivapi.vss.json:/etc/kuksa/drivapi.vss.json
+ghcr.io/eclipse-kuksa/kuksa-databroker:master
+--metadata /etc/kuksa/drivapi.vss.json
+```
