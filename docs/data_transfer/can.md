@@ -5,12 +5,12 @@ Controller Area Network (CAN) is a multi-master, event-driven, message-oriented 
 
 Key properties:
 - Deterministic arbitration for predictable priorities under load.
-- Built-in error handling and fault confinement were suitable for noisy vehicle environments.
+- Built-in error handling and fault confinement are suitable for noisy vehicle environments.
 - Error detection and recovery mechanisms:
-  - CRC(Cyclic Redundancy Check): a checksum computed over each CAN frame to detect corrupted bits. Receivers recompute the CRC and reject frames that don't match.
-  - ACK(Acknowledge bit): after a frame is received correctly, at least one node on the bus drives the ACK bit to tell the sender the frame was accepted.
+  - CRC (Cyclic Redundancy Check): a checksum computed over each CAN frame to detect corrupted bits. Receivers recompute the CRC and reject frames that don't match.
+  - ACK (Acknowledge bit): after a frame is received correctly, at least one node on the bus drives the ACK bit to tell the sender the frame was accepted.
   - Bit‑stuffing: to keep clock synchronization, the transmitter inserts the opposite bit after five identical consecutive bits. The receiver removes these stuffed bits and checks stuffing rules to detect framing errors.
-  - Automatic retransmission: if a frame is not acknowledged or an error is detected, the controller automatically retries transmission until success or until it moves to error‑passive / bus‑off state.
+  - Automatic retransmission: if a frame is not acknowledged or an error is detected, the controller automatically retries transmission until success or until it moves to an error‑passive or bus‑off state.
 - Fault confinement: nodes that repeatedly fail are placed into error-passive or bus-off states to protect the bus.
 - Wide ecosystem: mature transceivers, analyzers, software stacks and kernel support (SocketCAN) make integration and diagnostics straightforward.
 
@@ -19,7 +19,7 @@ Key properties:
 - Differential signaling:
   - Recessive (bus idle / logical 1): both CAN_H and CAN_L sit near the same voltage (approx. mid‑rail). No node is actively driving the bus.
   - Dominant (logical 0 / active): a transceiver actively drives CAN_H higher and CAN_L lower, producing a voltage difference that all receivers detect. Dominant bits override recessive bits on the bus.
-- Arbitration: if two nodes start transmitting at the same time, each transmits bits while simultaneously sampling the bus. The node that transmits recessive but senses dominant has lost arbitration and stops transmitting — this lets the highest‑priority (lowest ID) message win without collisions.
+- Arbitration: if two nodes start transmitting at the same time, each transmits bits while simultaneously sampling the bus. The node that transmits recessive but senses dominant bit has lost arbitration and stops transmitting — this lets the highest‑priority (lowest ID) message win without collisions.
 - Role of the transceiver:
   - MCU side: the FDCAN peripheral exposes single‑ended TXD (transmit) and RXD (receive) signals (3.3 V logic).
   - Transceiver side (SN65HVD230): converts the MCU TXD into differential CAN_H/CAN_L levels for the bus on transmit, and converts the differential bus levels into a single‑ended RXD for the MCU on receive. The transceiver also implements fail‑safe behavior, short‑circuit protection and common‑mode voltage tolerance required on the vehicle bus.
@@ -43,7 +43,7 @@ General rules
 Practical data and recommendations about CAN bitrates, bus length and factors that affect stability.
 
 Speed vs. bus length (rules of thumb)
-- Classical CAN (approximate maximum reliable length):
+- Classical CAN (approximate maximum reliable lengths):
   - 1 Mbps → ~40 m
   - 500 kbps → ~100–120 m
   - 250 kbps → ~250 m
@@ -56,10 +56,10 @@ Main stability drivers
 - Termination & reflections: incorrect or missing 120 Ω terminations or extra stubs cause reflections and CRC errors.
 - Ground/common‑mode: missing common ground or large ground offsets produce unreliable signaling and transceiver stress.
 - Cable quality & routing: untwisted pairs, long stubs, noisy proximity and poor connectors increase errors.
-- Transceiver and FD support: some transceivers do not support CAN‑FD data rates — verify rise/fall time and max data rate.
+- Transceiver and FD support: some transceivers do not support CAN‑FD data rates — verify rise/fall times and max data rate.
 - Timing mismatch: clock/timing differences and poorly chosen sample point (TSEG1/TSEG2/SJW) cause bit errors.
 - Bus load & congestion: heavy traffic and many nodes increase retransmissions and latency for lower‑priority frames.
-- EMI/ESD and noisy power rails: cause intermittent errors escalating to error‑passive / bus‑off.
+- EMI/ESD and noisy power rails: can cause intermittent errors escalating to error‑passive / bus‑off.
 
 Recommended configuration and practices
 - Sample point: target ~75–90% (common ~80–88%); tune TSEG1/TSEG2 to match cable topology and node clocks.
@@ -77,7 +77,7 @@ Monitoring metrics to track stability
 - Message age / latency: monitor end‑to‑end latency for control messages and missed heartbeats.
 
 ## Why CAN is used in this vehicle
-- Industry relevance: CAN (and CAN-FD) is widely used in automotive systems, using it mirrors real-world architectures.  
+- Industry relevance: CAN (and CAN-FD) are widely used in automotive systems, using them mirrors real-world architectures.  
 - Robustness: built-in error handling and fault confinement are suitable for noisy vehicle environments.  
 - Determinism: arbitration by ID gives predictable message delivery ordering under load.  
 - Tooling/ecosystem: many transceivers, analyzers and libraries exist, easing integration with diagnostic/debug tools.
@@ -152,7 +152,7 @@ canTX thread (transmit)
 - Waits on FLAG_SENSOR_UPDATE (tx_event_flags_get).
 - Reads g_vehicle_speed under speed_data_mutex.
 - Builds a CAN status message via make_speed_status_msg (copies float into payload) and calls can_send().
-- can_send() prepares an FDCAN_TxHeaderTypeDef and calls HAL_FDCAN_AddMessageToTxFifoQ(). On failure it logs over UART.
+- can_send() prepares an FDCAN_TxHeaderTypeDef and calls HAL_FDCAN_AddMessageToTxFifoQ(). On failure, it logs over UART.
 - Thread sleeps (tx_thread_sleep) between iterations.
 
 canRX thread (receive)
@@ -164,7 +164,7 @@ canRX thread (receive)
 
 HAL / FDCAN usage
 - HAL FDCAN APIs are used for TX FIFO enqueue and RX FIFO read.
-- Notifications were enabled (FDCAN_IT_RX_FIFO0_NEW_MESSAGE) in init, current code uses polling in canRX but can be adapted to use HAL callbacks/ISR signaling.
+- Notifications were enabled (FDCAN_IT_RX_FIFO0_NEW_MESSAGE) in init. Current code uses polling in canRX but can be adapted to use HAL callbacks/ISR signaling.
 
 Error handling
 - Transmission failure: can_send() logs "FailTransmitCAN!" via UART and returns (no retransmit logic in software).
