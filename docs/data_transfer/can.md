@@ -43,6 +43,19 @@ General rules
 - Use CAN‑FD when larger payloads are required; document FD DLCs and parsing accordingly.
 - Reserve an ID range for future expansion and versioning.
 
+## CAN Bit Timing (500 kbps, 36 MHz clock, 18 TQ per bit)
+
+Time --->
+|--SyncSeg--|--------TSEG1--------|--TSEG2--|
+| 0 TQ     | 1 TQ                 | 16 TQ   | 18 TQ |
+
+Sample Point (SP) --> 1 + TSEG1 = 16 TQ (~88.9% of bit)
+
+### Explanation:
+- **SyncSeg:** 1 TQ, used for synchronization
+- **TSEG1:** 15 TQ, before sample point, allows signal propagation
+- **Sample Point (SP):** Moment controller reads bus value
+- **TSEG2:** 2 TQ, after sample point, for edge adjustment before next bit
 
 ## Why CAN is used in this vehicle
 - Industry relevance: CAN (and CAN-FD) is widely used in automotive systems; using it mirrors real-world architectures.  
@@ -143,9 +156,6 @@ Practical checklist
 - Tune sample point and verify with oscilloscope against another node.
 - Use hardware filters, enable DMA for RX where possible, keep ISR minimal.
 - Run stress tests (high load, induced noise) and observe error counters and retransmit rates.
-
-
-
 
 Overview
 - We implemented CAN as two dedicated ThreadX threads: canTX (transmit) and canRX (receive).
