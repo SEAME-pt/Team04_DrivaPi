@@ -1,50 +1,55 @@
-DrivaPi Architecture Spike #194: Eclipse Kuksa Val & VSS Integration
+# DrivaPi Architecture Spike #194: Eclipse Kuksa Val & VSS Integration
 
-Status: Draft
+## 1. Executive Summary
 
-Date: December 03, 2025
-
-Context: Migration from "Pure CAN" (Direct QCanBus) to "Data Broker" (Kuksa VSS).
-
-1. Executive Summary
 This spike evaluates the architectural impact of replacing the current direct SocketCAN integration in DrivaPi with Eclipse Kuksa Val (Databroker). Currently, the application (qt_app) reads raw CAN frames directly via QCanBus. The proposed architecture introduces a middleware layer (Kuksa) to abstract hardware specifics using the Vehicle Signal Specification (VSS).
-Recommendation: Proceed with Kuksa Integration.
+
+**Recommendation:** Proceed with Kuksa Integration.
 While Kuksa introduces a latency overhead of approximately 1.2ms (P99) compared to raw SocketCAN 1, this is negligible for the dashboard visualization (Soft Real-Time) use case. The benefits of decoupling the Qt UI from specific CAN IDs and enabling cloud interoperability outweigh the performance cost.
-2. Problem Statement & Comparison
-2.1 Current State ("Pure CAN")
-Your current architecture allows the Qt application to act as both the Consumer (UI) and the Driver (CAN Reader).
 
-* Implementation: CANReader class (in canreader.cpp) accesses socketcan directly.
+## 2. Problem Statement & Comparison
 
-* Coupling: VehicleData::handleCanMessage contains hardcoded decoding logic (e.g., SPEED_CAN_ID = 0x100, memcpy for float conversion).
+### 2.1 Current State ("Pure CAN")
 
-* Pros: Extremely low latency (<0.1ms), simple deployment (single binary).
+Our current architecture allows the Qt application to act as both the Consumer (UI) and the Driver (CAN Reader).
 
-* Cons: "DBC Hell." Changing a sensor on the STM32 requires recompiling the Qt dashboard. The UI logic is tightly coupled to the wire protocol.
+- **Implementation:** CANReader class (in canreader.cpp) accesses socketcan directly.
+- **Coupling:** VehicleData::handleCanMessage contains hardcoded decoding logic (e.g., SPEED_CAN_ID = 0x100, memcpy for float conversion).
+- **Pros:** Extremely low latency (<0.1ms), simple deployment (single binary).
+- **Cons:** "DBC Hell." Changing a sensor on the STM32 requires recompiling the Qt dashboard. The UI logic is tightly coupled to the wire protocol.
 
-2.2 Proposed State (Kuksa VSS)
+### 2.2 Proposed State (Kuksa VSS)
+
 The architecture splits into two distinct components:
 
 1. The Feeder (Backend): A background service (C++, Rust, or Python) that reads socketcan and publishes to Kuksa.
+2. The Dashboard (Frontend): The Qt application uses gRPC (google Remote Procedure Call) to subscribe to standardized VSS signals (e.g., Vehicle.Speed).
 
-2. The Dashboard (Frontend): The Qt application uses gRPC to subscribe to standardized VSS signals (e.g., Vehicle.Speed).
+- **Pros:** The Qt app never sees a CAN ID. It only knows Vehicle.Speed. You can swap the STM32 for a Simulation or a different ECU without touching the UI code.
+- **Cons:** Requires running the Kuksa Databroker container; increases RAM usage by ~10-20MB.
 
-* Pros: The Qt app never sees a CAN ID. It only knows Vehicle.Speed. You can swap the STM32 for a Simulation or a different ECU without touching the UI code.
+## 3. VSS Schema Definition (drivapi.vss.json)
 
-* Cons: Requires running the Kuksa Databroker container; increases RAM usage by ~10-20MB.
+Based on our C++ code (vehicledata.hpp), we have mapped our member variables to standard VSS signals.
 
-3. VSS Schema Definition (drivapi.vss.json)
-Based on your C++ code (vehicledata.hpp), we have mapped your member variables to standard VSS signals.
-C++ VariableTypeProposed VSS PathNotesm_speedfloatVehicle.SpeedStandard signal. Unit: km/h.m_batteryintVehicle.Powertrain.TractionBattery.StateOfChargeStandard. Unit: Percent.m_energydoubleVehicle.Powertrain.TractionBattery.NetCapacityCustom mapping required if this represents "Energy Remaining" in kWh.m_gearQStringVehicle.Powertrain.Transmission.CurrentGearInt in VSS, requires mapping (0=P, 1=D, etc.) or custom string overlay.m_temperatureintVehicle.Cabin.HVAC.AmbientAirTemperatureStandard. Unit: Celsius.m_distanceintVehicle.TraveledDistanceStandard. Odometer.m_autonomousModeboolVehicle.ADAS.ActiveExtension needed.
+| C++ Variable | Type    | Proposed VSS Path                              | Notes                                                                 |
+|--------------|---------|------------------------------------------------|-----------------------------------------------------------------------|
+| m_speed     | float   | Vehicle.Speed                                  | Standard signal. Unit: km/h.                                          |
+| m_battery   | int     | Vehicle.Powertrain.TractionBattery.StateOfCharge | Standard. Unit: Percent.                                              |
+| m_energy    | double  | Vehicle.Powertrain.TractionBattery.NetCapacity | Custom mapping required if this represents "Energy Remaining" in kWh. |
+| m_gear      | QString | Vehicle.Powertrain.Transmission.CurrentGear    | Int in VSS, requires mapping (0=P, 1=D, etc.) or custom string overlay. |
+| m_temperature | int   | Vehicle.Cabin.HVAC.AmbientAirTemperature       | Standard. Unit: Celsius.                                              |
+| m_distance  | int     | Vehicle.TraveledDistance                       | Standard. Odometer.                                                   |
+| m_autonomousMode | bool | Vehicle.ADAS.Active                            | Extension needed.                                                     |
 
-Draft Schema Artifact:
+**Draft Schema Artifact:**
 
-```JSON
+```json
 {
   "Vehicle": {
     "children": {
-      "Speed": { "datatype": "float", "type": "Sensor", "unit": "m/s" },
-      "TraveledDistance": { "datatype": "float", "type": "Sensor", "unit": "m" },
+      "Speed": { "datatype": "float", "type": "Sensor", "unit": "km/h" },
+      "TraveledDistance": { "datatype": "float", "type": "Sensor", "unit": "km" },
       "Powertrain": {
         "children": {
           "TractionBattery": {
@@ -70,39 +75,48 @@ Draft Schema Artifact:
 }
 ```
 
+## 4. Performance & Latency Analysis
 
-
-4. Performance & Latency Analysis
 We utilized the kuksa-perf tool 1 to benchmark the Databroker on the RPi5 target hardware.
-Test Scenario:
 
-* Operation: streaming_publish -> Databroker -> subscribe
+**Test Scenario:**
 
-* Payload: Float (Speed)
+- **Operation:** streaming_publish -> Databroker -> subscribe
+- **Payload:** Float (Speed)
+- **Transport:** gRPC (HTTP/2) over localhost
 
-* Transport: gRPC (HTTP/2) over localhost
+**Results:**
 
-Results:
-MetricRaw SocketCAN (Current)Kuksa Databroker (Rust)Transport Latency~0.05 ms~0.15 ms (10th percentile)P99 Latency~0.10 ms
-1.20 ms 1
-Throughput>20k msg/sec~12k msg/secCPU Usage (1 Core)< 1%~3-5% (serialization overhead)
-Conclusion:
+| Metric            | Raw SocketCAN (Current) | Kuksa Databroker (Rust)        |
+|-------------------|-------------------------|--------------------------------|
+| Transport Latency | ~0.05 ms                | ~0.15 ms (10th percentile)     |
+| P99 Latency       | ~0.10 ms                | 1.20 ms 1                      |
+| Throughput        | >20k msg/sec            | ~12k msg/sec                   |
+| CPU Usage (1 Core)| < 1%                    | ~3-5% (serialization overhead) |
+
+**Conclusion:**
 While Kuksa introduces a ~10x relative increase in latency, the absolute latency of 1.2ms is orders of magnitude faster than the display refresh rate (60Hz = 16.6ms). It poses no issue for the dashboard.
 
-5. Implementation Roadmap (Qt Refactoring)
+## 5. Implementation Roadmap (Qt Refactoring)
+
 To move to this architecture, the qt_app source code requires specific refactoring.
-5.1 Remove CANReader
+
+### 5.1 Remove CANReader
+
 The CANReader class (canreader.cpp) is no longer needed in the GUI application. This logic should be moved to a standalone "Feeder" script (likely Python for ease of parsing, or Rust for safety).
-5.2 Update VehicleData to use QtGrpc
+
+### 5.2 Update VehicleData to use QtGrpc
+
 Instead of parsing bytes in handleCanMessage, the VehicleData class will initialize a gRPC client.
-Prerequisites:
 
-* Add Qt::Grpc and Qt::Protobuf to CMakeLists.txt.
+**Prerequisites:**
 
-* Generate C++ classes from kuksa/val/v1/val.proto using the Qt Protobuf compiler.
+- Add Qt::Grpc and Qt::Protobuf to CMakeLists.txt.
+- Generate C++ classes from kuksa/val/v1/val.proto using the Qt Protobuf compiler.
 
-Refactoring Logic:
-```C++
+**Refactoring Logic:**
+
+```cpp
 // OLD (Pure CAN)
 void VehicleData::handleCanMessage(const QByteArray &payload, uint32_t canId) {
     if (canId == SPEED_CAN_ID) {
@@ -127,24 +141,28 @@ void VehicleData::subscribeToSignals() {
 }
 ```
 
-5.3 Deployment Strategy (Docker)
+### 5.3 Deployment Strategy (Docker)
+
 On the RPi5, deploy the broker using the standard image mapping the config file:
+
 ```bash
-docker run -d --name kuksa-databroker
--p 55555:55555
--v $(pwd)/drivapi.vss.json:/etc/kuksa/drivapi.vss.json
-ghcr.io/eclipse-kuksa/kuksa-databroker:master
---metadata /etc/kuksa/drivapi.vss.json
+docker run -d --name kuksa-databroker \
+  -p 55555:55555 \
+  -v $(pwd)/drivapi.vss.json:/etc/kuksa/drivapi.vss.json \
+  ghcr.io/eclipse-kuksa/kuksa-databroker:master \
+  --metadata /etc/kuksa/drivapi.vss.json
 ```
 
+## 6. Risks & Mitigation
 
-6. Risks & Mitigation
-RiskImpactMitigationComplexityHigh. Adds Docker, gRPC, and Feeder service.Use kuksa-client (Python) for the feeder to keep complexity low initially.PerformanceLow. 1.2ms latency is acceptable.Keep "Emergency Stop" functionality on direct CAN/Hardware lines (bypass Kuksa).Stale DataMedium. Broker holds last value even if sensor dies.Implement a "Heartbeat" signal in VSS. If heartbeat stops, UI greys out.
+| Risk        | Impact  | Mitigation                                                                 |
+|-------------|---------|----------------------------------------------------------------------------|
+| Complexity | High    | Use kuksa-client (Python) for the feeder to keep complexity low initially. |
+| Performance| Low     | Keep "Emergency Stop" functionality on direct CAN/Hardware lines (bypass Kuksa). |
+| Stale Data | Medium  | Implement a "Heartbeat" signal in VSS. If heartbeat stops, UI greys out.  |
 
-7. Next Steps
+## 7. Next Steps
 
-	1. Commit VSS: Finalize drivapi.vss.json and push to repo.
-
-	2. Feeder Spike: Write a 50-line Python script using python-can and kuksa-client to bridge can0 to the broker.
-
-	3. Qt Spike: Create a branch of qt_app, strip CANReader, and implement QtGrpc client for just the Speed signal.
+1. Commit VSS: Finalize drivapi.vss.json and push to repo.
+2. Feeder Spike: Write a 50-line Python script using python-can and kuksa-client to bridge can0 to the broker.
+3. Qt Spike: Create a branch of qt_app, strip CANReader, and implement QtGrpc client for just the Speed signal.
