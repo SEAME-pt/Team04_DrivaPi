@@ -1,12 +1,15 @@
 DrivaPi Architecture Spike #194: Eclipse Kuksa Val & VSS Integration
+
 Status: Draft
+
 Date: December 03, 2025
+
 Context: Migration from "Pure CAN" (Direct QCanBus) to "Data Broker" (Kuksa VSS).
 
 1. Executive Summary
-This spike evaluates the architectural impact of replacing the current direct SocketCAN integration in DrivaPi with Eclipse Kuksa Val (Databroker).
-Recommendation: [TBD]
-
+This spike evaluates the architectural impact of replacing the current direct SocketCAN integration in DrivaPi with Eclipse Kuksa Val (Databroker). Currently, the application (qt_app) reads raw CAN frames directly via QCanBus. The proposed architecture introduces a middleware layer (Kuksa) to abstract hardware specifics using the Vehicle Signal Specification (VSS).
+Recommendation: Proceed with Kuksa Integration.
+While Kuksa introduces a latency overhead of approximately 1.2ms (P99) compared to raw SocketCAN 1, this is negligible for the dashboard visualization (Soft Real-Time) use case. The benefits of decoupling the Qt UI from specific CAN IDs and enabling cloud interoperability outweigh the performance cost.
 2. Problem Statement & Comparison
 2.1 Current State ("Pure CAN")
 Your current architecture allows the Qt application to act as both the Consumer (UI) and the Driver (CAN Reader).
@@ -33,7 +36,9 @@ The architecture splits into two distinct components:
 3. VSS Schema Definition (drivapi.vss.json)
 Based on your C++ code (vehicledata.hpp), we have mapped your member variables to standard VSS signals.
 C++ VariableTypeProposed VSS PathNotesm_speedfloatVehicle.SpeedStandard signal. Unit: km/h.m_batteryintVehicle.Powertrain.TractionBattery.StateOfChargeStandard. Unit: Percent.m_energydoubleVehicle.Powertrain.TractionBattery.NetCapacityCustom mapping required if this represents "Energy Remaining" in kWh.m_gearQStringVehicle.Powertrain.Transmission.CurrentGearInt in VSS, requires mapping (0=P, 1=D, etc.) or custom string overlay.m_temperatureintVehicle.Cabin.HVAC.AmbientAirTemperatureStandard. Unit: Celsius.m_distanceintVehicle.TraveledDistanceStandard. Odometer.m_autonomousModeboolVehicle.ADAS.ActiveExtension needed.
+
 Draft Schema Artifact:
+
 ```JSON
 {
   "Vehicle": {
