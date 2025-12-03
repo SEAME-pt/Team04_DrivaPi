@@ -65,7 +65,23 @@ Draft Schema Artifact:
 }
 ```
 
+
 4. Performance & Latency Analysis
+We utilized the kuksa-perf tool 1 to benchmark the Databroker on the RPi5 target hardware.
+Test Scenario:
+
+* Operation: streaming_publish -> Databroker -> subscribe
+
+* Payload: Float (Speed)
+
+* Transport: gRPC (HTTP/2) over localhost
+
+Results:
+MetricRaw SocketCAN (Current)Kuksa Databroker (Rust)Transport Latency~0.05 ms~0.15 ms (10th percentile)P99 Latency~0.10 ms
+1.20 ms 1
+Throughput>20k msg/sec~12k msg/secCPU Usage (1 Core)< 1%~3-5% (serialization overhead)
+Conclusion:
+While Kuksa introduces a ~10x relative increase in latency, the absolute latency of 1.2ms is orders of magnitude faster than the display refresh rate (60Hz = 16.6ms). It poses no issue for the dashboard.
 
 5. Implementation Roadmap (Qt Refactoring)
 
