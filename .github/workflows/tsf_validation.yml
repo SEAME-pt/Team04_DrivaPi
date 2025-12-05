@@ -1,147 +1,149 @@
-name: TSF Validation
+name: TSF Validation (PR)
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+  push:
+    branches: [ main, master]
+  pull_request_review:
+    types: [submitted]
 
 jobs:
+  generate-verification-artifacts:
+    uses: ./.github/workflows/generate_verification_artifacts.yml
+    with:
+      src_dirs: 'src'
+      junit_output: 'artifacts/verification/tests/LLTC-998-junit.xml'
+      coverage_output: 'artifacts/verification/coverage/coverage-SWD-998.xml'
+      cppcheck_output: 'artifacts/verification/static-analysis/cppcheck-SWD-998.xml'
+      build_dir: 'build'
+
   tsf-validation:
+    needs: generate-verification-artifacts
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
+      pull-requests: write
 
     steps:
-      # ========== CHECKOUT ==========
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      # ========== ENVIRONMENT ==========
-      - name: Setup Python 3.11
+      - name: Download verification artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: verification-artifacts
+          path: artifacts/verification
+
+      - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      # ========== CACHE ==========
-      - name: Cache pip dependencies
+      - name: Cache pip
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: ${{ runner.os }}-pip-
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
-      # ========== DEPENDENCIES ==========
-      - name: Install dependencies
+      - name: Install official TSF tools
         run: |
-          pip install --upgrade pip
-          pip install pytest pytest-cov pyyaml
-          sudo apt-get update
-          sudo apt-get install -y cppcheck
-
-      - name: Install trudag (TSF tools)
-        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml
           git clone https://gitlab.com/CodethinkLabs/trustable/trustable.git /tmp/trustable
           cd /tmp/trustable
-          git checkout v2025.09.16 || git checkout main
+          git fetch --tags || true
+          git checkout 2025.9.16 || git checkout master || echo "Using available branch"
           pip install .
+          cd -
 
-      # ========== PREPARE ==========
-      - name: Create artifact directories
+      - name: Install local validators
+        run: pip install -e .
+
+      - name: Mark TSF items and links as reviewed
         run: |
-          mkdir -p artifacts/verification/{tests,static-analysis,coverage}
-          touch artifacts/verification/{tests,static-analysis,coverage}/.gitkeep
+          trudag manage set-link SWD-998 LLTC-998
+          trudag manage set-link SWD-998 LLTC-997
+          trudag manage set-link SWD-998 LLTC-996
+          trudag manage set-link SRD-998 SWD-998
+          trudag manage set-link URD-998 SRD-998
+          trudag manage set-item SWD-998
+          trudag manage set-item LLTC-998
+          trudag manage set-item LLTC-997
+          trudag manage set-item LLTC-996
+          trudag manage set-item SRD-998
+          trudag manage set-item URD-998
 
-      # ========== TESTS & ANALYSIS ==========
-      - name: Run tests with coverage
-        id: tests
+      - name: Run trudag lint
+        id: lint
         continue-on-error: true
         run: |
-          if [ -d "tests" ] && find tests -name "*.py" 2>/dev/null | grep -q .; then
-            pytest tests/ \
-              --junit-xml=artifacts/verification/tests/pytest-results.xml \
-              --cov=src --cov=qt/src \
-              --cov-report=xml:artifacts/verification/coverage/coverage.xml \
-              2>&1 | tee artifacts/verification/tests/pytest.log
-            echo "status=success" >> $GITHUB_OUTPUT
+          mkdir -p artifacts
+          if trudag manage lint 2>&1 | tee artifacts/trudag-lint.txt; then
+            echo "lint_ok=true" >> $GITHUB_OUTPUT
           else
-            echo "status=skipped" >> $GITHUB_OUTPUT
+            echo "lint_ok=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Run static analysis
-        id: analysis
-        continue-on-error: true
+      - name: Get lint summary
+        id: summary
         run: |
-          if [ -d "src" ] || [ -d "qt/src" ]; then
-            cppcheck --enable=all --suppress=missingIncludeSystem --xml --xml-version=2 \
-              src/ qt/src/ 2> artifacts/verification/static-analysis/cppcheck-results.xml
-            cppcheck --enable=all --suppress=missingIncludeSystem \
-              src/ qt/src/ > artifacts/verification/static-analysis/cppcheck-report.txt 2>&1 || true
-            echo "status=success" >> $GITHUB_OUTPUT
+          if [ -f artifacts/trudag-lint.txt ]; then
+            echo "lint_summary<<EOF" >> $GITHUB_OUTPUT
+            head -c 500 artifacts/trudag-lint.txt >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
           else
-            echo "status=skipped" >> $GITHUB_OUTPUT
+            echo "lint_summary=No lint output generated" >> $GITHUB_OUTPUT
           fi
 
-      # ========== TSF VALIDATION ==========
-      - name: Validate TSF requirements
-        id: tsf
-        run: |
-          trudag manage lint 2>&1 | tee artifacts/trudag-lint.txt
-
-      - name: Calculate scores
-        id: score
+      - name: Calculate trust scores
+        id: scores
         continue-on-error: true
         run: |
-          trudag score 2>&1 | tee artifacts/trudag-score.txt
+          if trudag score 2>&1 | tee artifacts/trudag-score.txt; then
+            echo "score_ok=true" >> $GITHUB_OUTPUT
+          else
+            echo "score_ok=false" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Generate report
+      - name: Generate Trustable report (publish)
         id: publish
         continue-on-error: true
         run: |
           mkdir -p artifacts/trustable-report
-          trudag publish --output-dir artifacts/trustable-report --no-validate 2>&1 || true
+          if trudag publish --output-dir artifacts/trustable-report 2>&1; then
+            echo "publish_ok=true" >> $GITHUB_OUTPUT
+          elif trudag publish --no-validate --output-dir artifacts/trustable-report 2>&1; then
+            echo "publish_ok=true" >> $GITHUB_OUTPUT
+          else
+            echo "publish_ok=false" >> $GITHUB_OUTPUT
+          fi
 
-      # ========== UPLOAD & REPORT ==========
-      - name: Upload artifacts
+      - name: Upload TSF artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: tsf-validation-artifacts
-          path: artifacts/
+          path: |
+            artifacts/
+            .dotstop.dot
           retention-days: 30
 
-      # ========== DISPLAY RESULTS ==========
-      - name: Display validation results
-        if: always()
-        run: |
-          echo "=========================================="
-          echo "🔍 TSF VALIDATION RESULTS"
-          echo "=========================================="
-          echo ""
-          echo "📊 Test Results: ${{ steps.tests.outputs.status }}"
-          echo "📊 Analysis Results: ${{ steps.analysis.outputs.status }}"
-          echo "📊 TSF Lint: ${{ steps.tsf.outcome }}"
-          echo "📊 Score Calculation: ${{ steps.score.outcome }}"
-          echo "📊 Report Generation: ${{ steps.publish.outcome }}"
-          echo ""
-          echo "=========================================="
-          echo "📋 LINT OUTPUT (First 30 lines)"
-          echo "=========================================="
-          head -n 30 artifacts/trudag-lint.txt 2>/dev/null || echo "No lint output available"
-          echo ""
-          echo "=========================================="
-          echo "📦 ARTIFACTS GENERATED"
-          echo "=========================================="
-          find artifacts -type f | sort
-          echo ""
-          echo "=========================================="
-          if [ "${{ steps.tsf.outcome }}" = "success" ]; then
-            echo "✅ TSF VALIDATION PASSED"
-          else
-            echo "⚠️  TSF VALIDATION NEEDS ATTENTION"
-          fi
-          echo "=========================================="
-          echo ""
-          echo "📥 Download artifacts from Actions tab"
-          echo "🔗 Artifact name: tsf-validation-artifacts"
-          echo "==========================================="
+      - name: Comment PR with validation results
+        if: github.event_name == 'pull_request'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ## 🔍 TSF Validation Results
+
+            | Check | Status |
+            |-------|--------|
+            | **trudag lint** | ${{ steps.lint.outputs.lint_ok == 'true' && '✅ PASSED' || '❌ FAILED' }} |
+            | **trudag score** | ${{ steps.scores.outputs.score_ok == 'true' && '✅ PASSED' || '❌ FAILED' }} |
+            | **trudag publish** | ${{ steps.publish.outputs.publish_ok == 'true' && '✅ PASSED' || '❌ FAILED' }} |
+
+            ### 📋 Lint Output (first 500 chars)

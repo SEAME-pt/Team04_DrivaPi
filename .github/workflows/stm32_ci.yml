@@ -1,0 +1,41 @@
+name: STM32 CI (QEMU Simulation - split strategy)
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-firmware:
+    name: Build full STM32 firmware (compile only)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install ARM toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi make
+
+      - name: Show toolchain version
+        run: arm-none-eabi-gcc --version
+
+      - name: Build project (full STM32 firmware)
+        working-directory: Project/Debug
+        run: |
+          set -e
+          # build the original image (no QEMU target)
+          make -f makefile main-build -j$(nproc)
+          if [ ! -f Threadx.elf ]; then
+            echo "Error: Threadx.elf not found, build failed!"
+            exit 1
+          fi
+          echo "Full firmware built: Threadx.elf"
+          arm-none-eabi-readelf -h Threadx.elf || true
+          hexdump -C Threadx.elf | sed -n '1,4p' || true
+
+      - name: Upload Threadx.elf as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-elf
+          path: Project/Debug/Threadx.elf

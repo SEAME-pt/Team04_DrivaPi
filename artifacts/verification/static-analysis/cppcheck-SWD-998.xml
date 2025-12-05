@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<results version="2">
+    <cppcheck version="2.18.0"/>
+    <errors>
+        <error id="missingIncludeSystem" severity="information" msg="Include file: &lt;cstdint&gt; not found. Please note: Cppcheck does not need standard library headers to get proper results." verbose="Include file: &lt;cstdint&gt; not found. Please note: Cppcheck does not need standard library headers to get proper results.">
+            <location file="src/sensors/motor_speed.h" line="17" column="0"/>
+        </error>
+        <error id="missingIncludeSystem" severity="information" msg="Include file: &lt;chrono&gt; not found. Please note: Cppcheck does not need standard library headers to get proper results." verbose="Include file: &lt;chrono&gt; not found. Please note: Cppcheck does not need standard library headers to get proper results.">
+            <location file="src/sensors/motor_speed.cpp" line="2" column="0"/>
+        </error>
+        <error id="missingIncludeSystem" severity="information" msg="Include file: &lt;thread&gt; not found. Please note: Cppcheck does not need standard library headers to get proper results." verbose="Include file: &lt;thread&gt; not found. Please note: Cppcheck does not need standard library headers to get proper results.">
+            <location file="src/sensors/motor_speed.cpp" line="3" column="0"/>
+        </error>
+        <error id="unusedFunction" severity="style" msg="The function &apos;read_rpm&apos; is never used." verbose="The function &apos;read_rpm&apos; is never used." cwe="561">
+            <location file="src/sensors/motor_speed.cpp" line="32" column="23"/>
+            <symbol>read_rpm</symbol>
+        </error>
+        <error id="unusedFunction" severity="style" msg="The function &apos;get_last_rpm&apos; is never used." verbose="The function &apos;get_last_rpm&apos; is never used." cwe="561">
+            <location file="src/sensors/motor_speed.cpp" line="49" column="23"/>
+            <symbol>get_last_rpm</symbol>
+        </error>
+        <error id="unusedFunction" severity="style" msg="The function &apos;has_error&apos; is never used." verbose="The function &apos;has_error&apos; is never used." cwe="561">
+            <location file="src/sensors/motor_speed.cpp" line="56" column="24"/>
+            <symbol>has_error</symbol>
+        </error>
+        <error id="unusedFunction" severity="style" msg="The function &apos;clear_error&apos; is never used." verbose="The function &apos;clear_error&apos; is never used." cwe="561">
+            <location file="src/sensors/motor_speed.cpp" line="63" column="24"/>
+            <symbol>clear_error</symbol>
+        </error>
+        <error id="checkersReport" severity="information" msg="Active checkers: 169/966 (use --checkers-report=&lt;filename&gt; to see details)" verbose="Active checkers: 169/966 (use --checkers-report=&lt;filename&gt; to see details)"/>
+    </errors>
+</results>
