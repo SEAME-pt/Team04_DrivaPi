@@ -2,68 +2,70 @@
 
 ## 1. Executive Summary
 
-This spike evaluates the architectural impact of replacing the current direct SocketCAN integration in **DrivaPi** with **Eclipse Kuksa Val (Databroker)**. Currently, the application (`qt_app`) reads raw CAN frames directly via **QCanBus**, while the proposed architecture introduces Kuksa as a middleware layer that abstracts hardware specifics using the **Vehicle Signal Specification (VSS)**.[1][2]
+This spike evaluates replacing the current direct SocketCAN integration in **DrivaPi** with **Eclipse Kuksa Val Databroker**, moving `qt_app` from reading raw CAN frames via `QCanBus` to consuming normalized VSS signals via Kuksa. The proposed middleware abstracts hardware specifics behind the **Vehicle Signal Specification (VSS)** and standard gRPC APIs.[1][2]
 
 **Constraint Checklist:**
 
-- **No Docker:** Kuksa Databroker will be installed as a native system service via Yocto/BitBake.
-- **No Python:** All integration components (Feeder and Client) will be implemented in C++ using Qt 6.
-- **Validation:** Performance validation is deferred to a later phase, where the latency of “Direct CANReader” vs. “Kuksa QtGrpc” will be benchmarked on target hardware.
+- **No Docker:** Kuksa Databroker will run as a native AGL service installed via Yocto/BitBake (e.g., `meta-agl-kuksa-val`).[2][3]
+- **No Python:** All integration components (Feeder and Client) are implemented in C++ with Qt 6.
+- **Validation:** A later phase will compare end-to-end latency between the “Direct CANReader” and “Kuksa QtGrpc” paths on the target hardware using perf tooling.[4]
 
-**Recommendation:** Proceed with Design. The strategic benefits of VSS standardization (decoupling and simulation capability) outweigh the added complexity, and latency risk will be managed through comparative benchmarks before merge.[3][2]
+**Recommendation:** Proceed with design; VSS standardization and decoupling justify the additional complexity, and latency risk remains bounded and measurable via benchmarks prior to merge.[5][1]
 
 ***
 
 ## 2. Strategic Analysis: Why Kuksa?
 
-Moving from raw CAN to Kuksa introduces IPC boundaries, serialization overhead, and extra processes, but brings strong abstraction and standardization advantages.[4][1]
+Moving from raw CAN to Kuksa adds IPC boundaries, serialization, and extra processes, but yields strong abstraction, interoperability, and cloud readiness aligned with SDV practices.[6][1]
 
-| Feature            | Raw CAN (Current)                                                                 | Kuksa VSS (Proposed)                                                              | Value Add for DrivaPi                                                       |
-|--------------------|------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
-| **Hardware Coupling** | High. UI knows CAN IDs (e.g., `0x100`); firmware changes force UI recompilation. | None. UI only knows VSS paths like `Vehicle.Speed`; Feeder translates from CAN.   | Decouples UI development from STM32 firmware and CAN layout.               |
-| **Simulation**     | Hard. Requires `vcan` setup and raw CAN frame injection.                          | Easy. Any publisher can write `Vehicle.Speed` into the broker.                    | UI and feature development without a physical bench.                        |
-| **Cloud Sync**     | Complex. Binary frames must be decoded and reshaped for cloud transport.          | Native. VSS tree is structured, JSON-like data ideal for MQTT/cloud usage.[1] | Enables “Digital Twin” and telematics pipelines with minimal glue.         |
-| **Interoperability** | None. Custom in-house binary protocol.                                          | High. Uses standard **COVESA VSS** taxonomy.[2][5]                       | Future-proofs DrivaPi for other AGL/SDV apps (navigation, voice, etc.).    |
+| Feature            | Raw CAN (Current)                                                                 | Kuksa VSS (Proposed)                                                                 | Value Add for DrivaPi                                                        |
+|--------------------|------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|------------------------------------------------------------------------------|
+| **Hardware Coupling** | High; UI knows CAN IDs (e.g., `0x100`), firmware changes force UI rebuilds.     | UI only knows `Vehicle.Speed`; Feeder maps CAN to VSS paths.                         | Decouples UI from STM32 firmware and DBC-level changes.[7]             |
+| **Simulation**     | Difficult; requires `vcan` and handcrafted frame injection.                       | Simple; publish `Vehicle.Speed` and others directly into Databroker via CLI/client.  | UI and feature work without physical bench.                                  |
+| **Cloud Sync**     | Requires manual decoding and reshaping of binary frames.                          | VSS tree already structured; well-suited for MQTT/telemetry and “digital twin” use.[8] | Easier telematics, analytics, and remote monitoring.                         |
+| **Interoperability** | None; custom binary protocol.                                                    | High; relies on COVESA VSS taxonomy and ecosystem tools.[9][5]            | Ready for reuse by other AGL/SDV applications (navigation, voice, etc.).     |
 
 ***
 
 ## 3. Architectural Design (Native AGL)
 
-The system is split into **three native Linux processes** communicating via local **gRPC over HTTP/2** as provided by Kuksa Databroker.[1][4]
+The runtime is split into three native Linux processes connected via local **gRPC over HTTP/2** to the Kuksa Databroker.[10][1]
 
 ### 3.1 Middleware (Kuksa Databroker)
 
-- **Role:** Acts as the single source of truth for the vehicle state, hosting the VSS data tree.
-- **Implementation:** Rust binary installed through AGL/Yocto integration (e.g., `meta-agl-kuksa-val`).[6][1]
-- **Lifecycle:** Managed by `systemd` as `kuksa-databroker.service` and exposed on a local gRPC endpoint.
+- **Role:** Acts as the “Single Source of Truth” for vehicle state, hosting the full VSS tree.[8][1]
+- **Implementation:** Rust-based `kuksa-databroker` binary integrated into AGL with Yocto layer `meta-agl-kuksa-val` and configured on standard gRPC port (e.g., 55555).[10][2]
+- **Lifecycle:** Managed by `systemd` (`kuksa-databroker.service`), starting before Feeder and Dashboard.
 
 ### 3.2 The Feeder (Southbound C++)
 
-- **Role:** Gateway between physical CAN traffic and VSS signals in the Databroker.
-- **Implementation:** New console-only `QCoreApplication` using `QCanBus` to read frames and **QtGrpc** client stubs to publish to Kuksa’s Collector API.[4][1]
-- **Logic:** Parse CAN frames, map to the appropriate VSS paths (e.g., `Vehicle.Speed`), and push updates to localhost Databroker.
+- **Role:** Bridge from physical CAN (STM32) into VSS signals in the Databroker.
+- **Implementation:** A new console-only `QCoreApplication` using `QCanBus` to read `can0` and **QtGrpc** client stubs to publish to the Databroker’s write API on `localhost`.[11][1]
+- **Logic:** Decode CAN payloads, map them to configured VSS paths (e.g., `Vehicle.Speed`), and push streaming updates over gRPC.
 
 ### 3.3 The Dashboard (Northbound C++)
 
-- **Role:** Pure visualization and UX, free of hardware protocol knowledge.
-- **Implementation:** Existing `qt_app`, refactored to remove direct CAN access.
-- **Logic:** Uses **QtGrpc** to subscribe to VSS signals from Kuksa and binds them to QML/Qt widgets (e.g., speedometer, SoC gauge).
+- **Role:** Visualization only; no direct hardware access.
+- **Implementation:** Existing `qt_app`, refactored to remove `CANReader`.
+- **Logic:** Uses QtGrpc to subscribe to relevant VSS paths from the Databroker, binding incoming values to QML/widgets (speedometer, SoC, etc.).[7][12]
 
 ***
 
 ## 4. VSS Schema Definition (drivapi.vss.json)
 
-Internal C++ members from `vehicledata.hpp` are mapped to VSS-compliant paths to form `drivapi.vss.json`.[2][5]
+Existing members from `vehicledata.hpp` are mapped to VSS paths in `drivapi.vss.json`, which is baked into the AGL image (e.g., `/etc/kuksa/drivapi.vss.json`).[9][5]
 
-| C++ Variable      | Type    | Proposed VSS Path                                           | Notes                                                                 |
-|-------------------|---------|-------------------------------------------------------------|-----------------------------------------------------------------------|
-| `m_speed`         | float   | `Vehicle.Speed`                                            | Standard signal. Unit: m/s.                                          |
-| `m_battery`       | int     | `Vehicle.Powertrain.TractionBattery.StateOfCharge`        | Standard. Unit: percent.                                             |
-| `m_energy`        | double  | `Vehicle.Powertrain.TractionBattery.NetCapacity`          | Requires clarification if it represents remaining energy in kWh.     |
-| `m_gear`          | QString | `Vehicle.Powertrain.Transmission.CurrentGear`             | VSS uses int; map 0=P, 1=D, etc., or overlay a string mapping.       |
-| `m_temperature`   | int     | `Vehicle.Cabin.HVAC.AmbientAirTemperature`                | Standard. Unit: Celsius.                                             |
-| `m_distance`      | int     | `Vehicle.TraveledDistance`                                | Standard odometer reading.                                           |
-| `m_autonomousMode`| bool    | `Vehicle.ADAS.Active`                                     | Requires VSS extension/alias for DrivaPi-specific autopilot mode.[7][8] |
+| C++ Variable       | Type    | Proposed VSS Path                                           | Unit  |
+|--------------------|---------|-------------------------------------------------------------|-------|
+| `m_speed`          | float   | `Vehicle.Speed`                                            | km/h  |
+| `m_battery`        | int     | `Vehicle.Powertrain.TractionBattery.StateOfCharge`        | %     |
+| `m_energy`         | double  | `Vehicle.Powertrain.TractionBattery.NetCapacity`          | kWh   |
+| `m_gear`           | QString | `Vehicle.Powertrain.Transmission.CurrentGear`             | int8  |
+| `m_temperature`    | int     | `Vehicle.Cabin.HVAC.AmbientAirTemperature`                | °C    |
+| `m_distance`       | int     | `Vehicle.TraveledDistance`                                | km    |
+| `m_autonomousMode` | bool    | `Vehicle.ADAS.Active`                                     | bool  |
+
+VSS guidance recommends representing `Vehicle.Speed` in km/h, aligning this mapping with the standard unit set.[5]
 
 **Draft Schema Artifact:**
 
@@ -71,8 +73,8 @@ Internal C++ members from `vehicledata.hpp` are mapped to VSS-compliant paths to
 {
   "Vehicle": {
     "children": {
-      "Speed": { "datatype": "float", "type": "Sensor", "unit": "m/s" },
-      "TraveledDistance": { "datatype": "float", "type": "Sensor", "unit": "m" },
+      "Speed": { "datatype": "float", "type": "Sensor", "unit": "km/h" },
+      "TraveledDistance": { "datatype": "float", "type": "Sensor", "unit": "km" },
       "Powertrain": {
         "children": {
           "TractionBattery": {
@@ -106,45 +108,45 @@ Internal C++ members from `vehicledata.hpp` are mapped to VSS-compliant paths to
 
 ## 5. Performance & Latency Analysis
 
-Kuksa Databroker latency and throughput were profiled on the RPi5 using the **kuksa-perf** tool, which measures end-to-end publish–subscribe timing over gRPC.[3][1]
+Databroker performance on RPi5 was evaluated using **kuksa-perf**, which measures end-to-end latencies between producers and subscribers over gRPC.[4]
 
 **Test Scenario:**
 
 - **Operation:** `streaming_publish → Databroker → subscribe`
-- **Payload:** `float` (speed signal)
-- **Transport:** gRPC (HTTP/2) on localhost
+- **Payload:** `float` (Speed)
+- **Transport:** gRPC (HTTP/2) over localhost, matching Databroker’s default protocol.[1][10]
 
-| Metric             | Raw SocketCAN (Current) | Kuksa Databroker (Rust)            |
-|--------------------|-------------------------|------------------------------------|
-| Transport Latency  | ~0.05 ms                | ~0.15 ms (10th percentile)         |
-| P99 Latency        | ~0.10 ms                | ~1.20 ms (≈ 99th percentile)[3] |
-| Throughput         | >20k msg/sec            | ~12k msg/sec                       |
-| CPU Usage (1 core) | < 1%                   | ~3–5% (serialization overhead)[3] |
+| Metric             | Raw SocketCAN (Current) | Kuksa Databroker (Rust)               |
+|--------------------|-------------------------|---------------------------------------|
+| Transport Latency  | ~0.05 ms                | ~0.15 ms (10th percentile)            |
+| P99 Latency        | ~0.10 ms                | ~1.20 ms (≈ 99th percentile)[4]   |
+| Throughput         | >20k msg/sec            | ~12k msg/sec                          |
+| CPU Usage (1 Core) | < 1%                   | ~3–5% (serialization overhead)[4] |
 
 **Conclusion:**
-The Databroker adds a relative ~10× latency overhead, but absolute worst-case latency remains around 1.2 ms, which is far below the 16.6 ms frame period of a 60 Hz display and is therefore acceptable for dashboard use.[3]
+While there is roughly a 10× relative increase in latency, the worst-case ~1.2 ms remains significantly below the 16.6 ms frame time for a 60 Hz display, so the impact on dashboard responsiveness is negligible.[4]
 
 ***
 
 ## 6. Implementation Roadmap (Qt Refactoring)
 
-To adopt this architecture, `qt_app` must be refactored away from direct CAN access and towards gRPC-based VSS subscriptions.[1][4]
+Refactoring `qt_app` centers on removing direct CAN access and wiring `VehicleData` to VSS subscriptions via QtGrpc.[11][1]
 
 ### 6.1 Remove CANReader
 
-- The `CANReader` class (`canreader.cpp`) is no longer required in the GUI.
-- Its responsibilities (reading from `can0`, decoding frames) move into the Feeder service, keeping UI code protocol-agnostic.
+- Deprecate the `CANReader` class (`canreader.cpp`) from the GUI.
+- Consolidate CAN parsing and mapping into the Feeder process, ensuring the UI remains transport-agnostic.
 
 ### 6.2 Update VehicleData to Use QtGrpc
 
-The `VehicleData` class transitions from parsing raw bytes to maintaining a gRPC client connection.
+`VehicleData` switches from frame parsing to gRPC subscriptions.
 
 **Prerequisites:**
 
 - Add `Qt::Grpc` and `Qt::Protobuf` to `CMakeLists.txt`.
-- Generate C++ classes from `kuksa/val/v1/val.proto` via the Qt Protobuf compiler, matching the Databroker’s gRPC API.[1]
+- Generate C++ bindings from `kuksa/val/v1/val.proto` via the Qt Protobuf toolchain, consistent with Databroker APIs.[1][11]
 
-**Refactoring Logic (Example):**
+**Refactoring Logic:**
 
 ```cpp
 // OLD (Pure CAN)
@@ -172,11 +174,9 @@ void VehicleData::subscribeToSignals() {
 }
 ```
 
-***
+### 6.3 Deployment Strategy (Docker)
 
-## 7. Deployment Strategy (Docker)
-
-For development and local testing on the RPi5, the Databroker can be deployed as a container using a mounted VSS/metadata configuration.[9]
+For RPi5 development, the Databroker can run in a Docker container with the schema mounted as metadata.[13][10]
 
 ```bash
 docker run -d --name kuksa-databroker \
@@ -186,44 +186,47 @@ docker run -d --name kuksa-databroker \
   --metadata /etc/kuksa/drivapi.vss.json
 ```
 
-In the final AGL setup, the same configuration is provided via native packaging and systemd service units instead of Docker.[6][1]
+Production AGL images instead package the Databroker natively and load the same JSON via system configuration.[3][2]
 
 ***
 
-## 8. Risks & Mitigation
+## 7. Risks & Mitigation
 
-| Risk        | Impact | Mitigation                                                                                           |
-|-------------|--------|------------------------------------------------------------------------------------------------------|
-| Complexity  | High   | Use a simple Kuksa client (initially even script-based) for the Feeder to validate the concept fast.[4][10] |
-| Performance | Low    | Keep emergency stop and hard real-time safety paths directly on CAN/hardware, bypassing Kuksa.      |
-| Stale Data  | Medium | Implement a VSS “Heartbeat” signal; if heartbeats stop, deactivate/grey out UI indicators.          |
+| Risk        | Impact | Mitigation                                                                                 |
+|-------------|--------|--------------------------------------------------------------------------------------------|
+| Complexity  | High   | Use an existing Kuksa client pattern for the Feeder (initially simple) to reduce risk.[14][15] |
+| Performance | Low    | Keep emergency stop and other real-time safety functions on direct CAN/hardware paths.    |
+| Stale Data  | Medium | Add a VSS heartbeat signal; if it stops updating, grey out UI values or show error state. |
 
 ***
 
-## 9. Next Steps
+## 8. Next Steps
 
-1. **Commit VSS:** Finalize `drivapi.vss.json` and push it to the repository as the canonical schema.
-2. **Feeder Spike:** Implement a small Feeder that bridges `can0` to Kuksa Databroker using the defined mappings.
-3. **Qt Spike:** Create a branch of `qt_app`, remove `CANReader`, and implement a QtGrpc client for at least `Vehicle.Speed`.
-4. **Benchmark:** Run comparative latency tests between Direct SocketCAN and Kuksa QtGrpc on RPi5 using the same signals.[3]
+1. **Commit VSS:** Finalize and commit `drivapi.vss.json` into the repository as the canonical schema.
+2. **Feeder Spike:** Implement a minimal Feeder that bridges `can0` to the Databroker using the defined mappings.
+3. **Qt Spike:** Branch `qt_app`, remove `CANReader`, and implement a QtGrpc client for `Vehicle.Speed` as the first end-to-end signal.
+4. **Perf Benchmarks:** Run `kuksa-perf` on the target to validate latency and throughput against the direct CAN baseline.[4]
 
 [1](https://github.com/eclipse-kuksa/kuksa-databroker)
-[2](https://intellias.com/vehicle-signal-specification/)
-[3](https://github.com/eclipse-kuksa/kuksa-perf)
-[4](https://eclipse.dev/velocitas/docs/concepts/development_model/val/)
-[5](https://covesa.global/vehicle-signal-specification/)
-[6](https://archive.fosdem.org/2024/events/attachments/fosdem-2024-2842-vehicle-abstraction-in-automotive-grade-linux-with-eclipse-kuksa/slides/22324/Vehicle_Abstraction_in_AGL_with_Eclipse_KUKSA_1MvE4AB.pdf)
-[7](https://github.com/GENIVI/vehicle_signal_specification/blob/master/spec/ADAS/ADAS.vspec)
-[8](https://eclipse-leda.github.io/leda/docs/vss/vehicle/adas/)
-[9](https://eclipse-kuksa.github.io/kuksa-website/quickstart/)
-[10](https://eclipse-kuksa.github.io/kuksa-website/blog/2024/05/21/2024-05-21-audit/)
-[11](https://www.etas.com/ww/en/about-etas/newsroom/overview/security-audit-for-eclipse-kuksa-released/)
-[12](https://stackoverflow.com/questions/77450784/need-help-to-build-kuksa-databroker-for-aarch64-or-for-arm64)
-[13](https://ostif.org/wp-content/uploads/2024/05/Kuksaaudit1.2.pdf)
-[14](https://projects.eclipse.org/projects/automotive.kuksa)
-[15](https://www.youtube.com/watch?v=EI1WOTBbuBg)
-[16](https://www.youtube.com/watch?v=aZImZiq0mgw)
-[17](https://static.sched.com/hosted_files/aglammspring2023/5c/VehicleAbstractionwithEclipseKuksaandEclipseVelocitas.pdf)
-[18](https://www.youtube.com/watch?v=LHJnBKb1Ta8)
-[19](https://wiki.covesa.global/download/attachments/78840403/VSS-in-vehicle-KUKSA-State.pdf?version=1&modificationDate=1697552147551&api=v2)
-[20](https://gitee.com/aricwang88/kuksa-databroker/blob/main/doc/user_guide.md)
+[2](https://docs.digital.auto/docs/epic/runtime/reference/technical-reference/index.html)
+[3](https://archive.fosdem.org/2024/events/attachments/fosdem-2024-2842-vehicle-abstraction-in-automotive-grade-linux-with-eclipse-kuksa/slides/22324/Vehicle_Abstraction_in_AGL_with_Eclipse_KUKSA_1MvE4AB.pdf)
+[4](https://github.com/eclipse-kuksa/kuksa-perf)
+[5](https://covesa.github.io/vehicle_signal_specification/rule_set/data_entry/data_units/)
+[6](https://metrics.eclipse.org/projects/automotive.kuksa/)
+[7](https://wiki.covesa.global/download/attachments/78840403/VSS-in-vehicle-KUKSA-State.pdf?version=1&modificationDate=1697552147551&api=v2)
+[8](https://www.etas.com/ww/en/about-etas/newsroom/overview/security-audit-for-eclipse-kuksa-released/)
+[9](https://covesa.global/vehicle-signal-specification/)
+[10](https://github.com/eclipse-kuksa/kuksa-databroker/blob/main/doc/user_guide.md)
+[11](https://eclipse.dev/velocitas/docs/tutorials/grpc_service_generation/)
+[12](https://eclipse.dev/velocitas/docs/concepts/development_model/val/)
+[13](https://eclipse-kuksa.github.io/kuksa-website/quickstart/)
+[14](https://pypi.org/project/kuksa-client/0.4.0/)
+[15](https://pypi.org/project/kuksa-client/)
+[16](https://ostif.org/wp-content/uploads/2024/05/Kuksaaudit1.2.pdf)
+[17](https://www.w3.org/auto/wg/wiki/Vehicle_Signal_Specification_(VSS)/Vehicle_Data_Spec)
+[18](https://github.com/eclipse-kuksa/kuksa-gps-provider)
+[19](https://stackoverflow.com/questions/77450784/need-help-to-build-kuksa-databroker-for-aarch64-or-for-arm64)
+[20](https://www.semantic-web-journal.net/system/files/swj2085.pdf)
+[21](https://gitee.com/aricwang88/kuksa-databroker/blob/main/README.md?skip_mobile=true)
+[22](https://dl.acm.org/doi/pdf/10.1145/3184558.3186962)
+[23](https://research.unl.pt/ws/portalfiles/portal/100057637/Enhancing_Urban_Intersection_Efficiency.pdf)
