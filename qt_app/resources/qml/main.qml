@@ -78,7 +78,7 @@ Window {
 
                 // Left navigation arrow
                 Text {
-                    text: "⬅"
+                    text: "sinistra"
                     font.pixelSize: 50
                     color: "#00D66C"
                     anchors.left: parent.left
@@ -321,25 +321,6 @@ Window {
                         source: "qrc:/assets/headphones.svg"
                     }
                 }
-            }
-
-            // ============================================
-            // SIMULATION CONTROLS (Top Right) - COMPONENT
-            // ============================================
-            SimulationControls {
-                id: simulationControls
-                anchors.top: parent.top
-                anchors.right: parent.right
-                anchors.margins: 15
-                z: 100
-
-                isRunning: vehicleData.simulationRunning
-                simSpeed: vehicleData.simSpeed
-
-                onStartSimulation: vehicleData.startSimulation()
-                onStopSimulation: vehicleData.stopSimulation()
-                onIncreaseSpeed: vehicleData.increaseSimSpeed()
-                onDecreaseSpeed: vehicleData.decreaseSimSpeed()
             }
         }
     }
