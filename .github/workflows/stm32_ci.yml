@@ -64,3 +64,27 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             ❌ STM32 CI: Threadx.elf build failed. Check the workflow logs for details.
+
+      - name: Comment commit with build result (success)
+        if: ${{ success() && github.event_name == 'push' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: "✅ STM32 CI: Threadx.elf was built successfully."
+            });
+
+      - name: Comment commit with build result (failure)
+        if: ${{ failure() && github.event_name == 'push' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: "❌ STM32 CI: Threadx.elf build failed. Check the workflow logs for details."
+            });
