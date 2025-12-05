@@ -1,4 +1,0 @@
-../Core/Src/servo_motor.c:5:24:clamp_u16	3
-../Core/Src/servo_motor.c:11:5:Servo_SetAngle	4
-../Core/Src/servo_motor.c:39:5:Servo_Sweep	6
-../Core/Src/servo_motor.c:81:6:servo_motor	2

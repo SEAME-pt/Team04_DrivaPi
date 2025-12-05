@@ -1,4 +1,0 @@
-../Core/Src/servo_motor.c:5:24:clamp_u16	16	static
-../Core/Src/servo_motor.c:11:5:Servo_SetAngle	48	static
-../Core/Src/servo_motor.c:39:5:Servo_Sweep	48	static
-../Core/Src/servo_motor.c:81:6:servo_motor	56	static

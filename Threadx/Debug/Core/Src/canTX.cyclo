@@ -1,4 +1,0 @@
-../Core/Src/canTX.c:4:6:FloatToUint8	2
-../Core/Src/canTX.c:23:6:make_speed_status_msg	1
-../Core/Src/canTX.c:50:5:can_send	2
-../Core/Src/canTX.c:75:6:canTX	1

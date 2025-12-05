@@ -64,8 +64,8 @@ all: main-build
 main-build: Threadx.elf secondary-outputs
 
 # Tool invocations
-Threadx.elf Threadx.map: $(OBJS) $(USER_OBJS) /home/sheila/Desktop/Team04_DrivaPi/Threadx/STM32U585AIIXQ_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Threadx.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m33 -T"/home/sheila/Desktop/Team04_DrivaPi/Threadx/STM32U585AIIXQ_FLASH.ld" --specs=nosys.specs -Wl,-Map="Threadx.map" -Wl,--gc-sections -static -u _printf_float --specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Threadx.elf Threadx.map: $(OBJS) $(USER_OBJS) ../STM32U585AIIXQ_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "Threadx.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m33 -T"../STM32U585AIIXQ_FLASH.ld" --specs=nosys.specs -Wl,-Map="Threadx.map" -Wl,--gc-sections -static -u _printf_float --specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

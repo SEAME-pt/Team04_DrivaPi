@@ -1,9 +1,0 @@
-../Core/Src/dc_motor.c:9:24:clamp_u16	3
-../Core/Src/dc_motor.c:20:6:Motor_Stop	1
-../Core/Src/dc_motor.c:30:6:Motor_Forward	1
-../Core/Src/dc_motor.c:44:6:Motor_Backward	1
-../Core/Src/dc_motor.c:59:6:Motor_Left	1
-../Core/Src/dc_motor.c:72:6:Motor_Right	1
-../Core/Src/dc_motor.c:85:6:Motor_SetMotor	3
-../Core/Src/dc_motor.c:115:6:Motor_SetPWM	5
-../Core/Src/dc_motor.c:155:6:dc_motor	4
