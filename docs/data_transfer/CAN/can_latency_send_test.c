@@ -1,24 +1,42 @@
-#include "main.h"
-#include <stdint.h>
-#include <string.h>
+int main ()
+{
+    //existing code
+     HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
 
-uint32_t millis(void) {
-    return HAL_GetTick();  // Returns milliseconds since startup
+  HAL_FDCAN_Start(&hfdcan1);
+
+    while (1)   
+    {
+        HAL_Delay(1);
+    }
+    return 0;
 }
 
-void send_can_message(void) {
-    CAN_TxHeaderTypeDef txHeader;
-    uint8_t data[8] = {0};
-    uint32_t txMailbox;
+void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
+{
+    if (RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE)
+    {
+        FDCAN_RxHeaderTypeDef rxHeader;
+        uint8_t rxData[8];
 
-    // Fill CAN header
-    txHeader.StdId = 0x123;
-    txHeader.IDE = CAN_ID_STD;
-    txHeader.RTR = CAN_RTR_DATA;
-    txHeader.DLC = 4;  // 4 bytes for timestamp
+        if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &rxHeader, rxData) == HAL_OK)
+        {
+            // Optional: toggle LED or UART print
+            // HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
 
-    uint32_t timestamp = millis();
-    memcpy(data, &timestamp, sizeof(timestamp));
+            // Echo back immediately
+            FDCAN_TxHeaderTypeDef txHeader;
+            txHeader.Identifier = rxHeader.Identifier;
+            txHeader.IdType = rxHeader.IdType;
+            txHeader.TxFrameType = FDCAN_DATA_FRAME;
+            txHeader.DataLength = rxHeader.DataLength;
+            txHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
+            txHeader.BitRateSwitch = FDCAN_BRS_OFF;
+            txHeader.FDFormat = FDCAN_CLASSIC_CAN;
+            txHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
+            txHeader.MessageMarker = 0;
 
-    HAL_CAN_AddTxMessage(&hcan, &txHeader, data, &txMailbox);
+            HAL_FDCAN_AddMessageToTxFifoQ(hfdcan, &txHeader, rxData);
+        }
+    }
 }
