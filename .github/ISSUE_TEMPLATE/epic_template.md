@@ -3,12 +3,6 @@
 ## Summary / Business Objective
 Provide a high-level description of the epic and the business value it delivers. Explain why this work is important.
 
-## Priority
-- [ ] critical
-- [ ] high
-- [ ] medium
-- [ ] low
-
 ## User Stories (Issues)
 - [ ] # (link to user story 1)
 - [ ] # (link to user story 2)

@@ -21,7 +21,7 @@ jobs:
         run: arm-none-eabi-gcc --version
 
       - name: Build project (full STM32 firmware)
-        working-directory: Project/Debug
+        working-directory: Threadx/Debug
         run: |
           set -e
           # build the original image (no QEMU target)
@@ -38,4 +38,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: firmware-elf
-          path: Project/Debug/Threadx.elf
+          path: Threadx/Debug/Threadx.elf
