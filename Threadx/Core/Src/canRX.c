@@ -40,6 +40,6 @@ VOID canRX(ULONG initial_input)
             }
         }
 
-        tx_thread_sleep(50);
+        tx_thread_sleep(100);
     }
 }

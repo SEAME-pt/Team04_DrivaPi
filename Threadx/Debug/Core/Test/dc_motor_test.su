@@ -1,0 +1,2 @@
+../Core/Test/dc_motor_test.c:11:13:UART_Print	16	static
+../Core/Test/dc_motor_test.c:16:6:Motor_Test_High	144	static

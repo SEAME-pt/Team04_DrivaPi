@@ -82,19 +82,17 @@ VOID canTX(ULONG initial_input)
     while (1)
     {
     	HAL_UART_Transmit(&huart1, (uint8_t*)msg_tick, strlen(msg_tick), 10);
-        // Wait until sensor thread signals new data
+
         tx_event_flags_get(&event_flags, FLAG_SENSOR_UPDATE, TX_OR_CLEAR, &actual_flags, TX_NO_WAIT);
 
-        // Read speed safely with mutex
+
         tx_mutex_get(&speed_data_mutex, TX_WAIT_FOREVER);
         float speed = g_vehicle_speed;
         tx_mutex_put(&speed_data_mutex);
 
-        // Build CAN message and send
         make_speed_status_msg(&msg, speed);
 
-        // Optional: send additional periodic messages
         tx_thread_sleep(10);
-     // Sleep for a tick (ThreadX)
+
     }
 }

@@ -1,1 +1,9 @@
-../Core/Src/dc_motor.c:3:6:dc_motor	48	static
+../Core/Src/dc_motor.c:9:24:clamp_u16	16	static
+../Core/Src/dc_motor.c:20:6:Motor_Stop	16	static
+../Core/Src/dc_motor.c:30:6:Motor_Forward	32	static
+../Core/Src/dc_motor.c:44:6:Motor_Backward	32	static
+../Core/Src/dc_motor.c:59:6:Motor_Left	32	static
+../Core/Src/dc_motor.c:72:6:Motor_Right	32	static
+../Core/Src/dc_motor.c:85:6:Motor_SetMotor	48	static
+../Core/Src/dc_motor.c:115:6:Motor_SetPWM	40	static
+../Core/Src/dc_motor.c:155:6:dc_motor	56	static

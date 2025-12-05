@@ -23,7 +23,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "pca9685.h"
+#include "dc_motor.h"
+#include "servo_motor.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -71,6 +73,17 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
 
 	g_vehicle_speed = 0;
 
+	const char *msg = "\r\n=== DrivaPi ThreadX Init ===\r\n";
+	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+
+	msg = "Initializing PCA9685 devices...\r\n";
+	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+	PCA9685_Init_All_Devices();
+
+	msg = "Stopping motors...\r\n";
+	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+	Motor_Stop();
+
 	tx_queue_create(&queue_speed_cmd, "Speed Queue", sizeof(t_can_message)/sizeof(ULONG),
     memory_ptr, QUEUE_SIZE * sizeof(t_can_message));
     memory_ptr += QUEUE_SIZE * sizeof(t_can_message);
@@ -81,9 +94,15 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
 
 	tx_event_flags_create(&event_flags, "System Events");
 
+	msg = "Initializing threads...\r\n";
+	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
 	thread_init();
+
+	msg = "=== Init Complete ===\r\n\r\n";
+	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
   /* USER CODE END App_ThreadX_Init */
-	return ret;
+
+  return ret;
 }
 
   /**

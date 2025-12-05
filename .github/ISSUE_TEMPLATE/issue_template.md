@@ -10,11 +10,6 @@ Provide a short, clear description of the problem or task. Explain why this work
 - [ ] infra
 - [ ] spike / research
 
-## Priority
-- [ ] high
-- [ ] medium
-- [ ] low
-
 ## Dependencies
 ### Blocked by
 - [ ] # (link to issue this depends on)
@@ -41,9 +36,6 @@ Checklist describing repository/process conditions for merging (docs updated, te
 
 ## How to validate / Test steps
 Describe steps a reviewer or tester can follow to validate this work (commands, inputs, expected outputs, screenshots).
-
-## Estimate
-Estimated effort (e.g. hours, days, or story points):
 
 
 ---

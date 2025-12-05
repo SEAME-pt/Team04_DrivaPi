@@ -1,0 +1,11 @@
+../Core/Src/pca9685.c:16:13:UART_Printf	272	static
+../Core/Src/pca9685.c:25:6:UART_Print	16	static
+../Core/Src/pca9685.c:29:13:Software_Delay	24	static,ignoring_inline_asm
+../Core/Src/pca9685.c:36:26:PCA9685_SoftwareReset	32	static
+../Core/Src/pca9685.c:43:26:PCA9685_WriteReg	40	static
+../Core/Src/pca9685.c:54:26:PCA9685_ReadReg	48	static
+../Core/Src/pca9685.c:66:19:PCA9685_Init_Device	168	static
+../Core/Src/pca9685.c:109:19:PCA9685_SetPWM	72	static
+../Core/Src/pca9685.c:142:19:PCA9685_SetFrequency	48	static
+../Core/Src/pca9685.c:181:19:PCA9685_Sleep	32	static
+../Core/Src/pca9685.c:188:6:PCA9685_Init_All_Devices	72	static

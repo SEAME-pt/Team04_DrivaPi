@@ -76,8 +76,8 @@ typedef struct can_message_s
 #define FLAG_SENSOR_UPDATE	(1 << 2)
 #define THREAD_STACK_SIZE	1024
 #define QUEUE_SIZE         	10
-#define CMD_SPEED           0x101
-#define CMD_STEERING        0x102
+#define CMD_SPEED           44u
+#define CMD_STEERING        45u 
 
 /* USER CODE END PD */
 

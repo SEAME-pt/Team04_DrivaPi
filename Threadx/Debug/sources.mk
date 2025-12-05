@@ -25,6 +25,7 @@ SUBDIRS := \
 AZURE_RTOS/App \
 Core/Src \
 Core/Startup \
+Core/Test \
 Drivers/STM32U5xx_HAL_Driver/Src \
 Middlewares/ST/threadx/common/src \
 Middlewares/ST/threadx/ports/cortex_m33/gnu/src \
