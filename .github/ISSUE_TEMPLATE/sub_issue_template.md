@@ -14,13 +14,7 @@ Describe briefly what this sub-issue will deliver and why it is needed for the p
 - [ ] AC 1 (what must be true for this sub-issue to be considered done)
 - [ ] AC 2
 
-## 4 - Estimate
-- Estimated effort (hours/days/points):
-
-## 5 - Priority
-- `priority:high|medium|low`, `
-
-## 6 - Notes / Implementation details
+## 4 - Notes / Implementation details
 Add implementation notes, commands, links to design docs or files, and any test instructions.
 
 ---
