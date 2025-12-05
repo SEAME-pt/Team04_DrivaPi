@@ -1,4 +1,4 @@
-# DrivaPi Architecture Spike #194: Eclipse Kuksa Val & VSS Integration
+# DrivaPi Architecture Spike #194: Native AGL Kuksa & C++ Integration
 
 ## 1. Executive Summary
 
