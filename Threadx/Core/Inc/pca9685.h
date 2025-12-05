@@ -30,8 +30,8 @@ HAL_StatusTypeDef PCA9685_Init_Device(I2C_HandleTypeDef *hi2c, uint8_t addr7, co
 HAL_StatusTypeDef PCA9685_SetPWM(I2C_HandleTypeDef *hi2c, uint16_t addr, uint8_t channel, uint16_t on, uint16_t off);
 HAL_StatusTypeDef PCA9685_SetFrequency(I2C_HandleTypeDef *hi2c, uint8_t addr7, double freq);
 HAL_StatusTypeDef PCA9685_Sleep(I2C_HandleTypeDef *hi2c, uint16_t addr);
-void PCA9685_Init_All_Devices(void);
-void UART_Print(const char* msg);
+void              PCA9685_Init_All_Devices(void);
+void              UART_Print(const char* msg);
 
 
 extern I2C_HandleTypeDef hi2c3;
