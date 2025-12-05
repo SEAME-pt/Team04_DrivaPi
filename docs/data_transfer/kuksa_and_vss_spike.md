@@ -71,7 +71,7 @@ Existing C++ members from `vehicledata.hpp` are mapped to standard VSS signals, 
 | `m_temperature` | int  | `Vehicle.Cabin.HVAC.AmbientAirTemperature`                | °C   |
 | `m_autonomousMode` | bool | `Vehicle.ADAS.Active`                                   | bool |
 
-VSS explicitly defines `Vehicle.Speed` as a `float` sensor with unit `km/h`, matching this mapping.[13][14]
+VSS explicitly defines `Vehicle.Speed` as a `float` sensor with unit `m/s`, matching this mapping.[13][14]
 
 ***
 
