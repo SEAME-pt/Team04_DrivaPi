@@ -64,7 +64,7 @@ Existing C++ members from `vehicledata.hpp` are mapped to standard VSS signals, 
 
 | C++ Variable  | Type    | Proposed VSS Path                                           | Unit |
 |--------------|---------|-------------------------------------------------------------|------|
-| `m_speed`    | float   | `Vehicle.Speed`                                            | km/h |
+| `m_speed`    | float   | `Vehicle.Speed`                                            |  m/s |
 | `m_battery`  | int     | `Vehicle.Powertrain.TractionBattery.StateOfCharge`        | %    |
 | `m_energy`   | double  | `Vehicle.Powertrain.TractionBattery.NetCapacity`          | kWh  |
 | `m_gear`     | QString | `Vehicle.Powertrain.Transmission.CurrentGear`             | int8 |
@@ -89,7 +89,7 @@ Both implementations will log microsecond‑precision timestamps on the target s
 2. Signal emitted → slot invoked in UI thread.
 3. `VehicleData` is updated (end timer \(T_1\)).
 
-Latency A: \(\text{Latency}_A = T_1 - T_0\).
+Latency A: $\(\text{Latency}_A = T_1 - T_0\)$.
 
 **Scenario B (Proposed – Kuksa):**
 
@@ -98,11 +98,11 @@ Latency A: \(\text{Latency}_A = T_1 - T_0\).
 3. Kuksa processes message and notifies subscribers.
 4. Dashboard receives gRPC `OnUpdate` (end timer \(T_2\)).
 
-Latency B: \(\text{Latency}_B = T_2 - T_0\).
+Latency B: $\(\text{Latency}_B = T_2 - T_0\)$.
 
 ### 5.2 Success Criteria
 
-Overhead is acceptable if \(\text{Latency}_B < \text{Latency}_A + 16\text{ ms}\), corresponding to one 60 Hz display frame, meaning the added broker layer remains visually imperceptible.
+Overhead is acceptable if $\(\text{Latency}_B < \text{Latency}_A + 16\text{ ms}\)$, corresponding to one 60 Hz display frame, meaning the added broker layer remains visually imperceptible.
 
 ***
 
