@@ -16,6 +16,10 @@ parts/
 sdist/
 var/
 wheels/
+.cproject/
+.project/
+mxproject/
+.settings/
 *.egg-info/
 .installed.cfg
 *.egg
