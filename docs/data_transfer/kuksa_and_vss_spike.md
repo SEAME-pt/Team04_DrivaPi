@@ -3,9 +3,13 @@
 ## 1. Executive Summary
 
 This spike evaluates the architectural impact of replacing the current direct SocketCAN integration in DrivaPi with Eclipse Kuksa Val (Databroker). Currently, the application (qt_app) reads raw CAN frames directly via QCanBus. The proposed architecture introduces a middleware layer (Kuksa) to abstract hardware specifics using the Vehicle Signal Specification (VSS).
+Constraint Checklist:
 
-**Recommendation:** Proceed with Kuksa Integration.
-While Kuksa introduces a latency overhead of approximately 1.2ms (P99) compared to raw SocketCAN 1, this is negligible for the dashboard visualization (Soft Real-Time) use case. The benefits of decoupling the Qt UI from specific CAN IDs and enabling cloud interoperability outweigh the performance cost.
+No Docker: Kuksa Databroker will be installed as a native system service via Yocto/BitBake.
+No Python: All integration components (Feeder and Client) will be developed in C++ using Qt 6.
+Validation: Performance validation is deferred to a future phase where we will empirically compare the latency of the "Direct CANReader" vs. "Kuksa QtGrpc" implementations on the target hardware.
+
+**Recommendation:** Proceed with Design. The strategic benefits of VSS standardization (decoupling, simulation capability) outweigh the implementation complexity. The latency risk will be managed via a comparative benchmark before final merge.
 
 ## 2. Problem Statement & Comparison
 
