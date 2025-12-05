@@ -102,11 +102,11 @@ We map the existing C++ member variables from `vehicledata.hpp` to standard VSS 
 
 ## 5. Future Validation Strategy: Comparative Latency Test
 
-Since we are moving from a zero-copy (in-process) design to a multi-process design, we must measure the “Cost of Abstraction.” This test will be performed once the C++ implementation is ready.
+Since we are moving from a zero-copy (in-process) design to a multi-process design, we must measure the “Cost of Abstraction.” We will perform this test once the C++ implementation is ready.
 
 ### 5.1 Test Setup (AGL Target)
 
-Both versions of the application will be instrumented to log microsecond-precision timestamps.
+We will instrument both versions of the application to log microsecond-precision timestamps.
 
 **Scenario A (Current – Baseline):**
 
@@ -153,7 +153,7 @@ Create a simple `QCoreApplication` that bridges CAN to VSS.
 
 - **Input:** Use `QCanBusDevice` (reuse logic from `CANReader`).
 - **Output:** Use QtGrpc.
-- **Note:** Generate the C++ gRPC client code using `qt_add_grpc` in CMake against `kuksa/val/v1/val.proto`.
+- **Note:** Generate the C++ gRPC client code using `qt_add_grpc` in CMake against the `kuksa/val/v1/val.proto` definition.
 
 **Conceptual C++ Feeder Logic:**
 
@@ -179,13 +179,10 @@ if (frame.frameId() == 0x100) {
 
 ***
 
-## 7. Risks & Mitigation
+## 7. Risks
 
-| Risk        | Impact | Mitigation                                                                 |
-|-------------|--------|----------------------------------------------------------------------------|
-| Complexity  | High   | Use `kuksa-client` (Python) for the Feeder initially to keep complexity low. |
-| Performance | Low    | Keep “Emergency Stop” functionality on direct CAN/Hardware lines (bypass Kuksa). |
-| Stale Data  | Medium | Implement a “Heartbeat” signal in VSS. If heartbeat stops, the UI greys out. |
+- **Build Time:** Adding Rust dependencies (Kuksa) to the Yocto build can significantly increase compile times.
+- **Qt Version:** QtGrpc was introduced in Qt 6.5 (Tech Preview) and stabilized in 6.7, so the chosen AGL version must provide a compatible Qt 6 release.
 
 ***
 
