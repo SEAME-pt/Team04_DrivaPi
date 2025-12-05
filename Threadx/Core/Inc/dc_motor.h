@@ -35,9 +35,7 @@ extern "C" {
 
 
 void Motor_SetMotor(double value);
-
 void Motor_SetPWM(int32_t left_counts, int32_t right_counts);
-
 void Motor_Stop(void);
 void Motor_Forward(double speed);
 void Motor_Backward(double speed);
