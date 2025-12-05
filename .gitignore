@@ -16,10 +16,6 @@ parts/
 sdist/
 var/
 wheels/
-.cproject/
-.project/
-mxproject/
-.settings/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -136,3 +132,9 @@ secrets.yml
 .scratch/
 .local/
 .cache/
+
+# STM32 config
+*.cproject/
+*.project/
+*.mxproject/
+*.settings/
