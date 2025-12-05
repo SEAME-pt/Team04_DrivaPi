@@ -9,7 +9,7 @@ jobs:
     name: Build full STM32 firmware (compile only)
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       pull-requests: write
     steps:
       - name: Checkout repository
