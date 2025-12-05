@@ -8,6 +8,9 @@ jobs:
   build-firmware:
     name: Build full STM32 firmware (compile only)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -39,3 +42,25 @@ jobs:
         with:
           name: firmware-elf
           path: Threadx/Debug/Threadx.elf
+      
+      - name: Upload Threadx.elf as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-elf
+          path: Threadx/Debug/Threadx.elf
+
+      - name: Comment PR with build result (success)
+        if: ${{ success() && github.event_name == 'pull_request' }}
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ✅ STM32 CI: Threadx.elf was built successfully.
+
+      - name: Comment PR with build result (failure)
+        if: ${{ failure() && github.event_name == 'pull_request' }}
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ❌ STM32 CI: Threadx.elf build failed. Check the workflow logs for details.
