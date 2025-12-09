@@ -13,8 +13,7 @@
 
 uint64_t now_us() {
     return std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()
-    ).count();
+    std::chrono::steady_clock::now().time_since_epoch()).count();
 }
 
 void pack_uint64(uint64_t value, uint8_t *data) {
@@ -31,16 +30,23 @@ uint64_t unpack_uint64(const uint8_t *data) {
 
 int main() {
     int s = socket(PF_CAN, SOCK_RAW, CAN_RAW);
-    if (s < 0) { perror("socket"); return 1; }
+    if (s < 0) { 
+        perror("socket"); 
+        return 1; 
+    }
 
     struct ifreq ifr;
     strcpy(ifr.ifr_name, "can1");
-    if (ioctl(s, SIOCGIFINDEX, &ifr) < 0) { perror("ioctl"); return 1; }
+    if (ioctl(s, SIOCGIFINDEX, &ifr) < 0) { 
+        perror("ioctl"); 
+        return 1;
+    }
 
     struct sockaddr_can addr;
     addr.can_family = AF_CAN;
     addr.can_ifindex = ifr.ifr_ifindex;
-    if (bind(s, (struct sockaddr *)&addr, sizeof(addr)) < 0) { perror("bind"); return 1; }
+    if (bind(s, (struct sockaddr *)&addr, sizeof(addr)) < 0) 
+        perror("bind"); return 1;
 
     // Blocking reads
     // fcntl(s, F_SETFL, O_NONBLOCK); // do NOT use non-blocking for reliability
@@ -62,9 +68,14 @@ int main() {
         ssize_t n;
         do {
             n = write(s, &frame, sizeof(frame));
-            if (n < 0 && (errno == EAGAIN || errno == ENOBUFS)) usleep(100);
-            else if (n < 0) { perror("write"); break; }
-        } while (n != sizeof(frame));
+            if (n < 0 && (errno == EAGAIN || errno == ENOBUFS)) 
+                usleep(100);
+            else if (n < 0){ 
+                perror("write"); 
+                break; 
+            }
+        } 
+        while (n != sizeof(frame));
 
         // Wait for reply using poll()
         int poll_ret = poll(&pfd, 1, timeout_ms);
@@ -74,12 +85,12 @@ int main() {
                 uint64_t t1 = now_us();
                 uint64_t sent_time = unpack_uint64(rx.data);
                 std::cout << (t1 - sent_time) << std::endl;
-            } else {
+            } 
+            else
                 std::cout << "RX_ERROR" << std::endl;
-            }
-        } else {
+        } 
+        else
             std::cout << "TIMEOUT" << std::endl;
-        }
 
         usleep(100000); // 100ms between frames
     }

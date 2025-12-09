@@ -6,10 +6,11 @@
 
 int main(int argc, char* argv[]) {
     // Determine the file name based on the argument
-    std::string filename = "can_latency_log.txt";
-    if (argc > 1 && std::string(argv[1]) == "loopback") {
-        filename = "can_lat_loop_log.txt";
-    }
+    std::string filename = "can_rpi_to_stm_log.txt";
+    if (argc > 1 && std::string(argv[1]) == "rasp")
+        filename = "can_rpi_loopback_log.txt";
+    else if (argc > 1 && std::string(argv[1]) == "stm")
+        filename = "can_stm32_loopback_log.txt";
 
     std::ifstream infile(filename);
     if (!infile.is_open()) {
@@ -43,9 +44,8 @@ int main(int argc, char* argv[]) {
     if (count > 0) {
         double average = static_cast<double>(sum) / count;
         std::cout << "Average latency: " << average << " µs over " << count << " measurements\n";
-    } else {
+    } 
+    else
         std::cout << "No numeric data found in the file.\n";
-    }
-
     return 0;
 }
