@@ -13,20 +13,18 @@ This document describes CAN bus latency measurements performed on the Team04_Dri
 ### Round-Trip Latency (RTT)
 
 In this test, we measure **round-trip latency (RTT)**, which is the total time from:
-1. **Sending a message** from Raspberry Pi or STM32
-2. **Message traveling** through CAN bus to receiver (STM32 or loopback)
+1. **Sending a message** from Raspberry Pi
+2. **Message traveling** through CAN bus to receiver (STM32)
 3. **Receiver echoing back** the same message
 4. **Echo traveling back** through CAN bus
-5. **Raspberry Pi or STM32 receiving** the echoed message
+5. **Raspberry Pi receiving** the echoed message
 
 ### Internal Loopback Latency
 
-Additionally, we measure **STM32 internal loopback latency**, which is the time between:
+Additionally, we measure **STM32 and Raspberry Pi internal loopback latency**, which is the time between:
 1. **STM32 sending** a CAN frame
 2. **Frame going through the FDCAN peripheral and transceiver**
-3. **STM32 receiving its own frame back** (via hardware loopback or bus reflection)
-
-This measures the STM32's own CAN stack performance in isolation.
+3. **Receiving its own frame back** (via hardware loopback or bus reflection)
 
 ### Formulas
 
