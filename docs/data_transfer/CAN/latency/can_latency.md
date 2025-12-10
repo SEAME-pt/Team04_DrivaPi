@@ -62,7 +62,8 @@ Latency_one_way ≈ RTT / 2
   - CAN transceiver delays
   - STM32 firmware processing time
   - OS scheduling on both sides
-- **Test tool:** `can_latency_receive_test.cpp` on Raspberry Pi
+- **Test tool:** `can_latency_receive_test.cpp` on Raspberry Pi, `can_latency_send_test.c` on STM32  
+
 
 #### Configuration 2: Raspberry Pi Loopback (Software-Only)
 - **Path:** Raspberry Pi → Linux kernel SocketCAN → **immediate echo** → Raspberry Pi
