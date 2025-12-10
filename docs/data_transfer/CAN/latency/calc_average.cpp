@@ -5,7 +5,6 @@
 #include <cstdint>
 
 int main(int argc, char* argv[]) {
-    // Determine the file name based on the argument
     std::string filename = "can_rpi_to_stm_log.txt";
     if (argc > 1 && std::string(argv[1]) == "rasp")
         filename = "can_rpi_loopback_log.txt";
@@ -23,7 +22,6 @@ int main(int argc, char* argv[]) {
     int count = 0;
 
     while (std::getline(infile, line)) {
-        // Remove leading/trailing spaces
         line.erase(0, line.find_first_not_of(" \t\n\r"));
         line.erase(line.find_last_not_of(" \t\n\r") + 1);
 

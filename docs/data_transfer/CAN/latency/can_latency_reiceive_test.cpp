@@ -48,15 +48,12 @@ int main() {
     if (bind(s, (struct sockaddr *)&addr, sizeof(addr)) < 0) 
         perror("bind"); return 1;
 
-    // Blocking reads
-    // fcntl(s, F_SETFL, O_NONBLOCK); // do NOT use non-blocking for reliability
-
     struct can_frame frame, rx;
     frame.can_id = 0x123;
     frame.can_dlc = 8;
 
     const int iterations = 1000;
-    const int timeout_ms = 100;  // 100 ms timeout per frame
+    const int timeout_ms = 100;
 
     struct pollfd pfd = { s, POLLIN, 0 };
 
@@ -64,7 +61,6 @@ int main() {
         uint64_t t0 = now_us();
         pack_uint64(t0, frame.data);
 
-        // Send frame
         ssize_t n;
         do {
             n = write(s, &frame, sizeof(frame));
@@ -77,7 +73,6 @@ int main() {
         } 
         while (n != sizeof(frame));
 
-        // Wait for reply using poll()
         int poll_ret = poll(&pfd, 1, timeout_ms);
         if (poll_ret > 0 && (pfd.revents & POLLIN)) {
             int nr = read(s, &rx, sizeof(rx));
