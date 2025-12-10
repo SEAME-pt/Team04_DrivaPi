@@ -242,12 +242,13 @@ Breaking down the STM32↔RPi round-trip (789 µs median):
 - General-purpose OS scheduling introduces variability
 
 #### 4. **Hardware vs Software Determinism**
-| Platform | Jitter | Determinism Level |
+| Platform | Jitter*| Determinism Level |
 |----------|--------|-------------------|
 | STM32 Internal | 12 µs | ⭐⭐⭐⭐⭐ Excellent |
 | RPi Loopback | 199 µs | ⭐⭐⭐ Good |
 | STM32↔RPi | 16,014 µs | ⭐⭐ Acceptable |
 
+#### *variation in latency over time
 ---
 
 ## 🎯 Conclusions
@@ -260,7 +261,7 @@ Breaking down the STM32↔RPi round-trip (789 µs median):
 - No outliers or scheduling interference
 
 ✅ **Round-Trip Communication is Acceptable**
-- **Median RTT:** 789 µs (~395 µs one-way)
+- **Median Round-Trip Time (RTT):** 789 µs (~395 µs one-way)
 - Suitable for motor control loops (10–100 Hz)
 - Outliers caused by Linux scheduling, not CAN hardware
 
