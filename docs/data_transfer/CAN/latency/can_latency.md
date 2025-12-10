@@ -13,7 +13,7 @@ This document describes CAN bus latency measurements performed on the Team04_Dri
 ### Round-Trip Latency (RTT)
 
 In this test, we measure **round-trip latency (RTT)**, which is the total time from:
-1. **Sending a message** from Raspberry Pi
+1. **Sending a message** from Raspberry Pi or STM32
 2. **Message traveling** through CAN bus to receiver (STM32 or loopback)
 3. **Receiver echoing back** the same message
 4. **Echo traveling back** through CAN bus
