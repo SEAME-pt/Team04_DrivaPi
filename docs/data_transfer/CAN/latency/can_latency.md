@@ -17,7 +17,7 @@ In this test, we measure **round-trip latency (RTT)**, which is the total time f
 2. **Message traveling** through CAN bus to receiver (STM32 or loopback)
 3. **Receiver echoing back** the same message
 4. **Echo traveling back** through CAN bus
-5. **Raspberry Pi receiving** the echoed message
+5. **Raspberry Pi or STM32 receiving** the echoed message
 
 ### Internal Loopback Latency
 
