@@ -1,0 +1,81 @@
+name: "Update Verification Evidence"
+
+on:
+  workflow_run:
+    workflows: ["Unit Tests & TSF Artifacts", "CodeQL C Analysis for STM32"]
+    types:
+      - completed
+
+permissions:
+  contents: write
+
+jobs:
+  commit-evidence:
+    name: Commit Evidence to Branch
+    runs-on: ubuntu-latest
+    
+    if: >
+      ${{ github.event.workflow_run.conclusion == 'success' && 
+      github.event.workflow_run.event == 'pull_request' }}
+
+    steps:
+      - name: Checkout PR Branch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download Artifacts (GitHub CLI)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          WORKFLOW_NAME: ${{ github.event.workflow.name }}
+        run: |
+          mkdir -p artifacts/verification/coverage
+          mkdir -p artifacts/verification/tests
+          mkdir -p artifacts/verification/static-analysis
+
+          echo "📥 Processing workflow: $WORKFLOW_NAME"
+
+          # --- CASE 1: UNIT TESTS ---
+          if [[ "$WORKFLOW_NAME" == *"Unit Tests"* ]]; then
+            echo "🔍 Downloading Unit Test Artifacts..."
+            
+            # Download zip
+            gh run download $RUN_ID -n verification-artifacts -D temp_artifacts
+            
+            # Move files to correct repo structure
+            # Handle potential directory nesting in the artifact zip
+            cp temp_artifacts/coverage/coverage.xml artifacts/verification/coverage/ 2>/dev/null || cp temp_artifacts/coverage.xml artifacts/verification/coverage/
+            cp temp_artifacts/tests/junit_results.xml artifacts/verification/tests/ 2>/dev/null || cp temp_artifacts/junit_results.xml artifacts/verification/tests/
+            
+            rm -rf temp_artifacts
+          fi
+
+          # --- CASE 2: CODEQL ---
+          if [[ "$WORKFLOW_NAME" == *"CodeQL"* ]]; then
+            echo "🔍 Downloading CodeQL Artifacts..."
+            
+            gh run download $RUN_ID -n codeql-sarif-filtered -D temp_codeql
+            
+            # The SARIF artifact usually contains the file directly or in results/
+            find temp_codeql -name "*.sarif" -exec cp {} artifacts/verification/static-analysis/codeql.sarif \;
+            
+            rm -rf temp_codeql
+          fi
+          
+          echo "✅ Artifacts placed."
+          ls -R artifacts/verification
+
+      - name: Commit and Push Evidence
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(tsf): update verification evidence from ${{ github.event.workflow.name }} [skip ci]"
+          
+          file_pattern: |
+            artifacts/verification/coverage/coverage.xml
+            artifacts/verification/tests/junit_results.xml
+            artifacts/verification/static-analysis/codeql.sarif
+          
+          commit_user_name: "TSF Bot"
+          commit_user_email: "actions@github.com"
