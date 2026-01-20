@@ -1,4 +1,4 @@
-#include "kuksareader.hpp"
+#include "kuksa_reader.hpp"
 //QDateTime for latency testing - remove later
 #include <QDateTime>
 

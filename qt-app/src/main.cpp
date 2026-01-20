@@ -7,9 +7,12 @@
 #include <QPointer>
 #include <QCommandLineParser>
 #include <QCommandLineOption>
-#include "vehicledata.hpp"
-#include "canreader.hpp"
-#include "kuksareader.hpp"
+#include "vehicle_data.hpp"
+#include "can_reader.hpp"
+#include "kuksa_reader.hpp"
+#include "models/system_status.hpp"
+#include "models/notification_manager.hpp"
+#include "models/can_logger.hpp"
 
 int main(int argc, char *argv[])
 {
@@ -34,8 +37,15 @@ int main(int argc, char *argv[])
     // UI and Engine setup
     QQmlApplicationEngine engine;
     QScopedPointer<VehicleData> vehicleData(new VehicleData());
-    // Expose VehicleData to QML (keep ownership in C++)
+    QScopedPointer<SystemStatus> systemStatus(new SystemStatus());
+    QScopedPointer<NotificationManager> notificationManager(NotificationManager::instance());
+    QScopedPointer<CANLogger> canLogger(new CANLogger());
+    
+    // Expose models to QML (keep ownership in C++)
     engine.rootContext()->setContextProperty("vehicleData", vehicleData.data());
+    engine.rootContext()->setContextProperty("systemStatus", systemStatus.data());
+    engine.rootContext()->setContextProperty("notificationManager", notificationManager.data());
+    engine.rootContext()->setContextProperty("canLogger", canLogger.data());
 
     // Worker thread setup for data reading
     QThread *workerThread = new QThread(&app);

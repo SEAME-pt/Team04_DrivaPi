@@ -1,4 +1,4 @@
-#include "canreader.hpp"
+#include "can_reader.hpp"
 //QDateTime for latency testing - remove later
 #include <QDateTime>
 

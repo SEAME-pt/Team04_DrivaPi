@@ -1,324 +1,331 @@
-import QtQuick 2.15
-import QtQuick.Window 2.15
-import QtQuick.Controls 2.5
+import QtQuick
+import QtQuick.Window
+import QtQuick.Controls
+import QtQuick.Layouts
+import "screens"
 import "components"
+import "theme"
 
-Window {
+ApplicationWindow {
     id: root
     visible: true
-    width: 1280
-    height: 400
-    title: qsTr("SEA:ME HMI Dashboard")
-    color: "#1a1a1a"
-
+    width: 1920
+    height: 720
+    title: qsTr("DrivaPi HMI - Multi-Screen Infotainment")
+    color: AppTheme.colors.surface
+    
+    // Prevent resizing
     minimumWidth: width
     maximumWidth: width
     minimumHeight: height
     maximumHeight: height
-
-    // Layout properties
-    property int metricOffsetX: 390
-    property int metricVOffset: -6
-
-    // Update clock every second
-    Timer {
-        interval: 1000
-        running: true
-        repeat: true
-        onTriggered: {
-            currentTime.text = Qt.formatDateTime(new Date(), "hh:mm");
-        }
-    }
-
+    
+    // ====== KEYBOARD SHORTCUTS ======
     Shortcut {
         sequence: "Ctrl+Q"
         context: Qt.ApplicationShortcut
         onActivated: Qt.quit()
     }
-
-    // Background Image
-    Image {
-        id: backgroundImage
-        anchors.fill: parent
-        source: "qrc:/assets/InstrumentClusterBase.svg"
-        fillMode: Image.Stretch
-        z: 0
+    
+    Shortcut {
+        sequence: "Ctrl+D"
+        context: Qt.ApplicationShortcut
+        onActivated: {
+            // Toggle debug/diagnostics (placeholder for future)
+            console.log("[HMI] Debug shortcut triggered");
+        }
     }
-
-    Rectangle {
+    
+    // ====== MAIN LAYOUT ======
+    ColumnLayout {
         anchors.fill: parent
-        color: "transparent"
-        z: 1
-
-        Item {
+        spacing: 0
+        
+        // ====== CONTENT AREA (SwipeView with 5 screens) ======
+        SwipeView {
+            id: swipeView
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            currentIndex: tabBar.currentIndex
+            clip: true
+            
+            // Interactive swiping between screens
+            interactive: true
+            
+            // Screen 1: Cluster (Driving Display)
+            ClusterScreen {
+                id: clusterScreen
+            }
+            
+            // Screen 2: Navigation
+            NavigationScreen {
+                id: navigationScreen
+            }
+            
+            // Screen 3: Media Player
+            MediaScreen {
+                id: mediaScreen
+            }
+            
+            // Screen 4: Diagnostics
+            DiagnosticsScreen {
+                id: diagnosticsScreen
+            }
+            
+            // Screen 5: Settings
+            SettingsScreen {
+                id: settingsScreen
+            }
+        }
+        
+        // ====== BOTTOM NAVIGATION TAB BAR ======
+        TabBar {
+            id: tabBar
+            Layout.fillWidth: true
+            Layout.preferredHeight: 70
+            currentIndex: swipeView.currentIndex
+            position: TabBar.Footer
+            
+            // Styling
+            background: Rectangle {
+                color: AppTheme.colors.surfaceElevated
+                border.color: AppTheme.colors.divider
+                border.width: 1
+            }
+            
+            // Tab buttons
+            TabButton {
+                text: "Cluster"
+                font.pixelSize: AppTheme.typography.labelLarge
+                font.weight: Font.Medium
+                width: implicitWidth
+                
+                background: Rectangle {
+                    color: tabBar.currentIndex === 0 
+                        ? AppTheme.colors.primary 
+                        : "transparent"
+                    border.width: 0
+                }
+                
+                contentItem: Text {
+                    text: parent.text
+                    color: tabBar.currentIndex === 0 
+                        ? AppTheme.colors.text 
+                        : AppTheme.colors.textSecondary
+                    font: parent.font
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
+            
+            TabButton {
+                text: "Navigation"
+                font.pixelSize: AppTheme.typography.labelLarge
+                font.weight: Font.Medium
+                width: implicitWidth
+                
+                background: Rectangle {
+                    color: tabBar.currentIndex === 1 
+                        ? AppTheme.colors.primary 
+                        : "transparent"
+                }
+                
+                contentItem: Text {
+                    text: parent.text
+                    color: tabBar.currentIndex === 1 
+                        ? AppTheme.colors.text 
+                        : AppTheme.colors.textSecondary
+                    font: parent.font
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
+            
+            TabButton {
+                text: "Media"
+                font.pixelSize: AppTheme.typography.labelLarge
+                font.weight: Font.Medium
+                width: implicitWidth
+                
+                background: Rectangle {
+                    color: tabBar.currentIndex === 2 
+                        ? AppTheme.colors.primary 
+                        : "transparent"
+                }
+                
+                contentItem: Text {
+                    text: parent.text
+                    color: tabBar.currentIndex === 2 
+                        ? AppTheme.colors.text 
+                        : AppTheme.colors.textSecondary
+                    font: parent.font
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
+            
+            TabButton {
+                text: "Diagnostics"
+                font.pixelSize: AppTheme.typography.labelLarge
+                font.weight: Font.Medium
+                width: implicitWidth
+                
+                background: Rectangle {
+                    color: tabBar.currentIndex === 3 
+                        ? AppTheme.colors.primary 
+                        : "transparent"
+                }
+                
+                contentItem: Text {
+                    text: parent.text
+                    color: tabBar.currentIndex === 3 
+                        ? AppTheme.colors.text 
+                        : AppTheme.colors.textSecondary
+                    font: parent.font
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
+            
+            TabButton {
+                text: "Settings"
+                font.pixelSize: AppTheme.typography.labelLarge
+                font.weight: Font.Medium
+                width: implicitWidth
+                
+                background: Rectangle {
+                    color: tabBar.currentIndex === 4 
+                        ? AppTheme.colors.primary 
+                        : "transparent"
+                }
+                
+                contentItem: Text {
+                    text: parent.text
+                    color: tabBar.currentIndex === 4 
+                        ? AppTheme.colors.text 
+                        : AppTheme.colors.textSecondary
+                    font: parent.font
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
+        }
+    }
+    
+    // ====== STATUS BAR OVERLAY (TOP) ======
+    Rectangle {
+        id: statusBar
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 50
+        color: AppTheme.colors.surfaceElevated
+        border.color: AppTheme.colors.divider
+        border.width: 1
+        z: 100
+        
+        RowLayout {
             anchors.fill: parent
-
-            // ============================================
-            // TOP BAR
-            // ============================================
-            Item {
-                id: topBar
-                width: parent.width
-                height: 85
-                anchors.top: parent.top
-
-                // Time (far left)
+            anchors.margins: AppTheme.spacing.small
+            spacing: AppTheme.spacing.medium
+            
+            // Time (left)
+            Text {
+                text: Qt.formatDateTime(new Date(), "hh:mm:ss")
+                color: AppTheme.colors.text
+                font.pixelSize: AppTheme.typography.bodyMedium
+                
+                Timer {
+                    interval: 1000
+                    running: true
+                    repeat: true
+                    onTriggered: parent.text = Qt.formatDateTime(new Date(), "hh:mm:ss")
+                }
+            }
+            
+            Item { Layout.fillWidth: true }
+            
+            // Connection Status (right)
+            RowLayout {
+                spacing: AppTheme.spacing.small
+                
+                // Status indicator
+                Rectangle {
+                    width: 12
+                    height: 12
+                    radius: width / 2
+                    color: systemStatus.connectionState === "connected" 
+                        ? AppTheme.colors.online 
+                        : systemStatus.connectionState === "connecting"
+                        ? AppTheme.colors.warning
+                        : AppTheme.colors.offline
+                }
+                
                 Text {
-                    id: currentTime
-                    text: Qt.formatDateTime(new Date(), "hh:mm")
-                    font.pixelSize: 16
-                    font.family: "SF Pro Display"
-                    font.weight: Font.Light
-                    color: "#4A4A4A"
-                    anchors.left: parent.left
-                    anchors.leftMargin: 200
-                    anchors.top: parent.top
-                    anchors.topMargin: 18
-                }
-
-                // Left navigation arrow
-                Text {
-                    text: "sinistra"
-                    font.pixelSize: 50
-                    color: "#00D66C"
-                    anchors.left: parent.left
-                    anchors.leftMargin: 270
-                    anchors.top: parent.top
-                    anchors.topMargin: 8
-                }
-
-                // Gear selector (center) - COMPONENT
-                GearSelector {
-                    id: gearSelector
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.top: parent.top
-                    anchors.topMargin: 3
-                    z: 2
-
-                    currentGear: vehicleData.gear
-
-                    onGearUp: vehicleData.changeGearUp()
-                    onGearDown: vehicleData.changeGearDown()
-                }
-
-                // Right navigation arrow
-                Text {
-                    text: "➡"
-                    font.pixelSize: 50
-                    color: "#00D66C"
-                    anchors.right: parent.right
-                    anchors.rightMargin: 270
-                    anchors.top: parent.top
-                    anchors.topMargin: 8
-                }
-
-                // Temperature (top right)
-                Text {
-                    text: Math.round(vehicleData.temperature) + "°C"
-                    font.pixelSize: 16
-                    font.family: "SF Pro Display"
-                    font.weight: Font.Light
-                    color: "#4A4A4A"
-                    anchors.right: parent.right
-                    anchors.rightMargin: 200
-                    anchors.top: parent.top
-                    anchors.topMargin: 18
-                }
-
-                // Speed limit sign
-                Image {
-                    width: 75
-                    height: 75
-                    source: "qrc:/assets/roadSigns/Zeichen_274-62.svg.png"
-                    anchors.left: parent.left
-                    anchors.leftMargin: 40
-                    anchors.top: parent.top
-                    anchors.topMargin: 5
+                    text: systemStatus.connectionMode + " - " + systemStatus.frameRate + " fps"
+                    color: AppTheme.colors.text
+                    font.pixelSize: AppTheme.typography.bodySmall
                 }
             }
-
-            // ============================================
-            // LEFT - Speed Display - COMPONENT
-            // ============================================
-            SpeedDisplay {
-                id: speedDisplay
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.horizontalCenterOffset: -metricOffsetX
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.verticalCenterOffset: metricVOffset
-
-                speed: vehicleData.speed
-            }
-
-            // ============================================
-            // CENTER - Road View & Car
-            // ============================================
-            Item {
-                id: roadView
-                width: 660
-                height: 300
-                anchors.centerIn: parent
-                anchors.verticalCenterOffset: 15
-            }
-
-            Image {
-                width: 130
-                height: 140
-                source: "qrc:/assets/Car.svg"
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 50
-            }
-
-            // ============================================
-            // RIGHT - Energy Display - COMPONENT
-            // ============================================
-            EnergyDisplay {
-                id: energyDisplay
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.horizontalCenterOffset: metricOffsetX
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.verticalCenterOffset: metricVOffset
-
-                energy: vehicleData.energy
-            }
-
-            // ============================================
-            // BOTTOM BAR
-            // ============================================
-            Item {
-                width: parent.width
-                height: 85
-                anchors.bottom: parent.bottom
-
-                // Battery indicator (left) - COMPONENT
-                BatteryIndicator {
-                    id: batteryIndicator
-                    anchors.left: parent.left
-                    anchors.leftMargin: 50
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 28
-
-                    batteryLevel: vehicleData.battery
-                }
-
-                // Warning indicators (left-center)
-                Row {
-                    spacing: 15
-                    anchors.left: parent.left
-                    anchors.leftMargin: 200
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 28
-
-                    Image {
-                        width: 30
-                        height: 20
-                        opacity: 0.25
-                        anchors.verticalCenter: parent.verticalCenter
-                        source: "qrc:/assets/thirdRightIcon.svg"
-                    }
-
-                    Image {
-                        width: 30
-                        height: 20
-                        opacity: 0.25
-                        anchors.verticalCenter: parent.verticalCenter
-                        source: "qrc:/assets/SecondRightIcon.svg"
-                    }
-                }
-
-                // Distance counter (right-center)
-                Row {
-                    spacing: 15
-                    anchors.right: parent.right
-                    anchors.rightMargin: 200
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 28
-
-                    Text {
-                        text: Math.round(vehicleData.distance).toString()
-                        font.pixelSize: 16
-                        font.family: "SF Pro Display"
-                        color: "#FFFFFF"
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-
-                    Text {
-                        text: "KMS"
-                        font.pixelSize: 16
-                        font.family: "SF Pro Display"
-                        color: "#8A8A8A"
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-
-                    Text {
-                        text: "↻"
-                        font.pixelSize: 18
-                        color: "#6A6A6A"
-                        anchors.verticalCenter: parent.verticalCenter
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: vehicleData.resetTrip()
+        }
+        
+        // Adjust SwipeView to account for status bar
+        Component.onCompleted: swipeView.anchors.topMargin = statusBar.height
+    }
+    
+    // ====== NOTIFICATION TOAST CONTAINER (TOP-CENTER) ======
+    Rectangle {
+        id: notificationContainer
+        anchors.top: statusBar.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.topMargin: AppTheme.spacing.large
+        width: 400
+        height: childrenRect.height
+        color: "transparent"
+        z: 200
+        
+        Column {
+            width: parent.width
+            spacing: AppTheme.spacing.small
+            
+            // Dynamically create toasts from notificationManager.notifications
+            Repeater {
+                model: notificationManager.notifications
+                
+                Rectangle {
+                    width: notificationContainer.width
+                    height: 60
+                    radius: AppTheme.radius.medium
+                    
+                    // Color based on alert level
+                    color: {
+                        switch (modelData.level) {
+                        case 0: return AppTheme.colors.info        // Info
+                        case 1: return AppTheme.colors.warning     // Warning
+                        case 2: return AppTheme.colors.error       // Critical
+                        default: return AppTheme.colors.info
                         }
                     }
-                }
-
-                // Light & warning indicators (right)
-                Row {
-                    anchors.right: parent.right
-                    anchors.rightMargin: 50
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 24
-                    spacing: 15
-
-                    Image {
-                        width: 30
-                        height: 30
-                        opacity: 0.25
-                        anchors.verticalCenter: parent.verticalCenter
-                        source: "qrc:/assets/Low_beam_headlights_white.svg"
+                    
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.margins: AppTheme.spacing.medium
+                        spacing: AppTheme.spacing.medium
+                        
+                        Text {
+                            text: modelData.message
+                            color: AppTheme.colors.text
+                            font.pixelSize: AppTheme.typography.bodyMedium
+                            Layout.fillWidth: true
+                            wrapMode: Text.Wrap
+                        }
                     }
-
-                    Image {
-                        width: 22
-                        height: 22
-                        opacity: 0.15
-                        anchors.verticalCenter: parent.verticalCenter
-                        source: "qrc:/assets/warning.svg"
-                    }
-                }
-
-                // Drive mode indicators (bottom center)
-                Row {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: -2
-                    spacing: 80
-
-                    Image {
-                        width: 25
-                        height: 25
-                        opacity: 0.25
-                        anchors.verticalCenter: parent.verticalCenter
-                        source: "qrc:/assets/navigation.svg"
-                    }
-
-                    Image {
-                        width: 25
-                        height: 25
-                        opacity: 0.25
-                        anchors.verticalCenter: parent.verticalCenter
-                        source: "qrc:/assets/steering.svg"
-                    }
-
-                    Image {
-                        width: 40
-                        height: 40
-                        opacity: 0.25
-                        anchors.verticalCenter: parent.verticalCenter
-                        source: "qrc:/assets/headphones.svg"
+                    
+                    // Fade out animation
+                    NumberAnimation on opacity {
+                        from: 1.0
+                        to: 1.0
+                        duration: 0
                     }
                 }
             }

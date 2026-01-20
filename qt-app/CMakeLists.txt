@@ -40,19 +40,30 @@ file(GLOB_RECURSE APP_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
 )
 
-add_executable(myqtapp ${APP_SOURCES})
+# --- Model Sources (new in Phase 1) ---
+set(MODEL_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/models/system_status.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/models/notification_manager.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/models/can_logger.cpp"
+)
+
+add_executable(myqtapp ${APP_SOURCES} ${MODEL_SOURCES})
 
 target_include_directories(myqtapp PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/inc/models
     ${GEN_DIR}
 )
 
 target_sources(myqtapp PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/resources/qml.qrc"
     "${CMAKE_CURRENT_SOURCE_DIR}/resources/resources.qrc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/vehicle_data.hpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/can_reader.hpp"  
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/kuksa_reader.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/inc/vehicle_data.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/inc/can_reader.hpp"  
+    "${CMAKE_CURRENT_SOURCE_DIR}/inc/kuksa_reader.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/inc/models/system_status.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/inc/models/notification_manager.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/inc/models/can_logger.hpp"
     "${GEN_DIR}/val.pb.cc"
     "${GEN_DIR}/val.grpc.pb.cc"
     "${GEN_DIR}/types.pb.cc"

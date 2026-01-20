@@ -1,4 +1,7 @@
-#include "vehicledata.hpp"
+#include "vehicle_data.hpp"
+
+#include <cstring>
+#include <QStringList>
 
 // CAN ID that we agreed for speed
 static const uint32_t SPEED_CAN_ID = 0x100;

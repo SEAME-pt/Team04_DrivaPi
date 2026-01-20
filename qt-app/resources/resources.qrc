@@ -4,10 +4,10 @@
         <file>qml/main.qml</file>
 
         <!-- QML Components -->
-        <file>qml/components/SpeedDisplay.qml</file>
-        <file>qml/components/EnergyDisplay.qml</file>
-        <file>qml/components/GearSelector.qml</file>
-        <file>qml/components/BatteryIndicator.qml</file>
+        <file>qml/components/speed_display.qml</file>
+        <file>qml/components/energy_display.qml</file>
+        <file>qml/components/gear_selector.qml</file>
+        <file>qml/components/battery_indicator.qml</file>
 
         <!-- Main Assets -->
         <file>assets/InstrumentClusterBase.svg</file>
@@ -25,8 +25,5 @@
         <file>assets/navigation.svg</file>
         <file>assets/steering.svg</file>
         <file>assets/headphones.svg</file>
-
-        <!-- Road Signs -->
-        <file>assets/roadSigns/Zeichen_274-62.svg.png</file>
     </qresource>
 </RCC>

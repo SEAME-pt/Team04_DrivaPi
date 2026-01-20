@@ -2,10 +2,22 @@
     <qresource prefix="/">
         <!-- QML -->
         <file>qml/main.qml</file>
-        <file>qml/components/BatteryIndicator.qml</file>
-        <file>qml/components/EnergyDisplay.qml</file>
-        <file>qml/components/GearSelector.qml</file>
-        <file>qml/components/SpeedDisplay.qml</file>
+        
+        <!-- Components -->
+        <file>qml/components/battery_indicator.qml</file>
+        <file>qml/components/energy_display.qml</file>
+        <file>qml/components/gear_selector.qml</file>
+        <file>qml/components/speed_display.qml</file>
+        
+        <!-- Screens (Phase 1) -->
+        <file>qml/screens/ClusterScreen.qml</file>
+        <file>qml/screens/NavigationScreen.qml</file>
+        <file>qml/screens/MediaScreen.qml</file>
+        <file>qml/screens/DiagnosticsScreen.qml</file>
+        <file>qml/screens/SettingsScreen.qml</file>
+        
+        <!-- Theme (Phase 1) -->
+        <file>qml/theme/AppTheme.qml</file>
 
         <!-- Assets -->
         <file>assets/Low beam headlights.svg</file>
@@ -29,7 +41,6 @@
         <file>assets/SecondRightIcon_red.svg</file>
         <file>assets/thirdRightIcon_red.svg</file>
         <file>assets/InstrumentClusterBase.svg</file>
-        <file>assets/roadSigns/Zeichen_274-62.svg.png</file>
         <file>assets/headphones.svg</file>
         <file>assets/headphones_orange.svg</file>
         <file>assets/navigation.svg</file>
