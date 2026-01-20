@@ -16,6 +16,10 @@
         <file>qml/screens/DiagnosticsScreen.qml</file>
         <file>qml/screens/SettingsScreen.qml</file>
         
+        <!-- Screens (Phase 5) -->
+        <file>qml/screens/WeatherScreen.qml</file>
+        <file>qml/screens/UtilitiesScreen.qml</file>
+        
         <!-- Theme (Phase 1) -->
         <file>qml/theme/AppTheme.qml</file>
         <file>qml/theme/qmldir</file>
