@@ -23,60 +23,65 @@ Rectangle {
                 Layout.preferredHeight: 60
                 color: AppTheme.colors.surfaceVariant
                 
-                ColumnLayout {
+                RowLayout {
                     anchors.fill: parent
                     anchors.margins: AppTheme.spacing.medium
-                    spacing: AppTheme.spacing.xxSmall
+                    spacing: AppTheme.spacing.medium
                     
-                    Text {
-                        text: "Connection Mode"
-                        color: AppTheme.colors.text
-                        font.pixelSize: AppTheme.typography.labelLarge
-                        font.weight: Font.Bold
+                    Image {
+                        source: "qrc:/icons/hardware/network.svg"
+                        sourceSize.width: 20
+                        sourceSize.height: 20
+                        Layout.alignment: Qt.AlignVCenter
                     }
                     
-                    RowLayout {
-                        spacing: AppTheme.spacing.medium
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: AppTheme.spacing.xxSmall
                         
-                        // CAN button
-                        Rectangle {
-                            width: 60
-                            height: 32
-                            radius: AppTheme.radius.small
-                            color: AppTheme.colors.primary
-                            
-                            Text {
-                                text: "CAN"
-                                color: AppTheme.colors.text
-                                font.pixelSize: AppTheme.typography.labelSmall
-                                anchors.centerIn: parent
-                            }
+                        Text {
+                            text: "Connection Mode"
+                            color: AppTheme.colors.text
+                            font.pixelSize: AppTheme.typography.labelLarge
+                            font.weight: Font.Bold
                         }
-                        
-                        // KUKSA button
-                        Rectangle {
-                            width: 70
-                            height: 32
-                            radius: AppTheme.radius.small
-                            color: AppTheme.colors.surfaceElevated
+                    
+                        RowLayout {
+                            spacing: AppTheme.spacing.medium
                             
-                            Text {
-                                text: "KUKSA"
-                                color: AppTheme.colors.textSecondary
-                                font.pixelSize: AppTheme.typography.labelSmall
-                                anchors.centerIn: parent
+                            Rectangle {
+                                width: 60
+                                height: 32
+                                radius: AppTheme.radius.small
+                                color: AppTheme.colors.primary
+                                
+                                Text {
+                                    text: "CAN"
+                                    color: AppTheme.colors.text
+                                    font.pixelSize: AppTheme.typography.labelSmall
+                                    anchors.centerIn: parent
+                                }
+                            }
+                            
+                            Rectangle {
+                                width: 70
+                                height: 32
+                                radius: AppTheme.radius.small
+                                color: AppTheme.colors.surfaceElevated
+                                
+                                Text {
+                                    text: "KUKSA"
+                                    color: AppTheme.colors.textSecondary
+                                    font.pixelSize: AppTheme.typography.labelSmall
+                                    anchors.centerIn: parent
+                                }
                             }
                         }
                     }
                 }
             }
             
-            // ====== DIVIDER ======
-            Rectangle {
-                Layout.fillWidth: true
-                height: 1
-                color: AppTheme.colors.divider
-            }
+            Rectangle { Layout.fillWidth: true; height: 1; color: AppTheme.colors.divider }
             
             // ====== SECTION 2: Display ======
             Rectangle {
@@ -84,60 +89,85 @@ Rectangle {
                 Layout.preferredHeight: 60
                 color: AppTheme.colors.surface
                 
-                ColumnLayout {
+                RowLayout {
                     anchors.fill: parent
                     anchors.margins: AppTheme.spacing.medium
-                    spacing: AppTheme.spacing.xxSmall
+                    spacing: AppTheme.spacing.medium
                     
-                    Text {
-                        text: "Display Mode"
-                        color: AppTheme.colors.text
-                        font.pixelSize: AppTheme.typography.labelLarge
-                        font.weight: Font.Bold
+                    Image {
+                        source: "qrc:/icons/settings/display.svg"
+                        sourceSize.width: 20
+                        sourceSize.height: 20
+                        Layout.alignment: Qt.AlignVCenter
                     }
                     
-                    RowLayout {
-                        spacing: AppTheme.spacing.medium
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: AppTheme.spacing.xxSmall
                         
-                        // Dark mode button
-                        Rectangle {
-                            width: 60
-                            height: 32
-                            radius: AppTheme.radius.small
-                            color: AppTheme.colors.surfaceElevated
-                            
-                            Text {
-                                text: "🌙 Dark"
-                                color: AppTheme.colors.text
-                                font.pixelSize: AppTheme.typography.labelSmall
-                                anchors.centerIn: parent
-                            }
+                        Text {
+                            text: "Display Mode"
+                            color: AppTheme.colors.text
+                            font.pixelSize: AppTheme.typography.labelLarge
+                            font.weight: Font.Bold
                         }
-                        
-                        // Light mode button
-                        Rectangle {
-                            width: 60
-                            height: 32
-                            radius: AppTheme.radius.small
-                            color: AppTheme.colors.surfaceVariant
+                    
+                        RowLayout {
+                            spacing: AppTheme.spacing.medium
                             
-                            Text {
-                                text: "☀️ Light"
-                                color: AppTheme.colors.textSecondary
-                                font.pixelSize: AppTheme.typography.labelSmall
-                                anchors.centerIn: parent
+                            Rectangle {
+                                width: 80
+                                height: 32
+                                radius: AppTheme.radius.small
+                                color: AppTheme.colors.surfaceElevated
+                                
+                                RowLayout {
+                                    anchors.centerIn: parent
+                                    spacing: 4
+                                    
+                                    Image {
+                                        source: "qrc:/icons/settings/theme-dark.svg"
+                                        sourceSize.width: 14
+                                        sourceSize.height: 14
+                                    }
+                                    
+                                    Text {
+                                        text: "Dark"
+                                        color: AppTheme.colors.text
+                                        font.pixelSize: AppTheme.typography.labelSmall
+                                    }
+                                }
+                            }
+                            
+                            Rectangle {
+                                width: 80
+                                height: 32
+                                radius: AppTheme.radius.small
+                                color: AppTheme.colors.surfaceVariant
+                                
+                                RowLayout {
+                                    anchors.centerIn: parent
+                                    spacing: 4
+                                    
+                                    Image {
+                                        source: "qrc:/icons/settings/theme-light.svg"
+                                        sourceSize.width: 14
+                                        sourceSize.height: 14
+                                    }
+                                    
+                                    Text {
+                                        text: "Light"
+                                        color: AppTheme.colors.textSecondary
+                                        font.pixelSize: AppTheme.typography.labelSmall
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
             
-            // ====== DIVIDER ======
-            Rectangle {
-                Layout.fillWidth: true
-                height: 1
-                color: AppTheme.colors.divider
-            }
+            Rectangle { Layout.fillWidth: true; height: 1; color: AppTheme.colors.divider }
             
             // ====== SECTION 3: Audio ======
             Rectangle {
@@ -145,60 +175,140 @@ Rectangle {
                 Layout.preferredHeight: 60
                 color: AppTheme.colors.surfaceVariant
                 
-                ColumnLayout {
+                RowLayout {
                     anchors.fill: parent
                     anchors.margins: AppTheme.spacing.medium
-                    spacing: AppTheme.spacing.small
+                    spacing: AppTheme.spacing.medium
                     
-                    Text {
-                        text: "Audio Volume"
-                        color: AppTheme.colors.text
-                        font.pixelSize: AppTheme.typography.labelLarge
-                        font.weight: Font.Bold
+                    Image {
+                        source: "qrc:/icons/controls/volume-high.svg"
+                        sourceSize.width: 20
+                        sourceSize.height: 20
+                        Layout.alignment: Qt.AlignVCenter
                     }
                     
-                    RowLayout {
+                    ColumnLayout {
+                        Layout.fillWidth: true
                         spacing: AppTheme.spacing.small
                         
                         Text {
-                            text: "🔇"
-                            font.pixelSize: 14
+                            text: "Audio Volume"
+                            color: AppTheme.colors.text
+                            font.pixelSize: AppTheme.typography.labelLarge
+                            font.weight: Font.Bold
                         }
                         
-                        Rectangle {
-                            Layout.fillWidth: true
-                            height: 4
-                            radius: 2
-                            color: AppTheme.colors.surfaceElevated
+                        RowLayout {
+                            spacing: AppTheme.spacing.small
+                            
+                            Image {
+                                source: "qrc:/icons/controls/volume-mute.svg"
+                                sourceSize.width: 16
+                                sourceSize.height: 16
+                            }
                             
                             Rectangle {
-                                width: parent.width * 0.6
-                                height: parent.height
+                                Layout.fillWidth: true
+                                height: 4
                                 radius: 2
-                                color: AppTheme.colors.primary
+                                color: AppTheme.colors.surfaceElevated
+                                
+                                Rectangle {
+                                    width: parent.width * 0.6
+                                    height: parent.height
+                                    radius: 2
+                                    color: AppTheme.colors.primary
+                                }
                             }
-                        }
-                        
-                        Text {
-                            text: "🔊"
-                            font.pixelSize: 14
+                            
+                            Image {
+                                source: "qrc:/icons/controls/volume-high.svg"
+                                sourceSize.width: 16
+                                sourceSize.height: 16
+                            }
                         }
                     }
                 }
             }
             
-            // ====== DIVIDER ======
+            Rectangle { Layout.fillWidth: true; height: 1; color: AppTheme.colors.divider }
+            
+            // ====== SECTION 4: Connectivity ======
             Rectangle {
                 Layout.fillWidth: true
-                height: 1
-                color: AppTheme.colors.divider
+                Layout.preferredHeight: 90
+                color: AppTheme.colors.surface
+                
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.margins: AppTheme.spacing.medium
+                    spacing: AppTheme.spacing.medium
+                    
+                    Image {
+                        source: "qrc:/icons/settings/wifi.svg"
+                        sourceSize.width: 20
+                        sourceSize.height: 20
+                        Layout.alignment: Qt.AlignTop
+                    }
+                    
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: AppTheme.spacing.small
+                        
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: AppTheme.spacing.small
+                            
+                            Text {
+                                text: "WiFi"
+                                color: AppTheme.colors.text
+                                font.pixelSize: AppTheme.typography.labelLarge
+                                font.weight: Font.Bold
+                                Layout.fillWidth: true
+                            }
+                            
+                            Image {
+                                source: "qrc:/icons/settings/toggle-on.svg"
+                                sourceSize.width: 40
+                                sourceSize.height: 20
+                            }
+                        }
+                        
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: AppTheme.spacing.small
+                            
+                            Image {
+                                source: "qrc:/icons/settings/bluetooth.svg"
+                                sourceSize.width: 16
+                                sourceSize.height: 16
+                            }
+                            
+                            Text {
+                                text: "Bluetooth"
+                                color: AppTheme.colors.text
+                                font.pixelSize: AppTheme.typography.labelLarge
+                                font.weight: Font.Bold
+                                Layout.fillWidth: true
+                            }
+                            
+                            Image {
+                                source: "qrc:/icons/settings/toggle-off.svg"
+                                sourceSize.width: 40
+                                sourceSize.height: 20
+                            }
+                        }
+                    }
+                }
             }
             
-            // ====== SECTION 4: Developer ======
+            Rectangle { Layout.fillWidth: true; height: 1; color: AppTheme.colors.divider }
+            
+            // ====== SECTION 5: Developer ======
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 60
-                color: AppTheme.colors.surface
+                color: AppTheme.colors.surfaceVariant
                 
                 ColumnLayout {
                     anchors.fill: parent
@@ -216,7 +326,6 @@ Rectangle {
                             Layout.fillWidth: true
                         }
                         
-                        // Toggle switch
                         Rectangle {
                             width: 50
                             height: 28
@@ -242,14 +351,9 @@ Rectangle {
                 }
             }
             
-            // ====== DIVIDER ======
-            Rectangle {
-                Layout.fillWidth: true
-                height: 1
-                color: AppTheme.colors.divider
-            }
+            Rectangle { Layout.fillWidth: true; height: 1; color: AppTheme.colors.divider }
             
-            // ====== SECTION 5: About ======
+            // ====== SECTION 6: About ======
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 100
@@ -312,7 +416,6 @@ Rectangle {
                 }
             }
             
-            // ====== SPACING AT BOTTOM ======
             Item {
                 Layout.fillWidth: true
                 Layout.preferredHeight: AppTheme.spacing.large

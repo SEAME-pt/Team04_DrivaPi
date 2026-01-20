@@ -27,10 +27,11 @@ Rectangle {
                 ColumnLayout {
                     spacing: AppTheme.spacing.xxSmall
                     
-                    Text {
-                        text: "↗"  // Turn right arrow (can use SVG icons later)
-                        color: AppTheme.colors.primary
-                        font.pixelSize: 32
+                    Image {
+                        source: "qrc:/icons/navigation/turn-right.svg"
+                        sourceSize.width: 36
+                        sourceSize.height: 36
+                        Layout.alignment: Qt.AlignHCenter
                     }
                     
                     Text {
@@ -61,6 +62,49 @@ Rectangle {
                 }
                 
                 Item { Layout.fillWidth: true }
+                
+                // Weather badge
+                RowLayout {
+                    spacing: AppTheme.spacing.xsmall
+                    Layout.alignment: Qt.AlignVCenter
+                    
+                    Image {
+                        id: weatherIcon
+                        source: "qrc:/icons/weather/sun.svg"
+                        sourceSize.width: 18
+                        sourceSize.height: 18
+                    }
+                    
+                    Text {
+                        text: "24°C"
+                        color: AppTheme.colors.text
+                        font.pixelSize: AppTheme.typography.labelMedium
+                        font.weight: Font.Medium
+                    }
+                    
+                    // Quick weather info (expandable)
+                    Rectangle {
+                        width: 1
+                        height: 20
+                        color: AppTheme.colors.divider
+                    }
+                    
+                    RowLayout {
+                        spacing: 4
+                        
+                        Image {
+                            source: "qrc:/icons/weather/cloud.svg"
+                            sourceSize.width: 14
+                            sourceSize.height: 14
+                        }
+                        
+                        Text {
+                            text: "15% chance"
+                            color: AppTheme.colors.textSecondary
+                            font.pixelSize: AppTheme.typography.labelSmall
+                        }
+                    }
+                }
                 
                 // Street name
                 Text {
@@ -130,18 +174,29 @@ Rectangle {
                         }
                         
                         // Car icon (center)
-                        Text {
-                            text: "🚗"
-                            font.pixelSize: 40
+                        Image {
+                            source: "qrc:/icons/cluster/car.svg"
+                            sourceSize.width: 48
+                            sourceSize.height: 48
                             Layout.alignment: Qt.AlignHCenter
                         }
                         
                         // Destination info
-                        Text {
-                            text: "Navigation Map (Placeholder)"
-                            color: AppTheme.colors.textSecondary
-                            font.pixelSize: AppTheme.typography.bodySmall
+                        RowLayout {
+                            spacing: AppTheme.spacing.xsmall
                             Layout.alignment: Qt.AlignHCenter
+                            
+                            Image {
+                                source: "qrc:/icons/navigation/compass.svg"
+                                sourceSize.width: 20
+                                sourceSize.height: 20
+                            }
+                            
+                            Text {
+                                text: "Navigation Map (Placeholder)"
+                                color: AppTheme.colors.textSecondary
+                                font.pixelSize: AppTheme.typography.bodySmall
+                            }
                         }
                         
                         Text {
@@ -171,11 +226,22 @@ Rectangle {
                     spacing: 2
                     Layout.fillWidth: true
                     
-                    Text {
-                        text: "14:23"
-                        color: AppTheme.colors.text
-                        font.pixelSize: AppTheme.typography.bodyMedium
-                        font.weight: Font.Bold
+                    RowLayout {
+                        spacing: 4
+                        Layout.alignment: Qt.AlignHCenter
+                        
+                        Image {
+                            source: "qrc:/icons/navigation/destination.svg"
+                            sourceSize.width: 14
+                            sourceSize.height: 14
+                        }
+                        
+                        Text {
+                            text: "14:23"
+                            color: AppTheme.colors.text
+                            font.pixelSize: AppTheme.typography.bodyMedium
+                            font.weight: Font.Bold
+                        }
                     }
                     
                     Text {
@@ -196,11 +262,22 @@ Rectangle {
                     spacing: 2
                     Layout.fillWidth: true
                     
-                    Text {
-                        text: "42.5 km"
-                        color: AppTheme.colors.text
-                        font.pixelSize: AppTheme.typography.bodyMedium
-                        font.weight: Font.Bold
+                    RowLayout {
+                        spacing: 4
+                        Layout.alignment: Qt.AlignHCenter
+                        
+                        Image {
+                            source: "qrc:/icons/navigation/route.svg"
+                            sourceSize.width: 14
+                            sourceSize.height: 14
+                        }
+                        
+                        Text {
+                            text: "42.5 km"
+                            color: AppTheme.colors.text
+                            font.pixelSize: AppTheme.typography.bodyMedium
+                            font.weight: Font.Bold
+                        }
                     }
                     
                     Text {
@@ -221,20 +298,11 @@ Rectangle {
                     spacing: 2
                     Layout.fillWidth: true
                     
-                    Rectangle {
-                        width: 40
-                        height: 40
-                        radius: 4
-                        color: AppTheme.colors.error
+                    Image {
+                        source: "qrc:/icons/navigation/speed-limit-80.svg"
+                        sourceSize.width: 36
+                        sourceSize.height: 36
                         Layout.alignment: Qt.AlignHCenter
-                        
-                        Text {
-                            text: "60"
-                            color: AppTheme.colors.text
-                            font.pixelSize: AppTheme.typography.bodyMedium
-                            font.weight: Font.Bold
-                            anchors.centerIn: parent
-                        }
                     }
                     
                     Text {
@@ -256,15 +324,42 @@ Rectangle {
                     spacing: 2
                     Layout.fillWidth: true
                     
-                    Text {
-                        text: "●"
-                        color: AppTheme.colors.success
-                        font.pixelSize: 16
+                    Image {
+                        id: trafficIcon
+                        source: "qrc:/icons/navigation/traffic-green.svg"
+                        sourceSize.width: 16
+                        sourceSize.height: 16
                         Layout.alignment: Qt.AlignHCenter
                     }
                     
                     Text {
                         text: "Clear"
+                        color: AppTheme.colors.textTertiary
+                        font.pixelSize: AppTheme.typography.labelSmall
+                        Layout.alignment: Qt.AlignHCenter
+                    }
+                }
+                
+                Rectangle {
+                    Layout.fillHeight: true
+                    width: 1
+                    color: AppTheme.colors.divider
+                }
+                
+                // Parking status
+                ColumnLayout {
+                    spacing: 2
+                    Layout.fillWidth: true
+                    
+                    Image {
+                        source: "qrc:/icons/navigation/parking.svg"
+                        sourceSize.width: 16
+                        sourceSize.height: 16
+                        Layout.alignment: Qt.AlignHCenter
+                    }
+                    
+                    Text {
+                        text: "Available"
                         color: AppTheme.colors.textTertiary
                         font.pixelSize: AppTheme.typography.labelSmall
                         Layout.alignment: Qt.AlignHCenter

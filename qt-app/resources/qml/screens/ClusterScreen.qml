@@ -197,12 +197,22 @@ Rectangle {
                             Layout.fillWidth: true
                             Layout.alignment: Qt.AlignCenter
                             
-                            Text {
-                                text: vehicleData.temperature + "°C"
-                                color: vehicleData.temperature > 80 ? AppTheme.colors.warning : AppTheme.colors.text
-                                font.pixelSize: 14
-                                font.weight: Font.Bold
+                            RowLayout {
+                                spacing: 4
                                 Layout.alignment: Qt.AlignHCenter
+                                
+                                Image {
+                                    source: "qrc:/icons/hardware/temperature.svg"
+                                    sourceSize.width: 14
+                                    sourceSize.height: 14
+                                }
+                                
+                                Text {
+                                    text: vehicleData.temperature + "°C"
+                                    color: vehicleData.temperature > 80 ? AppTheme.colors.warning : AppTheme.colors.text
+                                    font.pixelSize: 14
+                                    font.weight: Font.Bold
+                                }
                             }
                             
                             Text {
@@ -225,12 +235,22 @@ Rectangle {
                             Layout.fillWidth: true
                             Layout.alignment: Qt.AlignCenter
                             
-                            Text {
-                                text: vehicleData.battery + "%"
-                                color: vehicleData.battery < 20 ? AppTheme.colors.error : AppTheme.colors.text
-                                font.pixelSize: 14
-                                font.weight: Font.Bold
+                            RowLayout {
+                                spacing: 4
                                 Layout.alignment: Qt.AlignHCenter
+                                
+                                Image {
+                                    source: "qrc:/icons/hardware/battery.svg"
+                                    sourceSize.width: 14
+                                    sourceSize.height: 14
+                                }
+                                
+                                Text {
+                                    text: vehicleData.battery + "%"
+                                    color: vehicleData.battery < 20 ? AppTheme.colors.error : AppTheme.colors.text
+                                    font.pixelSize: 14
+                                    font.weight: Font.Bold
+                                }
                             }
                             
                             Text {

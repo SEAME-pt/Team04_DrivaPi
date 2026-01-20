@@ -110,15 +110,34 @@ void SystemStatus::calculateFrameRate()
 void SystemStatus::updateSystemMetrics()
 {
     // Read CPU usage from /proc/stat (Linux only)
-    // This is a simplified version; production code should average over time
+    // Calculate CPU usage as percentage based on delta since last read
     #ifdef Q_OS_LINUX
     try {
         std::ifstream stat("/proc/stat");
         std::string line;
         if (std::getline(stat, line)) {
-            // Parse: cpu  user nice system idle
-            // For now, just use a placeholder
-            setCpuUsage(25); // TODO: implement proper CPU calculation
+            // Parse: cpu  user nice system idle iowait irq softirq
+            std::istringstream iss(line);
+            std::string cpu;
+            long long user, nice, system, idle, iowait, irq, softirq;
+            iss >> cpu >> user >> nice >> system >> idle >> iowait >> irq >> softirq;
+            
+            long long total = user + nice + system + idle + iowait + irq + softirq;
+            long long idleTime = idle + iowait;
+            
+            // Calculate delta
+            if (m_prevTotal > 0) {
+                long long totalDelta = total - m_prevTotal;
+                long long idleDelta = idleTime - m_prevIdle;
+                
+                if (totalDelta > 0) {
+                    int cpuPercent = 100 * (totalDelta - idleDelta) / totalDelta;
+                    setCpuUsage(cpuPercent);
+                }
+            }
+            
+            m_prevTotal = total;
+            m_prevIdle = idleTime;
         }
         
         std::ifstream meminfo("/proc/meminfo");

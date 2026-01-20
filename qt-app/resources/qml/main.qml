@@ -136,6 +136,9 @@ ApplicationWindow {
                 font.pixelSize: AppTheme.typography.labelMedium
                 font.weight: Font.Medium
                 width: implicitWidth
+                icon.source: "qrc:/icons/cluster/speedometer.svg"
+                icon.width: 20
+                icon.height: 20
                 
                 background: Rectangle {
                     color: tabBar.currentIndex === 0 
@@ -174,6 +177,11 @@ ApplicationWindow {
                 font.pixelSize: AppTheme.typography.labelMedium
                 font.weight: Font.Medium
                 width: implicitWidth
+                icon.source: tabBar.currentIndex === 1 
+                    ? "qrc:/icons/common/nav-mode-active.svg" 
+                    : "qrc:/icons/common/nav-mode.svg"
+                icon.width: 20
+                icon.height: 20
                 
                 background: Rectangle {
                     color: tabBar.currentIndex === 1 
@@ -209,6 +217,11 @@ ApplicationWindow {
                 font.pixelSize: AppTheme.typography.labelMedium
                 font.weight: Font.Medium
                 width: implicitWidth
+                icon.source: tabBar.currentIndex === 2 
+                    ? "qrc:/icons/common/media-mode-active.svg" 
+                    : "qrc:/icons/common/media-mode.svg"
+                icon.width: 20
+                icon.height: 20
                 
                 background: Rectangle {
                     color: tabBar.currentIndex === 2 
@@ -244,6 +257,9 @@ ApplicationWindow {
                 font.pixelSize: AppTheme.typography.labelMedium
                 font.weight: Font.Medium
                 width: implicitWidth
+                icon.source: "qrc:/icons/hardware/sensor.svg"
+                icon.width: 20
+                icon.height: 20
                 
                 background: Rectangle {
                     color: tabBar.currentIndex === 3 
@@ -279,6 +295,9 @@ ApplicationWindow {
                 font.pixelSize: AppTheme.typography.labelMedium
                 font.weight: Font.Medium
                 width: implicitWidth
+                icon.source: "qrc:/icons/settings/brightness.svg"
+                icon.width: 20
+                icon.height: 20
                 
                 background: Rectangle {
                     color: tabBar.currentIndex === 4 

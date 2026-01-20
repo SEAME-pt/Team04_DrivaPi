@@ -135,25 +135,36 @@ Rectangle {
                         radius: AppTheme.radius.small
                         color: AppTheme.colors.surfaceVariant
                         
-                        Text {
-                            text: "⏮"
-                            font.pixelSize: 24
+                        Image {
+                            source: "qrc:/icons/controls/previous.svg"
+                            width: 24
+                            height: 24
+                            sourceSize: Qt.size(24, 24)
                             anchors.centerIn: parent
                         }
                     }
                     
                     // Play/Pause (large)
                     Rectangle {
+                        id: playPauseBtn
                         Layout.preferredWidth: 64
                         Layout.preferredHeight: 64
                         radius: AppTheme.radius.medium
                         color: AppTheme.colors.primary
                         
-                        Text {
-                            text: "⏸"  // Play icon
-                            font.pixelSize: 32
-                            color: AppTheme.colors.surface
+                        property bool isPlaying: true
+                        
+                        Image {
+                            source: playPauseBtn.isPlaying ? "qrc:/icons/controls/pause.svg" : "qrc:/icons/controls/play.svg"
+                            width: 32
+                            height: 32
+                            sourceSize: Qt.size(32, 32)
                             anchors.centerIn: parent
+                        }
+                        
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: playPauseBtn.isPlaying = !playPauseBtn.isPlaying
                         }
                     }
                     
@@ -164,9 +175,11 @@ Rectangle {
                         radius: AppTheme.radius.small
                         color: AppTheme.colors.surfaceVariant
                         
-                        Text {
-                            text: "⏭"
-                            font.pixelSize: 24
+                        Image {
+                            source: "qrc:/icons/controls/next.svg"
+                            width: 24
+                            height: 24
+                            sourceSize: Qt.size(24, 24)
                             anchors.centerIn: parent
                         }
                     }
@@ -180,9 +193,11 @@ Rectangle {
                         radius: AppTheme.radius.small
                         color: AppTheme.colors.surfaceVariant
                         
-                        Text {
-                            text: "🔀"
-                            font.pixelSize: 20
+                        Image {
+                            source: "qrc:/icons/controls/shuffle.svg"
+                            width: 20
+                            height: 20
+                            sourceSize: Qt.size(20, 20)
                             anchors.centerIn: parent
                         }
                     }
@@ -194,9 +209,11 @@ Rectangle {
                         radius: AppTheme.radius.small
                         color: AppTheme.colors.surfaceVariant
                         
-                        Text {
-                            text: "🔁"
-                            font.pixelSize: 20
+                        Image {
+                            source: "qrc:/icons/controls/repeat.svg"
+                            width: 20
+                            height: 20
+                            sourceSize: Qt.size(20, 20)
                             anchors.centerIn: parent
                         }
                     }
@@ -217,9 +234,11 @@ Rectangle {
                         Layout.fillWidth: true
                         spacing: AppTheme.spacing.small
                         
-                        Text {
-                            text: "🔇"
-                            font.pixelSize: 16
+                        Image {
+                            source: "qrc:/icons/controls/volume-mute.svg"
+                            width: 20
+                            height: 20
+                            sourceSize: Qt.size(20, 20)
                         }
                         
                         // Volume slider
@@ -237,9 +256,11 @@ Rectangle {
                             }
                         }
                         
-                        Text {
-                            text: "🔊"
-                            font.pixelSize: 16
+                        Image {
+                            source: "qrc:/icons/controls/volume-high.svg"
+                            width: 20
+                            height: 20
+                            sourceSize: Qt.size(20, 20)
                         }
                     }
                 }

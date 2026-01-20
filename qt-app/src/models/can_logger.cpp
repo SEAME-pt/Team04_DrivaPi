@@ -69,6 +69,10 @@ void CANLogger::stopRecording()
     m_recordFile.close();
     m_isRecording = false;
     
+    // Save the path for easy playback
+    m_lastRecordedFile = m_recordFile.fileName();
+    emit lastRecordedFileChanged();
+    
     qInfo() << "[CANLogger] Recording stopped";
     emit recordingStateChanged();
 }
