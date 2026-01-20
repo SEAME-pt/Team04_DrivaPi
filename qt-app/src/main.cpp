@@ -56,6 +56,7 @@ int main(int argc, char *argv[])
 
     if (useKuksa)
     {
+        systemStatus->setConnectionMode(QStringLiteral("KUKSA"));
         qInfo() << "Starting in KUKSA mode";
         // KUKSA Reader setup
         kuksaReader = new KUKSAReader();
@@ -68,6 +69,7 @@ int main(int argc, char *argv[])
         QObject::connect(kuksaReader, &KUKSAReader::speedReceived,
                          vehicleData.data(), &VehicleData::handleSpeedUpdate);
     } else {
+        systemStatus->setConnectionMode(QStringLiteral("CAN"));
         qInfo() << "Starting in CAN mode";
         // CAN Reader setup
         canReader = new CANReader(QStringLiteral("vcan0"));
@@ -81,6 +83,15 @@ int main(int argc, char *argv[])
         QObject::connect(canReader, &CANReader::canMessageReceived,
                         vehicleData.data(), &VehicleData::handleCanMessage,
                         Qt::QueuedConnection);
+
+        // Feed raw CAN frames to CANLogger for recording
+        QObject::connect(canReader, &CANReader::canMessageReceived,
+                         &app, [canLogger = canLogger.data()](const QByteArray &payload, uint32_t canId){
+                             if (!canLogger->isRecording()) return;
+                             const int dlc = qMin(payload.size(), 8);
+                             const uint8_t *data = reinterpret_cast<const uint8_t*>(payload.constData());
+                             canLogger->recordFrame(canId, static_cast<uint8_t>(dlc), data);
+                         }, Qt::QueuedConnection);
     }
 
     workerThread->start();

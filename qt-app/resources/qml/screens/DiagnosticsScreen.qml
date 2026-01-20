@@ -6,6 +6,10 @@ Rectangle {
     id: root
     color: AppTheme.colors.surface
     
+    // Local state for logging paths and playback speed toggle
+    property string lastLogPath: ""
+    property int speedIndex: 1 // 0=0.5x, 1=1.0x, 2=2.0x
+    
     // ====== MAIN LAYOUT (TOP: Status + MIDDLE: Signals Table + BOTTOM: Controls) ======
     ColumnLayout {
         anchors.fill: parent
@@ -407,48 +411,107 @@ Rectangle {
                 
                 // Record button
                 Rectangle {
-                    width: 100
+                    id: recordBtn
+                    width: 110
                     height: 36
                     radius: AppTheme.radius.small
-                    color: AppTheme.colors.error
+                    color: canLogger.isRecording ? AppTheme.colors.warning : AppTheme.colors.error
                     
                     Text {
-                        text: "● Record"
+                        text: canLogger.isRecording ? "■ Stop" : "● Record"
                         color: AppTheme.colors.text
                         font.pixelSize: AppTheme.typography.labelSmall
                         font.weight: Font.Bold
                         anchors.centerIn: parent
                     }
+                    
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            if (systemStatus.connectionMode !== "CAN") {
+                                notificationManager.showNotification("Recording requires CAN mode", 1, 3000);
+                                return;
+                            }
+                            if (!canLogger.isRecording) {
+                                // Generate timestamped path in local logs/ folder
+                                const ts = Qt.formatDateTime(new Date(), "yyyy-MM-dd_hh-mm-ss");
+                                root.lastLogPath = "logs/can_" + ts + ".bin";
+                                const ok = canLogger.startRecording(root.lastLogPath);
+                                if (ok) {
+                                    notificationManager.showNotification("Recording CAN → " + root.lastLogPath, 0, 2500);
+                                } else {
+                                    notificationManager.showNotification("Failed to start recording", 2, 3500);
+                                }
+                            } else {
+                                canLogger.stopRecording();
+                                notificationManager.showNotification("Recording stopped", 0, 2000);
+                            }
+                        }
+                    }
                 }
                 
                 // Playback button
                 Rectangle {
-                    width: 100
+                    id: playbackBtn
+                    width: 110
                     height: 36
                     radius: AppTheme.radius.small
-                    color: AppTheme.colors.surfaceVariant
+                    color: canLogger.isPlayback ? AppTheme.colors.primary : AppTheme.colors.surfaceVariant
                     
                     Text {
-                        text: "▶ Playback"
-                        color: AppTheme.colors.textSecondary
+                        text: canLogger.isPlayback ? "■ Stop" : "▶ Playback"
+                        color: canLogger.isPlayback ? AppTheme.colors.text : AppTheme.colors.textSecondary
                         font.pixelSize: AppTheme.typography.labelSmall
                         font.weight: Font.Bold
                         anchors.centerIn: parent
+                    }
+                    
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            if (canLogger.isPlayback) {
+                                canLogger.stopPlayback();
+                                notificationManager.showNotification("Playback stopped", 0, 2000);
+                            } else {
+                                if (!root.lastLogPath || root.lastLogPath.length === 0) {
+                                    notificationManager.showNotification("No log loaded. Record first.", 1, 3000);
+                                    return;
+                                }
+                                if (canLogger.loadPlayback(root.lastLogPath)) {
+                                    canLogger.playPlayback();
+                                    notificationManager.showNotification("Playing " + root.lastLogPath, 0, 2500);
+                                } else {
+                                    notificationManager.showNotification("Failed to load log", 2, 3500);
+                                }
+                            }
+                        }
                     }
                 }
                 
                 // Speed control (for playback)
                 Rectangle {
+                    id: speedBtn
                     width: 70
                     height: 36
                     radius: AppTheme.radius.small
                     color: AppTheme.colors.surfaceVariant
                     
                     Text {
-                        text: "1.0x"
+                        text: speedIndex === 0 ? "0.5x" : (speedIndex === 1 ? "1.0x" : "2.0x")
                         color: AppTheme.colors.textSecondary
                         font.pixelSize: AppTheme.typography.labelSmall
                         anchors.centerIn: parent
+                    }
+                    
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            // Cycle 0.5x → 1.0x → 2.0x
+                            root.speedIndex = (root.speedIndex + 1) % 3;
+                            const speeds = [50, 100, 200];
+                            canLogger.setPlaybackSpeed(speeds[root.speedIndex]);
+                            notificationManager.showNotification("Speed " + (root.speedIndex === 0 ? "0.5x" : (root.speedIndex === 1 ? "1.0x" : "2.0x")), 0, 1500);
+                        }
                     }
                 }
                 

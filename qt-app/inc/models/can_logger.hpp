@@ -55,8 +55,8 @@ public:
     double playbackPosition() const { return m_playbackPosition; }
     double playbackDuration() const { return m_playbackDuration; }
     
-    // Setter
-    void setPlaybackSpeed(int speedPercent);
+    // Setter (callable from QML)
+    Q_INVOKABLE void setPlaybackSpeed(int speedPercent);
 
 signals:
     void recordingStateChanged();
