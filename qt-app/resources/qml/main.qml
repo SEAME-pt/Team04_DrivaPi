@@ -9,16 +9,14 @@ import "theme"
 ApplicationWindow {
     id: root
     visible: true
-    width: 1920
-    height: 720
+    width: 1280
+    height: 400
     title: qsTr("DrivaPi HMI - Multi-Screen Infotainment")
     color: AppTheme.colors.surface
     
-    // Prevent resizing
-    minimumWidth: width
-    maximumWidth: width
-    minimumHeight: height
-    maximumHeight: height
+    // Keep a sensible minimum for 1280x400 while allowing resize for testing
+    minimumWidth: 1280
+    minimumHeight: 400
     
     // ====== KEYBOARD SHORTCUTS ======
     Shortcut {
@@ -82,7 +80,7 @@ ApplicationWindow {
         TabBar {
             id: tabBar
             Layout.fillWidth: true
-            Layout.preferredHeight: 70
+            Layout.preferredHeight: 56
             currentIndex: swipeView.currentIndex
             position: TabBar.Footer
             
@@ -96,7 +94,7 @@ ApplicationWindow {
             // Tab buttons
             TabButton {
                 text: "Cluster"
-                font.pixelSize: AppTheme.typography.labelLarge
+                font.pixelSize: AppTheme.typography.labelMedium
                 font.weight: Font.Medium
                 width: implicitWidth
                 
@@ -120,7 +118,7 @@ ApplicationWindow {
             
             TabButton {
                 text: "Navigation"
-                font.pixelSize: AppTheme.typography.labelLarge
+                font.pixelSize: AppTheme.typography.labelMedium
                 font.weight: Font.Medium
                 width: implicitWidth
                 
@@ -143,7 +141,7 @@ ApplicationWindow {
             
             TabButton {
                 text: "Media"
-                font.pixelSize: AppTheme.typography.labelLarge
+                font.pixelSize: AppTheme.typography.labelMedium
                 font.weight: Font.Medium
                 width: implicitWidth
                 
@@ -166,7 +164,7 @@ ApplicationWindow {
             
             TabButton {
                 text: "Diagnostics"
-                font.pixelSize: AppTheme.typography.labelLarge
+                font.pixelSize: AppTheme.typography.labelMedium
                 font.weight: Font.Medium
                 width: implicitWidth
                 
@@ -189,7 +187,7 @@ ApplicationWindow {
             
             TabButton {
                 text: "Settings"
-                font.pixelSize: AppTheme.typography.labelLarge
+                font.pixelSize: AppTheme.typography.labelMedium
                 font.weight: Font.Medium
                 width: implicitWidth
                 
@@ -218,7 +216,7 @@ ApplicationWindow {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        height: 50
+        height: 48
         color: AppTheme.colors.surfaceElevated
         border.color: AppTheme.colors.divider
         border.width: 1
@@ -227,13 +225,13 @@ ApplicationWindow {
         RowLayout {
             anchors.fill: parent
             anchors.margins: AppTheme.spacing.small
-            spacing: AppTheme.spacing.medium
+            spacing: AppTheme.spacing.small
             
             // Time (left)
             Text {
                 text: Qt.formatDateTime(new Date(), "hh:mm:ss")
                 color: AppTheme.colors.text
-                font.pixelSize: AppTheme.typography.bodyMedium
+                font.pixelSize: AppTheme.typography.bodySmall
                 
                 Timer {
                     interval: 1000
@@ -268,9 +266,6 @@ ApplicationWindow {
                 }
             }
         }
-        
-        // Adjust SwipeView to account for status bar
-        Component.onCompleted: swipeView.anchors.topMargin = statusBar.height
     }
     
     // ====== NOTIFICATION TOAST CONTAINER (TOP-CENTER) ======
@@ -278,8 +273,8 @@ ApplicationWindow {
         id: notificationContainer
         anchors.top: statusBar.bottom
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.topMargin: AppTheme.spacing.large
-        width: 400
+        anchors.topMargin: AppTheme.spacing.medium
+        width: 320
         height: childrenRect.height
         color: "transparent"
         z: 200
@@ -294,7 +289,7 @@ ApplicationWindow {
                 
                 Rectangle {
                     width: notificationContainer.width
-                    height: 60
+                    height: 52
                     radius: AppTheme.radius.medium
                     
                     // Color based on alert level

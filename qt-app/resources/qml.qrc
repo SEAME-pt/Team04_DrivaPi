@@ -18,6 +18,7 @@
         
         <!-- Theme (Phase 1) -->
         <file>qml/theme/AppTheme.qml</file>
+        <file>qml/theme/qmldir</file>
 
         <!-- Assets -->
         <file>assets/Low beam headlights.svg</file>
