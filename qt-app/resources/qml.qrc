@@ -30,6 +30,10 @@
         <file>assets/backgrounds/vector-1.svg</file>
         <file>assets/backgrounds/vector-2.svg</file>
         <file>assets/Model 3.png</file>
+        <file>assets/cluster_left_panel.svg</file>
+        <file>assets/cluster_right_panel.svg</file>
+        <file>assets/cluster_floor_grid.svg</file>
+        <file>assets/cluster_car_glow.svg</file>
 
         <!-- Cluster Icons -->
         <file>icons/cluster/speedometer.svg</file>
