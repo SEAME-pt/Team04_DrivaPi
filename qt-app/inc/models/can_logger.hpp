@@ -31,6 +31,7 @@ class CANLogger : public QObject
     Q_PROPERTY(int playbackSpeed READ playbackSpeed WRITE setPlaybackSpeed NOTIFY playbackSpeedChanged)
     Q_PROPERTY(double playbackPosition READ playbackPosition NOTIFY playbackPositionChanged)
     Q_PROPERTY(double playbackDuration READ playbackDuration NOTIFY playbackDurationChanged)
+    Q_PROPERTY(QString lastRecordedFile READ lastRecordedFile NOTIFY lastRecordedFileChanged)
 
 public:
     explicit CANLogger(QObject *parent = nullptr);
@@ -54,6 +55,7 @@ public:
     int playbackSpeed() const { return m_playbackSpeed; }
     double playbackPosition() const { return m_playbackPosition; }
     double playbackDuration() const { return m_playbackDuration; }
+    QString lastRecordedFile() const { return m_lastRecordedFile; }
     
     // Setter (callable from QML)
     Q_INVOKABLE void setPlaybackSpeed(int speedPercent);
@@ -64,6 +66,7 @@ signals:
     void playbackSpeedChanged();
     void playbackPositionChanged();
     void playbackDurationChanged();
+    void lastRecordedFileChanged();
     void framePlaybackReady(uint32_t canId, uint8_t dlc, const uint8_t *data, uint64_t timestamp);
     void recordingError(const QString &error);
     void playbackError(const QString &error);
@@ -80,6 +83,7 @@ private:
     
     // Recording
     QFile m_recordFile;
+    QString m_lastRecordedFile;
     bool m_isRecording;
     uint64_t m_recordStartTime;
     

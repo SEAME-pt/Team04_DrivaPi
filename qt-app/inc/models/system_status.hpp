@@ -86,4 +86,8 @@ private:
     // Timers
     QTimer *m_metricsTimer;        // Updates system metrics every 1 sec
     QTimer *m_frameCountTimer;     // Calculates FPS every 1 sec
+    
+    // CPU calculation state (for delta-based calculation)
+    long long m_prevTotal{0};
+    long long m_prevIdle{0};
 };
