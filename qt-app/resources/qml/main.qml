@@ -113,6 +113,16 @@ ApplicationWindow {
             SettingsScreen {
                 id: settingsScreen
             }
+            
+            // Screen 6: Weather
+            WeatherScreen {
+                id: weatherScreen
+            }
+            
+            // Screen 7: Utilities
+            UtilitiesScreen {
+                id: utilitiesScreen
+            }
         }
         
         // ====== BOTTOM NAVIGATION TAB BAR ======
@@ -314,6 +324,82 @@ ApplicationWindow {
                 contentItem: Text {
                     text: parent.text
                     color: tabBar.currentIndex === 4 
+                        ? AppTheme.colors.text 
+                        : AppTheme.colors.textSecondary
+                    font: parent.font
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: AppTheme.animation.normal
+                        }
+                    }
+                }
+            }
+            
+            TabButton {
+                text: "Weather"
+                font.pixelSize: AppTheme.typography.labelMedium
+                font.weight: Font.Medium
+                width: implicitWidth
+                icon.source: "qrc:/icons/weather/sun.svg"
+                icon.width: 20
+                icon.height: 20
+                
+                background: Rectangle {
+                    color: tabBar.currentIndex === 5 
+                        ? AppTheme.colors.primary 
+                        : "transparent"
+                    
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: AppTheme.animation.normal
+                        }
+                    }
+                }
+                
+                contentItem: Text {
+                    text: parent.text
+                    color: tabBar.currentIndex === 5 
+                        ? AppTheme.colors.text 
+                        : AppTheme.colors.textSecondary
+                    font: parent.font
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: AppTheme.animation.normal
+                        }
+                    }
+                }
+            }
+            
+            TabButton {
+                text: "Utilities"
+                font.pixelSize: AppTheme.typography.labelMedium
+                font.weight: Font.Medium
+                width: implicitWidth
+                icon.source: "qrc:/icons/common/menu.svg"
+                icon.width: 20
+                icon.height: 20
+                
+                background: Rectangle {
+                    color: tabBar.currentIndex === 6 
+                        ? AppTheme.colors.primary 
+                        : "transparent"
+                    
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: AppTheme.animation.normal
+                        }
+                    }
+                }
+                
+                contentItem: Text {
+                    text: parent.text
+                    color: tabBar.currentIndex === 6 
                         ? AppTheme.colors.text 
                         : AppTheme.colors.textSecondary
                     font: parent.font

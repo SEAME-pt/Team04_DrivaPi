@@ -299,6 +299,22 @@ Item {
                         {label: "Load", value: "65%", warning: false}
                     ]
                 }
+
+                // ====== BATTERY MONITOR ======
+                ComponentCard {
+                    titleIcon: "qrc:/icons/hardware/battery-monitor.svg"
+                    title: "Battery Monitor"
+                    status: "Charging"
+                    statusColor: AppTheme.colors.online
+                    metrics: [
+                        {label: "State of Charge", value: (vehicleData.battery || 0) + "%", warning: (vehicleData.battery || 0) < 20},
+                        {label: "Current", value: "32.4 A", warning: false},
+                        {label: "Voltage", value: "402 V", warning: false},
+                        {label: "Health", value: "98%", warning: false},
+                        {label: "Temp", value: (vehicleData.temperature || 0) + "°C", warning: (vehicleData.temperature || 0) > 70},
+                        {label: "Cycles", value: "412", warning: false}
+                    ]
+                }
                 
                 // ====== TEMPERATURE SENSORS ======
                 ComponentCard {

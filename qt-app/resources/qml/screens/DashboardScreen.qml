@@ -215,6 +215,39 @@ Rectangle {
                         active: false
                     }
                 }
+
+                // Night mode light indicators (white variants)
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: AppTheme.spacing.large
+                    Layout.rightMargin: AppTheme.spacing.large
+                    Layout.topMargin: AppTheme.spacing.small
+                    spacing: AppTheme.spacing.medium
+
+                    LightIndicator {
+                        icon: "qrc:/icons/status/lights-white.svg"
+                        label: "Lights"
+                        active: false
+                    }
+
+                    LightIndicator {
+                        icon: "qrc:/icons/status/low-beam-headlights-white.svg"
+                        label: "Low Beam"
+                        active: false
+                    }
+
+                    LightIndicator {
+                        icon: "qrc:/icons/status/parking-lights-white.svg"
+                        label: "Parking"
+                        active: false
+                    }
+
+                    LightIndicator {
+                        icon: "qrc:/icons/status/rear-fog-lights-red.svg"
+                        label: "Rear Fog"
+                        active: true
+                    }
+                }
                 
                 Rectangle {
                     Layout.fillWidth: true

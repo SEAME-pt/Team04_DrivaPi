@@ -227,6 +227,22 @@ Rectangle {
                                 sourceSize.height: 16
                             }
                         }
+
+                        RowLayout {
+                            spacing: AppTheme.spacing.small
+                            
+                            Image {
+                                source: "qrc:/icons/controls/volume-low.svg"
+                                sourceSize.width: 16
+                                sourceSize.height: 16
+                            }
+                            
+                            Text {
+                                text: "Night mode volume"
+                                color: AppTheme.colors.textSecondary
+                                font.pixelSize: AppTheme.typography.labelSmall
+                            }
+                        }
                     }
                 }
             }

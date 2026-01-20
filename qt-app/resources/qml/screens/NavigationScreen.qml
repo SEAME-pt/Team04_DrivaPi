@@ -173,12 +173,34 @@ Rectangle {
                             }
                         }
                         
-                        // Car icon (center)
-                        Image {
-                            source: "qrc:/icons/cluster/car.svg"
-                            sourceSize.width: 48
-                            sourceSize.height: 48
+                        // Vehicle icons showcase
+                        RowLayout {
+                            spacing: AppTheme.spacing.medium
                             Layout.alignment: Qt.AlignHCenter
+                            
+                            Image {
+                                source: "qrc:/icons/cluster/car.svg"
+                                sourceSize.width: 40
+                                sourceSize.height: 40
+                            }
+                            
+                            Image {
+                                source: "qrc:/icons/cluster/car-alt.svg"
+                                sourceSize.width: 40
+                                sourceSize.height: 40
+                            }
+                            
+                            Image {
+                                source: "qrc:/icons/cluster/model3.svg"
+                                sourceSize.width: 40
+                                sourceSize.height: 40
+                            }
+                            
+                            Image {
+                                source: "qrc:/icons/cluster/speedometer.svg"
+                                sourceSize.width: 40
+                                sourceSize.height: 40
+                            }
                         }
                         
                         // Destination info
