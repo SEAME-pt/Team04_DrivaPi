@@ -50,6 +50,15 @@ ApplicationWindow {
             // Interactive swiping between screens
             interactive: true
             
+            // Smooth transition animation
+            transitions: Transition {
+                NumberAnimation {
+                    property: "contentX"
+                    duration: AppTheme.animation.normal
+                    easing.type: Easing.InOutQuad
+                }
+            }
+            
             // Screen 1: Cluster (Driving Display)
             ClusterScreen {
                 id: clusterScreen
@@ -103,6 +112,13 @@ ApplicationWindow {
                         ? AppTheme.colors.primary 
                         : "transparent"
                     border.width: 0
+                    
+                    // Smooth color transition
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: AppTheme.animation.normal
+                        }
+                    }
                 }
                 
                 contentItem: Text {
@@ -113,6 +129,13 @@ ApplicationWindow {
                     font: parent.font
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
+                    
+                    // Smooth text color transition
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: AppTheme.animation.normal
+                        }
+                    }
                 }
             }
             
@@ -126,6 +149,12 @@ ApplicationWindow {
                     color: tabBar.currentIndex === 1 
                         ? AppTheme.colors.primary 
                         : "transparent"
+                    
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: AppTheme.animation.normal
+                        }
+                    }
                 }
                 
                 contentItem: Text {
@@ -136,6 +165,12 @@ ApplicationWindow {
                     font: parent.font
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
+                    
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: AppTheme.animation.normal
+                        }
+                    }
                 }
             }
             
@@ -149,6 +184,12 @@ ApplicationWindow {
                     color: tabBar.currentIndex === 2 
                         ? AppTheme.colors.primary 
                         : "transparent"
+                    
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: AppTheme.animation.normal
+                        }
+                    }
                 }
                 
                 contentItem: Text {
@@ -159,6 +200,12 @@ ApplicationWindow {
                     font: parent.font
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
+                    
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: AppTheme.animation.normal
+                        }
+                    }
                 }
             }
             
@@ -172,6 +219,12 @@ ApplicationWindow {
                     color: tabBar.currentIndex === 3 
                         ? AppTheme.colors.primary 
                         : "transparent"
+                    
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: AppTheme.animation.normal
+                        }
+                    }
                 }
                 
                 contentItem: Text {
@@ -182,6 +235,12 @@ ApplicationWindow {
                     font: parent.font
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
+                    
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: AppTheme.animation.normal
+                        }
+                    }
                 }
             }
             
@@ -195,6 +254,12 @@ ApplicationWindow {
                     color: tabBar.currentIndex === 4 
                         ? AppTheme.colors.primary 
                         : "transparent"
+                    
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: AppTheme.animation.normal
+                        }
+                    }
                 }
                 
                 contentItem: Text {
@@ -205,6 +270,12 @@ ApplicationWindow {
                     font: parent.font
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
+                    
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: AppTheme.animation.normal
+                        }
+                    }
                 }
             }
         }
