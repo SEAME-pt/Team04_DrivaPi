@@ -55,7 +55,7 @@ NS_ :
 BS_:
 BU_: Receiver
 BO_ 256 SpeedMessage: 4 Receiver
- SG_ Speed : 0|32@1+ (1,0) [0|0] "m/s" Receiver
+ SG_ Speed : 0|32@1+ (3.6,0) [0|0] "km/h" Receiver
 SIG_VALTYPE_ 256 Speed : 1;' > simple.dbc
 
 # 4. Create the Mapping Configuration (mapping.json)

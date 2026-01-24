@@ -65,5 +65,5 @@ The team reviews this quarterly and updates based on:
 
 
 <p>
-	<img src="../../docs/tsf/TSF_Arhitecture.svg" alt="TSF Architecture Diagram" width="700">
+	<img src="../../../docs/TSF/TSF_Arhitecture.svg" alt="TSF Architecture Diagram" width="700">
 </p>

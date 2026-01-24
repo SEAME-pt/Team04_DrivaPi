@@ -4,10 +4,10 @@
         <file>qml/main.qml</file>
 
         <!-- QML Components -->
-        <file>qml/components/speed_display.qml</file>
-        <file>qml/components/energy_display.qml</file>
-        <file>qml/components/gear_selector.qml</file>
-        <file>qml/components/battery_indicator.qml</file>
+        <file>qml/components/SpeedDisplay.qml</file>
+        <file>qml/components/EnergyDisplay.qml</file>
+        <file>qml/components/GearSelector.qml</file>
+        <file>qml/components/BatteryIndicator.qml</file>
 
         <!-- Background Assets -->
         <file>assets/backgrounds/cluster-base.svg</file>
@@ -139,7 +139,7 @@
         <file>icons/weather/rain.svg</file>
         <file>icons/weather/snow.svg</file>
         <file>icons/weather/fog.svg</file>
-        
+
         <!-- Common UI Icons -->
         <file>icons/common/close.svg</file>
         <file>icons/common/menu.svg</file>
@@ -160,5 +160,12 @@
         <file>icons/common/steering-mode-active.svg</file>
         <file>icons/common/media-mode.svg</file>
         <file>icons/common/media-mode-active.svg</file>
+
+        <!-- Light Indicators -->
+
+        <!-- Drive Mode Icons -->
+
+        <!-- Road Signs -->
+        <!-- To be added -->
     </qresource>
 </RCC>

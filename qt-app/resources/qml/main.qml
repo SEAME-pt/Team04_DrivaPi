@@ -67,71 +67,117 @@ ApplicationWindow {
     // ====== MAIN LAYOUT ======
     ColumnLayout {
         anchors.fill: parent
-        spacing: 0
-        
-        // ====== CONTENT AREA (SwipeView with 5 screens) ======
-        SwipeView {
-            id: swipeView
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            currentIndex: tabBar.currentIndex
-            clip: true
-            
-            // Interactive swiping between screens
-            interactive: true
-            
-            // Smooth transition animation
-            transitions: Transition {
-                NumberAnimation {
-                    property: "contentX"
-                    duration: AppTheme.animation.normal
-                    easing.type: Easing.InOutQuad
-                }
+        z: 1
+
+        // ============================================
+        // TOP BAR
+        // ============================================
+        Item {
+            id: topBar
+            width: parent.width
+            height: 85
+            anchors.top: parent.top
+
+            // Time (far left)
+            Text {
+                id: currentTime
+                text: Qt.formatDateTime(new Date(), "hh:mm")
+                font.pixelSize: 16
+                font.family: "SF Pro Display"
+                font.weight: Font.Light
+                color: "#4A4A4A"
+                anchors.left: parent.left
+                anchors.leftMargin: 200
+                anchors.top: parent.top
+                anchors.topMargin: 18
             }
-            
-            // Screen 1: Cluster (Driving Display)
-            ClusterScreen {
-                id: clusterScreen
+
+            // Left navigation arrow
+            Text {
+                text: "sinistra"
+                font.pixelSize: 50
+                color: "#00D66C"
+                anchors.left: parent.left
+                anchors.leftMargin: 270
+                anchors.top: parent.top
+                anchors.topMargin: 8
             }
-            
-            // Screen 2: Navigation
-            NavigationScreen {
-                id: navigationScreen
+
+            // Gear selector (center) - COMPONENT
+            GearSelector {
+                id: gearSelector
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: parent.top
+                anchors.topMargin: 3
+                z: 2
+
+                currentGear: vehicleData.gear
+
+                onGearUp: vehicleData.changeGearUp()
+                onGearDown: vehicleData.changeGearDown()
             }
-            
-            // Screen 3: Media Player
-            MediaScreen {
-                id: mediaScreen
+
+            // Right navigation arrow
+            Text {
+                text: "➡"
+                font.pixelSize: 50
+                color: "#00D66C"
+                anchors.right: parent.right
+                anchors.rightMargin: 270
+                anchors.top: parent.top
+                anchors.topMargin: 8
             }
-            
-            // Screen 4: Diagnostics
-            DiagnosticsScreen {
-                id: diagnosticsScreen
+
+            // Temperature (top right)
+            Text {
+                text: Math.round(vehicleData.temperature) + "°C"
+                font.pixelSize: 16
+                font.family: "SF Pro Display"
+                font.weight: Font.Light
+                color: "#4A4A4A"
+                anchors.right: parent.right
+                anchors.rightMargin: 200
+                anchors.top: parent.top
+                anchors.topMargin: 18
             }
-            
-            // Screen 5: Settings
-            SettingsScreen {
-                id: settingsScreen
-            }
-            
-            // Screen 6: Weather
-            WeatherScreen {
-                id: weatherScreen
-            }
-            
-            // Screen 7: Utilities
-            UtilitiesScreen {
-                id: utilitiesScreen
+
+            // Speed limit sign
+            Image {
+                width: 75
+                height: 75
+                source: "qrc:/assets/warning.svg"  // existing bundled asset
+                anchors.left: parent.left
+                anchors.leftMargin: 40
+                anchors.top: parent.top
+                anchors.topMargin: 5
             }
         }
-        
-        // ====== BOTTOM NAVIGATION TAB BAR ======
-        TabBar {
-            id: tabBar
-            Layout.fillWidth: true
-            Layout.preferredHeight: 56
-            currentIndex: swipeView.currentIndex
-            position: TabBar.Footer
+            
+            // --- Main Screens in SwipeView ---
+            SwipeView {
+                id: swipeView
+                anchors.fill: parent
+                currentIndex: tabBar.currentIndex
+
+                ClusterScreen { id: clusterScreen }
+                NavigationScreen { id: navigationScreen }
+                MediaScreen { id: mediaScreen }
+                DiagnosticsScreen { id: diagnosticsScreen }
+                SettingsScreen { id: settingsScreen }
+                WeatherScreen { id: weatherScreen }
+                UtilitiesScreen { id: utilitiesScreen }
+            }
+        }
+    // <-- Close the Item wrapping the screens
+    
+    // ====== BOTTOM NAVIGATION TAB BAR ======
+    TabBar {
+        id: tabBar
+        Layout.fillWidth: true
+        Layout.preferredHeight: 56
+        currentIndex: swipeView.currentIndex
+        position: TabBar.Footer
+        onCurrentIndexChanged: swipeView.currentIndex = currentIndex
             
             // Styling
             background: Rectangle {
@@ -414,7 +460,7 @@ ApplicationWindow {
                 }
             }
         }
-    }
+    
     
     // ====== STATUS BAR OVERLAY (TOP) ======
     Rectangle {

@@ -61,8 +61,8 @@ int CanSend(t_can_message* msg)
 	tx_header.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
 	tx_header.MessageMarker = 0;
 
-	char wUpmsg[20] = "TransCan!\r\n"; // Refactor: wtf does this mean??
-	HAL_UART_Transmit(&huart1, (uint8_t*)wUpmsg, strlen(wUpmsg), 10);
+	char wake_up_message[20] = "TransCan!\r\n";
+	HAL_UART_Transmit(&huart1, (uint8_t*)wake_up_message, strlen(wake_up_message), 10);
 
 	if (HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &tx_header, (uint8_t*)msg->data) != HAL_OK)
 	{

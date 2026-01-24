@@ -48,11 +48,11 @@ void SoftwareDelay(uint32_t ms)
 * @param v
 * @return uint16_t
 */
-inline uint16_t ClampU16(int32_t computedValue)
+inline uint16_t ClampU16(int32_t computed_value)
 {
-	if (computedValue < 0)
+	if (computed_value < 0)
 		return 0;
-	if (computedValue >= (int32_t)PCA9685_COUNTS) 
+	if (computed_value >= (int32_t)PCA9685_COUNTS) 
 		return (uint16_t)(PCA9685_COUNTS - 1u);
-	return (uint16_t)computedValue;
+	return (uint16_t)computed_value;
 }

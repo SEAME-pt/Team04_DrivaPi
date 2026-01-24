@@ -2,7 +2,7 @@
 
 ## 1. Core Philosophy
 
-The goal of this standard is **Visual Distinction**. You should be able to identify the nature of a symbol (Type, Variable, or Function) purely by its casing, without looking up the definition.
+The goal of this standard is **Visual Distinction** with **one official policy**. Pure C/C++ follows the rules below; Qt code has a mandatory Qt-style exception (not optional, required by the framework).
 
 * **Files:** Compatibility (`snake_case`)
 * **Types & Functions:** Proper Nouns (`PascalCase`)
@@ -206,5 +206,88 @@ int SerialSendString(char* payload) {
 }
 
 ```
+
+---
+
+## 8. C++ / Qt Framework (Mandatory Qt Exception)
+
+This standard is primarily designed for **C / pure C++**. **Qt code MUST follow Qt style** (camelCase + `m_`), because Qt tooling and community conventions depend on it. This is not an alternative policy—Qt style is mandatory for Qt files.
+
+### 8.1 Qt Classes and Methods
+
+Qt framework follows its own established conventions. **Qt-related code should follow Qt style**:
+
+* **Qt Class Methods:** `camelCase` (Qt standard convention)
+* **Qt Signals/Slots:** `camelCase`
+* **Qt Member Variables:** `m_camelCase` (single convention; Qt uses `m_` prefix)
+* **Qt Class Names:** `PascalCase` (matches our convention)
+
+**Example (Qt Code):**
+```cpp
+// inc/vehicle_data.hpp - Qt Class
+class VehicleData : public QObject {
+    Q_OBJECT
+public:
+    float getSpeed() const;      // Qt style: camelCase
+    void setSpeed(float value);  // Qt style: camelCase
+    
+signals:
+    void speedReceived(float speed);  // Qt style: camelCase
+    
+private:
+    float m_speed;               // Qt style: m_ prefix
+    QTimer* m_watchdogTimer;     // Qt style: m_ + camelCase
+};
+```
+
+### 8.2 Pure C++ Modules (Non-Qt)
+
+For **pure C++ code that doesn't use Qt** (e.g., the feeder module), apply the C conventions with C++ adaptations:
+
+* **Free Functions:** `PascalCase` (class/namespace provides scope)
+* **Namespaces:** `snake_case` (lowercase)
+* **Class Methods:** `PascalCase`
+* **Member Variables:** `snake_case` with optional trailing underscore `variable_name_`
+* **Local Variables:** `snake_case`
+
+**Example (Pure C++ Code):**
+```cpp
+// src/feeder/can_decode.hpp - Pure C++
+namespace can_decode {
+
+inline uint8_t U8(const uint8_t* data) {
+    return data[0];
+}
+
+inline float FloatLe(const uint8_t* data) {
+    float result;
+    std::memcpy(&result, data, sizeof(float));
+    return result;
+}
+
+} // namespace can_decode
+
+// src/feeder/publisher.hpp - Pure C++ Class
+namespace kuksa {
+
+class Publisher {
+public:
+    bool PublishFloat(const std::string& path, float value);
+    bool PublishInt32(const std::string& path, int32_t value);
+    
+private:
+    void AttachAuth(grpc::ClientContext& ctx);
+    PublisherOptions options_;
+    std::unique_ptr<VAL::Stub> stub_;
+};
+
+} // namespace kuksa
+```
+
+### 8.3 Rationale (Why Qt is an exception, not an option)
+
+* Qt code must match Qt tooling expectations (MOC, signals/slots)
+* Qt developers expect camelCase + `m_`; changing it reduces readability
+* Pure C/C++ keeps PascalCase actions and snake_case data for clarity
 
 ---

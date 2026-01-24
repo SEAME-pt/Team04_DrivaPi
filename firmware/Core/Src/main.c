@@ -210,7 +210,7 @@ static void MX_FDCAN1_Init(void)
 {
 	char *msg;
 
-	FDCAN_FilterTypeDef sFilterConfig;
+	FDCAN_FilterTypeDef filter_config;
 
 	hfdcan1.Instance = FDCAN1;
 	hfdcan1.Init.ClockDivider = FDCAN_CLOCK_DIV1;
@@ -250,13 +250,13 @@ static void MX_FDCAN1_Init(void)
 	}
 
 	// Configure filter to accept all standard IDs into RX FIFO 0
-	sFilterConfig.IdType = FDCAN_STANDARD_ID;
-	sFilterConfig.FilterIndex = 0;
-	sFilterConfig.FilterType = FDCAN_FILTER_RANGE;
-	sFilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-	sFilterConfig.FilterID1 = 0x000;
-	sFilterConfig.FilterID2 = 0x7FF;
-	if (HAL_FDCAN_ConfigFilter(&hfdcan1, &sFilterConfig) != HAL_OK)
+	filter_config.IdType = FDCAN_STANDARD_ID;
+	filter_config.FilterIndex = 0;
+	filter_config.FilterType = FDCAN_FILTER_RANGE;
+	filter_config.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+	filter_config.FilterID1 = 0x000;
+	filter_config.FilterID2 = 0x7FF;
+	if (HAL_FDCAN_ConfigFilter(&hfdcan1, &filter_config) != HAL_OK)
 	{
 		msg = "FDCAN Filter Config Failed\r\n";
 		HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
@@ -367,8 +367,8 @@ static void MX_TIM1_Init(void)
 	
 	/* USER CODE END TIM1_Init 0 */
 	
-	TIM_SlaveConfigTypeDef sSlaveConfig = {0};
-	TIM_MasterConfigTypeDef sMasterConfig = {0};
+	TIM_SlaveConfigTypeDef slave_config = {0};
+	TIM_MasterConfigTypeDef master_config = {0};
 	
 	/* USER CODE BEGIN TIM1_Init 1 */
 	
@@ -384,18 +384,18 @@ static void MX_TIM1_Init(void)
 	{
 		Error_Handler();
 	}
-	sSlaveConfig.SlaveMode = TIM_SLAVEMODE_EXTERNAL1;
-	sSlaveConfig.InputTrigger = TIM_TS_TI1FP1;
-	sSlaveConfig.TriggerPolarity = TIM_TRIGGERPOLARITY_RISING;
-	sSlaveConfig.TriggerFilter = 15;
-	if (HAL_TIM_SlaveConfigSynchro(&htim1, &sSlaveConfig) != HAL_OK)
+	slave_config.SlaveMode = TIM_SLAVEMODE_EXTERNAL1;
+	slave_config.InputTrigger = TIM_TS_TI1FP1;
+	slave_config.TriggerPolarity = TIM_TRIGGERPOLARITY_RISING;
+	slave_config.TriggerFilter = 15;
+	if (HAL_TIM_SlaveConfigSynchro(&htim1, &slave_config) != HAL_OK)
 	{
 		Error_Handler();
 	}
-	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-	sMasterConfig.MasterOutputTrigger2 = TIM_TRGO2_RESET;
-	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-	if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+	master_config.MasterOutputTrigger = TIM_TRGO_RESET;
+	master_config.MasterOutputTrigger2 = TIM_TRGO2_RESET;
+	master_config.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+	if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &master_config) != HAL_OK)
 	{
 		Error_Handler();
 	}

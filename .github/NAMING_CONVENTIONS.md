@@ -43,6 +43,25 @@ C/C++ (`.c`, `.cpp`, `.h`, `hpp`) and Rust (`.rs`) files should use **snake_case
 - `can_latency_send_test.c`
 - `main.rs`
 
+### QML Component Files
+QML component files (`.qml`) **MUST** use **PascalCase** (starting with an uppercase letter). This is a **strict requirement** of the QML engine - files starting with lowercase letters are not registered as instantiable types.
+
+**Examples:**
+- `BatteryIndicator.qml` ✅ (works - creates `BatteryIndicator` type)
+- `EnergyDisplay.qml` ✅ (works - creates `EnergyDisplay` type)
+- `GearSelector.qml` ✅ (works - creates `GearSelector` type)
+- `battery_indicator.qml` ❌ (fails - not recognized as a type)
+
+**Why this matters:**
+The QML engine only recognizes files beginning with uppercase letters as component types. Lowercase-starting files are ignored for type registration, causing "X is not a type" errors at runtime.
+
+**Qt Documentation Reference:**
+> "The type name has the following requirements:
+> - It must be comprised of alphanumeric characters or underscores.
+> - **It must begin with an uppercase letter.**"
+
+See: [Qt QML Type Naming](https://doc.qt.io/qt-6/qtqml-documents-definetypes.html#naming-custom-qml-object-types)
+
 ### Markdown Documentation
 Markdown files should use **snake_case**.
 
@@ -88,6 +107,7 @@ Configuration files follow their ecosystem conventions:
 | C files | snake_case | `speed_sensor.c`, `test_speed_sensor.c` |
 | Rust files | snake_case | `main.rs` |
 | C++ files | snake_case | `can_reader.cpp`, `vehicle_data.cpp` |
+| QML components | **PascalCase** (mandatory) | `BatteryIndicator.qml`, `EnergyDisplay.qml` |
 | Markdown files | snake_case | `project_guidelines.md` |
 | Template files | snake_case + `_template` | `issue_template.md` |
 
@@ -97,6 +117,7 @@ Configuration files follow their ecosystem conventions:
 2. **Acronyms**: Keep acronyms in CAPS for directories, preserve meaning in files
 3. **Readability**: Prioritize clarity over brevity
 4. **C/C++ and Rust**: Always use snake_case for files (primary languages in this project)
+5. **QML Components**: **MUST** use PascalCase - this is enforced by the QML engine, not a preference
 6. **Don't rename existing files**: Only apply these rules to new additions unless refactoring
 
 ## Questions?

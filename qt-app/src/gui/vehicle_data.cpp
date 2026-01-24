@@ -1,7 +1,6 @@
-#include "vehicle_data.hpp"
+#include "gui/vehicle_data.hpp"
 
-#include <cstring>
-#include <QStringList>
+namespace drivaui {
 
 // CAN ID that we agreed for speed
 static const uint32_t SPEED_CAN_ID = 0x100;
@@ -37,11 +36,11 @@ VehicleData::~VehicleData()
 
 void VehicleData::setSpeed(float mps)
 {
-    // if (!qFuzzyCompare(1.0 + mps, 1.0 + m_speed)) {
+    if (!qFuzzyCompare(1.0 + mps, 1.0 + m_speed)) {
         m_speed = mps;
         qDebug() << "Speed set to (m/s):" << m_speed;
         emit speedChanged();
-    // }
+    }
     updateTimestamp(QStringLiteral("speed"));
 }
 
@@ -126,14 +125,14 @@ void VehicleData::resetTrip()
 
 int VehicleData::getGearIndex() const
 {
-    QStringList gears = {"P", "R", "N", "D"};
+    static const QStringList gears = {"P", "R", "N", "D"};
     return gears.indexOf(m_gear);
 }
 
 void VehicleData::changeGearUp()
 {
     int currentIndex = getGearIndex();
-    QStringList gears = {"P", "R", "N", "D"};
+    static const QStringList gears = {"P", "R", "N", "D"};
     if (currentIndex >= 0 && currentIndex < gears.length() - 1) {
         setGear(gears[currentIndex + 1]);
     }
@@ -142,7 +141,7 @@ void VehicleData::changeGearUp()
 void VehicleData::changeGearDown()
 {
     int currentIndex = getGearIndex();
-    QStringList gears = {"P", "R", "N", "D"};
+    static const QStringList gears = {"P", "R", "N", "D"};
     if (currentIndex > 0) {
         setGear(gears[currentIndex - 1]);
     }
@@ -211,8 +210,8 @@ void VehicleData::markPropertyStale(const QString &propName)
 void VehicleData::handleCanMessage(const QByteArray &payload, uint32_t canId)
 {
     if (canId == SPEED_CAN_ID) {
-        // Expect 2 bytes: uint16_t big-endian = speed_mps_x100
-        if (payload.size() < 2) {
+        // Expect 4 bytes: little-endian float32 speed in m/s
+        if (payload.size() < 4) {
             qWarning() << "SPEED frame too short: " << payload.size();
             return;
         }
@@ -238,7 +237,7 @@ void VehicleData::checkStaleProperties()
     // Speed (high-rate)
     qint64 lastSpeed = lastUpdate(QStringLiteral("speed"));
     if (lastSpeed == 0 || (now - lastSpeed) > SPEED_STALE_MS) {
-        // markPropertyStale(QStringLiteral("speed"));
+        markPropertyStale(QStringLiteral("speed"));
     }
 
     // Other properties: mark as stale only if very old
@@ -256,3 +255,4 @@ void VehicleData::handleSpeedUpdate(float speed)
     // debug
     // qDebug() << "Updated speed from KUKSA (m/s):" << speed;
 }
+}  // namespace drivaui

@@ -19,7 +19,7 @@ extern "C" {
 void        UartPrintf(const char* format, ...);
 void        UartPrint(const char* msg);
 void        SoftwareDelay(uint32_t ms);
-uint16_t    ClampU16(int32_t computedValue);
+uint16_t    ClampU16(int32_t computed_value);
 
 #ifdef __cplusplus
 }

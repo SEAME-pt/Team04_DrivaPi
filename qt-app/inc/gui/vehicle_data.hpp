@@ -1,3 +1,9 @@
+/**
+ * @file vehicle_data.hpp
+ * @brief Vehicle telemetry data model exposed to QML (speed, battery, gear, etc.).
+ * @note Thread-safe property setters for main thread; use queued connections from workers.
+ */
+
 #ifndef VEHICLEDATA_HPP
 #define VEHICLEDATA_HPP
 
@@ -10,9 +16,16 @@
 #include <QDateTime>
 #include <QtMath>
 
+namespace drivaui {
+
+/**
+ * @class VehicleData
+ * @brief QObject-based vehicle telemetry model for QML (properties, signals, staleness detection).
+ */
 class VehicleData : public QObject
 {
     Q_OBJECT
+
     Q_PROPERTY(QString gear READ getGear WRITE setGear NOTIFY gearChanged)
     Q_PROPERTY(double speed READ getSpeed WRITE setSpeed NOTIFY speedChanged)
     Q_PROPERTY(double energy READ getEnergy WRITE setEnergy NOTIFY energyChanged)
@@ -22,19 +35,21 @@ class VehicleData : public QObject
     Q_PROPERTY(bool autonomousMode READ getAutonomousMode WRITE setAutonomousMode NOTIFY autonomousModeChanged)
 
 public:
+    /// @brief Construct VehicleData.
     explicit VehicleData(QObject *parent = nullptr);
+    /// @brief Destructor.
     ~VehicleData() override;
 
-    // Getters
-	float   getSpeed() const;
-	double  getEnergy() const;
-	int     getBattery() const;
-	int     getDistance() const;
+    // ===== Getters =====
+    float   getSpeed() const;
+    double  getEnergy() const;
+    int     getBattery() const;
+    int     getDistance() const;
     int     getTemperature() const;
     QString getGear() const;
     bool    getAutonomousMode() const;
 
-    // Setters
+    // ===== Setters =====
     void    setSpeed(float mps);
     void    setEnergy(double energy);
     void    setBattery(int battery);
@@ -43,18 +58,17 @@ public:
     void    setTemperature(int temperature);
     void    setAutonomousMode(bool mode);
 
-    // Q_INVOKABLE methods - callable from QML
+    // ===== QML-Invokable Methods =====
     Q_INVOKABLE void toggleAutonomousMode();
     Q_INVOKABLE void resetValues();
     Q_INVOKABLE void resetTrip();
     Q_INVOKABLE void changeGearUp();
     Q_INVOKABLE void changeGearDown();
 
-    // Thread-safe handlers for incoming data
     void handleSpeedUpdate(float speed);
-    
+
 public slots:
-    // Called by CANReader (queued connection) with raw payload + canId
+    /// @brief Process CAN frame and update vehicle data.
     void handleCanMessage(const QByteArray &payload, uint32_t canId);
 
 signals:
@@ -67,17 +81,11 @@ signals:
     void autonomousModeChanged();
 
 private slots:
-    // Single watchdog that checks timestamps for all properties
+    /// @brief Check all properties for staleness (timestamps exceed threshold).
     void checkStaleProperties();
 
 private:
-
-    // Internal helpers
-    void    updateTimestamp(const QString &propName);
-    qint64  lastUpdate(const QString &propName) const;
-    void    markPropertyStale(const QString &propName);
-
-    // Member variables
+    // ===== Member Variables =====
     float   m_speed;
     double  m_energy;
     int     m_battery;
@@ -86,18 +94,19 @@ private:
     int     m_temperature;
     bool    m_autonomousMode;
 
-    // Helper methods
-    int getGearIndex() const;
+    // ===== Helpers =====
+    void    updateTimestamp(const QString &propName);
+    qint64  lastUpdate(const QString &propName) const;
+    void    markPropertyStale(const QString &propName);
+    int     getGearIndex() const;
 
-	// timestamps: property name -> last update epoch ms
-    QHash<QString, qint64> m_lastUpdateMs;
+    QHash<QString, qint64> m_lastUpdateMs;  ///< Property → last update time (ms).
+    QTimer *m_watchdogTimer;                 ///< Stale detection timer.
 
-    // watchdog timer (single)
-    QTimer *m_watchdogTimer;
-
-    // Stale thresholds (ms)
-    static constexpr qint64 SPEED_STALE_MS = 500;     // speed is high-rate -> short timeout
-    static constexpr qint64 OTHER_STALE_MS = 2000;    // other properties slower
+    static constexpr qint64 SPEED_STALE_MS = 500;     // High-frequency timeout
+    static constexpr qint64 OTHER_STALE_MS = 2000;    // Low-frequency timeout
 };
+
+}  // namespace drivaui
 
 #endif // VEHICLEDATA_HPP

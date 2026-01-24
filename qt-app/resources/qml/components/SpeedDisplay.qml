@@ -22,7 +22,7 @@ Item {
     }
 
     Text {
-        text: "M/S"
+        text: "KM/H"
         font.pixelSize: 18
         font.family: "SF Pro Display"
         font.weight: Font.Light

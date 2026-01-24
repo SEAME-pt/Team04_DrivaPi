@@ -1,8 +1,7 @@
-#include "can_reader.hpp"
-//QDateTime for latency testing - remove later
-#include <QDateTime>
+#include "gui/can_reader.hpp"
+#include <cstring>
 
-CANReader *reader0 = new CANReader(QStringLiteral("can1"));
+namespace drivaui {
 
 CANReader::CANReader(const QString &ifname, QObject *parent)
     : QObject(parent)
@@ -83,21 +82,8 @@ void CANReader::handleFramesReceived()
         QCanBusFrame frame = m_device->readFrame();
         QByteArray payload = frame.payload();
         uint32_t canId = static_cast<uint32_t>(frame.frameId());
-        
-        //LATENCY TESTING CODE - REMOVE LATER
-        auto now = std::chrono::steady_clock::now();
-        long long t_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
-        double t1 = static_cast<double>(t_ns) / 1e9; // Seconds as double
-        // qDebug() << "CANReader: Received CAN frame ID=0x" << QString::number(canId, 16) << " at " << t1;
-        //END LATENCY TESTING CODE
-        
-        emit canMessageReceived(payload, canId);
-        // In CANReader::handleFramesReceived
-        float speed_val;
-        std::memcpy(&speed_val, payload.constData(), sizeof(float)); // Assuming payload is 4 bytes
 
-        std::cout << "CANReader: Received speed: " << speed_val
-        << " at " << std::fixed << std::setprecision(6) << t1 << std::endl;
+        emit canMessageReceived(payload, canId);
     }
 }
 
@@ -111,3 +97,5 @@ void CANReader::handleErrorOccurred(QCanBusDevice::CanBusError error)
     qWarning() << errorMsg;
     emit errorOccurred(errorMsg);
 }
+
+}  // namespace drivaui
