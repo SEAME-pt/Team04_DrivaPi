@@ -1,3 +1,6 @@
+#include "models/system_status.hpp"
+#include "models/notification_manager.hpp"
+#include "models/can_logger.hpp"
 #include "gui/app_controller.hpp"
 
 #include <QGuiApplication>
@@ -24,9 +27,17 @@ AppController::AppController(const RunConfig& config)
 
 int AppController::run(QGuiApplication& app)
 {
+
     QQmlApplicationEngine engine;
     QScopedPointer<VehicleData> vehicleData(new VehicleData());
+    QScopedPointer<SystemStatus> systemStatus(new SystemStatus());
+    QScopedPointer<NotificationManager> notificationManager(NotificationManager::instance());
+    QScopedPointer<CANLogger> canLogger(new CANLogger());
+
     engine.rootContext()->setContextProperty("vehicleData", vehicleData.data());
+    engine.rootContext()->setContextProperty("systemStatus", systemStatus.data());
+    engine.rootContext()->setContextProperty("notificationManager", notificationManager.data());
+    engine.rootContext()->setContextProperty("canLogger", canLogger.data());
 
     QThread* workerThread = new QThread(&app);
     kuksa::KUKSAReader* kuksaReader = nullptr;
@@ -56,6 +67,14 @@ int AppController::run(QGuiApplication& app)
         QObject::connect(canReader, &CANReader::canMessageReceived,
                          vehicleData.data(), &VehicleData::handleCanMessage,
                          Qt::QueuedConnection);
+        // Feed raw CAN frames to CANLogger for recording
+        QObject::connect(canReader, &CANReader::canMessageReceived,
+                         &app, [canLogger = canLogger.data()](const QByteArray &payload, uint32_t canId){
+                             if (!canLogger->isRecording()) return;
+                             const int dlc = qMin(payload.size(), 8);
+                             const uint8_t *data = reinterpret_cast<const uint8_t*>(payload.constData());
+                             canLogger->recordFrame(canId, static_cast<uint8_t>(dlc), data);
+                         }, Qt::QueuedConnection);
     }
 #endif
 
