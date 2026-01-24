@@ -16,6 +16,7 @@
 
 #include "gui/vehicle_data.hpp"
 #include "gui/kuksa_reader.hpp"
+#include "gui/spotify_controller.hpp"
 #ifdef ENABLE_CAN_MODE
 #include "gui/can_reader.hpp"
 #endif
@@ -28,16 +29,21 @@ AppController::AppController(const RunConfig& config)
 int AppController::run(QGuiApplication& app)
 {
 
+
     QQmlApplicationEngine engine;
     QScopedPointer<VehicleData> vehicleData(new VehicleData());
     QScopedPointer<SystemStatus> systemStatus(new SystemStatus());
     QScopedPointer<NotificationManager> notificationManager(NotificationManager::instance());
     QScopedPointer<CANLogger> canLogger(new CANLogger());
 
+    // --- Spotify Controller ---
+    QScopedPointer<SpotifyController> spotifyController(new SpotifyController());
+
     engine.rootContext()->setContextProperty("vehicleData", vehicleData.data());
     engine.rootContext()->setContextProperty("systemStatus", systemStatus.data());
     engine.rootContext()->setContextProperty("notificationManager", notificationManager.data());
     engine.rootContext()->setContextProperty("canLogger", canLogger.data());
+    engine.rootContext()->setContextProperty("spotifyController", spotifyController.data());
 
     QThread* workerThread = new QThread(&app);
     kuksa::KUKSAReader* kuksaReader = nullptr;

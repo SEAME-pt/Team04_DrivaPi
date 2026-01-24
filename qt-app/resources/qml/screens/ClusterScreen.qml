@@ -21,6 +21,7 @@ Rectangle {
         opacity: 1.0
         sourceSize.width: 450
     }
+
     Image {
         anchors.right: parent.right
         anchors.top: parent.top
@@ -30,52 +31,171 @@ Rectangle {
         opacity: 1.0
         sourceSize.width: 450
     }
+            // --- Spotify Now Playing Card ---
+            Rectangle {
+                id: spotifyCard
+                width: parent.width * 0.9
+                height: 90
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: parent.top
+                anchors.topMargin: 80
+                radius: 18
+                color: "#1DB954" // Spotify green
+                border.color: "#191414"
+                border.width: 2
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.margins: 12
+                    spacing: 16
+                    // Album Art Placeholder
+                    Rectangle {
+                        width: 66; height: 66
+                        radius: 8
+                        color: "#191414"
+                        border.color: "#222831"
+                        border.width: 1
+                        Image {
+                            anchors.fill: parent
+                            anchors.margins: 6
+                            source: spotifyController.albumArtUrl !== "" ? spotifyController.albumArtUrl : "qrc:/resources/spotify_placeholder.png"
+                            fillMode: Image.PreserveAspectFit
+                        }
+                    }
+                    // Track Info
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 4
+                        Text {
+                            text: spotifyController.trackTitle
+                            font.bold: true
+                            font.pixelSize: 18
+                            color: "#fff"
+                            elide: Text.ElideRight
+                        }
+                        Text {
+                            text: spotifyController.artistName
+                            font.pixelSize: 14
+                            color: "#e0e0e0"
+                            elide: Text.ElideRight
+                        }
+                    }
+                    // Controls
+                    RowLayout {
+                        spacing: 8
+                        Rectangle {
+                            width: 28; height: 28; radius: 14
+                            color: "#191414"
+                            border.color: "#fff"
+                            border.width: 1
+                            Text { anchors.centerIn: parent; text: "⏮"; color: "#fff"; font.pixelSize: 16 }
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: spotifyController.previousTrack()
+                            }
+                        }
+                        Rectangle {
+                            width: 32; height: 32; radius: 16
+                            color: "#fff"
+                            border.color: "#191414"
+                            border.width: 1
+                            Text {
+                                anchors.centerIn: parent
+                                text: spotifyController.isPlaying ? "⏸" : "▶"
+                                color: "#1DB954"
+                                font.pixelSize: 18
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: spotifyController.playPause()
+                            }
+                        }
+                        Rectangle {
+                            width: 28; height: 28; radius: 14
+                            color: "#191414"
+                            border.color: "#fff"
+                            border.width: 1
+                            Text { anchors.centerIn: parent; text: "⏭"; color: "#fff"; font.pixelSize: 16 }
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: spotifyController.nextTrack()
+                            }
+                        }
+                    }
+                }
+                // Drop shadow effect (optional)
+                // ... add shadow if desired ...
 
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
 
-        // Top bar
+        // Top bar - refined for reference fidelity
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 50
-            color: "#0f1c29ee"
-            border.color: "#4fb3d933"
-            border.width: 1
-            radius: 5
-            Layout.leftMargin: 32
-            Layout.rightMargin: 32
+            Layout.preferredHeight: 56
+            color: "#101c2bfa"
+            border.color: "#4fb3d955"
+            border.width: 1.5
+            radius: 8
+            Layout.leftMargin: 40
+            Layout.rightMargin: 40
 
             RowLayout {
                 anchors.fill: parent
-                anchors.margins: 12
-                spacing: 32
+                anchors.margins: 10
+                spacing: 40
 
+                // Battery indicator
                 RowLayout {
                     spacing: 8
-                    Image { source: "qrc:/icons/hardware/battery.svg"; sourceSize.width: 18; sourceSize.height: 18 }
-                    Text { text: "94km"; color: "#6fd3ff"; font.pixelSize: 15; font.weight: Font.Medium }
+                    Image { source: "qrc:/icons/hardware/battery.svg"; sourceSize.width: 20; sourceSize.height: 20 }
+                    Text { text: "94 km"; color: "#6fd3ff"; font.pixelSize: 16; font.weight: Font.DemiBold }
                 }
 
-                Rectangle { width: 1; Layout.fillHeight: true; color: "#4fb3d91a" }
+                Rectangle { width: 1.5; Layout.fillHeight: true; color: "#4fb3d92a" }
 
                 Item { Layout.fillWidth: true }
 
-                RowLayout {
-                    spacing: 16
-                    Layout.alignment: Qt.AlignHCenter
-                    function gearColor(letter) { return vehicleData.gear === letter ? "#6fd3ff" : "#6b737d"; }
-                    Text { text: "D"; color: gearColor("D"); font.pixelSize: 16; font.weight: Font.Bold }
-                    Text { text: "P"; color: gearColor("P"); font.pixelSize: 16; font.weight: Font.Bold }
-                    Text { text: "R"; color: gearColor("R"); font.pixelSize: 16; font.weight: Font.Bold }
-                    Text { text: "N"; color: gearColor("N"); font.pixelSize: 16; font.weight: Font.Bold }
+                // Gear indicator - more prominent, pill background
+                Rectangle {
+                    color: "#0b1624cc"
+                    radius: 16
+                    border.color: "#4fb3d9"
+                    border.width: 1
+                    height: 32
+                    width: 120
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.margins: 6
+                        spacing: 10
+
+                        function gearColor(letter) { return vehicleData.gear === letter ? "#6fd3ff" : "#6b737d"; }
+
+                        Repeater {
+                            model: ["P", "R", "N", "D"]  // Updated to match common reference order
+                            delegate: Text {
+                                text: modelData
+                                color: parent.gearColor(modelData)
+                                font.pixelSize: 17
+                                font.weight: Font.Bold
+                                opacity: vehicleData.gear === modelData ? 1.0 : 0.6
+                            }
+                        }
+                    }
                 }
 
                 Item { Layout.fillWidth: true }
 
-                Rectangle { width: 1; Layout.fillHeight: true; color: "#4fb3d91a" }
+                Rectangle { width: 1.5; Layout.fillHeight: true; color: "#4fb3d92a" }
 
-                Text { text: Qt.formatDateTime(new Date(), "hh:mm"); color: "#c0cfdd"; font.pixelSize: 15; font.weight: Font.Medium }
+                // Clock
+                Text {
+                    text: Qt.formatDateTime(new Date(), "hh:mm")
+                    color: "#c0cfdd"
+                    font.pixelSize: 16
+                    font.weight: Font.DemiBold
+                }
             }
         }
 
@@ -93,6 +213,7 @@ Rectangle {
                 sourceSize.width: 1200
                 opacity: 0.6
             }
+
             Image {
                 source: "qrc:/assets/cluster_car_glow.svg"
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -101,6 +222,7 @@ Rectangle {
                 sourceSize.width: 900
                 opacity: 0.9
             }
+
             Canvas {
                 anchors.fill: parent
                 onPaint: {
@@ -135,7 +257,7 @@ Rectangle {
                             var ctx = getContext("2d");
                             ctx.clearRect(0, 0, width, height);
                             ctx.strokeStyle = "#4fb3d914";
-                            ctx.lineWidth = 1;
+                            ctx.lineWidth(1);
                             ctx.beginPath();
                             ctx.moveTo(10, height * 0.2); ctx.lineTo(width * 0.7, height * 0.25);
                             ctx.moveTo(20, height * 0.45); ctx.lineTo(width * 0.6, height * 0.5);
@@ -174,88 +296,99 @@ Rectangle {
                         }
                     }
                 }
-                
+
                 // ====== CENTER: Speed Display ======
                 Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    
-                    // Central vignette behind speed
+
+                    // Central vignette behind speed - more contrast, larger
                     Rectangle {
-                        width: 520
-                        height: 260
+                        width: 600
+                        height: 300
                         anchors.centerIn: parent
-                        radius: 260
+                        radius: 300
                         gradient: Gradient {
                             GradientStop { position: 0.0; color: "#0b1624" }
-                            GradientStop { position: 0.4; color: "#0b1624" }
+                            GradientStop { position: 0.5; color: "#0b1624" }
                             GradientStop { position: 1.0; color: "#08111a00" }
                         }
-                        opacity: 0.8
+                        opacity: 0.92
                     }
-                    
+
                     ColumnLayout {
                         anchors.centerIn: parent
-                        anchors.verticalCenterOffset: -10
-                        spacing: 10
-                        
-                        // ECO mode badge
-                        Text {
-                            text: "ECO"
-                            color: "#4fb3d9"
-                            font.pixelSize: 16
-                            font.weight: Font.Bold
-                            font.letterSpacing: 2
+                        anchors.verticalCenterOffset: -18
+                        spacing: 8
+
+                        // ECO mode badge - pill style
+                        Rectangle {
+                            width: 54
+                            height: 24
+                            radius: 12
+                            color: "#0b253a"
+                            border.color: "#4fb3d9"
+                            border.width: 1
                             Layout.alignment: Qt.AlignHCenter
+                            Text {
+                                text: "ECO"
+                                color: "#4fb3d9"
+                                font.pixelSize: 15
+                                font.weight: Font.Bold
+                                font.letterSpacing: 2
+                                anchors.centerIn: parent
+                            }
                         }
-                        
+
                         // Speed
                         Text {
                             text: Math.round(vehicleData.speed * 3.6).toString()
                             color: "#ffffff"
-                            font.pixelSize: 160
-                            font.weight: Font.Bold
+                            font.pixelSize: 170
+                            font.weight: Font.ExtraBold
                             Layout.alignment: Qt.AlignHCenter
+                            style: Text.Outline
+                            styleColor: "#4fb3d9"
                         }
-                        
+
                         // Unit
                         Text {
                             text: "km/h"
                             color: "#7a8a9a"
-                            font.pixelSize: 22
-                            font.weight: Font.Medium
+                            font.pixelSize: 26
+                            font.weight: Font.DemiBold
                             Layout.alignment: Qt.AlignHCenter
                         }
                     }
 
-                    // Car base glow
+                    // Car base glow - more intense
                     Rectangle {
-                        width: 220
-                        height: 70
-                        radius: 35
+                        width: 260
+                        height: 80
+                        radius: 40
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.bottom: parent.bottom
                         anchors.bottomMargin: 70
                         gradient: Gradient {
                             GradientStop { position: 0.0; color: "#0b1624" }
-                            GradientStop { position: 0.5; color: "#112236" }
+                            GradientStop { position: 0.5; color: "#4fb3d9" }
                             GradientStop { position: 1.0; color: "#0b1624" }
                         }
-                        opacity: 0.75
+                        opacity: 0.85
                     }
 
                     // Car model at bottom - more visible
                     Image {
                         source: "qrc:/icons/cluster/model3.svg"
-                        sourceSize.width: 190
-                        sourceSize.height: 190
+                        sourceSize.width: 200
+                        sourceSize.height: 200
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.bottom: parent.bottom
-                        anchors.bottomMargin: 35
+                        anchors.bottomMargin: 32
                         opacity: 1.0
                     }
                 }
-                
+
                 // ====== RIGHT: Media Player ======
                 Item {
                     Layout.fillHeight: true
@@ -275,28 +408,23 @@ Rectangle {
                             border.width: 1
                             Layout.alignment: Qt.AlignHCenter
 
+                            Image {
+                                source: "qrc:/assets/album_art.svg"  // Updated to use real album art (replace with actual path if needed)
+                                sourceSize.width: 100
+                                sourceSize.height: 100
+                                anchors.centerIn: parent
+                                fillMode: Image.PreserveAspectFit
+                                opacity: 0.9
+                            }
+
                             Rectangle {
                                 anchors.fill: parent
-                                anchors.margins: 16
                                 radius: 10
-                                color: "#0d1d2a"
-
-                                Text {
-                                    text: "♪"
-                                    color: "#6fd3ff"
-                                    font.pixelSize: 52
-                                    anchors.centerIn: parent
-                                    opacity: 0.7
+                                gradient: Gradient {
+                                    GradientStop { position: 0.0; color: "#1a3040aa" }
+                                    GradientStop { position: 1.0; color: "#1a304000" }
                                 }
-                                Rectangle {
-                                    anchors.fill: parent
-                                    radius: 10
-                                    gradient: Gradient {
-                                        GradientStop { position: 0.0; color: "#1a3040aa" }
-                                        GradientStop { position: 1.0; color: "#1a304000" }
-                                    }
-                                    opacity: 0.5
-                                }
+                                opacity: 0.5
                             }
 
                             Rectangle {
@@ -342,7 +470,7 @@ Rectangle {
                 }
             }
         }
-        
+
         // ====== BOTTOM BAR: Trip, Power, ODO ======
         Rectangle {
             Layout.fillWidth: true
@@ -354,61 +482,61 @@ Rectangle {
             anchors.leftMargin: 40
             anchors.rightMargin: 40
             anchors.bottomMargin: 6
-            
+
             RowLayout {
                 anchors.fill: parent
                 anchors.margins: 14
                 spacing: 60
-                
+
                 // Trip A
                 Text {
-                    text: "Trip A  568km"
+                    text: "Trip A " + Math.round(vehicleData.trip || 568) + "km"  // Dynamic
                     color: "#a6b4c2"
                     font.pixelSize: 12
                     font.weight: Font.Medium
                 }
-                
+
                 Item { Layout.fillWidth: true }
-                
+
                 // Power meter
                 RowLayout {
                     spacing: 10
                     Layout.alignment: Qt.AlignHCenter
-                    
+
                     Text {
                         text: "kw"
                         color: "#7a8a9a"
                         font.pixelSize: 11
                     }
-                    
+
                     // Power bar
                     Rectangle {
                         width: 110
                         height: 5
                         radius: 2.5
                         color: "#1a3040"
-                        
+
                         Rectangle {
-                            width: parent.width * 0.9
+                            width: parent.width * (vehicleData.power / 100 || 0.9)  // Dynamic fill
                             height: parent.height
                             radius: parent.radius
                             color: "#4fb3d9"
                         }
                     }
-                    
+
                     Text {
-                        text: "98"
+                        text: Math.round(vehicleData.power || 98)  // Dynamic value
                         color: "#4fb3d9"
                         font.pixelSize: 12
                         font.weight: Font.Bold
                     }
                 }
-                
+
                 Item { Layout.fillWidth: true }
-                
+
                 // ODO
                 Text {
-                    text: "ODO  1273km"
+                    text: "ODO " + Math.round(vehicleData.odo || 1273) + "km"  // Dynamic
                     color: "#a6b4c2"
                     font.pixelSize: 12
                     font.weight: Font.Medium

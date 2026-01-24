@@ -53,6 +53,7 @@ set(QT_APP_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/gui/cli_parser.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/gui/vehicle_data.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/gui/kuksa_reader.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/gui/spotify_controller.cpp"
 )
 
 if(ENABLE_CAN_MODE)
@@ -102,6 +103,7 @@ target_sources(myqtapp PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/resources/resources.qrc"
     "${CMAKE_CURRENT_SOURCE_DIR}/inc/gui/vehicle_data.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/inc/gui/kuksa_reader.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/inc/gui/spotify_controller.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/inc/models/system_status.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/inc/models/notification_manager.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/inc/models/can_logger.hpp"
