@@ -7,9 +7,9 @@ Rectangle {
     id: root
 
     gradient: Gradient {
-        GradientStop { position: 0.0; color: "#0d1822" }
-        GradientStop { position: 0.5; color: "#08111a" }
-        GradientStop { position: 1.0; color: "#0d1822" }
+        GradientStop { position: 0.0; color: "#05080e" }
+        GradientStop { position: 0.5; color: "#030509" }
+        GradientStop { position: 1.0; color: "#05080e" }
     }
 
     // --- Glowing Frame Overlay ---
@@ -77,8 +77,8 @@ Rectangle {
                 anchors.top: parent.top
                 anchors.topMargin: 80
                 radius: 18
-                color: "#1DB954" // Spotify green
-                border.color: "#191414"
+                color: "#1a2a1a" // Darker green for dark mode
+                border.color: "#101c13"
                 border.width: 2
                 RowLayout {
                     anchors.fill: parent
@@ -88,8 +88,8 @@ Rectangle {
                     Rectangle {
                         width: 66; height: 66
                         radius: 8
-                        color: "#191414"
-                        border.color: "#222831"
+                        color: "#0a0d12"
+                        border.color: "#181b1f"
                         border.width: 1
                         Image {
                             anchors.fill: parent
@@ -132,8 +132,8 @@ Rectangle {
                         }
                         Rectangle {
                             width: 32; height: 32; radius: 16
-                            color: "#fff"
-                            border.color: "#191414"
+                            color: "#222831"
+                            border.color: "#101c13"
                             border.width: 1
                             Text {
                                 anchors.centerIn: parent
@@ -148,8 +148,8 @@ Rectangle {
                         }
                         Rectangle {
                             width: 28; height: 28; radius: 14
-                            color: "#191414"
-                            border.color: "#fff"
+                            color: "#0a0d12"
+                            border.color: "#222831"
                             border.width: 1
                             Text { anchors.centerIn: parent; text: "⏭"; color: "#fff"; font.pixelSize: 16 }
                             MouseArea {
@@ -171,8 +171,8 @@ Rectangle {
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 56
-            color: "#101c2bfa"
-            border.color: "#4fb3d955"
+            color: "#070c13fa"
+            border.color: "#232a35"
             border.width: 1.5
             radius: 8
             Layout.leftMargin: 40
@@ -513,8 +513,8 @@ Rectangle {
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 52
-            color: "#0f1c29cc"
-            border.color: "#4fb3d926"
+            color: "#070c13cc"
+            border.color: "#232a35"
             border.width: 1
             radius: 4
             anchors.leftMargin: 40
