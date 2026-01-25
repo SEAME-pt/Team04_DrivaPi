@@ -5,10 +5,47 @@ import "../theme"
 
 Rectangle {
     id: root
+
     gradient: Gradient {
         GradientStop { position: 0.0; color: "#0d1822" }
         GradientStop { position: 0.5; color: "#08111a" }
         GradientStop { position: 1.0; color: "#0d1822" }
+    }
+
+    // --- Glowing Frame Overlay ---
+    // --- Top Glow Layer ---
+    Image {
+        source: "qrc:/assets/oie_kUl6AfLcsUwE.png"
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        fillMode: Image.PreserveAspectFit
+        width: parent.width * 0.95
+        height: parent.height * 0.13
+        opacity: 0.85
+        z: 1
+    }
+
+    // --- Center Glow Layer ---
+    Image {
+        source: "qrc:/assets/oie_e7ruG6vIvyll.png"
+        anchors.centerIn: parent
+        fillMode: Image.PreserveAspectFit
+        width: parent.width * 0.98
+        height: parent.height * 0.60
+        opacity: 0.95
+        z: 2
+    }
+
+    // --- Bottom Glow Layer ---
+    Image {
+        source: "qrc:/assets/oie_OeB7IAtTvDtn.png"
+        anchors.bottom: parent.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+        fillMode: Image.PreserveAspectFit
+        width: parent.width * 0.95
+        height: parent.height * 0.11
+        opacity: 0.85
+        z: 3
     }
 
     // Glass side panels - prominent borders
@@ -124,6 +161,7 @@ Rectangle {
                 }
                 // Drop shadow effect (optional)
                 // ... add shadow if desired ...
+            }
 
     ColumnLayout {
         anchors.fill: parent

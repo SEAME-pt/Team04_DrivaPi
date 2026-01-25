@@ -1,5 +1,10 @@
 <RCC>
     <qresource prefix="/">
+            <!-- HMI Glowing Frame and Highlights -->
+            <file>assets/oie_OeB7IAtTvDtn.png</file>
+            <file>assets/oie_e7ruG6vIvyll.png</file>
+            <file>assets/oie_kUl6AfLcsUwE.png</file>
+            <file>assets/oie_transparent (2).png</file>
         <!-- QML -->
         <file>qml/main.qml</file>
         

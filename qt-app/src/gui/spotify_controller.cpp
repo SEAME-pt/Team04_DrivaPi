@@ -1,4 +1,4 @@
-#include "spotify_controller.hpp"
+#include "gui/spotify_controller.hpp"
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -119,6 +119,3 @@ QString SpotifyController::artistName() const { return m_artistName; }
 QString SpotifyController::albumArtUrl() const { return m_albumArtUrl; }
 bool SpotifyController::isPlaying() const { return m_isPlaying; }
 
-void SpotifyController::refreshTokenIfNeeded() {
-    // ... implement token refresh if needed ...
-}
