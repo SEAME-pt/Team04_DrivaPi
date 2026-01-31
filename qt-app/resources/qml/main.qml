@@ -13,18 +13,18 @@ ApplicationWindow {
     height: 400
     title: qsTr("DrivaPi HMI - Multi-Screen Infotainment")
     color: AppTheme.colors.surface
-    
+
     // Keep a sensible minimum for 1280x400 while allowing resize for testing
     minimumWidth: 1280
     minimumHeight: 400
-    
+
     // ====== KEYBOARD SHORTCUTS ======
     Shortcut {
         sequence: "Ctrl+Q"
         context: Qt.ApplicationShortcut
         onActivated: Qt.quit()
     }
-    
+
     Shortcut {
         sequence: "Ctrl+D"
         context: Qt.ApplicationShortcut
@@ -33,143 +33,148 @@ ApplicationWindow {
             console.log("[HMI] Debug shortcut triggered");
         }
     }
-    
+
     // ====== CONNECTION STATE MONITORING ======
     Connections {
         target: systemStatus
-        
+
         function onConnectionStateChanged() {
             var state = systemStatus.connectionState;
             var mode = systemStatus.connectionMode;
-            
+
             if (state === "connected") {
-                notificationManager.showNotification(
-                    "✓ " + mode + " Connected", 
-                    0, // Info level
-                    2000
-                );
+                notificationManager.showNotification("✓ " + mode + " Connected", 0 // Info level
+                , 2000);
             } else if (state === "disconnected") {
-                notificationManager.showNotification(
-                    "✗ " + mode + " Disconnected", 
-                    2, // Critical level
-                    3000
-                );
+                notificationManager.showNotification("✗ " + mode + " Disconnected", 2 // Critical level
+                , 3000);
             } else if (state === "connecting") {
-                notificationManager.showNotification(
-                    "○ Connecting to " + mode + "...", 
-                    0, // Info level
-                    2000
-                );
+                notificationManager.showNotification("○ Connecting to " + mode + "...", 0 // Info level
+                , 2000);
             }
         }
     }
-    
+
     // ====== MAIN LAYOUT ======
     ColumnLayout {
         anchors.fill: parent
         z: 1
 
-        // ============================================
-        // TOP BAR
-        // ============================================
-        Item {
-            id: topBar
-            width: parent.width
-            height: 85
-            anchors.top: parent.top
+        // // ============================================
+        // // TOP BAR
+        // // ============================================
+        // Item {
+        //     id: topBar
+        //     width: parent.width
+        //     height: 85
+        //     anchors.top: parent.top
 
-            // Time (far left)
-            Text {
-                id: currentTime
-                text: Qt.formatDateTime(new Date(), "hh:mm")
-                font.pixelSize: 16
-                font.family: "SF Pro Display"
-                font.weight: Font.Light
-                color: "#4A4A4A"
-                anchors.left: parent.left
-                anchors.leftMargin: 200
-                anchors.top: parent.top
-                anchors.topMargin: 18
+        //     // Time (far left)
+        //     Text {
+        //         id: currentTime
+        //         text: Qt.formatDateTime(new Date(), "hh:mm")
+        //         font.pixelSize: 16
+        //         font.family: "SF Pro Display"
+        //         font.weight: Font.Light
+        //         color: "#4A4A4A"
+        //         anchors.left: parent.left
+        //         anchors.leftMargin: 200
+        //         anchors.top: parent.top
+        //         anchors.topMargin: 18
+        //     }
+
+        //     // Left navigation arrow
+        //     Text {
+        //         text: "sinistra"
+        //         font.pixelSize: 50
+        //         color: "#00D66C"
+        //         anchors.left: parent.left
+        //         anchors.leftMargin: 270
+        //         anchors.top: parent.top
+        //         anchors.topMargin: 8
+        //     }
+
+        //     // Gear selector (center) - COMPONENT
+        //     GearSelector {
+        //         id: gearSelector
+        //         anchors.horizontalCenter: parent.horizontalCenter
+        //         anchors.top: parent.top
+        //         anchors.topMargin: 3
+        //         z: 2
+
+        //         currentGear: vehicleData.gear
+
+        //         onGearUp: vehicleData.changeGearUp()
+        //         onGearDown: vehicleData.changeGearDown()
+        //     }
+
+        //     // Right navigation arrow
+        //     Text {
+        //         text: "➡"
+        //         font.pixelSize: 50
+        //         color: "#00D66C"
+        //         anchors.right: parent.right
+        //         anchors.rightMargin: 270
+        //         anchors.top: parent.top
+        //         anchors.topMargin: 8
+        //     }
+
+        //     // Temperature (top right)
+        //     Text {
+        //         text: Math.round(vehicleData.temperature) + "°C"
+        //         font.pixelSize: 16
+        //         font.family: "SF Pro Display"
+        //         font.weight: Font.Light
+        //         color: "#4A4A4A"
+        //         anchors.right: parent.right
+        //         anchors.rightMargin: 200
+        //         anchors.top: parent.top
+        //         anchors.topMargin: 18
+        //     }
+
+        //     // Speed limit sign
+        //     Image {
+        //         width: 75
+        //         height: 75
+        //         source: "qrc:/assets/warning.svg"  // existing bundled asset
+        //         anchors.left: parent.left
+        //         anchors.leftMargin: 40
+        //         anchors.top: parent.top
+        //         anchors.topMargin: 5
+        //     }
+        // }
+
+        // --- Main Screens in SwipeView ---
+        SwipeView {
+            id: swipeView
+            anchors.fill: parent
+            currentIndex: tabBar.currentIndex
+
+            ClusterScreen {
+                id: clusterScreen
             }
-
-            // Left navigation arrow
-            Text {
-                text: "sinistra"
-                font.pixelSize: 50
-                color: "#00D66C"
-                anchors.left: parent.left
-                anchors.leftMargin: 270
-                anchors.top: parent.top
-                anchors.topMargin: 8
+            NavigationScreen {
+                id: navigationScreen
             }
-
-            // Gear selector (center) - COMPONENT
-            GearSelector {
-                id: gearSelector
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: parent.top
-                anchors.topMargin: 3
-                z: 2
-
-                currentGear: vehicleData.gear
-
-                onGearUp: vehicleData.changeGearUp()
-                onGearDown: vehicleData.changeGearDown()
+            MediaScreen {
+                id: mediaScreen
             }
-
-            // Right navigation arrow
-            Text {
-                text: "➡"
-                font.pixelSize: 50
-                color: "#00D66C"
-                anchors.right: parent.right
-                anchors.rightMargin: 270
-                anchors.top: parent.top
-                anchors.topMargin: 8
+            DiagnosticsScreen {
+                id: diagnosticsScreen
             }
-
-            // Temperature (top right)
-            Text {
-                text: Math.round(vehicleData.temperature) + "°C"
-                font.pixelSize: 16
-                font.family: "SF Pro Display"
-                font.weight: Font.Light
-                color: "#4A4A4A"
-                anchors.right: parent.right
-                anchors.rightMargin: 200
-                anchors.top: parent.top
-                anchors.topMargin: 18
+            SettingsScreen {
+                id: settingsScreen
             }
-
-            // Speed limit sign
-            Image {
-                width: 75
-                height: 75
-                source: "qrc:/assets/warning.svg"  // existing bundled asset
-                anchors.left: parent.left
-                anchors.leftMargin: 40
-                anchors.top: parent.top
-                anchors.topMargin: 5
+            WeatherScreen {
+                id: weatherScreen
+            }
+            UtilitiesScreen {
+                id: utilitiesScreen
             }
         }
-            
-            // --- Main Screens in SwipeView ---
-            SwipeView {
-                id: swipeView
-                anchors.fill: parent
-                currentIndex: tabBar.currentIndex
-
-                ClusterScreen { id: clusterScreen }
-                NavigationScreen { id: navigationScreen }
-                MediaScreen { id: mediaScreen }
-                DiagnosticsScreen { id: diagnosticsScreen }
-                SettingsScreen { id: settingsScreen }
-                WeatherScreen { id: weatherScreen }
-                UtilitiesScreen { id: utilitiesScreen }
-            }
-        }
+    }
     // <-- Close the Item wrapping the screens
-    
+
     // ====== BOTTOM NAVIGATION TAB BAR ======
     TabBar {
         id: tabBar
@@ -178,348 +183,257 @@ ApplicationWindow {
         currentIndex: swipeView.currentIndex
         position: TabBar.Footer
         onCurrentIndexChanged: swipeView.currentIndex = currentIndex
-            
-            // Styling
+
+        // Styling
+        background: Rectangle {
+            color: AppTheme.colors.surfaceElevated
+            border.color: AppTheme.colors.divider
+            border.width: 1
+        }
+
+        // Tab buttons
+        TabButton {
+            text: "Cluster"
+            font.pixelSize: AppTheme.typography.labelMedium
+            font.weight: Font.Medium
+            width: implicitWidth
+            icon.source: "qrc:/icons/cluster/speedometer.svg"
+            icon.width: 20
+            icon.height: 20
+
             background: Rectangle {
-                color: AppTheme.colors.surfaceElevated
-                border.color: AppTheme.colors.divider
-                border.width: 1
-            }
-            
-            // Tab buttons
-            TabButton {
-                text: "Cluster"
-                font.pixelSize: AppTheme.typography.labelMedium
-                font.weight: Font.Medium
-                width: implicitWidth
-                icon.source: "qrc:/icons/cluster/speedometer.svg"
-                icon.width: 20
-                icon.height: 20
-                
-                background: Rectangle {
-                    color: tabBar.currentIndex === 0 
-                        ? AppTheme.colors.primary 
-                        : "transparent"
-                    border.width: 0
-                    
-                    // Smooth color transition
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: AppTheme.animation.normal
-                        }
-                    }
-                }
-                
-                contentItem: Text {
-                    text: parent.text
-                    color: tabBar.currentIndex === 0 
-                        ? AppTheme.colors.text 
-                        : AppTheme.colors.textSecondary
-                    font: parent.font
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    
-                    // Smooth text color transition
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: AppTheme.animation.normal
-                        }
+                color: tabBar.currentIndex === 0 ? AppTheme.colors.primary : "transparent"
+                border.width: 0
+
+                // Smooth color transition
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppTheme.animation.normal
                     }
                 }
             }
-            
-            TabButton {
-                text: "Navigation"
-                font.pixelSize: AppTheme.typography.labelMedium
-                font.weight: Font.Medium
-                width: implicitWidth
-                icon.source: tabBar.currentIndex === 1 
-                    ? "qrc:/icons/common/nav-mode-active.svg" 
-                    : "qrc:/icons/common/nav-mode.svg"
-                icon.width: 20
-                icon.height: 20
-                
-                background: Rectangle {
-                    color: tabBar.currentIndex === 1 
-                        ? AppTheme.colors.primary 
-                        : "transparent"
-                    
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: AppTheme.animation.normal
-                        }
-                    }
-                }
-                
-                contentItem: Text {
-                    text: parent.text
-                    color: tabBar.currentIndex === 1 
-                        ? AppTheme.colors.text 
-                        : AppTheme.colors.textSecondary
-                    font: parent.font
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: AppTheme.animation.normal
-                        }
-                    }
-                }
-            }
-            
-            TabButton {
-                text: "Media"
-                font.pixelSize: AppTheme.typography.labelMedium
-                font.weight: Font.Medium
-                width: implicitWidth
-                icon.source: tabBar.currentIndex === 2 
-                    ? "qrc:/icons/common/media-mode-active.svg" 
-                    : "qrc:/icons/common/media-mode.svg"
-                icon.width: 20
-                icon.height: 20
-                
-                background: Rectangle {
-                    color: tabBar.currentIndex === 2 
-                        ? AppTheme.colors.primary 
-                        : "transparent"
-                    
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: AppTheme.animation.normal
-                        }
-                    }
-                }
-                
-                contentItem: Text {
-                    text: parent.text
-                    color: tabBar.currentIndex === 2 
-                        ? AppTheme.colors.text 
-                        : AppTheme.colors.textSecondary
-                    font: parent.font
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: AppTheme.animation.normal
-                        }
-                    }
-                }
-            }
-            
-            TabButton {
-                text: "Diagnostics"
-                font.pixelSize: AppTheme.typography.labelMedium
-                font.weight: Font.Medium
-                width: implicitWidth
-                icon.source: "qrc:/icons/hardware/sensor.svg"
-                icon.width: 20
-                icon.height: 20
-                
-                background: Rectangle {
-                    color: tabBar.currentIndex === 3 
-                        ? AppTheme.colors.primary 
-                        : "transparent"
-                    
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: AppTheme.animation.normal
-                        }
-                    }
-                }
-                
-                contentItem: Text {
-                    text: parent.text
-                    color: tabBar.currentIndex === 3 
-                        ? AppTheme.colors.text 
-                        : AppTheme.colors.textSecondary
-                    font: parent.font
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: AppTheme.animation.normal
-                        }
-                    }
-                }
-            }
-            
-            TabButton {
-                text: "Settings"
-                font.pixelSize: AppTheme.typography.labelMedium
-                font.weight: Font.Medium
-                width: implicitWidth
-                icon.source: "qrc:/icons/settings/brightness.svg"
-                icon.width: 20
-                icon.height: 20
-                
-                background: Rectangle {
-                    color: tabBar.currentIndex === 4 
-                        ? AppTheme.colors.primary 
-                        : "transparent"
-                    
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: AppTheme.animation.normal
-                        }
-                    }
-                }
-                
-                contentItem: Text {
-                    text: parent.text
-                    color: tabBar.currentIndex === 4 
-                        ? AppTheme.colors.text 
-                        : AppTheme.colors.textSecondary
-                    font: parent.font
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: AppTheme.animation.normal
-                        }
-                    }
-                }
-            }
-            
-            TabButton {
-                text: "Weather"
-                font.pixelSize: AppTheme.typography.labelMedium
-                font.weight: Font.Medium
-                width: implicitWidth
-                icon.source: "qrc:/icons/weather/sun.svg"
-                icon.width: 20
-                icon.height: 20
-                
-                background: Rectangle {
-                    color: tabBar.currentIndex === 5 
-                        ? AppTheme.colors.primary 
-                        : "transparent"
-                    
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: AppTheme.animation.normal
-                        }
-                    }
-                }
-                
-                contentItem: Text {
-                    text: parent.text
-                    color: tabBar.currentIndex === 5 
-                        ? AppTheme.colors.text 
-                        : AppTheme.colors.textSecondary
-                    font: parent.font
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: AppTheme.animation.normal
-                        }
-                    }
-                }
-            }
-            
-            TabButton {
-                text: "Utilities"
-                font.pixelSize: AppTheme.typography.labelMedium
-                font.weight: Font.Medium
-                width: implicitWidth
-                icon.source: "qrc:/icons/common/menu.svg"
-                icon.width: 20
-                icon.height: 20
-                
-                background: Rectangle {
-                    color: tabBar.currentIndex === 6 
-                        ? AppTheme.colors.primary 
-                        : "transparent"
-                    
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: AppTheme.animation.normal
-                        }
-                    }
-                }
-                
-                contentItem: Text {
-                    text: parent.text
-                    color: tabBar.currentIndex === 6 
-                        ? AppTheme.colors.text 
-                        : AppTheme.colors.textSecondary
-                    font: parent.font
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: AppTheme.animation.normal
-                        }
+
+            contentItem: Text {
+                text: parent.text
+                color: tabBar.currentIndex === 0 ? AppTheme.colors.text : AppTheme.colors.textSecondary
+                font: parent.font
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+
+                // Smooth text color transition
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppTheme.animation.normal
                     }
                 }
             }
         }
-    
-    
-    // ====== STATUS BAR OVERLAY (TOP) ======
-    Rectangle {
-        id: statusBar
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        height: 48
-        color: AppTheme.colors.surfaceElevated
-        border.color: AppTheme.colors.divider
-        border.width: 1
-        z: 100
-        
-        RowLayout {
-            anchors.fill: parent
-            anchors.margins: AppTheme.spacing.small
-            spacing: AppTheme.spacing.small
-            
-            // Time (left)
-            Text {
-                text: Qt.formatDateTime(new Date(), "hh:mm:ss")
-                color: AppTheme.colors.text
-                font.pixelSize: AppTheme.typography.bodySmall
-                
-                Timer {
-                    interval: 1000
-                    running: true
-                    repeat: true
-                    onTriggered: parent.text = Qt.formatDateTime(new Date(), "hh:mm:ss")
+
+        TabButton {
+            text: "Navigation"
+            font.pixelSize: AppTheme.typography.labelMedium
+            font.weight: Font.Medium
+            width: implicitWidth
+            icon.source: tabBar.currentIndex === 1 ? "qrc:/icons/common/nav-mode-active.svg" : "qrc:/icons/common/nav-mode.svg"
+            icon.width: 20
+            icon.height: 20
+
+            background: Rectangle {
+                color: tabBar.currentIndex === 1 ? AppTheme.colors.primary : "transparent"
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppTheme.animation.normal
+                    }
                 }
             }
-            
-            Item { Layout.fillWidth: true }
-            
-            // Connection Status (right)
-            RowLayout {
-                spacing: AppTheme.spacing.small
-                
-                // Status indicator
-                Rectangle {
-                    width: 12
-                    height: 12
-                    radius: width / 2
-                    color: systemStatus.connectionState === "connected" 
-                        ? AppTheme.colors.online 
-                        : systemStatus.connectionState === "connecting"
-                        ? AppTheme.colors.warning
-                        : AppTheme.colors.offline
+
+            contentItem: Text {
+                text: parent.text
+                color: tabBar.currentIndex === 1 ? AppTheme.colors.text : AppTheme.colors.textSecondary
+                font: parent.font
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppTheme.animation.normal
+                    }
                 }
-                
-                Text {
-                    text: systemStatus.connectionMode + " - " + systemStatus.frameRate + " fps"
-                    color: AppTheme.colors.text
-                    font.pixelSize: AppTheme.typography.bodySmall
+            }
+        }
+
+        TabButton {
+            text: "Media"
+            font.pixelSize: AppTheme.typography.labelMedium
+            font.weight: Font.Medium
+            width: implicitWidth
+            icon.source: tabBar.currentIndex === 2 ? "qrc:/icons/common/media-mode-active.svg" : "qrc:/icons/common/media-mode.svg"
+            icon.width: 20
+            icon.height: 20
+
+            background: Rectangle {
+                color: tabBar.currentIndex === 2 ? AppTheme.colors.primary : "transparent"
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppTheme.animation.normal
+                    }
+                }
+            }
+
+            contentItem: Text {
+                text: parent.text
+                color: tabBar.currentIndex === 2 ? AppTheme.colors.text : AppTheme.colors.textSecondary
+                font: parent.font
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppTheme.animation.normal
+                    }
+                }
+            }
+        }
+
+        TabButton {
+            text: "Diagnostics"
+            font.pixelSize: AppTheme.typography.labelMedium
+            font.weight: Font.Medium
+            width: implicitWidth
+            icon.source: "qrc:/icons/hardware/sensor.svg"
+            icon.width: 20
+            icon.height: 20
+
+            background: Rectangle {
+                color: tabBar.currentIndex === 3 ? AppTheme.colors.primary : "transparent"
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppTheme.animation.normal
+                    }
+                }
+            }
+
+            contentItem: Text {
+                text: parent.text
+                color: tabBar.currentIndex === 3 ? AppTheme.colors.text : AppTheme.colors.textSecondary
+                font: parent.font
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppTheme.animation.normal
+                    }
+                }
+            }
+        }
+
+        TabButton {
+            text: "Settings"
+            font.pixelSize: AppTheme.typography.labelMedium
+            font.weight: Font.Medium
+            width: implicitWidth
+            icon.source: "qrc:/icons/settings/brightness.svg"
+            icon.width: 20
+            icon.height: 20
+
+            background: Rectangle {
+                color: tabBar.currentIndex === 4 ? AppTheme.colors.primary : "transparent"
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppTheme.animation.normal
+                    }
+                }
+            }
+
+            contentItem: Text {
+                text: parent.text
+                color: tabBar.currentIndex === 4 ? AppTheme.colors.text : AppTheme.colors.textSecondary
+                font: parent.font
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppTheme.animation.normal
+                    }
+                }
+            }
+        }
+
+        TabButton {
+            text: "Weather"
+            font.pixelSize: AppTheme.typography.labelMedium
+            font.weight: Font.Medium
+            width: implicitWidth
+            icon.source: "qrc:/icons/weather/sun.svg"
+            icon.width: 20
+            icon.height: 20
+
+            background: Rectangle {
+                color: tabBar.currentIndex === 5 ? AppTheme.colors.primary : "transparent"
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppTheme.animation.normal
+                    }
+                }
+            }
+
+            contentItem: Text {
+                text: parent.text
+                color: tabBar.currentIndex === 5 ? AppTheme.colors.text : AppTheme.colors.textSecondary
+                font: parent.font
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppTheme.animation.normal
+                    }
+                }
+            }
+        }
+
+        TabButton {
+            text: "Utilities"
+            font.pixelSize: AppTheme.typography.labelMedium
+            font.weight: Font.Medium
+            width: implicitWidth
+            icon.source: "qrc:/icons/common/menu.svg"
+            icon.width: 20
+            icon.height: 20
+
+            background: Rectangle {
+                color: tabBar.currentIndex === 6 ? AppTheme.colors.primary : "transparent"
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppTheme.animation.normal
+                    }
+                }
+            }
+
+            contentItem: Text {
+                text: parent.text
+                color: tabBar.currentIndex === 6 ? AppTheme.colors.text : AppTheme.colors.textSecondary
+                font: parent.font
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppTheme.animation.normal
+                    }
                 }
             }
         }
     }
-    
+
     // ====== NOTIFICATION TOAST CONTAINER (TOP-CENTER) ======
     Rectangle {
         id: notificationContainer
@@ -530,35 +444,39 @@ ApplicationWindow {
         height: childrenRect.height
         color: "transparent"
         z: 200
-        
+
         Column {
             width: parent.width
             spacing: AppTheme.spacing.small
-            
+
             // Dynamically create toasts from notificationManager.notifications
             Repeater {
                 model: notificationManager.notifications
-                
+
                 Rectangle {
                     width: notificationContainer.width
                     height: 52
                     radius: AppTheme.radius.medium
-                    
+
                     // Color based on alert level
                     color: {
                         switch (modelData.level) {
-                        case 0: return AppTheme.colors.info        // Info
-                        case 1: return AppTheme.colors.warning     // Warning
-                        case 2: return AppTheme.colors.error       // Critical
-                        default: return AppTheme.colors.info
+                        case 0:
+                            return AppTheme.colors.info;        // Info
+                        case 1:
+                            return AppTheme.colors.warning;     // Warning
+                        case 2:
+                            return AppTheme.colors.error;       // Critical
+                        default:
+                            return AppTheme.colors.info;
                         }
                     }
-                    
+
                     RowLayout {
                         anchors.fill: parent
                         anchors.margins: AppTheme.spacing.medium
                         spacing: AppTheme.spacing.medium
-                        
+
                         Text {
                             text: modelData.message
                             color: AppTheme.colors.text
@@ -567,7 +485,7 @@ ApplicationWindow {
                             wrapMode: Text.Wrap
                         }
                     }
-                    
+
                     // Fade out animation
                     NumberAnimation on opacity {
                         from: 1.0

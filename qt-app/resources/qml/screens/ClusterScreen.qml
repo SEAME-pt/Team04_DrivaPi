@@ -7,9 +7,18 @@ Rectangle {
     id: root
 
     gradient: Gradient {
-        GradientStop { position: 0.0; color: "#05080e" }
-        GradientStop { position: 0.5; color: "#030509" }
-        GradientStop { position: 1.0; color: "#05080e" }
+        GradientStop {
+            position: 0.0
+            color: "#05080e"
+        }
+        GradientStop {
+            position: 0.5
+            color: "#030509"
+        }
+        GradientStop {
+            position: 1.0
+            color: "#05080e"
+        }
     }
 
     // --- Glowing Frame Overlay ---
@@ -68,100 +77,117 @@ Rectangle {
         opacity: 1.0
         sourceSize.width: 450
     }
-            // --- Spotify Now Playing Card ---
+    // --- Spotify Now Playing Card ---
+    Rectangle {
+        id: spotifyCard
+        width: parent.width * 0.9
+        height: 90
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
+        anchors.topMargin: 80
+        radius: 18
+        color: "#1a2a1a" // Darker green for dark mode
+        border.color: "#101c13"
+        border.width: 2
+        RowLayout {
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 16
+            // Album Art Placeholder
             Rectangle {
-                id: spotifyCard
-                width: parent.width * 0.9
-                height: 90
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: parent.top
-                anchors.topMargin: 80
-                radius: 18
-                color: "#1a2a1a" // Darker green for dark mode
-                border.color: "#101c13"
-                border.width: 2
-                RowLayout {
+                width: 66
+                height: 66
+                radius: 8
+                color: "#0a0d12"
+                border.color: "#181b1f"
+                border.width: 1
+                Image {
                     anchors.fill: parent
-                    anchors.margins: 12
-                    spacing: 16
-                    // Album Art Placeholder
-                    Rectangle {
-                        width: 66; height: 66
-                        radius: 8
-                        color: "#0a0d12"
-                        border.color: "#181b1f"
-                        border.width: 1
-                        Image {
-                            anchors.fill: parent
-                            anchors.margins: 6
-                            source: spotifyController.albumArtUrl !== "" ? spotifyController.albumArtUrl : "qrc:/resources/spotify_placeholder.png"
-                            fillMode: Image.PreserveAspectFit
-                        }
+                    anchors.margins: 6
+                    source: spotifyController.albumArtUrl !== "" ? spotifyController.albumArtUrl : "qrc:/resources/spotify_placeholder.png"
+                    fillMode: Image.PreserveAspectFit
+                }
+            }
+            // Track Info
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 4
+                Text {
+                    text: spotifyController.trackTitle
+                    font.bold: true
+                    font.pixelSize: 18
+                    color: "#fff"
+                    elide: Text.ElideRight
+                }
+                Text {
+                    text: spotifyController.artistName
+                    font.pixelSize: 14
+                    color: "#e0e0e0"
+                    elide: Text.ElideRight
+                }
+            }
+            // Controls
+            RowLayout {
+                spacing: 8
+                Rectangle {
+                    width: 28
+                    height: 28
+                    radius: 14
+                    color: "#191414"
+                    border.color: "#fff"
+                    border.width: 1
+                    Text {
+                        anchors.centerIn: parent
+                        text: "⏮"
+                        color: "#fff"
+                        font.pixelSize: 16
                     }
-                    // Track Info
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 4
-                        Text {
-                            text: spotifyController.trackTitle
-                            font.bold: true
-                            font.pixelSize: 18
-                            color: "#fff"
-                            elide: Text.ElideRight
-                        }
-                        Text {
-                            text: spotifyController.artistName
-                            font.pixelSize: 14
-                            color: "#e0e0e0"
-                            elide: Text.ElideRight
-                        }
-                    }
-                    // Controls
-                    RowLayout {
-                        spacing: 8
-                        Rectangle {
-                            width: 28; height: 28; radius: 14
-                            color: "#191414"
-                            border.color: "#fff"
-                            border.width: 1
-                            Text { anchors.centerIn: parent; text: "⏮"; color: "#fff"; font.pixelSize: 16 }
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: spotifyController.previousTrack()
-                            }
-                        }
-                        Rectangle {
-                            width: 32; height: 32; radius: 16
-                            color: "#222831"
-                            border.color: "#101c13"
-                            border.width: 1
-                            Text {
-                                anchors.centerIn: parent
-                                text: spotifyController.isPlaying ? "⏸" : "▶"
-                                color: "#1DB954"
-                                font.pixelSize: 18
-                            }
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: spotifyController.playPause()
-                            }
-                        }
-                        Rectangle {
-                            width: 28; height: 28; radius: 14
-                            color: "#0a0d12"
-                            border.color: "#222831"
-                            border.width: 1
-                            Text { anchors.centerIn: parent; text: "⏭"; color: "#fff"; font.pixelSize: 16 }
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: spotifyController.nextTrack()
-                            }
-                        }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: spotifyController.previousTrack()
                     }
                 }
-                // Drop shadow effect (optional)
-                // ... add shadow if desired ...
+                Rectangle {
+                    width: 32
+                    height: 32
+                    radius: 16
+                    color: "#222831"
+                    border.color: "#101c13"
+                    border.width: 1
+                    Text {
+                        anchors.centerIn: parent
+                        text: spotifyController.isPlaying ? "⏸" : "▶"
+                        color: "#1DB954"
+                        font.pixelSize: 18
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: spotifyController.playPause()
+                    }
+                }
+                Rectangle {
+                    width: 28
+                    height: 28
+                    radius: 14
+                    color: "#0a0d12"
+                    border.color: "#222831"
+                    border.width: 1
+                    Text {
+                        anchors.centerIn: parent
+                        text: "⏭"
+                        color: "#fff"
+                        font.pixelSize: 16
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: spotifyController.nextTrack()
+                    }
+                }
             }
+        }
+        // Drop shadow effect (optional)
+        // ... add shadow if desired ...
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -175,8 +201,8 @@ Rectangle {
             border.color: "#232a35"
             border.width: 1.5
             radius: 8
-            Layout.leftMargin: 40
-            Layout.rightMargin: 40
+            Layout.leftMargin: 0.25 * parent.width
+            Layout.rightMargin: 0.25 * parent.width
 
             RowLayout {
                 anchors.fill: parent
@@ -186,13 +212,28 @@ Rectangle {
                 // Battery indicator
                 RowLayout {
                     spacing: 8
-                    Image { source: "qrc:/icons/hardware/battery.svg"; sourceSize.width: 20; sourceSize.height: 20 }
-                    Text { text: "94 km"; color: "#6fd3ff"; font.pixelSize: 16; font.weight: Font.DemiBold }
+                    Image {
+                        source: "qrc:/icons/hardware/battery.svg"
+                        sourceSize.width: 20
+                        sourceSize.height: 20
+                    }
+                    Text {
+                        text: "94 km"
+                        color: "#6fd3ff"
+                        font.pixelSize: 16
+                        font.weight: Font.DemiBold
+                    }
                 }
 
-                Rectangle { width: 1.5; Layout.fillHeight: true; color: "#4fb3d92a" }
+                Rectangle {
+                    width: 1.5
+                    Layout.fillHeight: true
+                    color: "#4fb3d92a"
+                }
 
-                Item { Layout.fillWidth: true }
+                Item {
+                    Layout.fillWidth: true
+                }
 
                 // Gear indicator - more prominent, pill background
                 Rectangle {
@@ -208,7 +249,9 @@ Rectangle {
                         anchors.margins: 6
                         spacing: 10
 
-                        function gearColor(letter) { return vehicleData.gear === letter ? "#6fd3ff" : "#6b737d"; }
+                        function gearColor(letter) {
+                            return vehicleData.gear === letter ? "#6fd3ff" : "#6b737d";
+                        }
 
                         Repeater {
                             model: ["P", "R", "N", "D"]  // Updated to match common reference order
@@ -222,10 +265,127 @@ Rectangle {
                         }
                     }
                 }
+                // 			    // ====== STATUS BAR OVERLAY (TOP) ======
+                // Rectangle {
+                //     id: statusBar
+                //     anchors.top: parent.top
+                //     anchors.left: parent.left
+                //     anchors.right: parent.right
+                //     height: 85
+                //     color: Qt.darker(AppTheme.colors.surfaceElevated, 1.6)
+                //     border.color: AppTheme.colors.divider
+                //     border.width: 1
+                //     z: 100
 
-                Item { Layout.fillWidth: true }
+                //     // --- Glowing Frame Overlay ---
+                //     // --- Top Glow Layer ---
+                //     Image {
+                //         source: "qrc:/assets/oie_kUl6AfLcsUwE.png"
+                //         anchors.top: parent.top
+                //         anchors.horizontalCenter: parent.horizontalCenter
+                //         fillMode: Image.PreserveAspectFit
+                //         width: parent.width * 0.95
+                //         //height: parent.height * 0.13
+                //         opacity: 0.85
+                //         z: 1
+                //     }
 
-                Rectangle { width: 1.5; Layout.fillHeight: true; color: "#4fb3d92a" }
+                //     // --- Top Bar Content (moved here) ---
+                //     // Time (far left)
+                //     Text {
+                //         id: currentTime
+                //         text: Qt.formatDateTime(new Date(), "hh:mm")
+                //         font.pixelSize: 16
+                //         font.family: "SF Pro Display"
+                //         font.weight: Font.Light
+                //         color: "#E0E0E0"
+                //         anchors.left: parent.left
+                //         anchors.leftMargin: 200
+                //         anchors.top: parent.top
+                //         anchors.topMargin: 18
+                //         z: 2
+                //         Timer {
+                //             interval: 1000
+                //             running: true
+                //             repeat: true
+                //             onTriggered: parent.text = Qt.formatDateTime(new Date(), "hh:mm")
+                //         }
+                //     }
+
+                //     // Left navigation arrow
+                //     Text {
+                //         text: "sinistra"
+                //         font.pixelSize: 50
+                //         color: "#00D66C"
+                //         anchors.left: parent.left
+                //         anchors.leftMargin: 270
+                //         anchors.top: parent.top
+                //         anchors.topMargin: 8
+                //         z: 2
+                //     }
+
+                //     // Gear selector (center) - COMPONENT
+                //     GearSelector {
+                //         id: gearSelector
+                //         anchors.horizontalCenter: parent.horizontalCenter
+                //         anchors.top: parent.top
+                //         anchors.topMargin: 3
+                //         z: 2
+
+                //         currentGear: vehicleData.gear
+
+                //         onGearUp: vehicleData.changeGearUp()
+                //         onGearDown: vehicleData.changeGearDown()
+                //     }
+
+                //     // Right navigation arrow
+                //     Text {
+                //         text: "➡"
+                //         font.pixelSize: 50
+                //         color: "#00D66C"
+                //         anchors.right: parent.right
+                //         anchors.rightMargin: 270
+                //         anchors.top: parent.top
+                //         anchors.topMargin: 8
+                //         z: 2
+                //     }
+
+                //     // Temperature (top right)
+                //     Text {
+                //         text: Math.round(vehicleData.temperature) + "°C"
+                //         font.pixelSize: 16
+                //         font.family: "SF Pro Display"
+                //         font.weight: Font.Light
+                //         color: "#E0E0E0"
+                //         anchors.right: parent.right
+                //         anchors.rightMargin: 200
+                //         anchors.top: parent.top
+                //         anchors.topMargin: 18
+                //         z: 2
+                //     }
+
+                //     // Speed limit sign
+                //     Image {
+                //         width: 75
+                //         height: 75
+                //         source: "qrc:/assets/warning.svg"
+                //         anchors.left: parent.left
+                //         anchors.leftMargin: 40
+                //         anchors.top: parent.top
+                //         anchors.topMargin: 5
+                //         z: 2
+                //     }
+                // }
+
+                Item {
+                    Layout.fillWidth: true
+                }
+
+                Rectangle {
+                    width: 1.5
+                    Layout.fillHeight: true
+                    color: "#4fb3d92a"
+                }
 
                 // Clock
                 Text {
@@ -297,11 +457,16 @@ Rectangle {
                             ctx.strokeStyle = "#4fb3d914";
                             ctx.lineWidth(1);
                             ctx.beginPath();
-                            ctx.moveTo(10, height * 0.2); ctx.lineTo(width * 0.7, height * 0.25);
-                            ctx.moveTo(20, height * 0.45); ctx.lineTo(width * 0.6, height * 0.5);
-                            ctx.moveTo(30, height * 0.7); ctx.lineTo(width * 0.65, height * 0.75);
-                            ctx.moveTo(width * 0.4, 10); ctx.lineTo(width * 0.35, height * 0.85);
-                            ctx.moveTo(width * 0.6, 20); ctx.lineTo(width * 0.55, height * 0.9);
+                            ctx.moveTo(10, height * 0.2);
+                            ctx.lineTo(width * 0.7, height * 0.25);
+                            ctx.moveTo(20, height * 0.45);
+                            ctx.lineTo(width * 0.6, height * 0.5);
+                            ctx.moveTo(30, height * 0.7);
+                            ctx.lineTo(width * 0.65, height * 0.75);
+                            ctx.moveTo(width * 0.4, 10);
+                            ctx.lineTo(width * 0.35, height * 0.85);
+                            ctx.moveTo(width * 0.6, 20);
+                            ctx.lineTo(width * 0.55, height * 0.9);
                             ctx.stroke();
                         }
                         opacity: 0.4
@@ -316,21 +481,59 @@ Rectangle {
                             width: 110
                             height: 110
                             Layout.alignment: Qt.AlignHCenter
-                            Rectangle { anchors.fill: parent; radius: 55; color: "#4fb3d914"; border.color: "#4fb3d933"; border.width: 1 }
-                            Rectangle { anchors.fill: parent; anchors.margins: 8; radius: 47; color: "#0f1c29cc"; border.color: "#4fb3d926"; border.width: 1 }
-                            Image { source: "qrc:/icons/navigation/turn-right.svg"; sourceSize.width: 64; sourceSize.height: 64; anchors.centerIn: parent }
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: 55
+                                color: "#4fb3d914"
+                                border.color: "#4fb3d933"
+                                border.width: 1
+                            }
+                            Rectangle {
+                                anchors.fill: parent
+                                anchors.margins: 8
+                                radius: 47
+                                color: "#0f1c29cc"
+                                border.color: "#4fb3d926"
+                                border.width: 1
+                            }
+                            Image {
+                                source: "qrc:/icons/navigation/turn-right.svg"
+                                sourceSize.width: 64
+                                sourceSize.height: 64
+                                anchors.centerIn: parent
+                            }
                         }
 
-                        Text { text: "500 m"; color: "#4fb3d9"; font.pixelSize: 36; font.weight: Font.Bold; Layout.alignment: Qt.AlignHCenter }
+                        Text {
+                            text: "500 m"
+                            color: "#4fb3d9"
+                            font.pixelSize: 36
+                            font.weight: Font.Bold
+                            Layout.alignment: Qt.AlignHCenter
+                        }
 
                         RowLayout {
                             spacing: 6
                             Layout.alignment: Qt.AlignHCenter
                             Rectangle {
-                                width: 16; height: 16; radius: 8; color: "#4fb3d9"; Layout.alignment: Qt.AlignVCenter
-                                Text { text: "A"; color: "#0b1624"; font.pixelSize: 10; font.weight: Font.Bold; anchors.centerIn: parent }
+                                width: 16
+                                height: 16
+                                radius: 8
+                                color: "#4fb3d9"
+                                Layout.alignment: Qt.AlignVCenter
+                                Text {
+                                    text: "A"
+                                    color: "#0b1624"
+                                    font.pixelSize: 10
+                                    font.weight: Font.Bold
+                                    anchors.centerIn: parent
+                                }
                             }
-                            Text { text: "右转进入金科路"; color: "#7a8a9a"; font.pixelSize: 13 }
+                            Text {
+                                text: "右转进入金科路"
+                                color: "#7a8a9a"
+                                font.pixelSize: 13
+                            }
                         }
                     }
                 }
@@ -347,9 +550,18 @@ Rectangle {
                         anchors.centerIn: parent
                         radius: 300
                         gradient: Gradient {
-                            GradientStop { position: 0.0; color: "#0b1624" }
-                            GradientStop { position: 0.5; color: "#0b1624" }
-                            GradientStop { position: 1.0; color: "#08111a00" }
+                            GradientStop {
+                                position: 0.0
+                                color: "#0b1624"
+                            }
+                            GradientStop {
+                                position: 0.5
+                                color: "#0b1624"
+                            }
+                            GradientStop {
+                                position: 1.0
+                                color: "#08111a00"
+                            }
                         }
                         opacity: 0.92
                     }
@@ -408,9 +620,18 @@ Rectangle {
                         anchors.bottom: parent.bottom
                         anchors.bottomMargin: 70
                         gradient: Gradient {
-                            GradientStop { position: 0.0; color: "#0b1624" }
-                            GradientStop { position: 0.5; color: "#4fb3d9" }
-                            GradientStop { position: 1.0; color: "#0b1624" }
+                            GradientStop {
+                                position: 0.0
+                                color: "#0b1624"
+                            }
+                            GradientStop {
+                                position: 0.5
+                                color: "#4fb3d9"
+                            }
+                            GradientStop {
+                                position: 1.0
+                                color: "#0b1624"
+                            }
                         }
                         opacity: 0.85
                     }
@@ -459,8 +680,14 @@ Rectangle {
                                 anchors.fill: parent
                                 radius: 10
                                 gradient: Gradient {
-                                    GradientStop { position: 0.0; color: "#1a3040aa" }
-                                    GradientStop { position: 1.0; color: "#1a304000" }
+                                    GradientStop {
+                                        position: 0.0
+                                        color: "#1a3040aa"
+                                    }
+                                    GradientStop {
+                                        position: 1.0
+                                        color: "#1a304000"
+                                    }
                                 }
                                 opacity: 0.5
                             }
@@ -474,13 +701,33 @@ Rectangle {
                             }
                         }
 
-                        Text { text: "Send Me Your Love"; color: "#ffffff"; font.pixelSize: 16; font.weight: Font.Bold; Layout.alignment: Qt.AlignHCenter; Layout.maximumWidth: 190; wrapMode: Text.Wrap; horizontalAlignment: Text.AlignHCenter }
+                        Text {
+                            text: "Send Me Your Love"
+                            color: "#ffffff"
+                            font.pixelSize: 16
+                            font.weight: Font.Bold
+                            Layout.alignment: Qt.AlignHCenter
+                            Layout.maximumWidth: 190
+                            wrapMode: Text.Wrap
+                            horizontalAlignment: Text.AlignHCenter
+                        }
 
                         ColumnLayout {
                             spacing: 4
                             Layout.alignment: Qt.AlignHCenter
-                            Text { text: "OneRepublic"; color: "#7a8a9a"; font.pixelSize: 13; Layout.alignment: Qt.AlignHCenter }
-                            Rectangle { width: 90; height: 2; radius: 1; color: "#4fb3d9"; Layout.alignment: Qt.AlignHCenter }
+                            Text {
+                                text: "OneRepublic"
+                                color: "#7a8a9a"
+                                font.pixelSize: 13
+                                Layout.alignment: Qt.AlignHCenter
+                            }
+                            Rectangle {
+                                width: 90
+                                height: 2
+                                radius: 1
+                                color: "#4fb3d9"
+                                Layout.alignment: Qt.AlignHCenter
+                            }
                         }
 
                         Rectangle {
@@ -490,19 +737,44 @@ Rectangle {
                             color: "#1a3040"
                             Layout.alignment: Qt.AlignHCenter
                             Layout.topMargin: 6
-                            Rectangle { width: parent.width * 0.6; height: parent.height; radius: parent.radius; color: "#4fb3d9" }
+                            Rectangle {
+                                width: parent.width * 0.6
+                                height: parent.height
+                                radius: parent.radius
+                                color: "#4fb3d9"
+                            }
                         }
 
                         RowLayout {
                             spacing: 26
                             Layout.alignment: Qt.AlignHCenter
                             Layout.topMargin: 6
-                            Image { source: "qrc:/icons/controls/previous.svg"; sourceSize.width: 22; sourceSize.height: 22; opacity: 0.7 }
-                            Rectangle {
-                                width: 46; height: 46; radius: 23; color: "#1c3048"; border.color: "#6fd3ff"; border.width: 2
-                                Image { source: "qrc:/icons/controls/play.svg"; sourceSize.width: 20; sourceSize.height: 20; anchors.centerIn: parent }
+                            Image {
+                                source: "qrc:/icons/controls/previous.svg"
+                                sourceSize.width: 22
+                                sourceSize.height: 22
+                                opacity: 0.7
                             }
-                            Image { source: "qrc:/icons/controls/next.svg"; sourceSize.width: 22; sourceSize.height: 22; opacity: 0.7 }
+                            Rectangle {
+                                width: 46
+                                height: 46
+                                radius: 23
+                                color: "#1c3048"
+                                border.color: "#6fd3ff"
+                                border.width: 2
+                                Image {
+                                    source: "qrc:/icons/controls/play.svg"
+                                    sourceSize.width: 20
+                                    sourceSize.height: 20
+                                    anchors.centerIn: parent
+                                }
+                            }
+                            Image {
+                                source: "qrc:/icons/controls/next.svg"
+                                sourceSize.width: 22
+                                sourceSize.height: 22
+                                opacity: 0.7
+                            }
                         }
                     }
                 }
@@ -534,7 +806,9 @@ Rectangle {
                     font.weight: Font.Medium
                 }
 
-                Item { Layout.fillWidth: true }
+                Item {
+                    Layout.fillWidth: true
+                }
 
                 // Power meter
                 RowLayout {
@@ -570,7 +844,9 @@ Rectangle {
                     }
                 }
 
-                Item { Layout.fillWidth: true }
+                Item {
+                    Layout.fillWidth: true
+                }
 
                 // ODO
                 Text {
