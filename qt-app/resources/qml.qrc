@@ -1,75 +1,60 @@
+<!DOCTYPE RCC>
 <RCC>
-    <qresource prefix="/">
-            <!-- HMI Glowing Frame and Highlights -->
-            <file>assets/oie_OeB7IAtTvDtn.png</file>
-            <file>assets/oie_e7ruG6vIvyll.png</file>
-            <file>assets/oie_kUl6AfLcsUwE.png</file>
-            <file>assets/oie_transparent (2).png</file>
-        <!-- QML -->
-        <file>qml/main.qml</file>
-        
-        <!-- Components -->
-        <file>qml/components/BatteryIndicator.qml</file>
-        <file>qml/components/EnergyDisplay.qml</file>
-        <file>qml/components/GearSelector.qml</file>
-        <file>qml/components/SpeedDisplay.qml</file>
-        
-        <!-- Screens (Phase 1) -->
-        <file>qml/screens/ClusterScreen.qml</file>
-        <file>qml/screens/NavigationScreen.qml</file>
-        <file>qml/screens/MediaScreen.qml</file>
-        <file>qml/screens/DiagnosticsScreen.qml</file>
-        <file>qml/screens/SettingsScreen.qml</file>
-        
-        <!-- Screens (Phase 5) -->
-        <file>qml/screens/WeatherScreen.qml</file>
-        <file>qml/screens/UtilitiesScreen.qml</file>
-        
-        <!-- Theme (Phase 1) -->
-        <file>qml/theme/AppTheme.qml</file>
-        <file>qml/theme/qmldir</file>
-
-        <!-- Background Assets -->
-        <file>assets/backgrounds/cluster-base.svg</file>
-        <file>assets/backgrounds/default.svg</file>
-        <file>assets/backgrounds/vector-1.svg</file>
-        <file>assets/backgrounds/vector-2.svg</file>
-        <file>assets/Model 3.png</file>
-        <file>assets/cluster_left_panel.svg</file>
-        <file>assets/cluster_right_panel.svg</file>
-        <file>assets/cluster_floor_grid.svg</file>
-        <file>assets/cluster_car_glow.svg</file>
-
-        <!-- Cluster Icons -->
-        <file>icons/cluster/speedometer.svg</file>
-        <file>icons/cluster/car.svg</file>
-        <file>icons/cluster/car-alt.svg</file>
-        <file>icons/cluster/model3.svg</file>
-
-        <!-- Status Icons -->
-        <file>icons/status/low-beam-headlights.svg</file>
-        <file>icons/status/low-beam-headlights-white.svg</file>
-        <file>icons/status/lights.svg</file>
-        <file>icons/status/lights-white.svg</file>
-        <file>icons/status/parking-lights.svg</file>
-        <file>icons/status/parking-lights-white.svg</file>
-        <file>icons/status/rear-fog-lights.svg</file>
-        <file>icons/status/rear-fog-lights-red.svg</file>
-        <file>icons/status/indicator-1.svg</file>
-        <file>icons/status/indicator-1-grey.svg</file>
-        <file>icons/status/indicator-2.svg</file>
-        <file>icons/status/indicator-2-red.svg</file>
-        <file>icons/status/indicator-3.svg</file>
-        <file>icons/status/indicator-3-red.svg</file>
-        <file>icons/status/warning-icon.svg</file>
-        <file>icons/status/warning-icon-red.svg</file>
-
-        <!-- Mode Icons -->
-        <file>icons/common/nav-mode.svg</file>
-        <file>icons/common/nav-mode-active.svg</file>
-        <file>icons/common/steering-mode.svg</file>
-        <file>icons/common/steering-mode-active.svg</file>
-        <file>icons/common/media-mode.svg</file>
-        <file>icons/common/media-mode-active.svg</file>
-    </qresource>
+  <qresource prefix="/">
+    <file>assets/oie_OeB7IAtTvDtn.png</file>
+    <file>assets/oie_e7ruG6vIvyll.png</file>
+    <file>assets/oie_kUl6AfLcsUwE.png</file>
+    <file>assets/oie_transparent (2).png</file>
+    <file>qml/main.qml</file>
+    <file>qml/components/BatteryIndicator.qml</file>
+    <file>qml/components/EnergyDisplay.qml</file>
+    <file>qml/components/GearSelector.qml</file>
+    <file>qml/components/SpeedDisplay.qml</file>
+    <file>qml/screens/ClusterScreen.qml</file>
+    <file>qml/screens/NavigationScreen.qml</file>
+    <file>qml/screens/MediaScreen.qml</file>
+    <file>qml/screens/DiagnosticsScreen.qml</file>
+    <file>qml/screens/SettingsScreen.qml</file>
+    <file>qml/screens/WeatherScreen.qml</file>
+    <file>qml/screens/UtilitiesScreen.qml</file>
+    <file>qml/theme/AppTheme.qml</file>
+    <file>qml/theme/qmldir</file>
+    <file>assets/backgrounds/cluster-base.svg</file>
+    <file>assets/backgrounds/default.svg</file>
+    <file>assets/backgrounds/vector-1.svg</file>
+    <file>assets/backgrounds/vector-2.svg</file>
+    <file>assets/Model 3.png</file>
+    <file>assets/cluster_left_panel.svg</file>
+    <file>assets/cluster_right_panel.svg</file>
+    <file>assets/cluster_floor_grid.svg</file>
+    <file>assets/cluster_car_glow.svg</file>
+    <file>icons/cluster/speedometer.svg</file>
+    <file>icons/cluster/car.svg</file>
+    <file>icons/cluster/car-alt.svg</file>
+    <file>icons/cluster/model3.svg</file>
+    <file>icons/status/low-beam-headlights.svg</file>
+    <file>icons/status/low-beam-headlights-white.svg</file>
+    <file>icons/status/lights.svg</file>
+    <file>icons/status/lights-white.svg</file>
+    <file>icons/status/parking-lights.svg</file>
+    <file>icons/status/parking-lights-white.svg</file>
+    <file>icons/status/rear-fog-lights.svg</file>
+    <file>icons/status/rear-fog-lights-red.svg</file>
+    <file>icons/status/indicator-1.svg</file>
+    <file>icons/status/indicator-1-grey.svg</file>
+    <file>icons/status/indicator-2.svg</file>
+    <file>icons/status/indicator-2-red.svg</file>
+    <file>icons/status/indicator-3.svg</file>
+    <file>icons/status/indicator-3-red.svg</file>
+    <file>icons/status/warning-icon.svg</file>
+    <file>icons/status/warning-icon-red.svg</file>
+    <file>icons/common/nav-mode.svg</file>
+    <file>icons/common/nav-mode-active.svg</file>
+    <file>icons/common/steering-mode.svg</file>
+    <file>icons/common/steering-mode-active.svg</file>
+    <file>icons/common/media-mode.svg</file>
+    <file>icons/common/media-mode-active.svg</file>
+    <file>icons/cluster/left-arrow.svg</file>
+    <file>icons/cluster/right-arrow.svg</file>
+  </qresource>
 </RCC>

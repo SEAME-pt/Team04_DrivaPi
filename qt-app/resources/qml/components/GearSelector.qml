@@ -1,4 +1,4 @@
-import QtQuick 2.15
+import QtQuick
 
 Item {
     id: root
@@ -11,61 +11,48 @@ Item {
 
     Row {
         anchors.centerIn: parent
-        spacing: 14
 
-        Text {
-            text: "◄"
-            font.pixelSize: 20
-            font.family: "SF Pro Display"
-            font.weight: Font.Medium
-            color: "#9A9A9A"
-            opacity: 0.7
+        // PRND pill background and highlight
+        Rectangle {
+            color: "#181f2b"
+            radius: 18
+            border.color: "#4fb3d9"
+            border.width: 1.2
+            height: 36
+            width: 160
             anchors.verticalCenter: parent.verticalCenter
 
-            MouseArea {
+            Row {
                 anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.gearDown()
-            }
-        }
-
-        Row {
-            spacing: 20
-            anchors.verticalCenter: parent.verticalCenter
-
-            Repeater {
-                model: ["P", "R", "N", "D"]
-
-                Text {
-                    text: modelData
-                    font.pixelSize: 20
-                    font.family: "SF Pro Display"
-                    font.weight: Font.DemiBold
-                    color: "#E6E6E6"
-                    opacity: root.currentGear === modelData ? 0.95 : 0.25
-
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: 200
+                anchors.margins: 10
+                spacing: 14
+                Repeater {
+                    model: ["P", "R", "N", "D"]
+                    delegate: Rectangle {
+                        width: 28
+                        height: 28
+                        radius: 14
+                        color: root.currentGear === modelData ? "#6fd3ff" : "transparent"
+                        border.color: root.currentGear === modelData ? "#6fd3ff" : "transparent"
+                        border.width: root.currentGear === modelData ? 1.2 : 0
+                        anchors.verticalCenter: parent.verticalCenter
+                        z: root.currentGear === modelData ? 2 : 1
+                        Text {
+                            text: modelData
+                            anchors.centerIn: parent
+                            font.pixelSize: 18
+                            font.family: "SF Pro Display"
+                            font.weight: Font.Bold
+                            color: root.currentGear === modelData ? "#181f2b" : "#E6E6E6"
+                            opacity: root.currentGear === modelData ? 1.0 : 0.5
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: 200
+                                }
+                            }
                         }
                     }
                 }
-            }
-        }
-
-        Text {
-            text: "►"
-            font.pixelSize: 20
-            font.family: "SF Pro Display"
-            font.weight: Font.Medium
-            color: "#9A9A9A"
-            opacity: 0.7
-            anchors.verticalCenter: parent.verticalCenter
-
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.gearUp()
             }
         }
     }

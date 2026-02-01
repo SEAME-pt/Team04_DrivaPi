@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import "../components"
 import QtQuick.Effects
 import "../theme"
 
@@ -21,16 +22,14 @@ Rectangle {
         }
     }
 
-    // --- Glowing Frame Overlay ---
     // --- Top Glow Layer ---
     Image {
         source: "qrc:/assets/oie_kUl6AfLcsUwE.png"
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        fillMode: Image.PreserveAspectFit
-        width: parent.width * 0.95
-        height: parent.height * 0.13
-        opacity: 0.85
+        width: parent.width
+        height: parent.height * 0.07
+        opacity: 0.95
         z: 1
     }
 
@@ -53,7 +52,7 @@ Rectangle {
         fillMode: Image.PreserveAspectFit
         width: parent.width * 0.95
         height: parent.height * 0.11
-        opacity: 0.85
+        opacity: 0.95
         z: 3
     }
 
@@ -77,324 +76,20 @@ Rectangle {
         opacity: 1.0
         sourceSize.width: 450
     }
-    // --- Spotify Now Playing Card ---
-    Rectangle {
-        id: spotifyCard
-        width: parent.width * 0.9
-        height: 90
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: parent.top
-        anchors.topMargin: 80
-        radius: 18
-        color: "#1a2a1a" // Darker green for dark mode
-        border.color: "#101c13"
-        border.width: 2
-        RowLayout {
-            anchors.fill: parent
-            anchors.margins: 12
-            spacing: 16
-            // Album Art Placeholder
-            Rectangle {
-                width: 66
-                height: 66
-                radius: 8
-                color: "#0a0d12"
-                border.color: "#181b1f"
-                border.width: 1
-                Image {
-                    anchors.fill: parent
-                    anchors.margins: 6
-                    source: spotifyController.albumArtUrl !== "" ? spotifyController.albumArtUrl : "qrc:/resources/spotify_placeholder.png"
-                    fillMode: Image.PreserveAspectFit
-                }
-            }
-            // Track Info
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 4
-                Text {
-                    text: spotifyController.trackTitle
-                    font.bold: true
-                    font.pixelSize: 18
-                    color: "#fff"
-                    elide: Text.ElideRight
-                }
-                Text {
-                    text: spotifyController.artistName
-                    font.pixelSize: 14
-                    color: "#e0e0e0"
-                    elide: Text.ElideRight
-                }
-            }
-            // Controls
-            RowLayout {
-                spacing: 8
-                Rectangle {
-                    width: 28
-                    height: 28
-                    radius: 14
-                    color: "#191414"
-                    border.color: "#fff"
-                    border.width: 1
-                    Text {
-                        anchors.centerIn: parent
-                        text: "⏮"
-                        color: "#fff"
-                        font.pixelSize: 16
-                    }
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: spotifyController.previousTrack()
-                    }
-                }
-                Rectangle {
-                    width: 32
-                    height: 32
-                    radius: 16
-                    color: "#222831"
-                    border.color: "#101c13"
-                    border.width: 1
-                    Text {
-                        anchors.centerIn: parent
-                        text: spotifyController.isPlaying ? "⏸" : "▶"
-                        color: "#1DB954"
-                        font.pixelSize: 18
-                    }
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: spotifyController.playPause()
-                    }
-                }
-                Rectangle {
-                    width: 28
-                    height: 28
-                    radius: 14
-                    color: "#0a0d12"
-                    border.color: "#222831"
-                    border.width: 1
-                    Text {
-                        anchors.centerIn: parent
-                        text: "⏭"
-                        color: "#fff"
-                        font.pixelSize: 16
-                    }
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: spotifyController.nextTrack()
-                    }
-                }
-            }
-        }
-        // Drop shadow effect (optional)
-        // ... add shadow if desired ...
-    }
 
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
 
-        // Top bar - refined for reference fidelity
-        Rectangle {
+        // Top bar
+        ClusterTopBar {
+            id: topBar
             Layout.fillWidth: true
-            Layout.preferredHeight: 56
-            color: "#070c13fa"
-            border.color: "#232a35"
-            border.width: 1.5
-            radius: 8
-            Layout.leftMargin: 0.25 * parent.width
-            Layout.rightMargin: 0.25 * parent.width
+            z: 10
 
-            RowLayout {
-                anchors.fill: parent
-                anchors.margins: 10
-                spacing: 40
-
-                // Battery indicator
-                RowLayout {
-                    spacing: 8
-                    Image {
-                        source: "qrc:/icons/hardware/battery.svg"
-                        sourceSize.width: 20
-                        sourceSize.height: 20
-                    }
-                    Text {
-                        text: "94 km"
-                        color: "#6fd3ff"
-                        font.pixelSize: 16
-                        font.weight: Font.DemiBold
-                    }
-                }
-
-                Rectangle {
-                    width: 1.5
-                    Layout.fillHeight: true
-                    color: "#4fb3d92a"
-                }
-
-                Item {
-                    Layout.fillWidth: true
-                }
-
-                // Gear indicator - more prominent, pill background
-                Rectangle {
-                    color: "#0b1624cc"
-                    radius: 16
-                    border.color: "#4fb3d9"
-                    border.width: 1
-                    height: 32
-                    width: 120
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.margins: 6
-                        spacing: 10
-
-                        function gearColor(letter) {
-                            return vehicleData.gear === letter ? "#6fd3ff" : "#6b737d";
-                        }
-
-                        Repeater {
-                            model: ["P", "R", "N", "D"]  // Updated to match common reference order
-                            delegate: Text {
-                                text: modelData
-                                color: parent.gearColor(modelData)
-                                font.pixelSize: 17
-                                font.weight: Font.Bold
-                                opacity: vehicleData.gear === modelData ? 1.0 : 0.6
-                            }
-                        }
-                    }
-                }
-                // 			    // ====== STATUS BAR OVERLAY (TOP) ======
-                // Rectangle {
-                //     id: statusBar
-                //     anchors.top: parent.top
-                //     anchors.left: parent.left
-                //     anchors.right: parent.right
-                //     height: 85
-                //     color: Qt.darker(AppTheme.colors.surfaceElevated, 1.6)
-                //     border.color: AppTheme.colors.divider
-                //     border.width: 1
-                //     z: 100
-
-                //     // --- Glowing Frame Overlay ---
-                //     // --- Top Glow Layer ---
-                //     Image {
-                //         source: "qrc:/assets/oie_kUl6AfLcsUwE.png"
-                //         anchors.top: parent.top
-                //         anchors.horizontalCenter: parent.horizontalCenter
-                //         fillMode: Image.PreserveAspectFit
-                //         width: parent.width * 0.95
-                //         //height: parent.height * 0.13
-                //         opacity: 0.85
-                //         z: 1
-                //     }
-
-                //     // --- Top Bar Content (moved here) ---
-                //     // Time (far left)
-                //     Text {
-                //         id: currentTime
-                //         text: Qt.formatDateTime(new Date(), "hh:mm")
-                //         font.pixelSize: 16
-                //         font.family: "SF Pro Display"
-                //         font.weight: Font.Light
-                //         color: "#E0E0E0"
-                //         anchors.left: parent.left
-                //         anchors.leftMargin: 200
-                //         anchors.top: parent.top
-                //         anchors.topMargin: 18
-                //         z: 2
-                //         Timer {
-                //             interval: 1000
-                //             running: true
-                //             repeat: true
-                //             onTriggered: parent.text = Qt.formatDateTime(new Date(), "hh:mm")
-                //         }
-                //     }
-
-                //     // Left navigation arrow
-                //     Text {
-                //         text: "sinistra"
-                //         font.pixelSize: 50
-                //         color: "#00D66C"
-                //         anchors.left: parent.left
-                //         anchors.leftMargin: 270
-                //         anchors.top: parent.top
-                //         anchors.topMargin: 8
-                //         z: 2
-                //     }
-
-                //     // Gear selector (center) - COMPONENT
-                //     GearSelector {
-                //         id: gearSelector
-                //         anchors.horizontalCenter: parent.horizontalCenter
-                //         anchors.top: parent.top
-                //         anchors.topMargin: 3
-                //         z: 2
-
-                //         currentGear: vehicleData.gear
-
-                //         onGearUp: vehicleData.changeGearUp()
-                //         onGearDown: vehicleData.changeGearDown()
-                //     }
-
-                //     // Right navigation arrow
-                //     Text {
-                //         text: "➡"
-                //         font.pixelSize: 50
-                //         color: "#00D66C"
-                //         anchors.right: parent.right
-                //         anchors.rightMargin: 270
-                //         anchors.top: parent.top
-                //         anchors.topMargin: 8
-                //         z: 2
-                //     }
-
-                //     // Temperature (top right)
-                //     Text {
-                //         text: Math.round(vehicleData.temperature) + "°C"
-                //         font.pixelSize: 16
-                //         font.family: "SF Pro Display"
-                //         font.weight: Font.Light
-                //         color: "#E0E0E0"
-                //         anchors.right: parent.right
-                //         anchors.rightMargin: 200
-                //         anchors.top: parent.top
-                //         anchors.topMargin: 18
-                //         z: 2
-                //     }
-
-                //     // Speed limit sign
-                //     Image {
-                //         width: 75
-                //         height: 75
-                //         source: "qrc:/assets/warning.svg"
-                //         anchors.left: parent.left
-                //         anchors.leftMargin: 40
-                //         anchors.top: parent.top
-                //         anchors.topMargin: 5
-                //         z: 2
-                //     }
-                // }
-
-                Item {
-                    Layout.fillWidth: true
-                }
-
-                Rectangle {
-                    width: 1.5
-                    Layout.fillHeight: true
-                    color: "#4fb3d92a"
-                }
-
-                // Clock
-                Text {
-                    text: Qt.formatDateTime(new Date(), "hh:mm")
-                    color: "#c0cfdd"
-                    font.pixelSize: 16
-                    font.weight: Font.DemiBold
-                }
-            }
+            currentGear: vehicleData.gear
+            temperatureText: Math.round(vehicleData.temperature) + "°C"
+            // timeTextValue is auto-updated internally, but you can override if you want
         }
 
         // Main content area
@@ -402,7 +97,7 @@ Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            // Background grid and glow - more visible
+            // Background grid and glow
             Image {
                 source: "qrc:/assets/cluster_floor_grid.svg"
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -455,7 +150,7 @@ Rectangle {
                             var ctx = getContext("2d");
                             ctx.clearRect(0, 0, width, height);
                             ctx.strokeStyle = "#4fb3d914";
-                            ctx.lineWidth(1);
+                            ctx.lineWidth = 1;   // FIX: was ctx.lineWidth(1)
                             ctx.beginPath();
                             ctx.moveTo(10, height * 0.2);
                             ctx.lineTo(width * 0.7, height * 0.25);
@@ -481,6 +176,7 @@ Rectangle {
                             width: 110
                             height: 110
                             Layout.alignment: Qt.AlignHCenter
+
                             Rectangle {
                                 anchors.fill: parent
                                 radius: 55
@@ -515,12 +211,14 @@ Rectangle {
                         RowLayout {
                             spacing: 6
                             Layout.alignment: Qt.AlignHCenter
+
                             Rectangle {
                                 width: 16
                                 height: 16
                                 radius: 8
                                 color: "#4fb3d9"
                                 Layout.alignment: Qt.AlignVCenter
+
                                 Text {
                                     text: "A"
                                     color: "#0b1624"
@@ -529,6 +227,7 @@ Rectangle {
                                     anchors.centerIn: parent
                                 }
                             }
+
                             Text {
                                 text: "右转进入金科路"
                                 color: "#7a8a9a"
@@ -538,12 +237,11 @@ Rectangle {
                     }
                 }
 
-                // ====== CENTER: Speed Display ======
+                // CENTER: Speed Display
                 Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
 
-                    // Central vignette behind speed - more contrast, larger
                     Rectangle {
                         width: 600
                         height: 300
@@ -571,26 +269,6 @@ Rectangle {
                         anchors.verticalCenterOffset: -18
                         spacing: 8
 
-                        // ECO mode badge - pill style
-                        Rectangle {
-                            width: 54
-                            height: 24
-                            radius: 12
-                            color: "#0b253a"
-                            border.color: "#4fb3d9"
-                            border.width: 1
-                            Layout.alignment: Qt.AlignHCenter
-                            Text {
-                                text: "ECO"
-                                color: "#4fb3d9"
-                                font.pixelSize: 15
-                                font.weight: Font.Bold
-                                font.letterSpacing: 2
-                                anchors.centerIn: parent
-                            }
-                        }
-
-                        // Speed
                         Text {
                             text: Math.round(vehicleData.speed * 3.6).toString()
                             color: "#ffffff"
@@ -601,7 +279,6 @@ Rectangle {
                             styleColor: "#4fb3d9"
                         }
 
-                        // Unit
                         Text {
                             text: "km/h"
                             color: "#7a8a9a"
@@ -611,7 +288,6 @@ Rectangle {
                         }
                     }
 
-                    // Car base glow - more intense
                     Rectangle {
                         width: 260
                         height: 80
@@ -636,7 +312,6 @@ Rectangle {
                         opacity: 0.85
                     }
 
-                    // Car model at bottom - more visible
                     Image {
                         source: "qrc:/icons/cluster/model3.svg"
                         sourceSize.width: 200
@@ -648,7 +323,7 @@ Rectangle {
                     }
                 }
 
-                // ====== RIGHT: Media Player ======
+                // RIGHT: Media Player
                 Item {
                     Layout.fillHeight: true
                     Layout.preferredWidth: 220
@@ -668,7 +343,7 @@ Rectangle {
                             Layout.alignment: Qt.AlignHCenter
 
                             Image {
-                                source: "qrc:/assets/album_art.svg"  // Updated to use real album art (replace with actual path if needed)
+                                source: "qrc:/assets/album_art.svg"
                                 sourceSize.width: 100
                                 sourceSize.height: 100
                                 anchors.centerIn: parent
@@ -715,12 +390,14 @@ Rectangle {
                         ColumnLayout {
                             spacing: 4
                             Layout.alignment: Qt.AlignHCenter
+
                             Text {
                                 text: "OneRepublic"
                                 color: "#7a8a9a"
                                 font.pixelSize: 13
                                 Layout.alignment: Qt.AlignHCenter
                             }
+
                             Rectangle {
                                 width: 90
                                 height: 2
@@ -737,6 +414,7 @@ Rectangle {
                             color: "#1a3040"
                             Layout.alignment: Qt.AlignHCenter
                             Layout.topMargin: 6
+
                             Rectangle {
                                 width: parent.width * 0.6
                                 height: parent.height
@@ -749,12 +427,14 @@ Rectangle {
                             spacing: 26
                             Layout.alignment: Qt.AlignHCenter
                             Layout.topMargin: 6
+
                             Image {
                                 source: "qrc:/icons/controls/previous.svg"
                                 sourceSize.width: 22
                                 sourceSize.height: 22
                                 opacity: 0.7
                             }
+
                             Rectangle {
                                 width: 46
                                 height: 46
@@ -762,6 +442,7 @@ Rectangle {
                                 color: "#1c3048"
                                 border.color: "#6fd3ff"
                                 border.width: 2
+
                                 Image {
                                     source: "qrc:/icons/controls/play.svg"
                                     sourceSize.width: 20
@@ -769,6 +450,7 @@ Rectangle {
                                     anchors.centerIn: parent
                                 }
                             }
+
                             Image {
                                 source: "qrc:/icons/controls/next.svg"
                                 sourceSize.width: 22
@@ -781,26 +463,28 @@ Rectangle {
             }
         }
 
-        // ====== BOTTOM BAR: Trip, Power, ODO ======
+        // BOTTOM BAR: Trip, Power, ODO
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 52
+
+            // FIX: anchors.*Margin doesn't apply in Layouts — use Layout margins
+            Layout.leftMargin: 40
+            Layout.rightMargin: 40
+            Layout.bottomMargin: 6
+
             color: "#070c13cc"
             border.color: "#232a35"
             border.width: 1
             radius: 4
-            anchors.leftMargin: 40
-            anchors.rightMargin: 40
-            anchors.bottomMargin: 6
 
             RowLayout {
                 anchors.fill: parent
                 anchors.margins: 14
                 spacing: 60
 
-                // Trip A
                 Text {
-                    text: "Trip A " + Math.round(vehicleData.trip || 568) + "km"  // Dynamic
+                    text: "Trip A " + Math.round(vehicleData.trip || 568) + "km"
                     color: "#a6b4c2"
                     font.pixelSize: 12
                     font.weight: Font.Medium
@@ -810,7 +494,6 @@ Rectangle {
                     Layout.fillWidth: true
                 }
 
-                // Power meter
                 RowLayout {
                     spacing: 10
                     Layout.alignment: Qt.AlignHCenter
@@ -821,7 +504,6 @@ Rectangle {
                         font.pixelSize: 11
                     }
 
-                    // Power bar
                     Rectangle {
                         width: 110
                         height: 5
@@ -829,7 +511,7 @@ Rectangle {
                         color: "#1a3040"
 
                         Rectangle {
-                            width: parent.width * (vehicleData.power / 100 || 0.9)  // Dynamic fill
+                            width: parent.width * (vehicleData.power / 100 || 0.9)
                             height: parent.height
                             radius: parent.radius
                             color: "#4fb3d9"
@@ -837,7 +519,7 @@ Rectangle {
                     }
 
                     Text {
-                        text: Math.round(vehicleData.power || 98)  // Dynamic value
+                        text: Math.round(vehicleData.power || 98)
                         color: "#4fb3d9"
                         font.pixelSize: 12
                         font.weight: Font.Bold
@@ -848,9 +530,8 @@ Rectangle {
                     Layout.fillWidth: true
                 }
 
-                // ODO
                 Text {
-                    text: "ODO " + Math.round(vehicleData.odo || 1273) + "km"  // Dynamic
+                    text: "ODO " + Math.round(vehicleData.odo || 1273) + "km"
                     color: "#a6b4c2"
                     font.pixelSize: 12
                     font.weight: Font.Medium
