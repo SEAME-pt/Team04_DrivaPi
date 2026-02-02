@@ -2,7 +2,6 @@
 <RCC>
   <qresource prefix="/">
     <file>assets/oie_OeB7IAtTvDtn.png</file>
-    <file>assets/oie_e7ruG6vIvyll.png</file>
     <file>assets/oie_kUl6AfLcsUwE.png</file>
     <file>assets/oie_transparent (2).png</file>
     <file>qml/main.qml</file>
@@ -56,5 +55,8 @@
     <file>icons/common/media-mode-active.svg</file>
     <file>icons/cluster/left-arrow.svg</file>
     <file>icons/cluster/right-arrow.svg</file>
+    <file>assets/road.png</file>
+    <file>assets/right-dashboard.png</file>
+    <file>assets/left-dashboard.png</file>
   </qresource>
 </RCC>
