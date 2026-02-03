@@ -77,7 +77,7 @@ openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out c
     --token <jwt_token>
 ```
 ```bash
-# Start with defaults (vcan0, localhost:55555, insecure)
+# Start with defaults (can1, localhost:55555, insecure)
 ./kuksa_feeder
 
 # Specify CAN interface and address (positional)
@@ -108,7 +108,7 @@ openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out c
 - `--cert <path>` - Client certificate for mTLS
 - `--key <path>` - Client private key for mTLS
 - `--token <jwt>` - JWT bearer token for authorization
-- `--can-if <name>` - CAN interface name (default: vcan0)
+- `--can-if <name>` - CAN interface name (default: can1)
 - `--address <addr>` - KUKSA databroker host:port (default: localhost:55555)
 - `--insecure` - Force insecure mode (default)
 
@@ -118,7 +118,7 @@ openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out c
 - `--cert <path>` - Client certificate for mTLS
 - `--key <path>` - Client private key for mTLS
 - `--token <jwt>` - JWT bearer token for authorization
-- `--can-if <name>` - CAN interface name (default: vcan0)
+- `--can-if <name>` - CAN interface name (default: can1)
 - `--address <addr>` - KUKSA databroker host:port (default: localhost:55555)
 - `--insecure` - Force insecure mode (default)
 
@@ -220,10 +220,10 @@ systemctl status kuksa-databroker
 sudo apt-get install can-utils
 
 # Send test CAN frame (5.3 m/s = 19.08 km/h)
-cansend vcan0 100#CDCC28410000FF00
+cansend can1 100#CDCC28410000FF00
 
 # Monitor CAN traffic
-candump vcan0
+candump can1
 
 # Query databroker
 databroker-cli

@@ -10,7 +10,7 @@ namespace feeder {
  * @brief Configuration parsed from command-line arguments
  */
 struct FeederConfig {
-    std::string can_interface = "vcan0";
+    std::string can_interface = "can1";
     kuksa::PublisherOptions publisher_options;
 };
 

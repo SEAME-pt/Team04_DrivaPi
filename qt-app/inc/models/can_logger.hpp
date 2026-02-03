@@ -104,5 +104,5 @@ private:
     // Helper methods
     bool writeFrameToFile(const CANFrame &frame);
     bool readFramesFromFile(const QString &filePath);
-    void injectFrameToVcan0(const CANFrame &frame);
+    void injectFrameTocan1(const CANFrame &frame);
 };

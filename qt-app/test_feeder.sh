@@ -7,15 +7,15 @@ echo "KUKSA CAN Feeder - Quick Test"
 echo "========================================="
 echo
 
-# 1. Check if vcan0 exists
-if ! ip link show vcan0 &>/dev/null; then
-    echo "[Setup] Creating vcan0..."
+# 1. Check if can1 exists
+if ! ip link show can1 &>/dev/null; then
+    echo "[Setup] Creating can1..."
     sudo modprobe vcan
-    sudo ip link add dev vcan0 type vcan
-    sudo ip link set vcan0 up
-    echo "[Setup] ✓ vcan0 created"
+    sudo ip link add dev can1 type vcan
+    sudo ip link set can1 up
+    echo "[Setup] ✓ can1 created"
 else
-    echo "[Setup] ✓ vcan0 already exists"
+    echo "[Setup] ✓ can1 already exists"
 fi
 
 # 2. Check if KUKSA databroker is accessible
@@ -47,14 +47,14 @@ echo "Next steps:"
 echo
 echo "1. Start the feeder in one terminal:"
 echo "   cd build"
-echo "   ./kuksa_feeder vcan0"
+echo "   ./kuksa_feeder can1"
 echo
 echo "2. Send test CAN frames in another terminal:"
 echo "   # Speed = 10.5 m/s (37.8 km/h) - 0x41280000 in LE float"
-echo "   cansend vcan0 100#00002841"
+echo "   cansend can1 100#00002841"
 echo
 echo "   # Speed = 25.3 m/s (91.08 km/h) - 0x41CA6666 in LE float"
-echo "   cansend vcan0 100#6666CA41"
+echo "   cansend can1 100#6666CA41"
 echo
 echo "3. Verify in KUKSA CLI (if installed):"
 echo "   kuksa-client"

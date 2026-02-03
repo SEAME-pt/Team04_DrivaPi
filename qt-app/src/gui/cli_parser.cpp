@@ -7,7 +7,7 @@ QString buildDescription()
 {
     QString desc = "Hybrid Dashboard (KUKSA default, CAN optional)\n\nExamples:\n";
 #ifdef ENABLE_CAN_MODE
-    desc += "  myqtapp --can --can-if vcan0\n";
+    desc += "  myqtapp --can --can-if can1\n";
 #endif
     desc += "  myqtapp --kuksa --kuksa-addr localhost:55555\n";
     desc += "  myqtapp --kuksa --kuksa-tls --kuksa-ca /path/to/ca.crt";

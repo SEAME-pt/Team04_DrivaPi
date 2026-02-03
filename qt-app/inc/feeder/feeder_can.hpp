@@ -7,7 +7,7 @@ namespace feeder {
 
 /**
  * @brief Opens and binds a SocketCAN socket to the specified interface
- * @param ifname Interface name (e.g., "can0", "vcan0")
+ * @param ifname Interface name (e.g., "can0", "can1")
  * @return Socket file descriptor (>= 0 on success, -1 on error)
  * @note On error, prints diagnostic message with interface name and errno
  * @note Call close() on the returned socket when done

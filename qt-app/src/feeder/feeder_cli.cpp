@@ -9,7 +9,7 @@ FeederConfig ParseArgs(int argc, char** argv)
     FeederConfig config;
     config.publisher_options.address = "localhost:55555";
     config.publisher_options.use_ssl = false;
-    config.can_interface = "vcan0";
+    config.can_interface = "can1";
 
     // Parse options starting from index 1
     for (int i = 1; i < argc; ++i) {
@@ -90,7 +90,7 @@ void PrintUsage(const std::string& program_name)
     std::cout << "\nUsage: " << program_name 
               << " [options] [can_interface] [kuksa_address]\n" 
               << "\nPositional Arguments (optional):\n"
-              << "  can_interface     CAN interface name (default: vcan0)\n"
+              << "  can_interface     CAN interface name (default: can1)\n"
               << "  kuksa_address     KUKSA databroker host:port (default: localhost:55555)\n"
               << "\nOptions:\n"
               << "  --insecure        Use insecure channel (default)\n"
@@ -103,7 +103,7 @@ void PrintUsage(const std::string& program_name)
               << "  --address <addr>  KUKSA databroker host:port\n"
               << "  --help, -h        Show this help message\n"
               << "\nExamples:\n"
-              << "  " << program_name << " vcan0 localhost:55555\n"
+              << "  " << program_name << " can1 localhost:55555\n"
               << "  " << program_name << " --tls --ca ca.crt --cert client.crt --key client.key\n"
               << "  " << program_name << " --can-if can0 --address databroker.local:55555 --tls\n"
               << std::endl;

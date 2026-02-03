@@ -226,7 +226,7 @@ void CANLogger::injectNextFrame()
         
         if (frame.timestamp <= m_playbackOffset) {
             // Inject this frame
-            injectFrameToVcan0(frame);
+            injectFrameTocan1(frame);
             m_currentFrameIndex++;
         } else {
             break; // Wait for next tick
@@ -294,17 +294,17 @@ bool CANLogger::readFramesFromFile(const QString &filePath)
     return true;
 }
 
-void CANLogger::injectFrameToVcan0(const CANFrame &frame)
+void CANLogger::injectFrameTocan1(const CANFrame &frame)
 {
-    // Use cansend command to inject frame into vcan0
-    // Format: cansend vcan0 <canid>#<data bytes>
+    // Use cansend command to inject frame into can1
+    // Format: cansend can1 <canid>#<data bytes>
     
     QString hexData;
     for (int i = 0; i < frame.dlc; ++i) {
         hexData += QString("%1").arg(frame.data[i], 2, 16, QChar('0'));
     }
     
-    QString cmd = QString("cansend vcan0 %1#%2").arg(frame.canId, 3, 16, QChar('0')).arg(hexData);
+    QString cmd = QString("cansend can1 %1#%2").arg(frame.canId, 3, 16, QChar('0')).arg(hexData);
     
     // Execute in background (suppress output)
     QProcess::startDetached("bash", QStringList() << "-c" << cmd);
