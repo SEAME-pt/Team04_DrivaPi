@@ -197,5 +197,6 @@ try:
             _fn.__signature__ = Validator._SIGNATURE
         except Exception:
             pass
-except Exception:
+except ImportError:
+    # Optional dependency: if trudag is not installed, validators still work without signature patching.
     pass
