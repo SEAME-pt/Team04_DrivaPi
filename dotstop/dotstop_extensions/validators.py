@@ -196,6 +196,9 @@ try:
         try:
             _fn.__signature__ = Validator._SIGNATURE
         except Exception:
+            # Best-effort: failure to set a custom __signature__ should not
+            # prevent the validators from working, so we intentionally ignore
+            # any errors here (e.g., missing attribute support).
             pass
 except Exception:
     pass
