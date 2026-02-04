@@ -9,18 +9,18 @@ FeederConfig ParseArgs(int argc, char** argv)
     FeederConfig config;
     config.publisher_options.address = "localhost:55555";
     config.publisher_options.use_ssl = false;
-    config.can_interface = "can1";
+    config.can_interface = "vcan0";
 
     // Parse options starting from index 1
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
-        
+
         if (arg == "--insecure") {
             config.publisher_options.use_ssl = false;
-        } 
+        }
         else if (arg == "--tls") {
             config.publisher_options.use_ssl = true;
-        } 
+        }
         else if (arg == "--ca" && i + 1 < argc) {
             config.publisher_options.root_ca_path = argv[++i];
         }
@@ -38,7 +38,7 @@ FeederConfig ParseArgs(int argc, char** argv)
         }
         else if (arg == "--address" && i + 1 < argc) {
             config.publisher_options.address = argv[++i];
-        } 
+        }
         else if (arg == "--help" || arg == "-h") {
             PrintUsage(argv[0]);
             exit(0);
@@ -87,10 +87,10 @@ void PrintConfig(const FeederConfig& config)
 
 void PrintUsage(const std::string& program_name)
 {
-    std::cout << "\nUsage: " << program_name 
-              << " [options] [can_interface] [kuksa_address]\n" 
+    std::cout << "\nUsage: " << program_name
+              << " [options] [can_interface] [kuksa_address]\n"
               << "\nPositional Arguments (optional):\n"
-              << "  can_interface     CAN interface name (default: can1)\n"
+              << "  can_interface     CAN interface name (default: vcan0)\n"
               << "  kuksa_address     KUKSA databroker host:port (default: localhost:55555)\n"
               << "\nOptions:\n"
               << "  --insecure        Use insecure channel (default)\n"
@@ -103,7 +103,7 @@ void PrintUsage(const std::string& program_name)
               << "  --address <addr>  KUKSA databroker host:port\n"
               << "  --help, -h        Show this help message\n"
               << "\nExamples:\n"
-              << "  " << program_name << " can1 localhost:55555\n"
+              << "  " << program_name << " vcan0 localhost:55555\n"
               << "  " << program_name << " --tls --ca ca.crt --cert client.crt --key client.key\n"
               << "  " << program_name << " --can-if can0 --address databroker.local:55555 --tls\n"
               << std::endl;

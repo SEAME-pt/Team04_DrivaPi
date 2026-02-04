@@ -60,94 +60,10 @@ ApplicationWindow {
         anchors.fill: parent
         z: 1
 
-        // // ============================================
-        // // TOP BAR
-        // // ============================================
-        // Item {
-        //     id: topBar
-        //     width: parent.width
-        //     height: 85
-        //     anchors.top: parent.top
-
-        //     // Time (far left)
-        //     Text {
-        //         id: currentTime
-        //         text: Qt.formatDateTime(new Date(), "hh:mm")
-        //         font.pixelSize: 16
-        //         font.family: "SF Pro Display"
-        //         font.weight: Font.Light
-        //         color: "#4A4A4A"
-        //         anchors.left: parent.left
-        //         anchors.leftMargin: 200
-        //         anchors.top: parent.top
-        //         anchors.topMargin: 18
-        //     }
-
-        //     // Left navigation arrow
-        //     Text {
-        //         text: "sinistra"
-        //         font.pixelSize: 50
-        //         color: "#00D66C"
-        //         anchors.left: parent.left
-        //         anchors.leftMargin: 270
-        //         anchors.top: parent.top
-        //         anchors.topMargin: 8
-        //     }
-
-        //     // Gear selector (center) - COMPONENT
-        //     GearSelector {
-        //         id: gearSelector
-        //         anchors.horizontalCenter: parent.horizontalCenter
-        //         anchors.top: parent.top
-        //         anchors.topMargin: 3
-        //         z: 2
-
-        //         currentGear: vehicleData.gear
-
-        //         onGearUp: vehicleData.changeGearUp()
-        //         onGearDown: vehicleData.changeGearDown()
-        //     }
-
-        //     // Right navigation arrow
-        //     Text {
-        //         text: "➡"
-        //         font.pixelSize: 50
-        //         color: "#00D66C"
-        //         anchors.right: parent.right
-        //         anchors.rightMargin: 270
-        //         anchors.top: parent.top
-        //         anchors.topMargin: 8
-        //     }
-
-        //     // Temperature (top right)
-        //     Text {
-        //         text: Math.round(vehicleData.temperature) + "°C"
-        //         font.pixelSize: 16
-        //         font.family: "SF Pro Display"
-        //         font.weight: Font.Light
-        //         color: "#4A4A4A"
-        //         anchors.right: parent.right
-        //         anchors.rightMargin: 200
-        //         anchors.top: parent.top
-        //         anchors.topMargin: 18
-        //     }
-
-        //     // Speed limit sign
-        //     Image {
-        //         width: 75
-        //         height: 75
-        //         source: "qrc:/assets/warning.svg"  // existing bundled asset
-        //         anchors.left: parent.left
-        //         anchors.leftMargin: 40
-        //         anchors.top: parent.top
-        //         anchors.topMargin: 5
-        //     }
-        // }
-
-        // --- Main Screens in SwipeView ---
         SwipeView {
             id: swipeView
-            anchors.fill: parent
+            Layout.fillWidth: true
+            Layout.fillHeight: true
             currentIndex: tabBar.currentIndex
 
             ClusterScreen {

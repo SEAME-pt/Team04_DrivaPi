@@ -58,5 +58,6 @@
     <file>assets/road.png</file>
     <file>assets/right-dashboard.png</file>
     <file>assets/left-dashboard.png</file>
+    <file>shaders/roadwarp.frag.qsb</file>
   </qresource>
 </RCC>

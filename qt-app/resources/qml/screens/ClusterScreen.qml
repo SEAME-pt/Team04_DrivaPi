@@ -55,7 +55,9 @@ Rectangle {
     // --- Center Left Glow Layer ---
     Image {
         source: "qrc:/assets/left-dashboard.png"
+        anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
+        anchors.horizontalCenterOffset: parent.width * 0.225
         width: parent.width * 0.45
         height: parent.height * 0.60
         opacity: 0.95
@@ -65,7 +67,9 @@ Rectangle {
     // --- Center Right Glow Layer ---
     Image {
         source: "qrc:/assets/right-dashboard.png"
+        anchors.verticalCenter: parent.verticalCenter
         anchors.right: parent.right
+        anchors.horizontalCenterOffset: -parent.width * 0.225
         width: parent.width * 0.45
         height: parent.height * 0.60
         opacity: 0.95
@@ -140,22 +144,19 @@ Rectangle {
                     anchors.right: parent.right
                     anchors.bottom: parent.bottom
                     anchors.top: parent.top
-
                     // Keep horizon high enough for the rails to "agree"
                     // (1200x480 target tuned)
-                    anchors.topMargin: root.clamp(parent.height * 0.20, 64 * root.sy, 130 * root.sy)
+                    anchors.topMargin: root.clamp(parent.height * 0.15, 64 * root.sy, 130 * root.sy)  // Decreased from 0.20 to lower horizon
                     clip: true
-
                     // --- Perspective tuning ---
                     // Your rails converge more than the road asset -> we need:
                     // - slightly narrower road
                     // - taller/steeper road
                     // - push texture upward
-                    property real roadW: width * 1.05          // narrower than before
-                    property real roadH: height * 1.85         // steeper perspective
-                    property real baseY: -height * 0.70        // push horizon up
+                    property real roadW: width * 0.85  // Kept narrower for fit
+                    property real roadH: height * 3.5  // Decreased from 4.0 for slightly flatter (longer) lines
+                    property real baseY: -height * 0.8 // Less negative from 0.8 to shift texture down
                     property real px: root.roadPhase * roadH
-
                     Image {
                         id: roadImg1
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -167,7 +168,6 @@ Rectangle {
                         smooth: true
                         opacity: 0.36
                     }
-
                     Image {
                         id: roadImg2
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -179,7 +179,6 @@ Rectangle {
                         smooth: true
                         opacity: 0.36
                     }
-
                     // Fog cap: calm the sky and hide any seam
                     Rectangle {
                         anchors.left: parent.left
@@ -202,7 +201,6 @@ Rectangle {
                             }
                         }
                     }
-
                     // ADAS calming band behind the ADAS box (aligned with new ADAS position)
                     Rectangle {
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -214,7 +212,6 @@ Rectangle {
                         color: "#05080e"
                         opacity: 0.58
                     }
-
                     // Soft global fade
                     Rectangle {
                         anchors.fill: parent
@@ -225,12 +222,12 @@ Rectangle {
                                 color: "#05080eff"
                             }
                             GradientStop {
-                                position: 0.30
-                                color: "#05080ee6"
+                                position: 0.50
+                                color: "#05080eff"  // Changed from 0.30/#e6 for less fade higher up
                             }
                             GradientStop {
-                                position: 0.65
-                                color: "#05080e88"
+                                position: 0.80
+                                color: "#05080e88"  // Changed from 0.65 for fade starting lower
                             }
                             GradientStop {
                                 position: 1.00
@@ -238,14 +235,12 @@ Rectangle {
                             }
                         }
                     }
-
                     Rectangle {
                         anchors.fill: parent
                         z: 6
                         color: "#000000"
                         opacity: 0.05
                     }
-
                     Rectangle {
                         anchors.fill: parent
                         z: 7
@@ -316,30 +311,6 @@ Rectangle {
                 Item {
                     Layout.fillHeight: true
                     Layout.preferredWidth: 220 * root.s
-
-                    Canvas {
-                        anchors.fill: parent
-                        anchors.margins: 12 * root.s
-                        onPaint: {
-                            var ctx = getContext("2d");
-                            ctx.clearRect(0, 0, width, height);
-                            ctx.strokeStyle = "#4fb3d910";
-                            ctx.lineWidth = 1;
-                            ctx.beginPath();
-                            ctx.moveTo(10, height * 0.2);
-                            ctx.lineTo(width * 0.7, height * 0.25);
-                            ctx.moveTo(20, height * 0.45);
-                            ctx.lineTo(width * 0.6, height * 0.5);
-                            ctx.moveTo(30, height * 0.7);
-                            ctx.lineTo(width * 0.65, height * 0.75);
-                            ctx.moveTo(width * 0.4, 10);
-                            ctx.lineTo(width * 0.35, height * 0.85);
-                            ctx.moveTo(width * 0.6, 20);
-                            ctx.lineTo(width * 0.55, height * 0.9);
-                            ctx.stroke();
-                        }
-                        opacity: 0.35
-                    }
 
                     ColumnLayout {
                         anchors.centerIn: parent
