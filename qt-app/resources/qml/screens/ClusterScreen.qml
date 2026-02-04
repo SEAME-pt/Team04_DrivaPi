@@ -47,7 +47,7 @@ Rectangle {
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         width: parent.width
-        height: parent.height * 0.07
+        height: 36 * 2.5 * root.s
         opacity: 0.95
         z: 1
     }
@@ -83,32 +83,9 @@ Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         fillMode: Image.PreserveAspectFit
         width: parent.width * 0.95
-        height: parent.height * 0.11
+        height: 36 * 3.5 * root.s
         opacity: 0.95
         z: 3
-    }
-
-    // Glass side panels
-    Image {
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        source: "qrc:/assets/cluster_left_panel.svg"
-        fillMode: Image.PreserveAspectFit
-        opacity: 1.0
-        sourceSize.width: 450
-        z: 4
-    }
-
-    Image {
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        source: "qrc:/assets/cluster_right_panel.svg"
-        fillMode: Image.PreserveAspectFit
-        opacity: 1.0
-        sourceSize.width: 450
-        z: 4
     }
 
     ColumnLayout {
@@ -166,7 +143,7 @@ Rectangle {
                         source: "qrc:/assets/road.png"
                         fillMode: Image.PreserveAspectCrop
                         smooth: true
-                        opacity: 0.36
+                        opacity: 0.98
                     }
                     Image {
                         id: roadImg2
@@ -177,7 +154,7 @@ Rectangle {
                         source: "qrc:/assets/road.png"
                         fillMode: Image.PreserveAspectCrop
                         smooth: true
-                        opacity: 0.36
+                        opacity: 0.98
                     }
                     // Fog cap: calm the sky and hide any seam
                     Rectangle {
@@ -307,7 +284,7 @@ Rectangle {
                 spacing: 46 * root.s
                 z: 30
 
-                // Left navigation panel
+                // Left panel: Speed
                 Item {
                     Layout.fillHeight: true
                     Layout.preferredWidth: 220 * root.s
@@ -315,112 +292,12 @@ Rectangle {
                     ColumnLayout {
                         anchors.centerIn: parent
                         anchors.verticalCenterOffset: -18 * root.sy
-                        spacing: 16 * root.s
-
-                        Item {
-                            width: 110 * root.s
-                            height: 110 * root.s
-                            Layout.alignment: Qt.AlignHCenter
-
-                            Rectangle {
-                                anchors.fill: parent
-                                radius: width / 2
-                                color: "#4fb3d914"
-                                border.color: "#4fb3d933"
-                                border.width: 1
-                            }
-                            Rectangle {
-                                anchors.fill: parent
-                                anchors.margins: 8 * root.s
-                                radius: (width - 16 * root.s) / 2
-                                color: "#0f1c29cc"
-                                border.color: "#4fb3d926"
-                                border.width: 1
-                            }
-                            Image {
-                                source: "qrc:/icons/navigation/turn-right.svg"
-                                sourceSize.width: 64 * root.s
-                                sourceSize.height: 64 * root.s
-                                anchors.centerIn: parent
-                            }
-                        }
-
-                        Text {
-                            text: "500 m"
-                            color: "#4fb3d9"
-                            font.pixelSize: 36 * root.s
-                            font.weight: Font.Bold
-                            Layout.alignment: Qt.AlignHCenter
-                        }
-
-                        RowLayout {
-                            spacing: 6 * root.s
-                            Layout.alignment: Qt.AlignHCenter
-
-                            Rectangle {
-                                width: 16 * root.s
-                                height: 16 * root.s
-                                radius: (16 * root.s) / 2
-                                color: "#4fb3d9"
-                                Layout.alignment: Qt.AlignVCenter
-                                Text {
-                                    text: "A"
-                                    color: "#0b1624"
-                                    font.pixelSize: 10 * root.s
-                                    font.weight: Font.Bold
-                                    anchors.centerIn: parent
-                                }
-                            }
-
-                            Text {
-                                text: "右转进入金科路"
-                                color: "#7a8a9a"
-                                font.pixelSize: 13 * root.s
-                            }
-                        }
-                    }
-                }
-
-                // CENTER: Speed + ADAS (OEM position)
-                Item {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-
-                    // Speed vignette (moved DOWN, less "sky")
-                    Rectangle {
-                        width: 600 * root.s
-                        height: 240 * root.s
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.verticalCenterOffset: -70 * root.sy
-                        radius: height
-                        gradient: Gradient {
-                            GradientStop {
-                                position: 0.0
-                                color: "#0b1624"
-                            }
-                            GradientStop {
-                                position: 0.70
-                                color: "#0b1624"
-                            }
-                            GradientStop {
-                                position: 1.0
-                                color: "#08111a00"
-                            }
-                        }
-                        opacity: 0.82
-                    }
-
-                    ColumnLayout {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.verticalCenterOffset: -82 * root.sy
                         spacing: 6 * root.s
 
                         Text {
                             text: Math.round(vehicleData.speed * 3.6).toString()
                             color: "#ffffff"
-                            font.pixelSize: 158 * root.s
+                            font.pixelSize: 132 * root.s
                             font.weight: Font.ExtraBold
                             Layout.alignment: Qt.AlignHCenter
                             style: Text.Outline
@@ -430,11 +307,17 @@ Rectangle {
                         Text {
                             text: "km/h"
                             color: "#7a8a9a"
-                            font.pixelSize: 20 * root.s
+                            font.pixelSize: 18 * root.s
                             font.weight: Font.DemiBold
                             Layout.alignment: Qt.AlignHCenter
                         }
                     }
+                }
+
+                // CENTER: Speed + ADAS (OEM position)
+                Item {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
 
                     // ADAS / warnings area (closer to speed, smaller)
                     Rectangle {
@@ -536,7 +419,7 @@ Rectangle {
                     }
 
                     Image {
-                        source: "qrc:/icons/cluster/model3.svg"
+                        source: "qrc:/assets/car.png"
                         sourceSize.width: 200 * root.s
                         sourceSize.height: 200 * root.s
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -705,7 +588,7 @@ Rectangle {
                 Text {
                     text: "Trip A " + Math.round(vehicleData.trip || 568) + "km"
                     color: "#a6b4c2"
-                    font.pixelSize: 12 * root.s
+                    font.pixelSize: 22 * root.s
                     font.weight: Font.Medium
                 }
 
@@ -720,7 +603,7 @@ Rectangle {
                     Text {
                         text: "kw"
                         color: "#7a8a9a"
-                        font.pixelSize: 11 * root.s
+                        font.pixelSize: 22 * root.s
                     }
 
                     Rectangle {
@@ -739,7 +622,7 @@ Rectangle {
                     Text {
                         text: Math.round(vehicleData.power || 98)
                         color: "#4fb3d9"
-                        font.pixelSize: 12 * root.s
+                        font.pixelSize: 22 * root.s
                         font.weight: Font.Bold
                     }
                 }
@@ -751,7 +634,7 @@ Rectangle {
                 Text {
                     text: "ODO " + Math.round(vehicleData.odo || 1273) + "km"
                     color: "#a6b4c2"
-                    font.pixelSize: 12 * root.s
+                    font.pixelSize: 18 * root.s
                     font.weight: Font.Medium
                 }
             }
