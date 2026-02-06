@@ -21,9 +21,90 @@ Rectangle {
     property string currentGear: vehicleDataAvailable && vehicleData.gear ? vehicleData.gear : "P"
     property real tripDistance: vehicleDataAvailable && vehicleData.trip ? vehicleData.trip : 568
     property real powerOutput: vehicleDataAvailable && vehicleData.power ? vehicleData.power : 98
-    property real odometerDistance: vehicleDataAvailable && vehicleData.odo ? vehicleData.odo : 1273
+    // ====== Odometer Logic (Track distance based on speed) ======
+    property real odometerDistance: 0  // Will be updated based on speed
+    property real lastTimestamp: 0
+    property real accumulatedDistance: 0  // Fractional distance accumulator
+    property bool showOdometerReset: false  // Toggle to show reset state
 
-    // ============================================================
+    // Initialize odometer with vehicleData value
+    Component.onCompleted: {
+        if (vehicleDataAvailable && vehicleData.odo > 0) {
+            odometerDistance = vehicleData.odo;
+            console.log("[ClusterScreen] Initialized odometer from vehicleData:", odometerDistance, "km");
+        }
+    }
+
+    // Listen for changes in vehicleData.odo (sync with backend changes)
+    Connections {
+        target: vehicleData
+        enabled: vehicleDataAvailable
+        function onOdometerChanged() {
+            // If backend updates odometer, sync it
+            if (vehicleData.odo > odometerDistance) {
+                odometerDistance = vehicleData.odo;
+                console.log("[ClusterScreen] Odometer synced from backend:", odometerDistance, "km");
+            }
+        }
+    }
+
+    Timer {
+        id: odometerUpdateTimer
+        interval: 100  // Update every 100ms
+        running: true
+        repeat: true
+
+        onTriggered: {
+            if (!vehicleDataAvailable) return;
+
+            var currentTime = new Date().getTime();
+            if (lastTimestamp === 0) {
+                lastTimestamp = currentTime;
+                return;
+            }
+
+            // Calculate elapsed time in seconds
+            var elapsedSeconds = (currentTime - lastTimestamp) / 1000;
+            lastTimestamp = currentTime;
+
+            // Speed is already in km/h from currentSpeed property
+            var speedKmh = currentSpeed;  
+            var timeHours = elapsedSeconds / 3600;  // Convert seconds to hours
+            var distanceTraveled = speedKmh * timeHours;  // Distance in km
+
+            // Accumulate distance
+            accumulatedDistance += distanceTraveled;
+
+            // Update odometer when threshold reached
+            if (accumulatedDistance >= 0.01 && speedKmh > 0.5) {  // 10 meters
+                odometerDistance += accumulatedDistance;
+                accumulatedDistance = 0;  // Reset accumulator
+            }
+        }
+    }
+
+    // Reset odometer function
+    function resetOdometer() {
+        odometerDistance = 0;
+        accumulatedDistance = 0;
+        // Update backend too
+        if (vehicleDataAvailable) {
+            vehicleData.setOdometer(0);
+        }
+        showOdometerReset = true;
+        resetOdometerTimer.start();
+        console.log("[ClusterScreen] Odometer reset to 0 km");
+    }
+
+    Timer {
+        id: resetOdometerTimer
+        interval: 500
+        running: false
+        repeat: false
+        onTriggered: showOdometerReset = false
+    }
+
+    // ====== END Odometer Logic ======"
     // Design Constants (ISO 26262 Instrument Cluster Compliance)
     // ============================================================
     // Font Sizes (consolidated for WCAG AA accessibility)
@@ -655,13 +736,43 @@ Rectangle {
                         Layout.fillWidth: true
                     }
 
-                    // Odometer distance (right)
-                    Text {
-                        // ISO 26262: Null-safe odometer display
-                        text: "ODO " + Math.round(root.odometerDistance) + "km"
-                        color: root.vehicleDataAvailable ? "#a6b4c2" : "#555555"
-                        font.pixelSize: root.fontSizeMedium * root.s
-                        font.weight: Font.Medium
+                    // Odometer distance (right) with reset button
+                    RowLayout {
+                        spacing: AppTheme.spacing.small
+                        Layout.alignment: Qt.AlignRight
+
+                        Text {
+                            text: "ODO " + Math.round(root.odometerDistance) + " km"
+                            color: root.showOdometerReset ? "#4fb3d9" : (root.vehicleDataAvailable ? "#a6b4c2" : "#555555")
+                            font.pixelSize: root.fontSizeMedium * root.s
+                            font.weight: Font.Bold
+                        }
+
+                        // Reset button
+                        Rectangle {
+                            width: 32
+                            height: 32
+                            radius: 4
+                            color: odometerResetMouseArea.containsMouse ? "#4fb3d9" : "transparent"
+                            border.color: "#4fb3d9"
+                            border.width: 1
+                            Layout.alignment: Qt.AlignVCenter
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "↻"
+                                color: "#4fb3d9"
+                                font.pixelSize: 18
+                                font.weight: Font.Bold
+                            }
+
+                            MouseArea {
+                                id: odometerResetMouseArea
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onClicked: root.resetOdometer()
+                            }
+                        }
                     }
                 }
             }

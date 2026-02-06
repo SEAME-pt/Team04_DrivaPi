@@ -14,6 +14,7 @@
 #include <QTimer>
 #include <QDebug>
 #include <QDateTime>
+#include <QSettings>
 #include <QtMath>
 
 namespace drivaui {
@@ -32,6 +33,7 @@ class VehicleData : public QObject
     Q_PROPERTY(int battery READ getBattery WRITE setBattery NOTIFY batteryChanged)
     Q_PROPERTY(int temperature READ getTemperature WRITE setTemperature NOTIFY temperatureChanged)
     Q_PROPERTY(int distance READ getDistance WRITE setDistance NOTIFY distanceChanged)
+    Q_PROPERTY(int odo READ getOdometer WRITE setOdometer NOTIFY odometerChanged)
     Q_PROPERTY(bool autonomousMode READ getAutonomousMode WRITE setAutonomousMode NOTIFY autonomousModeChanged)
 
 public:
@@ -45,6 +47,7 @@ public:
     double  getEnergy() const;
     int     getBattery() const;
     int     getDistance() const;
+    int     getOdometer() const;
     int     getTemperature() const;
     QString getGear() const;
     bool    getAutonomousMode() const;
@@ -54,6 +57,7 @@ public:
     void    setEnergy(double energy);
     void    setBattery(int battery);
     void    setDistance(int distance);
+    void    setOdometer(int odo);
     void    setGear(const QString &gear);
     void    setTemperature(int temperature);
     void    setAutonomousMode(bool mode);
@@ -76,6 +80,7 @@ signals:
     void energyChanged();
     void batteryChanged();
     void distanceChanged();
+    void odometerChanged();
     void temperatureChanged();
     void gearChanged();
     void autonomousModeChanged();
@@ -90,9 +95,15 @@ private:
     double  m_energy;
     int     m_battery;
     int     m_distance;
+    int     m_odometer;
     QString m_gear;
     int     m_temperature;
     bool    m_autonomousMode;
+
+    // ===== Persistence =====
+    QSettings *m_settings;
+    void loadOdometerFromSettings();
+    void saveOdometerToSettings();
 
     // ===== Helpers =====
     void    updateTimestamp(const QString &propName);

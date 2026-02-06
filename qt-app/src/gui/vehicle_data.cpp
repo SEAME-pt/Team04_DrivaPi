@@ -16,17 +16,22 @@ VehicleData::VehicleData(QObject *parent)
     , m_energy(100.0)
     , m_battery(100)
     , m_distance(0)
+    , m_odometer(0)
     , m_gear("P")
     , m_temperature(20)
     , m_autonomousMode(false)
 	, m_watchdogTimer(new QTimer(this))
+    , m_settings(new QSettings("DrivaPi", "HMI", this))
 {
     // Single watchdog timer, checks all properties periodically
     m_watchdogTimer->setInterval(200); // 200 ms tick
     connect(m_watchdogTimer, &QTimer::timeout, this, &VehicleData::checkStaleProperties);
     m_watchdogTimer->start();
 
-    qDebug() << "VehicleData initialized";
+    // Load odometer from persistent storage
+    loadOdometerFromSettings();
+
+    qDebug() << "VehicleData initialized with odometer:" << m_odometer << "km";
 }
 
 VehicleData::~VehicleData()
@@ -69,6 +74,17 @@ void VehicleData::setDistance(int distance)
         emit distanceChanged();
     }
     updateTimestamp(QStringLiteral("distance"));
+}
+
+void VehicleData::setOdometer(int odo)
+{
+    if (m_odometer != odo) {
+        m_odometer = odo;
+        qDebug() << "Odometer set to:" << m_odometer << "km";
+        saveOdometerToSettings();  // Save to persistent storage
+        emit odometerChanged();
+    }
+    updateTimestamp(QStringLiteral("odo"));
 }
 
 void VehicleData::setGear(const QString &gear)
@@ -167,6 +183,11 @@ int VehicleData::getDistance() const
 	return m_distance;
 }
 
+int VehicleData::getOdometer() const
+{
+	return m_odometer;
+}
+
 int VehicleData::getTemperature() const
 {
 	return m_temperature;
@@ -254,5 +275,19 @@ void VehicleData::handleSpeedUpdate(float speed)
     setSpeed(speed); // updates timestamp inside
     // debug
     // qDebug() << "Updated speed from KUKSA (m/s):" << speed;
+}
+// ===== Persistence Methods =====
+void VehicleData::loadOdometerFromSettings()
+{
+    // Load from QSettings with default fallback
+    m_odometer = m_settings->value("vehicle/odometer", 0).toInt();
+    qDebug() << "[Odometer] Loaded from persistent storage:" << m_odometer << "km";
+}
+
+void VehicleData::saveOdometerToSettings()
+{
+    m_settings->setValue("vehicle/odometer", m_odometer);
+    m_settings->sync();  // Ensure it's written to disk immediately
+    qDebug() << "[Odometer] Saved to persistent storage:" << m_odometer << "km";
 }
 }  // namespace drivaui
