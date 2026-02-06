@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
-import "../components"
 import QtQuick.Effects
+import "../components"
 import "../theme"
 
 Rectangle {
@@ -295,9 +295,9 @@ Rectangle {
                     from: 0
                     to: 1
                     loops: Animation.Infinite
-                    running: vehicleData.speed > 0.5
+                    running: root.vehicleDataAvailable && vehicleData.speed > 0.5
 
-                    property real kmh: vehicleData.speed * 3.6
+                    property real kmh: root.vehicleDataAvailable ? vehicleData.speed * 3.6 : 0
                     property real clamped: Math.max(10, Math.min(kmh, 160))
                     duration: 1400 - (clamped * 6)
                     onStopped: root.roadPhase = 0
@@ -333,10 +333,10 @@ Rectangle {
                     spacing: 46 * root.s
                     z: 30
 
-                    // Left panel: Speed
+                    // LEFT: Speed
                     Item {
                         Layout.fillHeight: true
-                        Layout.preferredWidth: 500 * root.s
+                        Layout.preferredWidth: 400 * root.s
 
                         ColumnLayout {
                             anchors.centerIn: parent
@@ -344,7 +344,6 @@ Rectangle {
                             spacing: 6 * root.s
 
                             Text {
-                                // ISO 26262: Null-safe speed display with fail-safe state
                                 text: root.vehicleDataAvailable ? Math.round(root.currentSpeed).toString() : "--"
                                 color: root.vehicleDataAvailable ? "#ffffff" : "#666666"
                                 font.pixelSize: root.fontSizeXL * root.s
@@ -470,141 +469,115 @@ Rectangle {
                         }
                     }
 
-                    // RIGHT: Media Player (Non-Critical Infotainment)
-                    // NOTE: Per ISO 26262, media player should be on separate HMI layer
-                    // Consider moving to ClusterMediaPanel component for ASIL compliance
+                    // ====== RIGHT: Album Art + Now Playing ======
                     Item {
                         Layout.fillHeight: true
-                        Layout.preferredWidth: 500 * root.s
+                        Layout.preferredWidth: 400 * root.s
 
-                        ColumnLayout {
-                            anchors.centerIn: parent
-                            anchors.verticalCenterOffset: -18 * root.sy
-                            spacing: 16 * root.s
+                        Item {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.verticalCenterOffset: -10 * root.sy  // Align vertically with speed velocity
+                            width: 280 * root.s  // Slightly wider than album art for longer titles/artists
+                            height: childrenRect.height
 
-                            Rectangle {
-                                width: 150 * root.s
-                                height: 150 * root.s
-                                radius: 14 * root.s
-                                color: "#1a2a3a"
-                                border.color: "#4fb3d94d"
-                                border.width: 1
-                                Layout.alignment: Qt.AlignHCenter
+                            Column {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                spacing: AppTheme.spacing.small
 
-                                Image {
-                                    source: "qrc:/assets/album_art.svg"
-                                    sourceSize.width: 100 * root.s
-                                    sourceSize.height: 100 * root.s
-                                    anchors.centerIn: parent
-                                    fillMode: Image.PreserveAspectFit
-                                    opacity: 0.9
-                                }
-
+                                // --- Album art: fixed square size ---
                                 Rectangle {
-                                    anchors.fill: parent
-                                    radius: 10 * root.s
-                                    gradient: Gradient {
-                                        GradientStop {
-                                            position: 0.0
-                                            color: "#1a3040aa"
-                                        }
-                                        GradientStop {
-                                            position: 1.0
-                                            color: "#1a304000"
-                                        }
-                                    }
-                                    opacity: 0.5
-                                }
+                                    id: albumArtBox
+                                    width: 102 * root.s  // Match speed limit main circle size for consistency
+                                    height: width
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    radius: AppTheme.radius.medium
+                                    color: "#0b1420"
+                                    clip: true
 
-                                Rectangle {
-                                    anchors.fill: parent
-                                    radius: parent.radius
-                                    color: "transparent"
-                                    border.color: "#4fb3d91a"
-                                    border.width: 1
-                                }
-                            }
-
-                            Text {
-                                // Infotainment: Song title (non-critical)
-                                text: "Send Me Your Love"
-                                color: "#ffffff"
-                                font.pixelSize: root.fontSizeSmall * root.s
-                                font.weight: Font.Bold
-                                Layout.alignment: Qt.AlignHCenter
-                                Layout.maximumWidth: 190 * root.s
-                                wrapMode: Text.Wrap
-                                horizontalAlignment: Text.AlignHCenter
-                            }
-
-                            ColumnLayout {
-                                spacing: 4 * root.s
-                                Layout.alignment: Qt.AlignHCenter
-
-                                Text {
-                                    // Infotainment: Artist name (non-critical)
-                                    text: "OneRepublic"
-                                    color: "#7a8a9a"
-                                    font.pixelSize: root.fontSizeXSmall * root.s
-                                    Layout.alignment: Qt.AlignHCenter
-                                }
-
-                                Rectangle {
-                                    width: 90 * root.s
-                                    height: 2 * root.s
-                                    radius: 1 * root.s
-                                    color: "#4fb3d9"
-                                    Layout.alignment: Qt.AlignHCenter
-                                }
-                            }
-
-                            Rectangle {
-                                width: 180 * root.s
-                                height: 3 * root.s
-                                radius: 1.5 * root.s
-                                color: "#1a3040"
-                                Layout.alignment: Qt.AlignHCenter
-                                Layout.topMargin: 6 * root.s
-                                Rectangle {
-                                    width: parent.width * 0.6
-                                    height: parent.height
-                                    radius: parent.radius
-                                    color: "#4fb3d9"
-                                }
-                            }
-
-                            RowLayout {
-                                spacing: 26 * root.s
-                                Layout.alignment: Qt.AlignHCenter
-                                Layout.topMargin: 6 * root.s
-
-                                Image {
-                                    source: "qrc:/icons/controls/previous.svg"
-                                    sourceSize.width: 22 * root.s
-                                    sourceSize.height: 22 * root.s
-                                    opacity: 0.7
-                                }
-
-                                Rectangle {
-                                    width: 46 * root.s
-                                    height: 46 * root.s
-                                    radius: (46 * root.s) / 2
-                                    color: "#1c3048"
-                                    border.color: "#6fd3ff"
-                                    border.width: 2 * root.s
+                                    // Album art
                                     Image {
-                                        source: "qrc:/icons/controls/play.svg"
-                                        sourceSize.width: 20 * root.s
-                                        sourceSize.height: 20 * root.s
+                                        id: albumArtImg
+                                        anchors.fill: parent
+                                        source: musicPlayerController.albumArtUrl
+                                        fillMode: Image.PreserveAspectCrop
+                                        smooth: true
+                                        asynchronous: true
+                                        visible: musicPlayerController.albumArtUrl.length > 0
+                                        // onStatusChanged: if (status === Image.Error) console.log("AlbumArt error:", source, errorString)
+                                    }
+
+                                    // Blend overlay for cluster look
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        color: "#0b1420"
+                                        opacity: 0.18
+                                    }
+
+                                    // Vignette for edges
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        gradient: Gradient {
+                                            GradientStop {
+                                                position: 0.0
+                                                color: "#2c3a4d"
+                                            }
+                                            GradientStop {
+                                                position: 0.5
+                                                color: "#00000000"
+                                            }
+                                            GradientStop {
+                                                position: 1.0
+                                                color: "#101826"
+                                            }
+                                        }
+                                        opacity: 0.25
+                                    }
+
+                                    // Fallback gradient when no album art
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        visible: musicPlayerController.albumArtUrl.length === 0
+                                        gradient: Gradient {
+                                            GradientStop {
+                                                position: 0.0
+                                                color: getAlbumColor(musicPlayerController.currentTrackIndex)
+                                            }
+                                            GradientStop {
+                                                position: 1.0
+                                                color: Qt.darker(getAlbumColor(musicPlayerController.currentTrackIndex), 1.5)
+                                            }
+                                        }
+                                    }
+
+                                    Image {
+                                        source: "qrc:/icons/common/music-note.svg"
+                                        width: 64 * root.s
+                                        height: 64 * root.s
                                         anchors.centerIn: parent
+                                        visible: musicPlayerController.albumArtUrl.length === 0
                                     }
                                 }
 
-                                Image {
-                                    source: "qrc:/icons/controls/next.svg"
-                                    sourceSize.width: 22 * root.s
-                                    sourceSize.height: 22 * root.s
-                                    opacity: 0.7
+                                // --- Track title ---
+                                Text {
+                                    width: parent.width
+                                    text: musicPlayerController.trackTitle.length > 0 ? musicPlayerController.trackTitle : "No Music"
+                                    color: "#e6f0ff"
+                                    font.pixelSize: root.fontSizeSmall * root.s
+                                    font.weight: Font.Bold
+                                    elide: Text.ElideRight
+                                    horizontalAlignment: Text.AlignHCenter
+                                }
+
+                                // --- Artist ---
+                                Text {
+                                    width: parent.width
+                                    text: musicPlayerController.artistName.length > 0 ? musicPlayerController.artistName : "Local Music"
+                                    color: "#93a6bf"
+                                    font.pixelSize: root.fontSizeXSmall * root.s
+                                    elide: Text.ElideRight
+                                    horizontalAlignment: Text.AlignHCenter
                                 }
                             }
                         }
@@ -693,5 +666,10 @@ Rectangle {
                 }
             }
         }
+    }
+
+    function getAlbumColor(index) {
+        var colors = ["#FF6B35", "#004E89", "#1AE5BE"];  // Orange, Blue, Teal
+        return colors[index % colors.length];
     }
 }

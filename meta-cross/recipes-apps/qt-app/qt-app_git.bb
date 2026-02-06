@@ -2,9 +2,9 @@ SUMMARY = "DrivaPi Qt Dashboard"
 LICENSE = "CLOSED"
 PR = "r4"
 
-DEPENDS = "qtbase qtdeclarative qtserialbus protobuf-native grpc-native protobuf grpc qtbase-native qtdeclarative-native"
+DEPENDS = "qtbase qtdeclarative qtserialbus qtmultimedia taglib protobuf-native grpc-native protobuf grpc qtbase-native qtdeclarative-native"
 
-RDEPENDS:${PN} = "qtbase qtdeclarative qtserialbus protobuf grpc"
+RDEPENDS:${PN} = "qtbase qtdeclarative qtserialbus qtmultimedia taglib protobuf grpc"
 
 SRC_URI = "file://qt-app"
 

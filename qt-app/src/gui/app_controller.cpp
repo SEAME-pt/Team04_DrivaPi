@@ -2,6 +2,8 @@
 #include "models/notification_manager.hpp"
 #include "models/can_logger.hpp"
 #include "gui/app_controller.hpp"
+#include "gui/settings_manager.hpp"
+#include "gui/music_player_controller.hpp"
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
@@ -16,7 +18,6 @@
 
 #include "gui/vehicle_data.hpp"
 #include "gui/kuksa_reader.hpp"
-#include "gui/spotify_controller.hpp"
 #ifdef ENABLE_CAN_MODE
 #include "gui/can_reader.hpp"
 #endif
@@ -36,14 +37,18 @@ int AppController::run(QGuiApplication& app)
     QScopedPointer<NotificationManager> notificationManager(NotificationManager::instance());
     QScopedPointer<CANLogger> canLogger(new CANLogger());
 
-    // --- Spotify Controller ---
-    QScopedPointer<SpotifyController> spotifyController(new SpotifyController());
+    // --- Settings Manager (must be created first) ---
+    QScopedPointer<SettingsManager> settingsManager(new SettingsManager());
+
+    // --- Music Player Controller ---
+    QScopedPointer<MusicPlayerController> musicPlayerController(new MusicPlayerController(settingsManager.data()));
 
     engine.rootContext()->setContextProperty("vehicleData", vehicleData.data());
     engine.rootContext()->setContextProperty("systemStatus", systemStatus.data());
     engine.rootContext()->setContextProperty("notificationManager", notificationManager.data());
     engine.rootContext()->setContextProperty("canLogger", canLogger.data());
-    engine.rootContext()->setContextProperty("spotifyController", spotifyController.data());
+    engine.rootContext()->setContextProperty("settingsManager", settingsManager.data());
+    engine.rootContext()->setContextProperty("musicPlayerController", musicPlayerController.data());
 
     QThread* workerThread = new QThread(&app);
     kuksa::KUKSAReader* kuksaReader = nullptr;
