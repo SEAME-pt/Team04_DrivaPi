@@ -46,14 +46,11 @@ ApplicationWindow {
             var mode = systemStatus.connectionMode;
 
             if (state === "connected") {
-                notificationManager.showNotification("✓ " + mode + " Connected", 0 // Info level
-                , 2000);
+                notificationManager.showNotification("✓ " + mode + " Connected", 0, 2000);
             } else if (state === "disconnected") {
-                notificationManager.showNotification("✗ " + mode + " Disconnected", 2 // Critical level
-                , 3000);
+                notificationManager.showNotification("✗ " + mode + " Disconnected", 2, 3000);
             } else if (state === "connecting") {
-                notificationManager.showNotification("○ Connecting to " + mode + "...", 0 // Info level
-                , 2000);
+                notificationManager.showNotification("○ Connecting to " + mode + "...", 0, 2000);
             }
         }
     }
@@ -65,11 +62,27 @@ ApplicationWindow {
         spacing: 0
 
         // ====== LEFT SIDE: PERSISTENT INSTRUMENT CLUSTER ======
-        ClusterScreen {
-            id: clusterScreen
+        // Cluster should maintain its aspect ratio (1200:480 = 2.5:1)
+        Item {
+            id: clusterContainer
             Layout.fillHeight: true
-            Layout.preferredWidth: rightPanelVisible ? 500 : parent.width  // Expand when right hidden
-            z: 100  // Always on top
+            // When right panel is visible, give cluster its proper aspect ratio width
+            Layout.preferredWidth: rightPanelVisible ? height * 2.5 : parent.width
+            Layout.minimumWidth: height * 2.5  // Minimum width to maintain aspect ratio
+            Layout.maximumWidth: rightPanelVisible ? height * 2.5 : parent.width
+            z: 100
+
+            // Clip to container bounds
+            clip: true
+
+            ClusterScreen {
+                id: clusterScreen
+                anchors.fill: parent
+
+                // Force the cluster to scale to fit the container while maintaining aspect ratio
+                width: parent.width
+                height: parent.height
+            }
 
             Behavior on Layout.preferredWidth {
                 NumberAnimation {
@@ -240,7 +253,6 @@ ApplicationWindow {
 
                     background: Rectangle {
                         color: tabBar.currentIndex === 0 ? AppTheme.colors.primary : "transparent"
-
                         Behavior on color {
                             ColorAnimation {
                                 duration: AppTheme.animation.normal
@@ -254,7 +266,6 @@ ApplicationWindow {
                         font: parent.font
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
-
                         Behavior on color {
                             ColorAnimation {
                                 duration: AppTheme.animation.normal
@@ -274,7 +285,6 @@ ApplicationWindow {
 
                     background: Rectangle {
                         color: tabBar.currentIndex === 1 ? AppTheme.colors.primary : "transparent"
-
                         Behavior on color {
                             ColorAnimation {
                                 duration: AppTheme.animation.normal
@@ -288,7 +298,6 @@ ApplicationWindow {
                         font: parent.font
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
-
                         Behavior on color {
                             ColorAnimation {
                                 duration: AppTheme.animation.normal
@@ -308,7 +317,6 @@ ApplicationWindow {
 
                     background: Rectangle {
                         color: tabBar.currentIndex === 2 ? AppTheme.colors.primary : "transparent"
-
                         Behavior on color {
                             ColorAnimation {
                                 duration: AppTheme.animation.normal
@@ -322,7 +330,6 @@ ApplicationWindow {
                         font: parent.font
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
-
                         Behavior on color {
                             ColorAnimation {
                                 duration: AppTheme.animation.normal
@@ -342,7 +349,6 @@ ApplicationWindow {
 
                     background: Rectangle {
                         color: tabBar.currentIndex === 3 ? AppTheme.colors.primary : "transparent"
-
                         Behavior on color {
                             ColorAnimation {
                                 duration: AppTheme.animation.normal
@@ -356,7 +362,6 @@ ApplicationWindow {
                         font: parent.font
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
-
                         Behavior on color {
                             ColorAnimation {
                                 duration: AppTheme.animation.normal
@@ -376,7 +381,6 @@ ApplicationWindow {
 
                     background: Rectangle {
                         color: tabBar.currentIndex === 4 ? AppTheme.colors.primary : "transparent"
-
                         Behavior on color {
                             ColorAnimation {
                                 duration: AppTheme.animation.normal
@@ -390,7 +394,6 @@ ApplicationWindow {
                         font: parent.font
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
-
                         Behavior on color {
                             ColorAnimation {
                                 duration: AppTheme.animation.normal
@@ -410,7 +413,6 @@ ApplicationWindow {
 
                     background: Rectangle {
                         color: tabBar.currentIndex === 5 ? AppTheme.colors.primary : "transparent"
-
                         Behavior on color {
                             ColorAnimation {
                                 duration: AppTheme.animation.normal
@@ -424,7 +426,6 @@ ApplicationWindow {
                         font: parent.font
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
-
                         Behavior on color {
                             ColorAnimation {
                                 duration: AppTheme.animation.normal
@@ -435,12 +436,11 @@ ApplicationWindow {
             }
         }
     }
-    // <-- Close the main RowLayout
 
     // ====== NOTIFICATION TOAST CONTAINER (TOP-CENTER) ======
     Rectangle {
         id: notificationContainer
-        anchors.top: statusBar.bottom
+        anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.topMargin: AppTheme.spacing.medium
         width: 320
@@ -452,7 +452,6 @@ ApplicationWindow {
             width: parent.width
             spacing: AppTheme.spacing.small
 
-            // Dynamically create toasts from notificationManager.notifications
             Repeater {
                 model: notificationManager.notifications
 
@@ -461,15 +460,14 @@ ApplicationWindow {
                     height: 52
                     radius: AppTheme.radius.medium
 
-                    // Color based on alert level
                     color: {
                         switch (modelData.level) {
                         case 0:
-                            return AppTheme.colors.info;        // Info
+                            return AppTheme.colors.info;
                         case 1:
-                            return AppTheme.colors.warning;     // Warning
+                            return AppTheme.colors.warning;
                         case 2:
-                            return AppTheme.colors.error;       // Critical
+                            return AppTheme.colors.error;
                         default:
                             return AppTheme.colors.info;
                         }
@@ -487,13 +485,6 @@ ApplicationWindow {
                             Layout.fillWidth: true
                             wrapMode: Text.Wrap
                         }
-                    }
-
-                    // Fade out animation
-                    NumberAnimation on opacity {
-                        from: 1.0
-                        to: 1.0
-                        duration: 0
                     }
                 }
             }
