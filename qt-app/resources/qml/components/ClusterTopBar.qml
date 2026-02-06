@@ -7,7 +7,7 @@ Item {
     id: clusterTopBar
 
     // Signals
-    signal batteryClicked()
+    signal batteryClicked
 
     // Public API
     property alias currentGear: gearSelector.currentGear
@@ -18,8 +18,10 @@ Item {
 
     // Battery color based on level - matching cluster cyan theme
     property color batteryColor: {
-        if (batteryLevel >= 60) return "#00BFFF";  // Cyan
-        if (batteryLevel >= 30) return "#FFA500";  // Orange
+        if (batteryLevel >= 60)
+            return "#00BFFF";  // Cyan
+        if (batteryLevel >= 30)
+            return "#FFA500";  // Orange
         return "#FF3B30";  // Red
     }
 
@@ -155,8 +157,14 @@ Item {
 
                         // Subtle gradient
                         gradient: Gradient {
-                            GradientStop { position: 0; color: Qt.lighter(clusterTopBar.batteryColor, 1.1) }
-                            GradientStop { position: 1; color: clusterTopBar.batteryColor }
+                            GradientStop {
+                                position: 0
+                                color: Qt.lighter(clusterTopBar.batteryColor, 1.1)
+                            }
+                            GradientStop {
+                                position: 1
+                                color: clusterTopBar.batteryColor
+                            }
                         }
                     }
                 }
@@ -184,7 +192,7 @@ Item {
                     color: clusterTopBar.batteryColor
                 }
             }
-            
+
             // Mouse area to make battery clickable
             MouseArea {
                 anchors.fill: parent
