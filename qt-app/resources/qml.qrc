@@ -18,7 +18,6 @@
     <file>qml/screens/DiagnosticsScreen.qml</file>
     <file>qml/screens/SettingsScreen.qml</file>
     <file>qml/screens/WeatherScreen.qml</file>
-    <file>qml/screens/UtilitiesScreen.qml</file>
     <file>qml/theme/AppTheme.qml</file>
     <file>qml/theme/qmldir</file>
     <file>assets/backgrounds/cluster-base.svg</file>

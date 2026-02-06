@@ -359,17 +359,14 @@ ApplicationWindow {
                 MediaScreen {
                     id: mediaScreen
                 }
-                DiagnosticsScreen {
-                    id: diagnosticsScreen
+                WeatherScreen {
+                    id: weatherScreen
                 }
                 SettingsScreen {
                     id: settingsScreen
                 }
-                WeatherScreen {
-                    id: weatherScreen
-                }
-                UtilitiesScreen {
-                    id: utilitiesScreen
+                DiagnosticsScreen {
+                    id: diagnosticsScreen
                 }
             }
 
@@ -386,6 +383,7 @@ ApplicationWindow {
                 Rectangle {
                     anchors.fill: parent
                     color: "#05080e"
+                    opacity: 0.18
                     layer.enabled: true
                     layer.effect: MultiEffect {
                         shadowEnabled: true
@@ -422,13 +420,13 @@ ApplicationWindow {
                         onClicked: verticalTabBar.currentIndex = 1
                     }
 
-                    // Diagnostics Tab
+                    // Weather Tab
                     TabIconButton {
                         width: 56
                         height: 56
                         anchors.horizontalCenter: parent.horizontalCenter
                         isActive: verticalTabBar.currentIndex === 2
-                        iconSource: "qrc:/icons/hardware/sensor.svg"
+                        iconSource: "qrc:/icons/weather/sun.svg"
                         onClicked: verticalTabBar.currentIndex = 2
                     }
 
@@ -442,24 +440,14 @@ ApplicationWindow {
                         onClicked: verticalTabBar.currentIndex = 3
                     }
 
-                    // Weather Tab
+                    // System State Tab (RPi + STM32)
                     TabIconButton {
                         width: 56
                         height: 56
                         anchors.horizontalCenter: parent.horizontalCenter
                         isActive: verticalTabBar.currentIndex === 4
-                        iconSource: "qrc:/icons/weather/sun.svg"
+                        iconSource: "qrc:/icons/hardware/sensor.svg"
                         onClicked: verticalTabBar.currentIndex = 4
-                    }
-
-                    // Utilities Tab
-                    TabIconButton {
-                        width: 56
-                        height: 56
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        isActive: verticalTabBar.currentIndex === 5
-                        iconSource: "qrc:/icons/common/menu.svg"
-                        onClicked: verticalTabBar.currentIndex = 5
                     }
 
                     Item {
