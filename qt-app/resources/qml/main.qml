@@ -377,7 +377,7 @@ ApplicationWindow {
                 Layout.fillHeight: true
                 z: 40
 
-                property int currentIndex: 0
+                property int currentIndex: verticalTabBar.currentIndex >= 0 ? verticalTabBar.currentIndex : 0  // Ensure valid index
 
                 // Nearly invisible semi-transparent background
                 Rectangle {
@@ -450,10 +450,10 @@ ApplicationWindow {
                         onClicked: verticalTabBar.currentIndex = 4
                     }
 
-                    Item {
-                        // Spacer to push buttons to top
-                        Layout.fillHeight: true
-                    }
+                    // Item {
+                    //     // Spacer to push buttons to top
+                    //     Layout.fillHeight: true
+                    // }
                 }
             }
         }

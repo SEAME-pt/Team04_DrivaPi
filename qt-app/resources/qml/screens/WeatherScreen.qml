@@ -1,133 +1,994 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import "../theme"
 
 Rectangle {
     id: root
-    color: AppTheme.colors.surface
+    color: "#05080e"
+    property bool keyboardAlwaysVisible: false
+    property int keyboardHeight: 140
+    MouseArea {
+        anchors.fill: parent
+        onClicked: {
+            if (locationInput.activeFocus) {
+                locationInput.focus = false;
+            }
+        }
+        z: -1
+    }
+    QtObject {
+        id: weatherData
+        property string location: ""
+        property real latitude: 41.1579
+        property real longitude: -8.6291
+
+        property int weatherCode: 0
+        property int temperature: 0
+        property int apparentTemperature: 0
+        property int humidity: 0
+        property real windSpeed: 0
+        property int windDirection: 0
+        property int uvIndex: 0
+        property real precipitation: 0
+        property string dayOfWeek: ""
+        property string hiLo: ""
+
+        property var hourlyData: []
+        property var dailyData: []
+
+        property bool isLoading: true
+        property bool hasError: false
+        property string errorMessage: ""
+        property string lastUpdated: ""
+    }
+
+    function fetchWeatherData(lat, lon, name) {
+        weatherData.isLoading = true;
+        weatherData.hasError = false;
+        weatherData.errorMessage = "";
+        weatherData.location = name;
+        weatherData.latitude = lat;
+        weatherData.longitude = lon;
+
+        var xhr = new XMLHttpRequest();
+        var url = "https://api.open-meteo.com/v1/forecast?" + "latitude=" + lat + "&longitude=" + lon + "&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,uv_index,precipitation" + "&hourly=temperature_2m,weather_code,precipitation_probability" + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,sunrise,sunset" + "&timezone=auto&forecast_days=7";
+
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    try {
+                        var data = JSON.parse(xhr.responseText);
+                        var current = data.current;
+                        var daily = data.daily;
+                        var hourly = data.hourly;
+
+                        weatherData.weatherCode = current.weather_code;
+                        weatherData.temperature = Math.round(current.temperature_2m);
+                        weatherData.apparentTemperature = Math.round(current.apparent_temperature);
+                        weatherData.humidity = current.relative_humidity_2m;
+                        weatherData.windSpeed = Math.round(current.wind_speed_10m * 10) / 10;
+                        weatherData.windDirection = Math.round(current.wind_direction_10m);
+                        weatherData.uvIndex = Math.round(current.uv_index);
+                        weatherData.precipitation = Math.round(current.precipitation * 10) / 10;
+                        weatherData.dayOfWeek = new Date().toLocaleDateString(Qt.locale(), "dddd");
+                        weatherData.hiLo = "H:" + Math.round(daily.temperature_2m_max[0]) + "°  L:" + Math.round(daily.temperature_2m_min[0]) + "°";
+                        weatherData.lastUpdated = new Date().toLocaleTimeString(Qt.locale(), "HH:mm");
+
+                        var now = new Date();
+                        var hourlyItems = [];
+                        for (var i = 0; i < hourly.time.length; i++) {
+                            var hourTimeMs = Date.parse(hourly.time[i]);
+                            if (isNaN(hourTimeMs))
+                                continue;
+                            if (hourTimeMs >= now.getTime() || hourlyItems.length > 0) {
+                                hourlyItems.push({
+                                    time: formatHour(hourly.time[i]),
+                                    temp: Math.round(hourly.temperature_2m[i]),
+                                    code: hourly.weather_code[i],
+                                    precip: hourly.precipitation_probability[i]
+                                });
+                                if (hourlyItems.length >= 6)
+                                    break;
+                            }
+                        }
+                        if (hourlyItems.length === 0) {
+                            for (var k = 0; k < Math.min(6, hourly.time.length); k++) {
+                                hourlyItems.push({
+                                    time: formatHour(hourly.time[k]),
+                                    temp: Math.round(hourly.temperature_2m[k]),
+                                    code: hourly.weather_code[k],
+                                    precip: hourly.precipitation_probability[k]
+                                });
+                            }
+                        }
+                        weatherData.hourlyData = hourlyItems;
+
+                        var dailyItems = [];
+                        for (var j = 0; j < Math.min(3, daily.time.length); j++) {
+                            dailyItems.push({
+                                day: formatDay(daily.time[j]),
+                                maxTemp: Math.round(daily.temperature_2m_max[j]),
+                                minTemp: Math.round(daily.temperature_2m_min[j]),
+                                code: daily.weather_code[j],
+                                precipitation: Math.round(daily.precipitation_sum[j] * 10) / 10,
+                                sunrise: formatTime(daily.sunrise[j]),
+                                sunset: formatTime(daily.sunset[j])
+                            });
+                        }
+                        weatherData.dailyData = dailyItems;
+
+                        weatherData.isLoading = false;
+                    } catch (e) {
+                        weatherData.hasError = true;
+                        weatherData.errorMessage = "Parse error";
+                        weatherData.isLoading = false;
+                    }
+                } else {
+                    weatherData.hasError = true;
+                    weatherData.errorMessage = "Network error";
+                    weatherData.isLoading = false;
+                }
+            }
+        };
+
+        xhr.open("GET", url);
+        xhr.send();
+    }
+
+    function searchLocation(query) {
+        if (!query || query.length < 2)
+            return;
+
+        var xhr = new XMLHttpRequest();
+        var url = "https://geocoding-api.open-meteo.com/v1/search?" + "name=" + encodeURIComponent(query) + "&count=1&language=en&format=json";
+
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                try {
+                    var data = JSON.parse(xhr.responseText);
+                    if (data.results && data.results.length > 0) {
+                        var result = data.results[0];
+                        var name = result.name + ",";
+                        if (result.country)
+                            name += "\n" + result.country;
+                        else if (result.admin1)
+                            name += "\n" + result.admin1;
+                        fetchWeatherData(result.latitude, result.longitude, name);
+                    }
+                } catch (e) {
+                    weatherData.hasError = true;
+                    weatherData.errorMessage = "Search error";
+                }
+            }
+        };
+
+        xhr.open("GET", url);
+        xhr.send();
+    }
+
+    function getWeatherDescription(code) {
+        if (code === 0)
+            return "Clear";
+        if (code <= 3)
+            return "Cloudy";
+        if (code === 45 || code === 48)
+            return "Foggy";
+        if (code >= 51 && code <= 67)
+            return "Drizzle";
+        if (code >= 71 && code <= 85)
+            return "Snow";
+        if (code >= 80 && code <= 82)
+            return "Rain";
+        if (code >= 95)
+            return "Thunderstorm";
+        return "Unknown";
+    }
+
+    function getWeatherIcon(code) {
+        if (code === 0)
+            return "sun";
+        if (code <= 3)
+            return "cloud";
+        if (code === 45 || code === 48)
+            return "fog";
+        if (code >= 51 && code <= 67)
+            return "rain";
+        if (code >= 71 && code <= 85)
+            return "snow";
+        if (code >= 80 && code <= 82)
+            return "rain";
+        if (code >= 95)
+            return "cloud";
+        return "sun";
+    }
+
+    function getWeatherIconType(code) {
+        if (code === 0)
+            return "sun";
+        if (code <= 3)
+            return "cloud";
+        if (code === 45 || code === 48)
+            return "fog";
+        if (code >= 51 && code <= 82)
+            return "rain";
+        if (code >= 95)
+            return "cloud";
+        return "sun";
+    }
+
+    function getDailyMinTemp() {
+        var minTemp = 999;
+        for (var i = 0; i < weatherData.dailyData.length; i++) {
+            minTemp = Math.min(minTemp, weatherData.dailyData[i].minTemp);
+        }
+        return minTemp === 999 ? 0 : minTemp;
+    }
+
+    function getDailyMaxTemp() {
+        var maxTemp = -999;
+        for (var i = 0; i < weatherData.dailyData.length; i++) {
+            maxTemp = Math.max(maxTemp, weatherData.dailyData[i].maxTemp);
+        }
+        return maxTemp === -999 ? 0 : maxTemp;
+    }
+
+    function formatHour(isoString) {
+        return new Date(isoString).toLocaleTimeString(Qt.locale(), "HH:mm");
+    }
+
+    function formatDay(isoString) {
+        return new Date(isoString).toLocaleDateString(Qt.locale(), "ddd");
+    }
+
+    function formatTime(isoString) {
+        return new Date(isoString).toLocaleTimeString(Qt.locale(), "HH:mm");
+    }
+
+    Component.onCompleted: {
+        fetchWeatherData(41.1579, -8.6291, "Porto, Portugal");
+    }
+
+    Timer {
+        id: refreshTimer
+        interval: 600000
+        repeat: true
+        running: true
+        onTriggered: fetchWeatherData(weatherData.latitude, weatherData.longitude, weatherData.location)
+    }
 
     ColumnLayout {
+        id: contentColumn
         anchors.fill: parent
-        anchors.margins: AppTheme.spacing.large
-        spacing: AppTheme.spacing.medium
+        anchors.leftMargin: 18
+        anchors.rightMargin: 13
+        anchors.topMargin: 12
+        anchors.bottomMargin: locationInput.activeFocus ? keyboardPanel.height + 8 : 12
+        spacing: 6
+        clip: true
 
-        Text {
-            text: "Weather Overview"
-            font.pixelSize: AppTheme.typography.headlineSmall
-            font.weight: Font.Bold
-            color: AppTheme.colors.text
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.bottomMargin: 6
+            Layout.rightMargin: 12
+
+            Text {
+                text: weatherData.location
+                color: "#FFFFFF"
+                font.pixelSize: 15
+                font.weight: Font.Medium
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                Layout.preferredWidth: 90
+            }
+
+            TextField {
+                id: locationInput
+                Layout.preferredWidth: 80
+                Layout.preferredHeight: 30
+                Layout.minimumWidth: 80
+                placeholderText: "Search"
+                Layout.rightMargin: 24
+                placeholderTextColor: "#4A5A6F"
+                font.pixelSize: 11
+                color: "#FFFFFF"
+                leftPadding: 10
+                rightPadding: 10
+                Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                z: 20
+                background: Rectangle {
+                    color: "#0A0F18"
+                    radius: 8
+                    border.width: 1
+                    border.color: locationInput.activeFocus ? "#00BFFF" : "#1A2535"
+                }
+                onAccepted: {
+                    searchLocation(text);
+                    locationInput.focus = false;
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    onPressed: {
+                        locationInput.forceActiveFocus();
+                        mouse.accepted = false;
+                    }
+                }
+            }
         }
 
-        GridLayout {
-            columns: 5
-            rowSpacing: AppTheme.spacing.medium
-            columnSpacing: AppTheme.spacing.medium
+        ColumnLayout {
             Layout.fillWidth: true
+            Layout.alignment: Qt.AlignHCenter
+            spacing: 1
 
-            ColumnLayout {
-                spacing: AppTheme.spacing.xsmall
+            AnimatedWeatherIcon {
+                id: animatedIcon
                 Layout.alignment: Qt.AlignHCenter
+                size: 60
+                type: getWeatherIconType(weatherData.weatherCode)
+            }
 
-                Rectangle {
-                    width: 64
-                    height: 64
-                    radius: AppTheme.radius.small
-                    color: AppTheme.colors.surfaceVariant
+            Text {
+                text: weatherData.isLoading ? "--" : weatherData.temperature + "°"
+                font.pixelSize: 56
+                font.weight: Font.Light
+                color: "#FFFFFF"
+                Layout.alignment: Qt.AlignHCenter
+            }
 
-                    Image {
-                        anchors.centerIn: parent
-                        source: "qrc:/icons/weather/sun.svg"
-                        sourceSize.width: 32
-                        sourceSize.height: 32
+            Text {
+                text: weatherData.isLoading ? "" : getWeatherDescription(weatherData.weatherCode)
+                font.pixelSize: 13
+                color: "#C5D0DD"
+                Layout.alignment: Qt.AlignHCenter
+            }
+
+            Text {
+                text: weatherData.isLoading ? "" : weatherData.hiLo
+                font.pixelSize: 11
+                color: "#8A9AA8"
+                Layout.bottomMargin: 4
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 4
+            Layout.topMargin: 2
+            Layout.bottomMargin: 6
+
+            Repeater {
+                model: [
+                    {
+                        label: "Wind",
+                        value: weatherData.windSpeed + " m/s"
+                    },
+                    {
+                        label: "Humidity",
+                        value: weatherData.humidity + "%"
+                    },
+                    {
+                        label: "UV",
+                        value: weatherData.uvIndex
+                    },
+                    {
+                        label: "Feels",
+                        value: weatherData.apparentTemperature + "°"
+                    }
+                ]
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+
+                    Text {
+                        text: modelData.label
+                        font.pixelSize: 10
+                        color: "#8A9AA8"
+                        Layout.alignment: Qt.AlignHCenter
+                    }
+
+                    Text {
+                        text: weatherData.isLoading ? "--" : modelData.value
+                        font.pixelSize: 14
+                        font.weight: Font.Medium
+                        color: "#FFFFFF"
+                        Layout.alignment: Qt.AlignHCenter
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            height: 1
+            color: "#1A2535"
+            opacity: 0.6
+        }
+
+        Text {
+            text: "HOURLY FORECAST"
+            font.pixelSize: 10
+            color: "#6A7A8A"
+            font.weight: Font.Medium
+            Layout.topMargin: 6
+            Layout.bottomMargin: 4
+        }
+
+        ListView {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 82
+            orientation: ListView.Horizontal
+            spacing: 12
+            clip: true
+            model: weatherData.hourlyData
+            Layout.alignment: Qt.AlignHCenter
+
+            delegate: ColumnLayout {
+                width: 46
+                spacing: 4
+
+                Text {
+                    text: modelData.time
+                    font.pixelSize: 11
+                    color: "#8A9AA8"
+                    font.weight: Font.Medium
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                Image {
+                    source: "qrc:/icons/weather/" + getWeatherIcon(modelData.code) + ".svg"
+                    sourceSize.width: 24
+                    sourceSize.height: 24
+                    Layout.alignment: Qt.AlignHCenter
+                    opacity: 0.95
+                    layer.enabled: true
+                    layer.effect: ColorOverlay {
+                        color: "#FFFFFF"
                     }
                 }
 
-                Text { text: "Clear"; color: AppTheme.colors.textSecondary; font.pixelSize: AppTheme.typography.labelSmall; Layout.alignment: Qt.AlignHCenter }
+                Text {
+                    text: modelData.precip > 0 ? modelData.precip + "%" : ""
+                    font.pixelSize: 9
+                    color: "#00BFFF"
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredHeight: 12
+                }
+
+                Text {
+                    text: modelData.temp + "°"
+                    font.pixelSize: 13
+                    color: "#FFFFFF"
+                    font.weight: Font.Medium
+                    Layout.alignment: Qt.AlignHCenter
+                }
             }
+        }
 
-            ColumnLayout {
-                spacing: AppTheme.spacing.xsmall
-                Layout.alignment: Qt.AlignHCenter
+        Rectangle {
+            Layout.fillWidth: true
+            height: 1
+            color: "#1A2535"
+            opacity: 0.6
+            Layout.topMargin: 4
+        }
 
-                Rectangle {
-                    width: 64
-                    height: 64
-                    radius: AppTheme.radius.small
-                    color: AppTheme.colors.surfaceVariant
+        Text {
+            text: "3-DAY FORECAST"
+            font.pixelSize: 10
+            color: "#6A7A8A"
+            font.weight: Font.Medium
+            Layout.topMargin: 6
+            Layout.bottomMargin: 4
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: 6
+
+            Repeater {
+                model: weatherData.dailyData
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+                    Layout.alignment: Qt.AlignHCenter
+
+                    Text {
+                        text: modelData.day
+                        font.pixelSize: 12
+                        color: "#C5D0DD"
+                        Layout.preferredWidth: 36
+                    }
 
                     Image {
+                        source: "qrc:/icons/weather/" + getWeatherIcon(modelData.code) + ".svg"
+                        sourceSize.width: 22
+                        sourceSize.height: 22
+                    }
+
+                    Item {
+                        Layout.fillWidth: true
+                    }
+
+                    Text {
+                        text: modelData.minTemp + "°"
+                        font.pixelSize: 12
+                        color: "#6A7A8A"
+                        Layout.preferredWidth: 30
+                        horizontalAlignment: Text.AlignRight
+                    }
+
+                    Rectangle {
+                        Layout.preferredWidth: 55
+                        Layout.preferredHeight: 3
+                        radius: 2
+                        color: "#2A3542"
+
+                        property real minAll: getDailyMinTemp()
+                        property real maxAll: getDailyMaxTemp()
+                        property real range: Math.max(1, maxAll - minAll)
+                        property real startRatio: (modelData.minTemp - minAll) / range
+                        property real spanRatio: (modelData.maxTemp - modelData.minTemp) / range
+
+                        Rectangle {
+                            x: parent.width * startRatio
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Math.max(6, parent.width * spanRatio)
+                            height: parent.height
+                            radius: 2
+                            gradient: Gradient {
+                                GradientStop {
+                                    position: 0.0
+                                    color: "#00BFFF"
+                                }
+                                GradientStop {
+                                    position: 1.0
+                                    color: "#00DDFF"
+                                }
+                            }
+                        }
+                    }
+
+                    Text {
+                        text: modelData.maxTemp + "°"
+                        font.pixelSize: 12
+                        color: "#FFFFFF"
+                        Layout.preferredWidth: 30
+                    }
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        id: keyboardPanel
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        height: root.keyboardHeight
+        radius: 0
+        color: "#0A0F18"
+        border.width: 1
+        border.color: "#1A2535"
+        opacity: 0.98
+        visible: locationInput.activeFocus
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 10
+            spacing: 5
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 5
+                Repeater {
+                    model: ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"]
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 24
+                        radius: 6
+                        color: keyMouse.pressed ? "#00BFFF" : "#131B26"
+                        border.width: 1
+                        border.color: "#1A2535"
+                        Text {
+                            anchors.centerIn: parent
+                            text: modelData
+                            font.pixelSize: 11
+                            font.weight: Font.Medium
+                            color: "#FFFFFF"
+                        }
+                        MouseArea {
+                            id: keyMouse
+                            anchors.fill: parent
+                            onClicked: locationInput.text += modelData.toLowerCase()
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 5
+                Repeater {
+                    model: ["A", "S", "D", "F", "G", "H", "J", "K", "L"]
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 24
+                        radius: 6
+                        color: keyMouse2.pressed ? "#00BFFF" : "#131B26"
+                        border.width: 1
+                        border.color: "#1A2535"
+                        Text {
+                            anchors.centerIn: parent
+                            text: modelData
+                            font.pixelSize: 11
+                            font.weight: Font.Medium
+                            color: "#FFFFFF"
+                        }
+                        MouseArea {
+                            id: keyMouse2
+                            anchors.fill: parent
+                            onClicked: locationInput.text += modelData.toLowerCase()
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 5
+                Repeater {
+                    model: ["Z", "X", "C", "V", "B", "N", "M"]
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 24
+                        radius: 6
+                        color: keyMouse3.pressed ? "#00BFFF" : "#131B26"
+                        border.width: 1
+                        border.color: "#1A2535"
+                        Text {
+                            anchors.centerIn: parent
+                            text: modelData
+                            font.pixelSize: 11
+                            font.weight: Font.Medium
+                            color: "#FFFFFF"
+                        }
+                        MouseArea {
+                            id: keyMouse3
+                            anchors.fill: parent
+                            onClicked: locationInput.text += modelData.toLowerCase()
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 5
+
+                Rectangle {
+                    Layout.preferredWidth: 60
+                    height: 24
+                    radius: 6
+                    color: backMouse.pressed ? "#FF5A5F" : "#131B26"
+                    border.width: 1
+                    border.color: "#1A2535"
+                    Text {
                         anchors.centerIn: parent
-                        source: "qrc:/icons/weather/cloud.svg"
-                        sourceSize.width: 32
-                        sourceSize.height: 32
+                        text: "⌫"
+                        font.pixelSize: 14
+                        color: "#FFFFFF"
+                    }
+                    MouseArea {
+                        id: backMouse
+                        anchors.fill: parent
+                        onClicked: locationInput.text = locationInput.text.slice(0, -1)
                     }
                 }
 
-                Text { text: "Cloudy"; color: AppTheme.colors.textSecondary; font.pixelSize: AppTheme.typography.labelSmall; Layout.alignment: Qt.AlignHCenter }
-            }
-
-            ColumnLayout {
-                spacing: AppTheme.spacing.xsmall
-                Layout.alignment: Qt.AlignHCenter
-
                 Rectangle {
-                    width: 64
-                    height: 64
-                    radius: AppTheme.radius.small
-                    color: AppTheme.colors.surfaceVariant
-
-                    Image {
+                    Layout.fillWidth: true
+                    height: 24
+                    radius: 6
+                    color: spaceMouse.pressed ? "#00BFFF" : "#1A2535"
+                    border.width: 1
+                    border.color: "#243142"
+                    Text {
                         anchors.centerIn: parent
-                        source: "qrc:/icons/weather/rain.svg"
-                        sourceSize.width: 32
-                        sourceSize.height: 32
+                        text: "SPACE"
+                        font.pixelSize: 10
+                        color: "#FFFFFF"
+                    }
+                    MouseArea {
+                        id: spaceMouse
+                        anchors.fill: parent
+                        onClicked: locationInput.text += " "
                     }
                 }
 
-                Text { text: "Rain"; color: AppTheme.colors.textSecondary; font.pixelSize: AppTheme.typography.labelSmall; Layout.alignment: Qt.AlignHCenter }
+                Rectangle {
+                    Layout.preferredWidth: 60
+                    height: 24
+                    radius: 6
+                    color: enterMouse.pressed ? "#00BFFF" : "#00405C"
+                    border.width: 1
+                    border.color: "#00BFFF"
+                    Text {
+                        anchors.centerIn: parent
+                        text: "⏎"
+                        font.pixelSize: 14
+                        color: "#FFFFFF"
+                    }
+                    MouseArea {
+                        id: enterMouse
+                        anchors.fill: parent
+                        onClicked: {
+                            searchLocation(locationInput.text);
+                            locationInput.focus = false;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        anchors.fill: parent
+        color: "#05080E"
+        radius: 12
+        border.width: 1
+        border.color: "#1A2535"
+        visible: weatherData.isLoading || weatherData.hasError
+
+        ColumnLayout {
+            anchors.centerIn: parent
+            spacing: 10
+
+            BusyIndicator {
+                running: weatherData.isLoading
+                visible: weatherData.isLoading
             }
 
-            ColumnLayout {
-                spacing: AppTheme.spacing.xsmall
+            Text {
+                text: weatherData.hasError ? "Failed to load weather" : "Fetching weather data..."
+                font.pixelSize: 13
+                color: AppTheme.colors.text
                 Layout.alignment: Qt.AlignHCenter
+            }
 
+            Button {
+                text: "Retry"
+                visible: weatherData.hasError
+                onClicked: fetchWeatherData(weatherData.latitude, weatherData.longitude, weatherData.location)
+            }
+        }
+    }
+
+    component AnimatedWeatherIcon: Item {
+        property string type: "sun"
+        property int size: 72
+
+        width: size
+        height: size
+
+        Item {
+            id: sunIcon
+            anchors.centerIn: parent
+            visible: type === "sun"
+
+            Repeater {
+                model: 8
                 Rectangle {
-                    width: 64
-                    height: 64
-                    radius: AppTheme.radius.small
-                    color: AppTheme.colors.surfaceVariant
+                    width: 2
+                    height: 10
+                    radius: 2
+                    color: "#FFD766"
+                    anchors.centerIn: parent
+                    rotation: index * 45
+                    y: -18
+                    opacity: 0.6
+                }
+            }
 
-                    Image {
-                        anchors.centerIn: parent
-                        source: "qrc:/icons/weather/snow.svg"
-                        sourceSize.width: 32
-                        sourceSize.height: 32
+            Rectangle {
+                width: 28
+                height: 28
+                radius: 14
+                anchors.centerIn: parent
+                gradient: Gradient {
+                    GradientStop {
+                        position: 0.0
+                        color: "#FFE08A"
+                    }
+                    GradientStop {
+                        position: 1.0
+                        color: "#FFC24A"
+                    }
+                }
+                opacity: 0.95
+            }
+
+            SequentialAnimation on scale {
+                loops: Animation.Infinite
+                NumberAnimation {
+                    from: 1.0
+                    to: 1.05
+                    duration: 1600
+                    easing.type: Easing.InOutQuad
+                }
+                NumberAnimation {
+                    from: 1.05
+                    to: 1.0
+                    duration: 1600
+                    easing.type: Easing.InOutQuad
+                }
+            }
+        }
+
+        Item {
+            id: cloudIcon
+            anchors.centerIn: parent
+            visible: type === "cloud" || type === "rain" || type === "fog"
+
+            Rectangle {
+                x: 10
+                y: 30
+                width: 42
+                height: 16
+                radius: 8
+                color: "#E9EFF6"
+                opacity: 0.98
+            }
+            Rectangle {
+                x: 2
+                y: 34
+                width: 22
+                height: 14
+                radius: 7
+                color: "#E9EFF6"
+                opacity: 0.98
+            }
+            Rectangle {
+                x: 28
+                y: 34
+                width: 24
+                height: 14
+                radius: 7
+                color: "#E9EFF6"
+                opacity: 0.98
+            }
+            Rectangle {
+                x: 16
+                y: 24
+                width: 22
+                height: 14
+                radius: 7
+                color: "#F4F7FB"
+                opacity: 0.85
+            }
+
+            SequentialAnimation on y {
+                loops: Animation.Infinite
+                NumberAnimation {
+                    from: 0
+                    to: 2
+                    duration: 1800
+                    easing.type: Easing.InOutQuad
+                }
+                NumberAnimation {
+                    from: 2
+                    to: 0
+                    duration: 1800
+                    easing.type: Easing.InOutQuad
+                }
+            }
+        }
+
+        Repeater {
+            model: type === "rain" ? 4 : 0
+            Rectangle {
+                width: 3
+                height: 10
+                radius: 2
+                color: "#5CC8FF"
+                x: 14 + index * 10
+                y: 50
+                opacity: 0.85
+
+                SequentialAnimation on y {
+                    loops: Animation.Infinite
+                    NumberAnimation {
+                        from: 48
+                        to: 62
+                        duration: 700
+                        easing.type: Easing.InQuad
+                    }
+                    NumberAnimation {
+                        from: 62
+                        to: 48
+                        duration: 0
                     }
                 }
 
-                Text { text: "Snow"; color: AppTheme.colors.textSecondary; font.pixelSize: AppTheme.typography.labelSmall; Layout.alignment: Qt.AlignHCenter }
-            }
-
-            ColumnLayout {
-                spacing: AppTheme.spacing.xsmall
-                Layout.alignment: Qt.AlignHCenter
-
-                Rectangle {
-                    width: 64
-                    height: 64
-                    radius: AppTheme.radius.small
-                    color: AppTheme.colors.surfaceVariant
-
-                    Image {
-                        anchors.centerIn: parent
-                        source: "qrc:/icons/weather/fog.svg"
-                        sourceSize.width: 32
-                        sourceSize.height: 32
+                SequentialAnimation on opacity {
+                    loops: Animation.Infinite
+                    NumberAnimation {
+                        from: 0.4
+                        to: 0.9
+                        duration: 700
+                        easing.type: Easing.InOutQuad
+                    }
+                    NumberAnimation {
+                        from: 0.9
+                        to: 0.4
+                        duration: 0
                     }
                 }
-
-                Text { text: "Fog"; color: AppTheme.colors.textSecondary; font.pixelSize: AppTheme.typography.labelSmall; Layout.alignment: Qt.AlignHCenter }
             }
+        }
+
+        Repeater {
+            model: type === "fog" ? 3 : 0
+            Rectangle {
+                width: 42 - index * 6
+                height: 2
+                radius: 1
+                color: "#C7D6E3"
+                x: 6 + index * 3
+                y: 48 + index * 6
+                opacity: 0.6
+
+                SequentialAnimation on x {
+                    loops: Animation.Infinite
+                    NumberAnimation {
+                        from: 4
+                        to: 10
+                        duration: 2000
+                        easing.type: Easing.InOutQuad
+                    }
+                    NumberAnimation {
+                        from: 10
+                        to: 4
+                        duration: 2000
+                        easing.type: Easing.InOutQuad
+                    }
+                }
+            }
+        }
+    }
+
+    component WeatherInfoItem: ColumnLayout {
+        property string label: ""
+        property string value: ""
+        property string iconSource: ""
+
+        Layout.fillWidth: true
+        spacing: 4
+
+        Image {
+            source: iconSource
+            sourceSize.width: 18
+            sourceSize.height: 18
+            opacity: 0.5
+            Layout.alignment: Qt.AlignHCenter
+        }
+
+        Text {
+            text: label
+            font.pixelSize: 10
+            color: "#5A6A78"
+            Layout.alignment: Qt.AlignHCenter
+        }
+
+        Text {
+            text: value
+            font.pixelSize: 13
+            font.weight: Font.DemiBold
+            color: "#FFFFFF"
+            Layout.alignment: Qt.AlignHCenter
         }
     }
 }
