@@ -634,145 +634,256 @@ ApplicationWindow {
             }
         }
 
-        ColumnLayout {
-            anchors.centerIn: parent
-            spacing: 32
+        // Gradient background with subtle depth
+        Rectangle {
+            anchors.fill: parent
+            gradient: Gradient {
+                GradientStop {
+                    position: 0.0
+                    color: Qt.darker(AppTheme.colors.surface, 1.3)
+                }
+                GradientStop {
+                    position: 1.0
+                    color: AppTheme.colors.surface
+                }
+            }
+        }
 
-            // Logo/Icon area (you can replace with an actual logo)
+        // Subtle ambient glow effect (center)
+        Rectangle {
+            anchors.centerIn: parent
+            width: 400
+            height: 400
+            radius: 200
+            color: AppTheme.colors.primary
+            opacity: 0.05
+        }
+
+        // Main logo container with glow
+        Item {
+            anchors.centerIn: parent
+            width: 280
+            height: 280
+
+            // Outer glow layer (pulsing)
             Rectangle {
-                Layout.alignment: Qt.AlignHCenter
-                width: 120
-                height: 120
-                radius: 60
-                color: AppTheme.colors.primary
+                anchors.centerIn: parent
+                width: 200
+                height: 200
+                radius: 100
+                color: "transparent"
+                border.color: AppTheme.colors.primary
+                border.width: 1
                 opacity: 0.2
 
-                Text {
-                    anchors.centerIn: parent
-                    text: "🚗"
-                    font.pixelSize: 64
-                }
-            }
-
-            // Welcome text
-            Column {
-                Layout.alignment: Qt.AlignHCenter
-                spacing: 16
-
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: "WELCOME TO"
-                    font.pixelSize: 18
-                    font.weight: Font.Light
-                    font.letterSpacing: 4
-                    color: AppTheme.colors.textSecondary
-                    opacity: 0
-
-                    SequentialAnimation on opacity {
-                        running: showSplashScreen
-                        PauseAnimation {
-                            duration: 200
+                SequentialAnimation on opacity {
+                    running: showSplashScreen
+                    PauseAnimation { duration: 400 }
+                    SequentialAnimation {
+                        loops: Animation.Infinite
+                        NumberAnimation {
+                            from: 0.2
+                            to: 0.6
+                            duration: 1500
+                            easing.type: Easing.InOutQuad
                         }
                         NumberAnimation {
-                            to: 1
-                            duration: 600
-                            easing.type: Easing.OutQuad
-                        }
-                    }
-                }
-
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: "DRIVAPI"
-                    font.pixelSize: 56
-                    font.weight: Font.Bold
-                    font.letterSpacing: 2
-                    color: AppTheme.colors.primary
-                    opacity: 0
-
-                    SequentialAnimation on opacity {
-                        running: showSplashScreen
-                        PauseAnimation {
-                            duration: 400
-                        }
-                        NumberAnimation {
-                            to: 1
-                            duration: 800
-                            easing.type: Easing.OutQuad
-                        }
-                    }
-
-                    scale: 0.8
-                    SequentialAnimation on scale {
-                        running: showSplashScreen
-                        PauseAnimation {
-                            duration: 400
-                        }
-                        NumberAnimation {
-                            to: 1.0
-                            duration: 800
-                            easing.type: Easing.OutBack
-                        }
-                    }
-                }
-
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: "Multi-Screen Infotainment System"
-                    font.pixelSize: 14
-                    font.weight: Font.Normal
-                    color: AppTheme.colors.textSecondary
-                    opacity: 0
-
-                    SequentialAnimation on opacity {
-                        running: showSplashScreen
-                        PauseAnimation {
-                            duration: 800
-                        }
-                        NumberAnimation {
-                            to: 1
-                            duration: 600
-                            easing.type: Easing.OutQuad
+                            from: 0.6
+                            to: 0.2
+                            duration: 1500
+                            easing.type: Easing.InOutQuad
                         }
                     }
                 }
             }
 
-            // Loading indicator
-            Row {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.topMargin: 32
-                spacing: 12
+            // Middle ring
+            Rectangle {
+                anchors.centerIn: parent
+                width: 160
+                height: 160
+                radius: 80
+                color: "transparent"
+                border.color: AppTheme.colors.primary
+                border.width: 1.5
+                opacity: 0
 
-                Repeater {
-                    model: 3
-                    Rectangle {
-                        width: 8
-                        height: 8
-                        radius: 4
-                        color: AppTheme.colors.primary
-                        opacity: 0.3
+                SequentialAnimation on opacity {
+                    running: showSplashScreen
+                    PauseAnimation { duration: 300 }
+                    NumberAnimation {
+                        to: 0.8
+                        duration: 500
+                        easing.type: Easing.OutQuad
+                    }
+                }
+            }
 
-                        SequentialAnimation on opacity {
-                            running: showSplashScreen
-                            loops: Animation.Infinite
-                            PauseAnimation {
-                                duration: index * 200
-                            }
-                            NumberAnimation {
-                                to: 1.0
-                                duration: 600
-                                easing.type: Easing.InOutQuad
-                            }
-                            NumberAnimation {
-                                to: 0.3
-                                duration: 600
-                                easing.type: Easing.InOutQuad
-                            }
+            // Inner logo "D"
+            Text {
+                anchors.centerIn: parent
+                text: "D"
+                font.pixelSize: 110
+                font.weight: Font.Bold
+                color: AppTheme.colors.primary
+                opacity: 0
+
+                SequentialAnimation on opacity {
+                    running: showSplashScreen
+                    PauseAnimation { duration: 600 }
+                    NumberAnimation {
+                        to: 1
+                        duration: 400
+                        easing.type: Easing.OutQuad
+                    }
+                }
+
+                scale: 0.5
+                SequentialAnimation on scale {
+                    running: showSplashScreen
+                    PauseAnimation { duration: 600 }
+                    NumberAnimation {
+                        to: 1.0
+                        duration: 600
+                        easing.type: Easing.OutElastic
+                    }
+                }
+            }
+
+            // Animated arc/dash indicator
+            Canvas {
+                anchors.fill: parent
+                id: loadingArc
+
+                property real progress: 0
+                onProgressChanged: requestPaint()
+
+                onPaint: {
+                    var ctx = getContext("2d");
+                    ctx.clearRect(0, 0, width, height);
+
+                    var centerX = width / 2;
+                    var centerY = height / 2;
+                    var radius = 90;
+                    var lineWidth = 2;
+
+                    ctx.strokeStyle = Qt.rgba(
+                        AppTheme.colors.primary.r,
+                        AppTheme.colors.primary.g,
+                        AppTheme.colors.primary.b,
+                        0.6
+                    );
+                    ctx.lineWidth = lineWidth;
+                    ctx.lineCap = "round";
+
+                    var startAngle = -Math.PI / 2;
+                    var endAngle = startAngle + (progress * 2 * Math.PI);
+
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius, startAngle, endAngle, false);
+                    ctx.stroke();
+                }
+
+                SequentialAnimation {
+                    running: showSplashScreen
+                    PauseAnimation { duration: 500 }
+                    SequentialAnimation {
+                        loops: Animation.Infinite
+                        NumberAnimation {
+                            target: loadingArc
+                            property: "progress"
+                            from: 0
+                            to: 1
+                            duration: 2000
+                            easing.type: Easing.InOutQuad
                         }
                     }
                 }
             }
         }
+
+        // Brand name
+        Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.verticalCenter
+            anchors.topMargin: 160
+            text: "DRIVAPI"
+            font.pixelSize: 24
+            font.weight: Font.Light
+            font.letterSpacing: 4
+            color: AppTheme.colors.primary
+            opacity: 0
+
+            SequentialAnimation on opacity {
+                running: showSplashScreen
+                PauseAnimation { duration: 1200 }
+                NumberAnimation {
+                    to: 0.9
+                    duration: 500
+                    easing.type: Easing.OutQuad
+                }
+            }
+        }
+
+        // Progress bar at bottom
+        Rectangle {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 80
+            width: 240
+            height: 2
+            radius: 1
+            color: AppTheme.colors.primary
+            opacity: 0.2
+
+            Rectangle {
+                height: parent.height
+                radius: 1
+                color: AppTheme.colors.primary
+                width: 0
+
+                SequentialAnimation on width {
+                    running: showSplashScreen
+                    PauseAnimation { duration: 300 }
+                    SequentialAnimation {
+                        loops: Animation.Infinite
+                        NumberAnimation {
+                            to: 240
+                            duration: 2000
+                            easing.type: Easing.InOutCubic
+                        }
+                        NumberAnimation {
+                            to: 0
+                            duration: 400
+                            easing.type: Easing.InQuad
+                        }
+                    }
+                }
+            }
+        }
+
+        // Subtle tagline
+        Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 40
+            text: "Initializing..."
+            font.pixelSize: 12
+            font.weight: Font.Light
+            font.letterSpacing: 1
+            color: AppTheme.colors.textSecondary
+            opacity: 0
+
+            SequentialAnimation on opacity {
+                running: showSplashScreen
+                PauseAnimation { duration: 1500 }
+                NumberAnimation {
+                    to: 0.6
+                    duration: 400
+                    easing.type: Easing.OutQuad
+                }
+            }
+        }
+
     }
 }
