@@ -307,8 +307,8 @@ ApplicationWindow {
             }
         }
 
-        // ====== RIGHT SIDE: SWIPEABLE CONTENT + TABBAR ======
-        ColumnLayout {
+        // ====== RIGHT SIDE: SWIPEABLE CONTENT + VERTICAL TABBAR ======
+        RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.margins: 0
@@ -340,7 +340,7 @@ ApplicationWindow {
                 id: swipeView
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                currentIndex: tabBar.currentIndex
+                currentIndex: verticalTabBar.currentIndex
                 z: 50   // Below cluster, above tab bar
                 clip: true
 
@@ -373,213 +373,98 @@ ApplicationWindow {
                 }
             }
 
-            // ====== TABBAR (only for right side) ======
-            TabBar {
-                id: tabBar
-                Layout.fillWidth: true
-                Layout.preferredHeight: 56
-                currentIndex: swipeView.currentIndex
-                position: TabBar.Footer
+            // ====== VERTICAL TABBAR (RIGHT SIDE, ICON ONLY) ======
+            Item {
+                id: verticalTabBar
+                Layout.preferredWidth: 72
+                Layout.fillHeight: true
                 z: 40
-                onCurrentIndexChanged: swipeView.currentIndex = currentIndex
 
-                // Styling
-                background: Rectangle {
-                    color: AppTheme.colors.surfaceElevated
-                    border.color: AppTheme.colors.divider
-                    border.width: 1
-                }
+                property int currentIndex: 0
 
-                // Tab buttons (6 total)
-                TabButton {
-                    text: "Navigation"
-                    font.pixelSize: AppTheme.typography.labelMedium
-                    font.weight: Font.Medium
-                    width: implicitWidth
-                    icon.source: tabBar.currentIndex === 0 ? "qrc:/icons/common/nav-mode-active.svg" : "qrc:/icons/common/nav-mode.svg"
-                    icon.width: 20
-                    icon.height: 20
-
-                    background: Rectangle {
-                        color: tabBar.currentIndex === 0 ? AppTheme.colors.primary : "transparent"
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: AppTheme.animation.normal
-                            }
-                        }
-                    }
-
-                    contentItem: Text {
-                        text: parent.text
-                        color: tabBar.currentIndex === 0 ? AppTheme.colors.text : AppTheme.colors.textSecondary
-                        font: parent.font
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: AppTheme.animation.normal
-                            }
-                        }
+                // Nearly invisible semi-transparent background
+                Rectangle {
+                    anchors.fill: parent
+                    color: "#05080e"
+                    layer.enabled: true
+                    layer.effect: MultiEffect {
+                        shadowEnabled: true
+                        shadowBlur: 20
+                        shadowColor: "#00BFFF"
+                        shadowOpacity: 0.08
                     }
                 }
 
-                TabButton {
-                    text: "Media"
-                    font.pixelSize: AppTheme.typography.labelMedium
-                    font.weight: Font.Medium
-                    width: implicitWidth
-                    icon.source: tabBar.currentIndex === 1 ? "qrc:/icons/common/media-mode-active.svg" : "qrc:/icons/common/media-mode.svg"
-                    icon.width: 20
-                    icon.height: 20
+                // Vertical column of icon buttons
+                Column {
+                    anchors.fill: parent
+                    anchors.margins: 8
+                    spacing: 8
+                    topPadding: 12
 
-                    background: Rectangle {
-                        color: tabBar.currentIndex === 1 ? AppTheme.colors.primary : "transparent"
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: AppTheme.animation.normal
-                            }
-                        }
+                    // Navigation Tab
+                    TabIconButton {
+                        width: 56
+                        height: 56
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        isActive: verticalTabBar.currentIndex === 0
+                        iconSource: "qrc:/icons/common/nav-mode.svg"
+                        onClicked: verticalTabBar.currentIndex = 0
                     }
 
-                    contentItem: Text {
-                        text: parent.text
-                        color: tabBar.currentIndex === 1 ? AppTheme.colors.text : AppTheme.colors.textSecondary
-                        font: parent.font
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: AppTheme.animation.normal
-                            }
-                        }
-                    }
-                }
-
-                TabButton {
-                    text: "Diagnostics"
-                    font.pixelSize: AppTheme.typography.labelMedium
-                    font.weight: Font.Medium
-                    width: implicitWidth
-                    icon.source: "qrc:/icons/hardware/sensor.svg"
-                    icon.width: 20
-                    icon.height: 20
-
-                    background: Rectangle {
-                        color: tabBar.currentIndex === 2 ? AppTheme.colors.primary : "transparent"
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: AppTheme.animation.normal
-                            }
-                        }
+                    // Media Tab
+                    TabIconButton {
+                        width: 56
+                        height: 56
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        isActive: verticalTabBar.currentIndex === 1
+                        iconSource: "qrc:/icons/common/media-mode.svg"
+                        onClicked: verticalTabBar.currentIndex = 1
                     }
 
-                    contentItem: Text {
-                        text: parent.text
-                        color: tabBar.currentIndex === 2 ? AppTheme.colors.text : AppTheme.colors.textSecondary
-                        font: parent.font
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: AppTheme.animation.normal
-                            }
-                        }
-                    }
-                }
-
-                TabButton {
-                    text: "Settings"
-                    font.pixelSize: AppTheme.typography.labelMedium
-                    font.weight: Font.Medium
-                    width: implicitWidth
-                    icon.source: "qrc:/icons/settings/brightness.svg"
-                    icon.width: 20
-                    icon.height: 20
-
-                    background: Rectangle {
-                        color: tabBar.currentIndex === 3 ? AppTheme.colors.primary : "transparent"
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: AppTheme.animation.normal
-                            }
-                        }
+                    // Diagnostics Tab
+                    TabIconButton {
+                        width: 56
+                        height: 56
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        isActive: verticalTabBar.currentIndex === 2
+                        iconSource: "qrc:/icons/hardware/sensor.svg"
+                        onClicked: verticalTabBar.currentIndex = 2
                     }
 
-                    contentItem: Text {
-                        text: parent.text
-                        color: tabBar.currentIndex === 3 ? AppTheme.colors.text : AppTheme.colors.textSecondary
-                        font: parent.font
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: AppTheme.animation.normal
-                            }
-                        }
-                    }
-                }
-
-                TabButton {
-                    text: "Weather"
-                    font.pixelSize: AppTheme.typography.labelMedium
-                    font.weight: Font.Medium
-                    width: implicitWidth
-                    icon.source: "qrc:/icons/weather/sun.svg"
-                    icon.width: 20
-                    icon.height: 20
-
-                    background: Rectangle {
-                        color: tabBar.currentIndex === 4 ? AppTheme.colors.primary : "transparent"
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: AppTheme.animation.normal
-                            }
-                        }
+                    // Settings Tab
+                    TabIconButton {
+                        width: 56
+                        height: 56
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        isActive: verticalTabBar.currentIndex === 3
+                        iconSource: "qrc:/icons/settings/brightness.svg"
+                        onClicked: verticalTabBar.currentIndex = 3
                     }
 
-                    contentItem: Text {
-                        text: parent.text
-                        color: tabBar.currentIndex === 4 ? AppTheme.colors.text : AppTheme.colors.textSecondary
-                        font: parent.font
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: AppTheme.animation.normal
-                            }
-                        }
-                    }
-                }
-
-                TabButton {
-                    text: "Utilities"
-                    font.pixelSize: AppTheme.typography.labelMedium
-                    font.weight: Font.Medium
-                    width: implicitWidth
-                    icon.source: "qrc:/icons/common/menu.svg"
-                    icon.width: 20
-                    icon.height: 20
-
-                    background: Rectangle {
-                        color: tabBar.currentIndex === 5 ? AppTheme.colors.primary : "transparent"
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: AppTheme.animation.normal
-                            }
-                        }
+                    // Weather Tab
+                    TabIconButton {
+                        width: 56
+                        height: 56
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        isActive: verticalTabBar.currentIndex === 4
+                        iconSource: "qrc:/icons/weather/sun.svg"
+                        onClicked: verticalTabBar.currentIndex = 4
                     }
 
-                    contentItem: Text {
-                        text: parent.text
-                        color: tabBar.currentIndex === 5 ? AppTheme.colors.text : AppTheme.colors.textSecondary
-                        font: parent.font
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: AppTheme.animation.normal
-                            }
-                        }
+                    // Utilities Tab
+                    TabIconButton {
+                        width: 56
+                        height: 56
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        isActive: verticalTabBar.currentIndex === 5
+                        iconSource: "qrc:/icons/common/menu.svg"
+                        onClicked: verticalTabBar.currentIndex = 5
+                    }
+
+                    Item {
+                        // Spacer to push buttons to top
+                        Layout.fillHeight: true
                     }
                 }
             }
@@ -941,6 +826,107 @@ ApplicationWindow {
                     easing.type: Easing.OutQuad
                 }
             }
+        }
+    }
+
+    // ====== CUSTOM TAB ICON BUTTON COMPONENT (BMW iDrive Style) ======
+    component TabIconButton: Rectangle {
+        id: tabButton
+        required property bool isActive
+        required property string iconSource
+        property bool isHovered: false
+        signal clicked
+
+        color: "transparent"
+        radius: 6
+
+        // Elegant minimalist background - nearly invisible unless active
+        Rectangle {
+            anchors.fill: parent
+            radius: 6
+            color: tabButton.isActive ? "#00BFFF" : (tabButton.isHovered ? "#FFFFFF" : "transparent")
+            opacity: tabButton.isActive ? 1 : (tabButton.isHovered ? 0.3 : 0.0)
+            border.color: tabButton.isActive ? "#00BFFF" : (tabButton.isHovered ? "#8FA4B8" : "transparent")
+            border.width: (tabButton.isActive || tabButton.isHovered) ? 1 : 0
+        }
+
+        // Smooth transitions for premium feel
+        Behavior on color {
+            ColorAnimation {
+                duration: 250
+                easing.type: Easing.OutCubic
+            }
+        }
+
+        Behavior on scale {
+            NumberAnimation {
+                duration: 160
+                easing.type: Easing.OutCubic
+            }
+        }
+
+        // Subtle glow on active/hover
+        layer.enabled: isActive || isHovered
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowBlur: isActive ? 12 : 6
+            shadowColor: isActive ? "#00BFFF" : "#8FA4B8"
+            shadowOpacity: isActive ? 0.45 : 0.18
+        }
+
+        // Icon - elegant and minimal
+        Image {
+            anchors.centerIn: parent
+            width: 24
+            height: 24
+            source: tabButton.iconSource
+            fillMode: Image.PreserveAspectFit
+            opacity: isActive ? 0.85 : (tabButton.isHovered ? 0.6 : 0.35)
+            mipmap: true
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 200
+                    easing.type: Easing.OutQuad
+                }
+            }
+        }
+
+        // Interactive mouse area
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+
+            onEntered: {
+                tabButton.isHovered = true;
+                if (!tabButton.isActive) {
+                    tabButton.scale = 1.05;
+                }
+            }
+
+            onExited: {
+                tabButton.isHovered = false;
+                tabButton.scale = 1.0;
+            }
+
+            onPressed: {
+                tabButton.scale = 0.92;
+            }
+
+            onReleased: {
+                if (containsMouse) {
+                    tabButton.scale = 1.05;
+                } else {
+                    tabButton.scale = 1.0;
+                }
+                tabButton.clicked();
+            }
+        }
+
+        // Ensure scale resets when active state changes
+        onIsActiveChanged: {
+            scale = 1.0;
         }
     }
 }
