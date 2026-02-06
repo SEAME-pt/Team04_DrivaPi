@@ -35,7 +35,17 @@ ApplicationWindow {
     }
 
     // ====== STATE MANAGEMENT ======
-    property bool rightPanelVisible: true  // Toggle for right content panel
+    property bool rightPanelVisible: false  // Toggle for right content panel - start with cluster full screen
+    property bool showSplashScreen: true   // Control splash screen visibility
+
+    // Timer to hide splash screen after delay
+    Timer {
+        id: splashTimer
+        interval: 2500  // Show splash for 2.5 seconds
+        running: true
+        repeat: false
+        onTriggered: showSplashScreen = false
+    }
 
     // ====== CONNECTION STATE MONITORING ======
     Connections {
@@ -82,9 +92,56 @@ ApplicationWindow {
                 // Force the cluster to scale to fit the container while maintaining aspect ratio
                 width: parent.width
                 height: parent.height
+
+                // Smooth scale animation during transitions
+                scale: rightPanelVisible ? 1.0 : 1.0
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: 400
+                        easing.type: Easing.InOutCubic
+                    }
+                }
+
+                // Subtle opacity pulse for smooth transition
+                opacity: 1.0
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 200
+                        easing.type: Easing.InOutQuad
+                    }
+                }
+
+                // Transform for smooth width adaptation
+                Behavior on width {
+                    NumberAnimation {
+                        duration: 400
+                        easing.type: Easing.InOutCubic
+                    }
+                }
+
+                Behavior on height {
+                    NumberAnimation {
+                        duration: 400
+                        easing.type: Easing.InOutCubic
+                    }
+                }
             }
 
             Behavior on Layout.preferredWidth {
+                NumberAnimation {
+                    duration: 400
+                    easing.type: Easing.InOutCubic
+                }
+            }
+
+            Behavior on Layout.minimumWidth {
+                NumberAnimation {
+                    duration: 400
+                    easing.type: Easing.InOutCubic
+                }
+            }
+
+            Behavior on Layout.maximumWidth {
                 NumberAnimation {
                     duration: 400
                     easing.type: Easing.InOutCubic
@@ -138,6 +195,26 @@ ApplicationWindow {
                         font.weight: Font.Bold
                         color: "#4fb3d9"
                         anchors.horizontalCenter: parent.horizontalCenter
+
+                        // Smooth rotation animation when direction changes
+                        Behavior on text {
+                            SequentialAnimation {
+                                NumberAnimation {
+                                    target: parent
+                                    property: "scale"
+                                    to: 1.2
+                                    duration: 100
+                                    easing.type: Easing.OutQuad
+                                }
+                                NumberAnimation {
+                                    target: parent
+                                    property: "scale"
+                                    to: 1.0
+                                    duration: 100
+                                    easing.type: Easing.InQuad
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -151,16 +228,33 @@ ApplicationWindow {
                         rightPanelVisible = !rightPanelVisible;
                     }
 
-                    // Visual feedback
-                    onPressed: toggleTab.opacity = 0.7
-                    onReleased: toggleTab.opacity = 1.0
-                    onCanceled: toggleTab.opacity = 1.0
+                    // Enhanced visual feedback with scale
+                    onPressed: {
+                        toggleTab.opacity = 0.7;
+                        toggleTab.scale = 0.95;
+                    }
+                    onReleased: {
+                        toggleTab.opacity = 1.0;
+                        toggleTab.scale = 1.0;
+                    }
+                    onCanceled: {
+                        toggleTab.opacity = 1.0;
+                        toggleTab.scale = 1.0;
+                    }
                 }
 
                 // Smooth opacity transition
                 Behavior on opacity {
                     NumberAnimation {
                         duration: 150
+                    }
+                }
+
+                // Smooth scale transition
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: 150
+                        easing.type: Easing.OutBack
                     }
                 }
             }
@@ -202,6 +296,14 @@ ApplicationWindow {
                 currentIndex: tabBar.currentIndex
                 z: 50   // Below cluster, above tab bar
                 clip: true
+
+                // Smooth page transition animation
+                Behavior on currentIndex {
+                    NumberAnimation {
+                        duration: 350
+                        easing.type: Easing.OutCubic
+                    }
+                }
 
                 // Navigation screens
                 NavigationScreen {
@@ -473,6 +575,31 @@ ApplicationWindow {
                         }
                     }
 
+                    // Entrance animation
+                    opacity: 0
+                    Component.onCompleted: {
+                        opacity = 1;
+                        transform.y = 0;
+                    }
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 300
+                            easing.type: Easing.OutQuad
+                        }
+                    }
+
+                    transform: Translate {
+                        y: -20
+                    }
+
+                    Behavior on transform {
+                        NumberAnimation {
+                            duration: 400
+                            easing.type: Easing.OutBack
+                        }
+                    }
+
                     RowLayout {
                         anchors.fill: parent
                         anchors.margins: AppTheme.spacing.medium
@@ -484,6 +611,164 @@ ApplicationWindow {
                             font.pixelSize: AppTheme.typography.bodyMedium
                             Layout.fillWidth: true
                             wrapMode: Text.Wrap
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ====== WELCOME SPLASH SCREEN ======
+    Rectangle {
+        id: splashScreen
+        anchors.fill: parent
+        z: 300  // Above everything
+        visible: opacity > 0
+        opacity: showSplashScreen ? 1 : 0
+        color: AppTheme.colors.surface
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 800
+                easing.type: Easing.InOutQuad
+            }
+        }
+
+        ColumnLayout {
+            anchors.centerIn: parent
+            spacing: 32
+
+            // Logo/Icon area (you can replace with an actual logo)
+            Rectangle {
+                Layout.alignment: Qt.AlignHCenter
+                width: 120
+                height: 120
+                radius: 60
+                color: AppTheme.colors.primary
+                opacity: 0.2
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "🚗"
+                    font.pixelSize: 64
+                }
+            }
+
+            // Welcome text
+            Column {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: 16
+
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: "WELCOME TO"
+                    font.pixelSize: 18
+                    font.weight: Font.Light
+                    font.letterSpacing: 4
+                    color: AppTheme.colors.textSecondary
+                    opacity: 0
+
+                    SequentialAnimation on opacity {
+                        running: showSplashScreen
+                        PauseAnimation {
+                            duration: 200
+                        }
+                        NumberAnimation {
+                            to: 1
+                            duration: 600
+                            easing.type: Easing.OutQuad
+                        }
+                    }
+                }
+
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: "DRIVAPI"
+                    font.pixelSize: 56
+                    font.weight: Font.Bold
+                    font.letterSpacing: 2
+                    color: AppTheme.colors.primary
+                    opacity: 0
+
+                    SequentialAnimation on opacity {
+                        running: showSplashScreen
+                        PauseAnimation {
+                            duration: 400
+                        }
+                        NumberAnimation {
+                            to: 1
+                            duration: 800
+                            easing.type: Easing.OutQuad
+                        }
+                    }
+
+                    scale: 0.8
+                    SequentialAnimation on scale {
+                        running: showSplashScreen
+                        PauseAnimation {
+                            duration: 400
+                        }
+                        NumberAnimation {
+                            to: 1.0
+                            duration: 800
+                            easing.type: Easing.OutBack
+                        }
+                    }
+                }
+
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: "Multi-Screen Infotainment System"
+                    font.pixelSize: 14
+                    font.weight: Font.Normal
+                    color: AppTheme.colors.textSecondary
+                    opacity: 0
+
+                    SequentialAnimation on opacity {
+                        running: showSplashScreen
+                        PauseAnimation {
+                            duration: 800
+                        }
+                        NumberAnimation {
+                            to: 1
+                            duration: 600
+                            easing.type: Easing.OutQuad
+                        }
+                    }
+                }
+            }
+
+            // Loading indicator
+            Row {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.topMargin: 32
+                spacing: 12
+
+                Repeater {
+                    model: 3
+                    Rectangle {
+                        width: 8
+                        height: 8
+                        radius: 4
+                        color: AppTheme.colors.primary
+                        opacity: 0.3
+
+                        SequentialAnimation on opacity {
+                            running: showSplashScreen
+                            loops: Animation.Infinite
+                            PauseAnimation {
+                                duration: index * 200
+                            }
+                            NumberAnimation {
+                                to: 1.0
+                                duration: 600
+                                easing.type: Easing.InOutQuad
+                            }
+                            NumberAnimation {
+                                to: 0.3
+                                duration: 600
+                                easing.type: Easing.InOutQuad
+                            }
                         }
                     }
                 }
