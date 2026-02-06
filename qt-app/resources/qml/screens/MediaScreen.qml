@@ -33,7 +33,7 @@ Rectangle {
             Layout.fillHeight: !compact
             Layout.preferredWidth: compact ? -1 : albumArtWidth
             Layout.preferredHeight: compact ? 170 : -1
-            
+
             Rectangle {
                 anchors.fill: parent
                 radius: 8
@@ -59,10 +59,16 @@ Rectangle {
                     visible: musicPlayerController.albumArtUrl.length === 0
                     radius: 4
                     gradient: Gradient {
-                        GradientStop { position: 0.0; color: "#FF6B35" }
-                        GradientStop { position: 1.0; color: "#C44D20" }
+                        GradientStop {
+                            position: 0.0
+                            color: "#FF6B35"
+                        }
+                        GradientStop {
+                            position: 1.0
+                            color: "#C44D20"
+                        }
                     }
-                    
+
                     Text {
                         anchors.centerIn: parent
                         text: "♪"
@@ -123,18 +129,20 @@ Rectangle {
                     height: parent.height
                     radius: 3
                     color: "#00BFFF"
-                    
+
                     Behavior on width {
-                        NumberAnimation { duration: 100 }
+                        NumberAnimation {
+                            duration: 100
+                        }
                     }
                 }
-                
+
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
                         if (musicPlayerController.duration > 0) {
-                            var newPosition = (mouse.x / width) * musicPlayerController.duration
-                            musicPlayerController.seek(newPosition)
+                            var newPosition = (mouse.x / width) * musicPlayerController.duration;
+                            musicPlayerController.seek(newPosition);
                         }
                     }
                 }
@@ -174,15 +182,18 @@ Rectangle {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: musicPlayerController.previous()
-                        
+
                         onEntered: parent.scale = 1.05
                         onExited: parent.scale = 1.0
                         onPressed: parent.scale = 0.95
                         onReleased: parent.scale = containsMouse ? 1.05 : 1.0
                     }
-                    
+
                     Behavior on scale {
-                        NumberAnimation { duration: 100; easing.type: Easing.OutQuad }
+                        NumberAnimation {
+                            duration: 100
+                            easing.type: Easing.OutQuad
+                        }
                     }
                 }
 
@@ -192,7 +203,7 @@ Rectangle {
                     height: playSize
                     radius: playSize / 2
                     color: "#00BFFF"
-                    
+
                     layer.enabled: true
                     layer.effect: MultiEffect {
                         shadowEnabled: true
@@ -215,15 +226,18 @@ Rectangle {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: musicPlayerController.togglePlayPause()
-                        
+
                         onEntered: parent.scale = 1.05
                         onExited: parent.scale = 1.0
                         onPressed: parent.scale = 0.95
                         onReleased: parent.scale = containsMouse ? 1.05 : 1.0
                     }
-                    
+
                     Behavior on scale {
-                        NumberAnimation { duration: 100; easing.type: Easing.OutQuad }
+                        NumberAnimation {
+                            duration: 100
+                            easing.type: Easing.OutQuad
+                        }
                     }
                 }
 
@@ -250,15 +264,18 @@ Rectangle {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: musicPlayerController.next()
-                        
+
                         onEntered: parent.scale = 1.05
                         onExited: parent.scale = 1.0
                         onPressed: parent.scale = 0.95
                         onReleased: parent.scale = containsMouse ? 1.05 : 1.0
                     }
-                    
+
                     Behavior on scale {
-                        NumberAnimation { duration: 100; easing.type: Easing.OutQuad }
+                        NumberAnimation {
+                            duration: 100
+                            easing.type: Easing.OutQuad
+                        }
                     }
                 }
             }
@@ -290,18 +307,20 @@ Rectangle {
                         height: parent.height
                         radius: 3
                         color: "#00BFFF"
-                        
+
                         Behavior on width {
-                            NumberAnimation { duration: 100 }
+                            NumberAnimation {
+                                duration: 100
+                            }
                         }
                     }
-                    
+
                     MouseArea {
                         anchors.fill: parent
                         onClicked: {
-                            var volume = mouse.x / width
-                            musicPlayerController.setVolume(volume)
-                            volumeFill.width = parent.width * volume
+                            var volume = mouse.x / width;
+                            musicPlayerController.setVolume(volume);
+                            volumeFill.width = parent.width * volume;
                         }
                     }
                 }
