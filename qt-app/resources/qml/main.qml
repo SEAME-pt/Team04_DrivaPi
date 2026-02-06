@@ -678,7 +678,9 @@ ApplicationWindow {
 
                 SequentialAnimation on opacity {
                     running: showSplashScreen
-                    PauseAnimation { duration: 400 }
+                    PauseAnimation {
+                        duration: 400
+                    }
                     SequentialAnimation {
                         loops: Animation.Infinite
                         NumberAnimation {
@@ -710,7 +712,9 @@ ApplicationWindow {
 
                 SequentialAnimation on opacity {
                     running: showSplashScreen
-                    PauseAnimation { duration: 300 }
+                    PauseAnimation {
+                        duration: 300
+                    }
                     NumberAnimation {
                         to: 0.8
                         duration: 500
@@ -730,7 +734,9 @@ ApplicationWindow {
 
                 SequentialAnimation on opacity {
                     running: showSplashScreen
-                    PauseAnimation { duration: 600 }
+                    PauseAnimation {
+                        duration: 600
+                    }
                     NumberAnimation {
                         to: 1
                         duration: 400
@@ -741,7 +747,9 @@ ApplicationWindow {
                 scale: 0.5
                 SequentialAnimation on scale {
                     running: showSplashScreen
-                    PauseAnimation { duration: 600 }
+                    PauseAnimation {
+                        duration: 600
+                    }
                     NumberAnimation {
                         to: 1.0
                         duration: 600
@@ -752,8 +760,8 @@ ApplicationWindow {
 
             // Animated arc/dash indicator
             Canvas {
-                anchors.fill: parent
                 id: loadingArc
+                anchors.fill: parent
 
                 property real progress: 0
                 onProgressChanged: requestPaint()
@@ -767,12 +775,7 @@ ApplicationWindow {
                     var radius = 90;
                     var lineWidth = 2;
 
-                    ctx.strokeStyle = Qt.rgba(
-                        AppTheme.colors.primary.r,
-                        AppTheme.colors.primary.g,
-                        AppTheme.colors.primary.b,
-                        0.6
-                    );
+                    ctx.strokeStyle = Qt.rgba(AppTheme.colors.primary.r, AppTheme.colors.primary.g, AppTheme.colors.primary.b, 0.6);
                     ctx.lineWidth = lineWidth;
                     ctx.lineCap = "round";
 
@@ -786,7 +789,9 @@ ApplicationWindow {
 
                 SequentialAnimation {
                     running: showSplashScreen
-                    PauseAnimation { duration: 500 }
+                    PauseAnimation {
+                        duration: 500
+                    }
                     SequentialAnimation {
                         loops: Animation.Infinite
                         NumberAnimation {
@@ -816,7 +821,9 @@ ApplicationWindow {
 
             SequentialAnimation on opacity {
                 running: showSplashScreen
-                PauseAnimation { duration: 1200 }
+                PauseAnimation {
+                    duration: 1200
+                }
                 NumberAnimation {
                     to: 0.9
                     duration: 500
@@ -844,7 +851,9 @@ ApplicationWindow {
 
                 SequentialAnimation on width {
                     running: showSplashScreen
-                    PauseAnimation { duration: 300 }
+                    PauseAnimation {
+                        duration: 300
+                    }
                     SequentialAnimation {
                         loops: Animation.Infinite
                         NumberAnimation {
@@ -876,7 +885,9 @@ ApplicationWindow {
 
             SequentialAnimation on opacity {
                 running: showSplashScreen
-                PauseAnimation { duration: 1500 }
+                PauseAnimation {
+                    duration: 1500
+                }
                 NumberAnimation {
                     to: 0.6
                     duration: 400
@@ -884,6 +895,5 @@ ApplicationWindow {
                 }
             }
         }
-
     }
 }
