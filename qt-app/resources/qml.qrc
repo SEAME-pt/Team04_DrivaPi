@@ -6,6 +6,9 @@
     <file>assets/oie_transparent (2).png</file>
     <file>qml/main.qml</file>
     <file>qml/components/BatteryIndicator.qml</file>
+    <file>qml/components/BatteryPopup.qml</file>
+    <file>qml/components/BatteryStatusRow.qml</file>
+    <file>qml/components/ClusterTopBar.qml</file>
     <file>qml/components/EnergyDisplay.qml</file>
     <file>qml/components/GearSelector.qml</file>
     <file>qml/components/SpeedDisplay.qml</file>

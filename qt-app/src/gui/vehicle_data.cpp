@@ -2,8 +2,9 @@
 
 namespace drivaui {
 
-// CAN ID that we agreed for speed
+// CAN IDs for various signals
 static const uint32_t SPEED_CAN_ID = 0x100;
+static const uint32_t STM32_BATTERY_CAN_ID = 0x200;
 
 typedef union{
     float float_val;
@@ -15,6 +16,8 @@ VehicleData::VehicleData(QObject *parent)
     , m_speed(0.0)
     , m_energy(100.0)
     , m_battery(100)
+    , m_stm32Battery(100)
+    , m_rpiBattery(100)
     , m_distance(0)
     , m_odometer(0)
     , m_gear("P")
@@ -65,6 +68,38 @@ void VehicleData::setBattery(int battery)
         emit batteryChanged();
     }
     updateTimestamp(QStringLiteral("battery"));
+}
+
+void VehicleData::setStm32Battery(int battery)
+{
+    if (m_stm32Battery != battery) {
+        m_stm32Battery = battery;
+        // Update overall battery as the minimum of both sources
+        int newBattery = qMin(m_stm32Battery, m_rpiBattery);
+        if (m_battery != newBattery) {
+            m_battery = newBattery;
+            emit batteryChanged();
+        }
+        emit stm32BatteryChanged();
+        qDebug() << "STM32 Battery updated to:" << m_stm32Battery << "%, Overall battery:" << m_battery << "%";
+    }
+    updateTimestamp(QStringLiteral("stm32Battery"));
+}
+
+void VehicleData::setRpiBattery(int battery)
+{
+    if (m_rpiBattery != battery) {
+        m_rpiBattery = battery;
+        // Update overall battery as the minimum of both sources
+        int newBattery = qMin(m_stm32Battery, m_rpiBattery);
+        if (m_battery != newBattery) {
+            m_battery = newBattery;
+            emit batteryChanged();
+        }
+        emit rpiBatteryChanged();
+        qDebug() << "RPi Battery updated to:" << m_rpiBattery << "%, Overall battery:" << m_battery << "%";
+    }
+    updateTimestamp(QStringLiteral("rpiBattery"));
 }
 
 void VehicleData::setDistance(int distance)
@@ -178,6 +213,16 @@ int VehicleData::getBattery() const
 	return m_battery;
 }
 
+int VehicleData::getStm32Battery() const
+{
+	return m_stm32Battery;
+}
+
+int VehicleData::getRpiBattery() const
+{
+	return m_rpiBattery;
+}
+
 int VehicleData::getDistance() const
 {
 	return m_distance;
@@ -246,8 +291,17 @@ void VehicleData::handleCanMessage(const QByteArray &payload, uint32_t canId)
         // debug
         // qDebug() << "Updated speed (m/s):" << mps;
     }
+    else if (canId == STM32_BATTERY_CAN_ID) {
+        // Expect 1 byte: battery percentage (0-100)
+        if (payload.size() < 1) {
+            qWarning() << "STM32 BATTERY frame too short: " << payload.size();
+            return;
+        }
+        uint8_t battery_value = static_cast<uint8_t>(payload[0]);
+        setStm32Battery(static_cast<int>(battery_value));
+    }
 
-    // TODO: expand handling for other CAN IDs (battery, energy, etc.)
+    // TODO: expand handling for other CAN IDs (energy, temperature, etc.)
 }
 
 // Watchdog: check timestamps and mark stale

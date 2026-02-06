@@ -31,6 +31,8 @@ class VehicleData : public QObject
     Q_PROPERTY(double speed READ getSpeed WRITE setSpeed NOTIFY speedChanged)
     Q_PROPERTY(double energy READ getEnergy WRITE setEnergy NOTIFY energyChanged)
     Q_PROPERTY(int battery READ getBattery WRITE setBattery NOTIFY batteryChanged)
+    Q_PROPERTY(int stm32Battery READ getStm32Battery WRITE setStm32Battery NOTIFY stm32BatteryChanged)
+    Q_PROPERTY(int rpiBattery READ getRpiBattery WRITE setRpiBattery NOTIFY rpiBatteryChanged)
     Q_PROPERTY(int temperature READ getTemperature WRITE setTemperature NOTIFY temperatureChanged)
     Q_PROPERTY(int distance READ getDistance WRITE setDistance NOTIFY distanceChanged)
     Q_PROPERTY(int odo READ getOdometer WRITE setOdometer NOTIFY odometerChanged)
@@ -46,6 +48,8 @@ public:
     float   getSpeed() const;
     double  getEnergy() const;
     int     getBattery() const;
+    int     getStm32Battery() const;
+    int     getRpiBattery() const;
     int     getDistance() const;
     int     getOdometer() const;
     int     getTemperature() const;
@@ -56,6 +60,8 @@ public:
     void    setSpeed(float mps);
     void    setEnergy(double energy);
     void    setBattery(int battery);
+    void    setStm32Battery(int battery);
+    void    setRpiBattery(int battery);
     void    setDistance(int distance);
     void    setOdometer(int odo);
     void    setGear(const QString &gear);
@@ -79,6 +85,8 @@ signals:
     void speedChanged();
     void energyChanged();
     void batteryChanged();
+    void stm32BatteryChanged();
+    void rpiBatteryChanged();
     void distanceChanged();
     void odometerChanged();
     void temperatureChanged();
@@ -94,6 +102,8 @@ private:
     float   m_speed;
     double  m_energy;
     int     m_battery;
+    int     m_stm32Battery;
+    int     m_rpiBattery;
     int     m_distance;
     int     m_odometer;
     QString m_gear;

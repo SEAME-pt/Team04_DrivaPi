@@ -17,7 +17,9 @@ Rectangle {
     // ISO 26262 ASIL requirement: Valid fallback for critical safety display
     property int speedLimitValue: vehicleDataAvailable && vehicleData.speedLimit ? Math.round(vehicleData.speedLimit) : 120
     property real currentSpeed: vehicleDataAvailable && vehicleData.speed ? vehicleData.speed * 3.6 : 0
-    property int currentTemperature: vehicleDataAvailable && vehicleData.temperature ? Math.round(vehicleData.temperature) : 20
+    property int currentBattery: vehicleDataAvailable && vehicleData.battery !== undefined ? vehicleData.battery : 85
+    property int stm32Battery: vehicleDataAvailable && vehicleData.stm32Battery !== undefined ? vehicleData.stm32Battery : 100
+    property int rpiBattery: vehicleDataAvailable && vehicleData.rpiBattery !== undefined ? vehicleData.rpiBattery : 100
     property string currentGear: vehicleDataAvailable && vehicleData.gear ? vehicleData.gear : "P"
     property real tripDistance: vehicleDataAvailable && vehicleData.trip ? vehicleData.trip : 568
     property real powerOutput: vehicleDataAvailable && vehicleData.power ? vehicleData.power : 98
@@ -46,6 +48,14 @@ Rectangle {
                 console.log("[ClusterScreen] Odometer synced from backend:", odometerDistance, "km");
             }
         }
+        function onStm32BatteryChanged() {
+            // Update dual battery display
+            console.log("[ClusterScreen] STM32 Battery changed to:", vehicleData.stm32Battery, "%");
+        }
+        function onRpiBatteryChanged() {
+            // Update dual battery display
+            console.log("[ClusterScreen] RPi Battery changed to:", vehicleData.rpiBattery, "%");
+        }
     }
 
     Timer {
@@ -55,7 +65,8 @@ Rectangle {
         repeat: true
 
         onTriggered: {
-            if (!vehicleDataAvailable) return;
+            if (!vehicleDataAvailable)
+                return;
 
             var currentTime = new Date().getTime();
             if (lastTimestamp === 0) {
@@ -68,7 +79,7 @@ Rectangle {
             lastTimestamp = currentTime;
 
             // Speed is already in km/h from currentSpeed property
-            var speedKmh = currentSpeed;  
+            var speedKmh = currentSpeed;
             var timeHours = elapsedSeconds / 3600;  // Convert seconds to hours
             var distanceTraveled = speedKmh * timeHours;  // Distance in km
 
@@ -359,7 +370,10 @@ Rectangle {
                 z: 20
                 // ISO 26262: Null-safe property access
                 currentGear: root.currentGear
-                temperatureText: root.currentTemperature + "°C"
+                batteryLevel: root.currentBattery
+
+                // Connect battery click to show popup
+                onBatteryClicked: batteryPopup.open()
             }
 
             // Main content area
@@ -777,6 +791,15 @@ Rectangle {
                 }
             }
         }
+    }
+
+    // Battery Status Popup
+    BatteryPopup {
+        id: batteryPopup
+        anchors.fill: parent
+        stm32BatteryLevel: root.stm32Battery
+        rpiBatteryLevel: root.rpiBattery
+        z: 1000
     }
 
     function getAlbumColor(index) {
