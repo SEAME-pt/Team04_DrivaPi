@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Window
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Effects
 import "screens"
 import "components"
 import "theme"
@@ -148,114 +149,160 @@ ApplicationWindow {
                 }
             }
 
-            // Minimal edge tab/handle
+            // Elegant minimal toggle button - small circular icon in bottom right
             Rectangle {
-                id: toggleTab
+                id: panelToggle
                 anchors.right: parent.right
-                anchors.rightMargin: 0
-                anchors.verticalCenter: parent.verticalCenter
-                width: 24
-                height: 280
+                anchors.bottom: parent.bottom
+                anchors.rightMargin: 30
+                anchors.bottomMargin: 50
+                width: 48
+                height: 48
+                radius: 24
                 z: 200
 
-                // Rounded corners (pill shape)
-                radius: 12
-                color: "#1a2a3a"
+                // Dark gradient matching cluster
+                gradient: Gradient {
+                    GradientStop {
+                        position: 0.0
+                        color: "#0a0f18"
+                    }
+                    GradientStop {
+                        position: 1.0
+                        color: "#05080e"
+                    }
+                }
 
-                // Subtle border
-                border.color: Qt.rgba(0.3, 0.6, 1.0, 0.3)
+                border.color: rightPanelVisible ? "#00BFFF" : "#1a2535"
                 border.width: 1
 
-                // Content column
+                // Subtle glow when active
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    shadowEnabled: rightPanelVisible
+                    shadowBlur: 10
+                    shadowColor: "#00BFFF40"
+                    shadowOpacity: 0.8
+                }
+
+                // Grid icon (three horizontal lines)
                 Column {
                     anchors.centerIn: parent
-                    spacing: 16
+                    spacing: 4
 
-                    // Three dots indicator
                     Repeater {
                         model: 3
                         Rectangle {
-                            width: 4
-                            height: 4
-                            radius: 2
-                            color: "#4fb3d9"
-                            opacity: 0.9
+                            width: 20
+                            height: 2
+                            radius: 1
+                            color: rightPanelVisible ? "#00BFFF" : "#8FA4B8"
                             anchors.horizontalCenter: parent.horizontalCenter
-                        }
-                    }
 
-                    Item {
-                        height: 8
-                    }  // Spacer
-
-                    // Chevron indicator
-                    Text {
-                        text: rightPanelVisible ? "›" : "‹"
-                        font.pixelSize: 28
-                        font.weight: Font.Bold
-                        color: "#4fb3d9"
-                        anchors.horizontalCenter: parent.horizontalCenter
-
-                        // Smooth rotation animation when direction changes
-                        Behavior on text {
-                            SequentialAnimation {
-                                NumberAnimation {
-                                    target: parent
-                                    property: "scale"
-                                    to: 1.2
-                                    duration: 100
-                                    easing.type: Easing.OutQuad
-                                }
-                                NumberAnimation {
-                                    target: parent
-                                    property: "scale"
-                                    to: 1.0
-                                    duration: 100
-                                    easing.type: Easing.InQuad
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: 200
                                 }
                             }
                         }
                     }
                 }
 
-                // Touch area (extended for easier tapping)
                 MouseArea {
                     anchors.fill: parent
-                    anchors.leftMargin: -20
-                    anchors.topMargin: -20
-                    anchors.bottomMargin: -20
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+
                     onClicked: {
                         rightPanelVisible = !rightPanelVisible;
                     }
 
-                    // Enhanced visual feedback with scale
+                    onEntered: {
+                        panelToggle.scale = 1.1;
+                    }
+
+                    onExited: {
+                        panelToggle.scale = 1.0;
+                    }
+
                     onPressed: {
-                        toggleTab.opacity = 0.7;
-                        toggleTab.scale = 0.95;
+                        panelToggle.scale = 0.95;
                     }
+
                     onReleased: {
-                        toggleTab.opacity = 1.0;
-                        toggleTab.scale = 1.0;
-                    }
-                    onCanceled: {
-                        toggleTab.opacity = 1.0;
-                        toggleTab.scale = 1.0;
+                        panelToggle.scale = containsMouse ? 1.1 : 1.0;
                     }
                 }
 
-                // Smooth opacity transition
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: 150
-                    }
-                }
-
-                // Smooth scale transition
                 Behavior on scale {
                     NumberAnimation {
                         duration: 150
                         easing.type: Easing.OutBack
                     }
+                }
+
+                Behavior on border.color {
+                    ColorAnimation {
+                        duration: 200
+                    }
+                }
+            }
+
+            // Invisible edge detection area for elegant panel reveal
+            MouseArea {
+                id: edgeDetector
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: 5
+                z: 199
+                hoverEnabled: true
+
+                property bool edgeHovered: false
+
+                onEntered: {
+                    edgeHoverTimer.start();
+                }
+
+                onExited: {
+                    edgeHoverTimer.stop();
+                    edgeHovered = false;
+                }
+
+                // Timer to delay panel reveal slightly
+                Timer {
+                    id: edgeHoverTimer
+                    interval: 300
+                    repeat: false
+                    onTriggered: {
+                        if (edgeDetector.containsMouse && !rightPanelVisible) {
+                            rightPanelVisible = true;
+                        }
+                    }
+                }
+            }
+
+            // Double-tap on cluster to toggle (alternative elegant method)
+            MouseArea {
+                anchors.fill: clusterScreen
+                z: 1
+                enabled: !rightPanelVisible
+
+                property int tapCount: 0
+                property var lastTapTime: 0
+
+                onClicked: {
+                    var currentTime = Date.now();
+                    if (currentTime - lastTapTime < 400) {
+                        tapCount++;
+                        if (tapCount >= 2) {
+                            rightPanelVisible = true;
+                            tapCount = 0;
+                        }
+                    } else {
+                        tapCount = 1;
+                    }
+                    lastTapTime = currentTime;
                 }
             }
         }
