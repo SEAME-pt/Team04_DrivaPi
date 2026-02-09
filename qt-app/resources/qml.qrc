@@ -12,6 +12,7 @@
     <file>qml/components/EnergyDisplay.qml</file>
     <file>qml/components/GearSelector.qml</file>
     <file>qml/components/SpeedDisplay.qml</file>
+    <file>qml/components/WeatherMini.qml</file>
     <file>qml/screens/ClusterScreen.qml</file>
     <file>qml/screens/NavigationScreen.qml</file>
     <file>qml/screens/MediaScreen.qml</file>

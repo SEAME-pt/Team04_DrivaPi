@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
+import QtQuick.Controls
 import "../components"
 import "../theme"
 
@@ -564,116 +565,173 @@ Rectangle {
                         }
                     }
 
-                    // ====== RIGHT: Album Art + Now Playing ======
+                    // ====== RIGHT: Swipe (Media / Weather / Navigation) ======
                     Item {
                         Layout.fillHeight: true
                         Layout.preferredWidth: 400 * root.s
 
-                        Item {
+                        Column {
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.verticalCenter: parent.verticalCenter
-                            anchors.verticalCenterOffset: -10 * root.sy  // Align vertically with speed velocity
-                            width: 280 * root.s  // Slightly wider than album art for longer titles/artists
-                            height: childrenRect.height
+                            anchors.verticalCenterOffset: -10 * root.sy
+                            spacing: 6 * root.s
 
-                            Column {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                spacing: AppTheme.spacing.small
+                            SwipeView {
+                                id: rightSwipe
+                                width: 280 * root.s
+                                height: 170 * root.s
+                                interactive: true
+                                clip: true
 
-                                // --- Album art: fixed square size ---
-                                Rectangle {
-                                    id: albumArtBox
-                                    width: 102 * root.s  // Match speed limit main circle size for consistency
-                                    height: width
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    radius: AppTheme.radius.medium
-                                    color: "#0b1420"
-                                    clip: true
+                                // --- Page 1: Media (your current UI) ---
+                                Item {
+                                    width: rightSwipe.width
+                                    height: rightSwipe.height
 
-                                    // Album art
-                                    Image {
-                                        id: albumArtImg
-                                        anchors.fill: parent
-                                        source: musicPlayerController.albumArtUrl
-                                        fillMode: Image.PreserveAspectCrop
-                                        smooth: true
-                                        asynchronous: true
-                                        visible: musicPlayerController.albumArtUrl.length > 0
-                                        // onStatusChanged: if (status === Image.Error) console.log("AlbumArt error:", source, errorString)
-                                    }
+                                    Column {
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        spacing: AppTheme.spacing.small
 
-                                    // Blend overlay for cluster look
-                                    Rectangle {
-                                        anchors.fill: parent
-                                        color: "#0b1420"
-                                        opacity: 0.18
-                                    }
+                                        Rectangle {
+                                            id: albumArtBox
+                                            width: 102 * root.s
+                                            height: width
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            radius: AppTheme.radius.medium
+                                            color: "#0b1420"
+                                            clip: true
 
-                                    // Vignette for edges
-                                    Rectangle {
-                                        anchors.fill: parent
-                                        gradient: Gradient {
-                                            GradientStop {
-                                                position: 0.0
-                                                color: "#2c3a4d"
+                                            Image {
+                                                id: albumArtImg
+                                                anchors.fill: parent
+                                                source: musicPlayerController.albumArtUrl
+                                                fillMode: Image.PreserveAspectCrop
+                                                smooth: true
+                                                asynchronous: true
+                                                visible: musicPlayerController.albumArtUrl.length > 0
                                             }
-                                            GradientStop {
-                                                position: 0.5
-                                                color: "#00000000"
+
+                                            Rectangle {
+                                                anchors.fill: parent
+                                                color: "#0b1420"
+                                                opacity: 0.18
                                             }
-                                            GradientStop {
-                                                position: 1.0
-                                                color: "#101826"
+
+                                            Rectangle {
+                                                anchors.fill: parent
+                                                gradient: Gradient {
+                                                    GradientStop {
+                                                        position: 0.0
+                                                        color: "#2c3a4d"
+                                                    }
+                                                    GradientStop {
+                                                        position: 0.5
+                                                        color: "#00000000"
+                                                    }
+                                                    GradientStop {
+                                                        position: 1.0
+                                                        color: "#101826"
+                                                    }
+                                                }
+                                                opacity: 0.25
+                                            }
+
+                                            Rectangle {
+                                                anchors.fill: parent
+                                                visible: musicPlayerController.albumArtUrl.length === 0
+                                                gradient: Gradient {
+                                                    GradientStop {
+                                                        position: 0.0
+                                                        color: getAlbumColor(musicPlayerController.currentTrackIndex)
+                                                    }
+                                                    GradientStop {
+                                                        position: 1.0
+                                                        color: Qt.darker(getAlbumColor(musicPlayerController.currentTrackIndex), 1.5)
+                                                    }
+                                                }
+                                            }
+
+                                            Image {
+                                                source: "qrc:/icons/common/music-note.svg"
+                                                width: 64 * root.s
+                                                height: 64 * root.s
+                                                anchors.centerIn: parent
+                                                visible: musicPlayerController.albumArtUrl.length === 0
                                             }
                                         }
-                                        opacity: 0.25
-                                    }
 
-                                    // Fallback gradient when no album art
-                                    Rectangle {
-                                        anchors.fill: parent
-                                        visible: musicPlayerController.albumArtUrl.length === 0
-                                        gradient: Gradient {
-                                            GradientStop {
-                                                position: 0.0
-                                                color: getAlbumColor(musicPlayerController.currentTrackIndex)
-                                            }
-                                            GradientStop {
-                                                position: 1.0
-                                                color: Qt.darker(getAlbumColor(musicPlayerController.currentTrackIndex), 1.5)
-                                            }
+                                        Text {
+                                            width: parent.width
+                                            text: musicPlayerController.trackTitle.length > 0 ? musicPlayerController.trackTitle : "No Music"
+                                            color: "#e6f0ff"
+                                            font.pixelSize: root.fontSizeSmall * root.s
+                                            font.weight: Font.Bold
+                                            elide: Text.ElideRight
+                                            horizontalAlignment: Text.AlignHCenter
+                                        }
+
+                                        Text {
+                                            width: parent.width
+                                            text: musicPlayerController.artistName.length > 0 ? musicPlayerController.artistName : "Local Music"
+                                            color: "#93a6bf"
+                                            font.pixelSize: root.fontSizeXSmall * root.s
+                                            elide: Text.ElideRight
+                                            horizontalAlignment: Text.AlignHCenter
                                         }
                                     }
+                                }
 
-                                    Image {
-                                        source: "qrc:/icons/common/music-note.svg"
-                                        width: 64 * root.s
-                                        height: 64 * root.s
+                                // --- Page 2: Weather (placeholder) ---
+                                Item {
+                                    width: rightSwipe.width
+                                    height: rightSwipe.height
+
+                                    WeatherMini {
                                         anchors.centerIn: parent
-                                        visible: musicPlayerController.albumArtUrl.length === 0
+                                        width: rightSwipe.width
+                                        height: rightSwipe.height
+                                        weatherData: weatherScreen?.weatherDataModel
                                     }
                                 }
 
-                                // --- Track title ---
-                                Text {
-                                    width: parent.width
-                                    text: musicPlayerController.trackTitle.length > 0 ? musicPlayerController.trackTitle : "No Music"
-                                    color: "#e6f0ff"
-                                    font.pixelSize: root.fontSizeSmall * root.s
-                                    font.weight: Font.Bold
-                                    elide: Text.ElideRight
-                                    horizontalAlignment: Text.AlignHCenter
-                                }
+                                // --- Page 3: Navigation (placeholder) ---
+                                Item {
+                                    width: rightSwipe.width
+                                    height: rightSwipe.height
 
-                                // --- Artist ---
-                                Text {
-                                    width: parent.width
-                                    text: musicPlayerController.artistName.length > 0 ? musicPlayerController.artistName : "Local Music"
-                                    color: "#93a6bf"
-                                    font.pixelSize: root.fontSizeXSmall * root.s
-                                    elide: Text.ElideRight
-                                    horizontalAlignment: Text.AlignHCenter
+                                    Column {
+                                        anchors.centerIn: parent
+                                        spacing: 6 * root.s
+
+                                        Image {
+                                            source: "qrc:/icons/common/arrow-right.svg"
+                                            width: 42 * root.s
+                                            height: 42 * root.s
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                        }
+
+                                        Text {
+                                            text: "Next Turn"
+                                            color: "#e6f0ff"
+                                            font.pixelSize: root.fontSizeSmall * root.s
+                                            font.weight: Font.Bold
+                                            horizontalAlignment: Text.AlignHCenter
+                                        }
+
+                                        Text {
+                                            text: "— m  •  —"
+                                            color: "#93a6bf"
+                                            font.pixelSize: root.fontSizeXSmall * root.s
+                                            horizontalAlignment: Text.AlignHCenter
+                                        }
+                                    }
                                 }
+                            }
+
+                            PageIndicator {
+                                count: rightSwipe.count
+                                currentIndex: rightSwipe.currentIndex
+                                anchors.horizontalCenter: parent.horizontalCenter
                             }
                         }
                     }

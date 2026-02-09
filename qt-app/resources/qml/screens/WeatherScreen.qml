@@ -18,6 +18,9 @@ Rectangle {
         }
         z: -1
     }
+
+    property alias weatherDataModel: weatherData
+
     QtObject {
         id: weatherData
         property string location: ""
