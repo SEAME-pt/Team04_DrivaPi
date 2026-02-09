@@ -282,16 +282,39 @@ ApplicationWindow {
                 }
             }
 
-            // Double-tap on cluster to toggle (alternative elegant method)
             MouseArea {
                 anchors.fill: clusterScreen
                 z: 1
                 enabled: !rightPanelVisible
+                hoverEnabled: false
+                propagateComposedEvents: true
+
+                // Tuning: top bar ~11% height, bottom bar ~13% height (adjust if needed)
+                readonly property real topDeadZone: clusterScreen.height * 0.14
+                readonly property real bottomDeadZone: clusterScreen.height * 0.14
 
                 property int tapCount: 0
-                property var lastTapTime: 0
+                property double lastTapTime: 0
 
-                onClicked: {
+                function inDeadZone(y) {
+                    return (y <= topDeadZone) || (y >= (clusterScreen.height - bottomDeadZone));
+                }
+
+                onPressed: mouse => {
+                    // Let UI buttons receive the press
+                    if (inDeadZone(mouse.y)) {
+                        mouse.accepted = false;
+                        return;
+                    }
+                }
+
+                onClicked: mouse => {
+                    // Let UI buttons receive the click
+                    if (inDeadZone(mouse.y)) {
+                        mouse.accepted = false;
+                        return;
+                    }
+
                     var currentTime = Date.now();
                     if (currentTime - lastTapTime < 400) {
                         tapCount++;
