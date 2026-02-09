@@ -19,6 +19,9 @@ Rectangle {
     property int playSize: compact ? 64 : 80
     property int iconSize: compact ? 20 : 24
 
+    // Signal to notify parent when volume is being adjusted
+    signal volumeInteractionChanged(bool interacting)
+
     // ====== MAIN LAYOUT ======
     GridLayout {
         anchors.fill: parent
@@ -61,19 +64,19 @@ Rectangle {
                     gradient: Gradient {
                         GradientStop {
                             position: 0.0
-                            color: "#FF6B35"
+                            color: getAlbumColor(musicPlayerController.currentTrackIndex)
                         }
                         GradientStop {
                             position: 1.0
-                            color: "#C44D20"
+                            color: Qt.darker(getAlbumColor(musicPlayerController.currentTrackIndex), 1.5)
                         }
                     }
 
-                    Text {
+                    Image {
                         anchors.centerIn: parent
-                        text: "♪"
-                        font.pixelSize: 64
-                        color: "#FFFFFF"
+                        source: "qrc:/icons/common/music-note.svg"
+                        width: 64
+                        height: 64
                         opacity: 0.5
                     }
                 }
@@ -142,7 +145,7 @@ Rectangle {
                     onClicked: {
                         if (musicPlayerController.duration > 0) {
                             var newPosition = (mouse.x / width) * musicPlayerController.duration;
-                            musicPlayerController.seek(newPosition);
+                            musicPlayerController.setPosition(newPosition);
                         }
                     }
                 }
@@ -181,7 +184,17 @@ Rectangle {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: musicPlayerController.previous()
+                        onClicked: {
+                            var wasPlaying = musicPlayerController.isPlaying;
+                            musicPlayerController.previous();
+                            if (wasPlaying) {
+                                Qt.callLater(function() {
+                                    if (!musicPlayerController.isPlaying) {
+                                        musicPlayerController.play();
+                                    }
+                                });
+                            }
+                        }
 
                         onEntered: parent.scale = 1.05
                         onExited: parent.scale = 1.0
@@ -263,7 +276,17 @@ Rectangle {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: musicPlayerController.next()
+                        onClicked: {
+                            var wasPlaying = musicPlayerController.isPlaying;
+                            musicPlayerController.next();
+                            if (wasPlaying) {
+                                Qt.callLater(function() {
+                                    if (!musicPlayerController.isPlaying) {
+                                        musicPlayerController.play();
+                                    }
+                                });
+                            }
+                        }
 
                         onEntered: parent.scale = 1.05
                         onExited: parent.scale = 1.0
@@ -285,53 +308,140 @@ Rectangle {
                 Layout.fillWidth: true
                 spacing: compact ? 8 : 12
 
-                Image {
-                    source: "qrc:/icons/controls/volume-mute.svg"
-                    width: compact ? 16 : 20
-                    height: compact ? 16 : 20
-                    sourceSize: Qt.size(compact ? 16 : 20, compact ? 16 : 20)
-                    smooth: true
+                property real previousVolume: 50  // Store previous volume for unmute
+
+                // Volume icon with mute toggle
+                Rectangle {
+                    width: iconSize + 8
+                    height: iconSize + 8
+                    radius: 4
+                    color: volumeIconMouseArea.containsMouse ? "#1a2535" : "transparent"
+                    
+                    Image {
+                        anchors.centerIn: parent
+                        source: musicPlayerController.volume > 0 ? "qrc:/icons/controls/volume-high.svg" : "qrc:/icons/controls/volume-mute.svg"
+                        width: iconSize
+                        height: iconSize
+                        sourceSize: Qt.size(iconSize, iconSize)
+                        smooth: true
+                    }
+                    
+                    MouseArea {
+                        id: volumeIconMouseArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            // Toggle mute
+                            if (musicPlayerController.volume > 0) {
+                                parent.parent.previousVolume = musicPlayerController.volume;
+                                musicPlayerController.volume = 0;
+                            } else {
+                                musicPlayerController.volume = parent.parent.previousVolume || 50;
+                            }
+                        }
+                    }
                 }
 
-                Rectangle {
+                // Volume slider container (prevents swipe interference)
+                Item {
                     Layout.fillWidth: true
-                    height: compact ? 4 : 6
-                    radius: 3
-                    color: "#0a0f18"
-                    border.color: "#1a2535"
-                    border.width: 1
+                    Layout.alignment: Qt.AlignVCenter
+                    height: 40  // Larger hit area for easier interaction
 
+                    // Volume slider background
                     Rectangle {
-                        id: volumeFill
-                        width: parent.width * 0.7
-                        height: parent.height
-                        radius: 3
-                        color: "#00BFFF"
+                        id: volumeTrack
+                        anchors.centerIn: parent  // Center it vertically in the container
+                        width: parent.width
+                        height: compact ? 6 : 8  // Slightly taller so it's more visible
+                        radius: 4
+                        color: "#0a0f18"
+                        border.color: "#1a2535"
+                        border.width: 1
 
-                        Behavior on width {
-                            NumberAnimation {
-                                duration: 100
+                        Rectangle {
+                            id: volumeFill
+                            width: parent.width * (musicPlayerController.volume / 100)
+                            height: parent.height
+                            radius: 4
+                            color: "#00BFFF"
+
+                            Behavior on width {
+                                NumberAnimation { duration: 100 }
                             }
                         }
                     }
 
+                    // Volume handle
+                    Rectangle {
+                        id: volumeHandle
+                        width: 20
+                        height: 20
+                        radius: 10
+                        color: volumeClickArea.pressed ? "#ffffff" : "#00BFFF"
+                        border.color: "#0a0f18"
+                        border.width: 2
+                        x: volumeFill.width - width / 2
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: volumeClickArea.containsMouse || volumeClickArea.pressed
+
+                        Behavior on color {
+                            ColorAnimation { duration: 100 }
+                        }
+
+                        Behavior on x {
+                            NumberAnimation { duration: 100 }
+                        }
+                    }
+
+                    // MouseArea on the track itself
                     MouseArea {
+                        id: volumeClickArea
                         anchors.fill: parent
-                        onClicked: {
-                            var volume = mouse.x / width;
-                            musicPlayerController.setVolume(volume);
-                            volumeFill.width = parent.width * volume;
+                        anchors.margins: -15  // Expand hit area
+                        hoverEnabled: true
+                        preventStealing: true  // Prevents SwipeView from stealing events
+                        propagateComposedEvents: false
+
+                        onPressed: function(mouse) {
+                            root.volumeInteractionChanged(true);
+                            updateVolume(mouse.x);
+                            mouse.accepted = true;
+                        }
+
+                        onReleased: function(mouse) {
+                            root.volumeInteractionChanged(false);
+                            mouse.accepted = true;
+                        }
+
+                        onPositionChanged: function(mouse) {
+                            if (pressed) {
+                                updateVolume(mouse.x);
+                            }
+                            mouse.accepted = true;
+                        }
+
+                        function updateVolume(x) {
+                            // x is relative to this MouseArea
+                            var ratio = Math.max(0, Math.min(1, x / width));
+                            var newValue = Math.round(ratio * 100);
+                            console.log("Setting volume to:", newValue);
+                            musicPlayerController.volume = newValue;
                         }
                     }
                 }
+            }
 
-                Image {
-                    source: "qrc:/icons/controls/volume-high.svg"
-                    width: compact ? 16 : 20
-                    height: compact ? 16 : 20
-                    sourceSize: Qt.size(compact ? 16 : 20, compact ? 16 : 20)
-                    smooth: true
-                }
+            // Volume percentage (MOVED INSIDE RowLayout)
+            Text {
+                text: Math.round(musicPlayerController.volume) + "%"
+                color: "#8FA4B8"
+                font.pixelSize: timeSize
+                font.weight: Font.Medium
+                Layout.preferredWidth: 35
+                horizontalAlignment: Text.AlignRight
+                Layout.alignment: Qt.AlignVCenter
             }
         }
     }
@@ -346,7 +456,7 @@ Rectangle {
     }
 
     function getAlbumColor(index) {
-        var colors = ["#FF6B35", "#004E89", "#1AE5BE"];  // Orange, Blue, Teal
+        var colors = ["#FF6B35", "#004E89", "#1AE5BE"];
         return colors[index % colors.length];
     }
 }
