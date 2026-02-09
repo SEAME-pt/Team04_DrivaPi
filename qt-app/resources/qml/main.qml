@@ -383,7 +383,6 @@ ApplicationWindow {
                 Rectangle {
                     anchors.fill: parent
                     color: "#05080e"
-                    opacity: 0.18
                     layer.enabled: true
                     layer.effect: MultiEffect {
                         shadowEnabled: true
