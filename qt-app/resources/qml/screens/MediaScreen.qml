@@ -128,23 +128,66 @@ Rectangle {
                 border.width: 1
 
                 Rectangle {
+                    id: progressFill
                     width: musicPlayerController.duration > 0 ? parent.width * (musicPlayerController.position / musicPlayerController.duration) : 0
                     height: parent.height
                     radius: 3
                     color: "#00BFFF"
 
                     Behavior on width {
+                        enabled: !progressMouseArea.pressed  // Disable animation when dragging
                         NumberAnimation {
                             duration: 100
                         }
                     }
                 }
 
+                // Progress handle (shows when hovering/dragging)
+                Rectangle {
+                    id: progressHandle
+                    width: 16
+                    height: 16
+                    radius: 8
+                    color: progressMouseArea.pressed ? "#ffffff" : "#00BFFF"
+                    border.color: "#0a0f18"
+                    border.width: 2
+                    x: progressFill.width - width / 2
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: progressMouseArea.containsMouse || progressMouseArea.pressed
+
+                    Behavior on color {
+                        ColorAnimation { duration: 100 }
+                    }
+                }
+
                 MouseArea {
+                    id: progressMouseArea
                     anchors.fill: parent
-                    onClicked: {
+                    hoverEnabled: true
+                    preventStealing: true  // Prevents SwipeView from stealing events
+                    propagateComposedEvents: false
+
+                    onPressed: function(mouse) {
+                        updatePosition(mouse.x);
+                        mouse.accepted = true;
+                    }
+
+                    onPositionChanged: function(mouse) {
+                        if (pressed) {
+                            updatePosition(mouse.x);
+                        }
+                        mouse.accepted = true;
+                    }
+
+                    onReleased: function(mouse) {
+                        mouse.accepted = true;
+                    }
+
+                    function updatePosition(x) {
                         if (musicPlayerController.duration > 0) {
-                            var newPosition = (mouse.x / width) * musicPlayerController.duration;
+                            var ratio = Math.max(0, Math.min(1, x / width));
+                            var newPosition = Math.round(ratio * musicPlayerController.duration);
+                            console.log("Seeking to:", newPosition, "ms");
                             musicPlayerController.setPosition(newPosition);
                         }
                     }
@@ -188,7 +231,7 @@ Rectangle {
                             var wasPlaying = musicPlayerController.isPlaying;
                             musicPlayerController.previous();
                             if (wasPlaying) {
-                                Qt.callLater(function() {
+                                Qt.callLater(function () {
                                     if (!musicPlayerController.isPlaying) {
                                         musicPlayerController.play();
                                     }
@@ -280,7 +323,7 @@ Rectangle {
                             var wasPlaying = musicPlayerController.isPlaying;
                             musicPlayerController.next();
                             if (wasPlaying) {
-                                Qt.callLater(function() {
+                                Qt.callLater(function () {
                                     if (!musicPlayerController.isPlaying) {
                                         musicPlayerController.play();
                                     }
@@ -316,7 +359,7 @@ Rectangle {
                     height: iconSize + 8
                     radius: 4
                     color: volumeIconMouseArea.containsMouse ? "#1a2535" : "transparent"
-                    
+
                     Image {
                         anchors.centerIn: parent
                         source: musicPlayerController.volume > 0 ? "qrc:/icons/controls/volume-high.svg" : "qrc:/icons/controls/volume-mute.svg"
@@ -325,7 +368,7 @@ Rectangle {
                         sourceSize: Qt.size(iconSize, iconSize)
                         smooth: true
                     }
-                    
+
                     MouseArea {
                         id: volumeIconMouseArea
                         anchors.fill: parent
@@ -368,7 +411,9 @@ Rectangle {
                             color: "#00BFFF"
 
                             Behavior on width {
-                                NumberAnimation { duration: 100 }
+                                NumberAnimation {
+                                    duration: 100
+                                }
                             }
                         }
                     }
@@ -387,11 +432,15 @@ Rectangle {
                         visible: volumeClickArea.containsMouse || volumeClickArea.pressed
 
                         Behavior on color {
-                            ColorAnimation { duration: 100 }
+                            ColorAnimation {
+                                duration: 100
+                            }
                         }
 
                         Behavior on x {
-                            NumberAnimation { duration: 100 }
+                            NumberAnimation {
+                                duration: 100
+                            }
                         }
                     }
 
@@ -404,18 +453,18 @@ Rectangle {
                         preventStealing: true  // Prevents SwipeView from stealing events
                         propagateComposedEvents: false
 
-                        onPressed: function(mouse) {
+                        onPressed: function (mouse) {
                             root.volumeInteractionChanged(true);
                             updateVolume(mouse.x);
                             mouse.accepted = true;
                         }
 
-                        onReleased: function(mouse) {
+                        onReleased: function (mouse) {
                             root.volumeInteractionChanged(false);
                             mouse.accepted = true;
                         }
 
-                        onPositionChanged: function(mouse) {
+                        onPositionChanged: function (mouse) {
                             if (pressed) {
                                 updateVolume(mouse.x);
                             }
