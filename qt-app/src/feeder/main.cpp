@@ -1,7 +1,7 @@
 /**
  * @file main.cpp
  * @brief KUKSA CAN Feeder - Main entry point
- * 
+ *
  * Orchestrates initialization and runs the CAN-to-KUKSA feed loop.
  * Frame dispatch and signal handling delegated to specialized modules.
  */
@@ -42,18 +42,28 @@ int main(int argc, char** argv)
         can_frame frame;
         if (!feeder::ReadCanFrame(can_sock, frame)) {
             if (feeder::g_stop_requested.load()) break;
-            continue;  // Retry on error (unless stop requested)
+            continue;
         }
-        
-        // Dispatch frame to appropriate handler
+
         const uint32_t can_id = frame.can_id & CAN_SFF_MASK;
         switch (can_id) {
             case can::ID_SPEED:
                 handlers::HandleSpeed(frame, publisher);
                 break;
-            // Add more handlers as needed
+
+            case can::ID_STM32_BATTERY:
+                handlers::HandleStm32Battery(frame, publisher);
+                break;
+
+            case can::ID_GEAR:
+                handlers::HandleGear(frame, publisher);
+                break;
+
+            case can::ID_ENV:
+                handlers::HandleEnv(frame, publisher);
+                break;
+
             default:
-                // Ignore unknown CAN IDs silently
                 break;
         }
     }
