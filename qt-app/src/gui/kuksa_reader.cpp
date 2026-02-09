@@ -1,8 +1,23 @@
 #include "gui/kuksa_reader.hpp"
 #include <fstream>
-#include <atomic>
+#include <chrono>
 
 namespace kuksa {
+
+using kuksa::val::v2::SubscribeRequest;
+using kuksa::val::v2::SubscribeResponse;
+using kuksa::val::v2::Datapoint;
+
+static constexpr const char* PATH_SPEED        = "Vehicle.Speed";
+
+// Match your edited vss_v6.json :contentReference[oaicite:1]{index=1}
+static constexpr const char* PATH_LV_PERCENT   = "Vehicle.LowVoltageBattery.StateOfCharge";
+static constexpr const char* PATH_LV_VOLT      = "Vehicle.LowVoltageBattery.CurrentVoltage";
+
+static constexpr const char* PATH_CURRENT_GEAR = "Vehicle.Powertrain.Transmission.CurrentGear";
+
+static constexpr const char* PATH_STM32_TEMP   = "Vehicle.ControlUnit.STM32.Health.Resources.Temperature";
+static constexpr const char* PATH_STM32_HUM    = "Vehicle.ControlUnit.STM32.Health.Resources.Humidity";
 
 KUKSAReader::KUKSAReader(QObject *parent)
     : QObject(parent)
@@ -13,145 +28,158 @@ KUKSAReader::KUKSAReader(const KuksaOptions& opts, QObject *parent)
 {}
 
 KUKSAReader::~KUKSAReader()
-{}
+{
+    stop();
+}
+static float readFloat(const Datapoint& dp, float fallback = 0.0f)
+{
+    if (!dp.has_value()) return fallback;
+    const auto& v = dp.value();
+
+    // float/double are typically generated as float_ / double_
+    if (v.has_float_())  return v.float_();
+    if (v.has_double_()) return static_cast<float>(v.double_());
+
+    // integers are generated without trailing underscore
+    if (v.has_int32())   return static_cast<float>(v.int32());
+    if (v.has_int64())   return static_cast<float>(v.int64());
+    if (v.has_uint32())  return static_cast<float>(v.uint32());
+    if (v.has_uint64())  return static_cast<float>(v.uint64());
+
+    return fallback;
+}
+
+static int readInt(const Datapoint& dp, int fallback = 0)
+{
+    if (!dp.has_value()) return fallback;
+    const auto& v = dp.value();
+
+    if (v.has_int32())   return v.int32();
+    if (v.has_int64())   return static_cast<int>(v.int64());
+    if (v.has_uint32())  return static_cast<int>(v.uint32());
+    if (v.has_uint64())  return static_cast<int>(v.uint64());
+
+    if (v.has_float_())  return static_cast<int>(v.float_());
+    if (v.has_double_()) return static_cast<int>(v.double_());
+
+    return fallback;
+}
 
 void KUKSAReader::start()
 {
+    m_stop_requested_.store(false);
+
     try {
-        // 1. Connect to Broker (TLS or insecure)
         std::shared_ptr<grpc::ChannelCredentials> creds;
         if (!m_opts_.use_ssl) {
             creds = grpc::InsecureChannelCredentials();
-            qDebug() << "KuksaReader: Using insecure connection.";
         } else {
             grpc::SslCredentialsOptions ssl_opts;
             const std::string root = loadFile(m_opts_.root_ca_path, true);
             if (!root.empty()) ssl_opts.pem_root_certs = root;
+
             const std::string cert = loadFile(m_opts_.client_cert_path, true);
             const std::string key  = loadFile(m_opts_.client_key_path, true);
             if (!cert.empty() && !key.empty()) {
                 ssl_opts.pem_cert_chain = cert;
                 ssl_opts.pem_private_key = key;
-                qDebug() << "KuksaReader: Using mTLS with client certificate.";
-            } else {
-                qDebug() << "KuksaReader: Using TLS without client certificate.";
             }
             creds = grpc::SslCredentials(ssl_opts);
         }
-        const std::string addr = m_opts_.address.isEmpty() ? std::string("localhost:55555")
-                                                           : m_opts_.address.toStdString();
+
+        const std::string addr = m_opts_.address.isEmpty()
+            ? std::string("localhost:55555")
+            : m_opts_.address.toStdString();
+
         auto channel = grpc::CreateChannel(addr, creds);
         m_stub_ = VAL::NewStub(channel);
-        if (!m_stub_) {
-            throw std::runtime_error("Failed to create gRPC stub for " + addr);
-        }
-        // Verify channel connectivity (blocks briefly)
-        if (!channel->WaitForConnected(std::chrono::system_clock::now() + std::chrono::seconds(2))) {
-            qWarning() << "KuksaReader: Channel not connected to" << QString::fromStdString(addr) 
-                       << "(broker may be unreachable)";
-        }
-        qDebug() << "KuksaReader: Channel created to" << QString::fromStdString(addr);
+        if (!m_stub_) throw std::runtime_error("Failed to create gRPC stub");
+
+        channel->WaitForConnected(std::chrono::system_clock::now() + std::chrono::seconds(2));
     } catch (const std::exception& e) {
-        qCritical() << "KuksaReader: Connection setup failed:" << QString::fromStdString(e.what());
         emit errorOccurred(QString::fromStdString(e.what()));
         return;
     }
 
-    // 2. Subscribe to speed data using VAL v2 API
     m_context_ = std::make_unique<grpc::ClientContext>();
     attachAuth(*m_context_);
+
     SubscribeRequest request;
-    
-    // Add Vehicle.Speed to subscription paths
-    request.add_signal_paths("Vehicle.Speed");
 
-    std::unique_ptr<grpc::ClientReader<SubscribeResponse>> reader(
-        m_stub_->Subscribe(m_context_.get(), request));
+    // Subscribe to the required signals (plus speed if used elsewhere)
+    request.add_signal_paths(PATH_SPEED);
 
+    request.add_signal_paths(PATH_LV_PERCENT);
+    request.add_signal_paths(PATH_LV_VOLT);
+
+    request.add_signal_paths(PATH_CURRENT_GEAR);
+
+    request.add_signal_paths(PATH_STM32_TEMP);
+    request.add_signal_paths(PATH_STM32_HUM);
+
+    auto reader = m_stub_->Subscribe(m_context_.get(), request);
     SubscribeResponse response;
-    qDebug() << "KuksaReader: Connected and Subscribed to Vehicle.Speed";
 
-    // 3. Loop to read incoming speed data (blocking call - runs in QThread)
-    while (!m_stop_requested_.load() && reader->Read(&response))
-    {
-        if (m_stop_requested_.load()) break;
-
-        // Iterate over the map entries in the response
+    while (!m_stop_requested_.load() && reader->Read(&response)) {
         const auto& entries = response.entries();
-        auto it = entries.find("Vehicle.Speed");
-        
-        if (it != entries.end()) {
-            const auto& datapoint = it->second;
-            
-            if (datapoint.has_value()) {
-                const auto& value = datapoint.value();
-                
-                // Handle both float and double types from VAL v2
-                float speed = 0.0f;
-                if (value.has_float_()) {
-                    speed = value.float_();
-                } else if (value.has_double_()) {
-                    speed = static_cast<float>(value.double_());
-                }
-                
-                qDebug() << "KuksaReader: Received Vehicle.Speed =" << speed << "km/h";
-                emit speedReceived(speed);
-            }
+
+        if (auto it = entries.find(PATH_SPEED); it != entries.end()) {
+            emit speedReceived(readFloat(it->second, 0.0f));
+        }
+
+        if (auto it = entries.find(PATH_LV_PERCENT); it != entries.end()) {
+            emit lvBatteryPercentReceived(readInt(it->second, 0));
+        }
+
+        if (auto it = entries.find(PATH_LV_VOLT); it != entries.end()) {
+            emit lvBatteryVoltageReceived(readFloat(it->second, 0.0f));
+        }
+
+        if (auto it = entries.find(PATH_CURRENT_GEAR); it != entries.end()) {
+            emit currentGearReceived(readInt(it->second, 0));
+        }
+
+        if (auto it = entries.find(PATH_STM32_TEMP); it != entries.end()) {
+            emit stm32TemperatureReceived(readFloat(it->second, 0.0f));
+        }
+
+        if (auto it = entries.find(PATH_STM32_HUM); it != entries.end()) {
+            emit stm32HumidityReceived(readFloat(it->second, 0.0f));
         }
     }
-    
+
     grpc::Status status = reader->Finish();
-    if (m_stop_requested_.load()) {
-        qInfo() << "KuksaReader: Subscription stream stopped by request.";
-    } else if (!status.ok()) {
-        qWarning() << "KuksaReader: Subscribe stream ended with error:" 
-                   << QString::fromStdString(status.error_message());
+    if (!m_stop_requested_.load() && !status.ok()) {
         emit errorOccurred(QString::fromStdString(status.error_message()));
     }
 }
 
 void KUKSAReader::stop()
 {
-    qDebug() << "KuksaReader: Stop requested.";
     m_stop_requested_.store(true);
-    if (m_context_) {
-        m_context_->TryCancel();
-    }
+    if (m_context_) m_context_->TryCancel();
 }
 
 void KUKSAReader::attachAuth(grpc::ClientContext& ctx)
 {
     if (!m_opts_.token.isEmpty()) {
-        const std::string bearer = encodeBearerToken(m_opts_.token);
-        ctx.AddMetadata("authorization", bearer);
-        qDebug() << "KuksaReader: Authorization token attached.";
+        ctx.AddMetadata("authorization", encodeBearerToken(m_opts_.token));
     }
 }
 
-std::string KUKSAReader::loadFile(const QString& path, bool warnOnMissing)
+std::string KUKSAReader::loadFile(const QString& path, bool /*warnOnMissing*/)
 {
     if (path.isEmpty()) return {};
     std::ifstream ifs(path.toStdString(), std::ios::in | std::ios::binary);
-    if (!ifs) {
-        if (warnOnMissing) {
-            qWarning() << "KuksaReader: Failed to load file:" << path;
-        }
-        return {};
-    }
-    std::string content((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    qDebug() << "KuksaReader: Loaded file:" << path << "(" << content.size() << "bytes)";
-    return content;
+    if (!ifs) return {};
+    return std::string((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 }
 
 std::string KUKSAReader::encodeBearerToken(const QString& token)
 {
-    // Validate token contains no invalid whitespace
-    QString validated = token.trimmed();
-    if (validated.contains('\n') || validated.contains('\r')) {
-        qWarning() << "KuksaReader: Bearer token contains newlines; stripping.";
-        validated.replace('\n', "").replace('\r', "");
-    }
-    return std::string("Bearer ") + validated.toStdString();
+    QString t = token.trimmed();
+    t.replace('\n', "").replace('\r', "");
+    return std::string("Bearer ") + t.toStdString();
 }
 
-}  // namespace kuksa
+} // namespace kuksa

@@ -150,5 +150,6 @@
     <file>assets/left-dashboard.png</file>
     <file>assets/right-dashboard.png</file>
     <file>assets/car.png</file>
+    <file>qml/components/WeatherMini.qml</file>
   </qresource>
 </RCC>

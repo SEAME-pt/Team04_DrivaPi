@@ -29,8 +29,6 @@ AppController::AppController(const RunConfig& config)
 
 int AppController::run(QGuiApplication& app)
 {
-
-
     QQmlApplicationEngine engine;
     QScopedPointer<VehicleData> vehicleData(new VehicleData());
     QScopedPointer<SystemStatus> systemStatus(new SystemStatus());
@@ -63,21 +61,51 @@ int AppController::run(QGuiApplication& app)
         kuksa::KuksaOptions ko = config_.kuksa;
         kuksaReader = new kuksa::KUKSAReader(ko);
         kuksaReader->moveToThread(workerThread);
+
         QObject::connect(workerThread, &QThread::started, kuksaReader, &kuksa::KUKSAReader::start);
         QObject::connect(workerThread, &QThread::finished, kuksaReader, &kuksa::KUKSAReader::deleteLater);
+
+        // Existing
         QObject::connect(kuksaReader, &kuksa::KUKSAReader::speedReceived,
-                         vehicleData.data(), &VehicleData::handleSpeedUpdate);
+                         vehicleData.data(), &VehicleData::handleSpeedUpdate,
+                         Qt::QueuedConnection);
+
+        // NEW: 12V battery percent + voltage
+        QObject::connect(kuksaReader, &kuksa::KUKSAReader::lvBatteryPercentReceived,
+                         vehicleData.data(), &VehicleData::handleStm32BatteryUpdate,
+                         Qt::QueuedConnection);
+
+        QObject::connect(kuksaReader, &kuksa::KUKSAReader::lvBatteryVoltageReceived,
+                         vehicleData.data(), &VehicleData::handleStm32BatteryVoltageUpdate,
+                         Qt::QueuedConnection);
+
+        // NEW: STM32 internal temp/humidity
+        QObject::connect(kuksaReader, &kuksa::KUKSAReader::stm32TemperatureReceived,
+                         vehicleData.data(), &VehicleData::handleStm32TemperatureUpdate,
+                         Qt::QueuedConnection);
+
+        QObject::connect(kuksaReader, &kuksa::KUKSAReader::stm32HumidityReceived,
+                         vehicleData.data(), &VehicleData::handleStm32HumidityUpdate,
+                         Qt::QueuedConnection);
+
+        // NEW: CurrentGear only (no SelectedGear)
+        QObject::connect(kuksaReader, &kuksa::KUKSAReader::currentGearReceived,
+                         vehicleData.data(), &VehicleData::handleCurrentGearUpdate,
+                         Qt::QueuedConnection);
     }
 #ifdef ENABLE_CAN_MODE
     else {
         qInfo() << "Starting in CAN mode on" << config_.canInterface << "(--can)";
         canReader = new CANReader(config_.canInterface);
         canReader->moveToThread(workerThread);
+
         QObject::connect(workerThread, &QThread::started, canReader, &CANReader::start);
         QObject::connect(workerThread, &QThread::finished, canReader, &CANReader::deleteLater);
+
         QObject::connect(canReader, &CANReader::canMessageReceived,
                          vehicleData.data(), &VehicleData::handleCanMessage,
                          Qt::QueuedConnection);
+
         // Feed raw CAN frames to CANLogger for recording
         QObject::connect(canReader, &CANReader::canMessageReceived,
                          &app, [canLogger = canLogger.data()](const QByteArray &payload, uint32_t canId){
