@@ -1,7 +1,7 @@
 /**
  * @file can_ids.hpp
  * @brief CAN ID definitions matching STM32 ThreadX implementation
- * 
+ *
  * These must stay in sync with the STM32 firmware definitions
  */
 
@@ -11,12 +11,21 @@
 
 namespace can {
 
-// CAN IDs from STM32 ThreadX firmware
-constexpr uint32_t ID_SPEED = 0x100;  // Speed telemetry (float m/s from STM32, 4 bytes)
+// 0x100: 4-byte float (LE) speed in m/s
+constexpr uint32_t ID_SPEED = 0x100;
 
-// Additional IDs can be added here as needed:
-// constexpr uint32_t ID_TEMPERATURE = 0x200;
-// constexpr uint32_t ID_BATTERY = 0x300;
-// constexpr uint32_t ID_HEARTBEAT = 0x701;
+// 0x200: 5 bytes:
+//   [0]   uint8 battery percentage (0..100)
+//   [1..4] float battery voltage (LE)
+constexpr uint32_t ID_BATTERY_12V = 0x200;
+
+// 0x300: 1 byte:
+//   [0] uint8 gear: 0=N, 1=R, 2=D
+constexpr uint32_t ID_GEAR = 0x300;
+
+// 0x400: 8 bytes:
+//   [0..3] float temperature (LE, celsius)
+//   [4..7] float humidity (LE, percent)
+constexpr uint32_t ID_ENV = 0x400;
 
 } // namespace can
