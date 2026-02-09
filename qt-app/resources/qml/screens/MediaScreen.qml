@@ -156,7 +156,9 @@ Rectangle {
                     visible: progressMouseArea.containsMouse || progressMouseArea.pressed
 
                     Behavior on color {
-                        ColorAnimation { duration: 100 }
+                        ColorAnimation {
+                            duration: 100
+                        }
                     }
                 }
 
@@ -167,19 +169,19 @@ Rectangle {
                     preventStealing: true  // Prevents SwipeView from stealing events
                     propagateComposedEvents: false
 
-                    onPressed: function(mouse) {
+                    onPressed: function (mouse) {
                         updatePosition(mouse.x);
                         mouse.accepted = true;
                     }
 
-                    onPositionChanged: function(mouse) {
+                    onPositionChanged: function (mouse) {
                         if (pressed) {
                             updatePosition(mouse.x);
                         }
                         mouse.accepted = true;
                     }
 
-                    onReleased: function(mouse) {
+                    onReleased: function (mouse) {
                         mouse.accepted = true;
                     }
 
