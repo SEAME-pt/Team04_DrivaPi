@@ -169,52 +169,81 @@ Rectangle {
     }
 
     function getWeatherDescription(code) {
+        // WMO Weather interpretation codes
         if (code === 0)
-            return "Clear";
-        if (code <= 3)
-            return "Cloudy";
+            return "Clear sky";
+        if (code === 1 || code === 2)
+            return "Mostly clear";
+        if (code === 3)
+            return "Overcast";
         if (code === 45 || code === 48)
             return "Foggy";
-        if (code >= 51 && code <= 67)
-            return "Drizzle";
-        if (code >= 71 && code <= 85)
-            return "Snow";
-        if (code >= 80 && code <= 82)
+        if (code >= 51 && code <= 55)
+            return "Light drizzle";
+        if (code >= 56 && code <= 57)
+            return "Freezing drizzle";
+        if (code >= 61 && code <= 65)
             return "Rain";
-        if (code >= 95)
+        if (code >= 66 && code <= 67)
+            return "Freezing rain";
+        if (code >= 71 && code <= 75)
+            return "Snow";
+        if (code === 77)
+            return "Snow grains";
+        if (code >= 80 && code <= 82)
+            return "Rain showers";
+        if (code >= 85 && code <= 86)
+            return "Snow showers";
+        if (code === 95 || code === 96 || code === 99)
             return "Thunderstorm";
         return "Unknown";
     }
 
     function getWeatherIcon(code) {
+        // WMO Weather interpretation codes
         if (code === 0)
             return "sun";
-        if (code <= 3)
+        if (code === 1 || code === 2)
+            return "cloud";
+        if (code === 3)
             return "cloud";
         if (code === 45 || code === 48)
             return "fog";
-        if (code >= 51 && code <= 67)
-            return "rain";
-        if (code >= 71 && code <= 85)
-            return "snow";
+        if (code >= 51 && code <= 57)
+            return "rain";  // Drizzle and freezing drizzle
+        if (code >= 61 && code <= 67)
+            return "rain";  // Rain and freezing rain
+        if (code >= 71 && code <= 77)
+            return "snow";  // Snow
         if (code >= 80 && code <= 82)
-            return "rain";
-        if (code >= 95)
-            return "cloud";
+            return "rain";  // Rain showers
+        if (code >= 85 && code <= 86)
+            return "snow";  // Snow showers
+        if (code >= 95 && code <= 99)
+            return "cloud"; // Thunderstorm
         return "sun";
     }
 
     function getWeatherIconType(code) {
+        // WMO Weather interpretation codes
         if (code === 0)
             return "sun";
-        if (code <= 3)
+        if (code === 1 || code === 2 || code === 3)
             return "cloud";
         if (code === 45 || code === 48)
             return "fog";
-        if (code >= 51 && code <= 82)
-            return "rain";
-        if (code >= 95)
-            return "cloud";
+        if (code >= 51 && code <= 57)
+            return "rain";  // Drizzle (not snow!)
+        if (code >= 61 && code <= 67)
+            return "rain";  // Rain
+        if (code >= 71 && code <= 77)
+            return "snow";  // Only snow when code is 71-77
+        if (code >= 80 && code <= 82)
+            return "rain";  // Showers
+        if (code >= 85 && code <= 86)
+            return "snow";  // Snow showers
+        if (code >= 95 && code <= 99)
+            return "cloud"; // Thunderstorm
         return "sun";
     }
 
