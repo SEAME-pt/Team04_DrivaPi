@@ -83,18 +83,32 @@ void MusicPlayerController::togglePlayPause() {
 }
 
 void MusicPlayerController::next() {
+    bool wasPlaying = isPlaying();
+
     if (m_currentTrackIndex < m_trackList.size() - 1) {
         setCurrentTrackIndex(m_currentTrackIndex + 1);
     } else if (!m_trackList.isEmpty()) {
         setCurrentTrackIndex(0);
     }
+
+    // Resume playback if it was playing before
+    if (wasPlaying) {
+        play();
+    }
 }
 
 void MusicPlayerController::previous() {
+    bool wasPlaying = isPlaying();
+
     if (m_currentTrackIndex > 0) {
         setCurrentTrackIndex(m_currentTrackIndex - 1);
     } else if (!m_trackList.isEmpty()) {
         setCurrentTrackIndex(m_trackList.size() - 1);
+    }
+
+    // Resume playback if it was playing before
+    if (wasPlaying) {
+        play();
     }
 }
 
@@ -232,7 +246,10 @@ void MusicPlayerController::setVolume(int vol) {
 void MusicPlayerController::onMediaStatusChanged(QMediaPlayer::MediaStatus status) {
     qDebug() << "Media status changed:" << status;
     if (status == QMediaPlayer::EndOfMedia) {
+        // Auto-advance to next track when current one ends
+        bool wasPlaying = true; // Already playing, so continue
         next();
+        // Note: next() will handle resuming playback
     }
 }
 
