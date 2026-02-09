@@ -62,6 +62,7 @@ set(QT_APP_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/gui/kuksa_reader.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/gui/settings_manager.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/gui/music_player_controller.cpp"
+	""
 )
 
 if(ENABLE_CAN_MODE)
@@ -73,6 +74,7 @@ set(MODEL_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/models/system_status.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/models/notification_manager.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/models/can_logger.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/models/pi_health_reader.cpp"
 )
 
 # # --- Feeder Sources ---
@@ -92,7 +94,7 @@ add_executable(myqtapp ${QT_APP_SOURCES} ${MODEL_SOURCES})
 # add_executable(kuksa_feeder ${FEEDER_SOURCES})
 
 target_include_directories(myqtapp PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/inc/gui
     ${CMAKE_CURRENT_SOURCE_DIR}/inc/models
     ${GEN_DIR}
 )
@@ -107,8 +109,10 @@ endif()
 # )
 
 target_sources(myqtapp PRIVATE
-    "${CMAKE_CURRENT_SOURCE_DIR}/resources/qml.qrc"
     "${CMAKE_CURRENT_SOURCE_DIR}/resources/resources.qrc"
+	"${CMAKE_CURRENT_SOURCE_DIR}/resources/qml.qrc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/inc/gui/app_controller.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/inc/gui/cli_parser.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/inc/gui/vehicle_data.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/inc/gui/kuksa_reader.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/inc/gui/settings_manager.hpp"
@@ -116,6 +120,7 @@ target_sources(myqtapp PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/inc/models/system_status.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/inc/models/notification_manager.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/inc/models/can_logger.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/inc/models/pi_health_reader.hpp"
     "${GEN_DIR}/kuksa/val/v2/val.pb.cc"
     "${GEN_DIR}/kuksa/val/v2/val.grpc.pb.cc"
     "${GEN_DIR}/kuksa/val/v2/types.pb.cc"

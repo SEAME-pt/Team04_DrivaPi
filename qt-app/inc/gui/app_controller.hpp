@@ -6,7 +6,7 @@
 #pragma once
 
 #include <QString>
-#include "gui/kuksa_reader.hpp"
+#include "kuksa_reader.hpp"
 
 class QGuiApplication;
 

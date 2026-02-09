@@ -1,5 +1,5 @@
-#include "gui/music_player_controller.hpp"
-#include "gui/settings_manager.hpp"
+#include "music_player_controller.hpp"
+#include "settings_manager.hpp"
 #include <QDir>
 #include <QFileInfo>
 #include <QUrl>

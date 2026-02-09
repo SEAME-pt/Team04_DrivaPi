@@ -9,6 +9,7 @@ Item {
         anchors.fill: parent
         spacing: AppTheme.spacing.medium
 
+        // ====== HEADER ======
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 56
@@ -20,10 +21,10 @@ Item {
                 anchors.rightMargin: AppTheme.spacing.large
 
                 Text {
-                    text: "Diagnostics"
-                    font.pixelSize: AppTheme.typography.headlineSmall
+                    text: "System Diagnostics"
+                    font.pixelSize: 20
                     font.weight: Font.Bold
-                    color: AppTheme.colors.text
+                    color: "#e6f0ff"
                 }
 
                 Item {
@@ -31,160 +32,240 @@ Item {
                 }
 
                 Text {
+                    id: systemTime
                     text: Qt.formatDateTime(new Date(), "hh:mm:ss")
-                    font.pixelSize: AppTheme.typography.labelMedium
-                    color: AppTheme.colors.textSecondary
+                    font.pixelSize: 12
+                    color: "#93a6bf"
+
+                    Timer {
+                        interval: 1000
+                        running: true
+                        repeat: true
+                        onTriggered: systemTime.text = Qt.formatDateTime(new Date(), "hh:mm:ss")
+                    }
                 }
             }
         }
 
-        Rectangle {
+        // ====== SCROLLABLE CONTENT ======
+        Flickable {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            color: AppTheme.colors.background
+            contentHeight: diagnosticsContent.height
+            clip: true
 
             ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: AppTheme.spacing.large
-                spacing: AppTheme.spacing.large
+                id: diagnosticsContent
+                width: parent.width
+                spacing: AppTheme.spacing.small
 
-                // Battery
-                Rectangle {
-                    Layout.fillWidth: true
-                    radius: 16
-                    color: AppTheme.colors.surfaceElevated
-                    border.width: 1
-                    border.color: AppTheme.colors.outline
-
-                    ColumnLayout {
-                        anchors.fill: parent
-                        anchors.margins: AppTheme.spacing.large
-                        spacing: AppTheme.spacing.medium
-
-                        Text {
-                            text: "STM32 Battery"
-                            font.pixelSize: AppTheme.typography.titleMedium
-                            font.weight: Font.DemiBold
-                            color: AppTheme.colors.text
+                // ====== RASPBERRY PI 5 (Real Health Data) ======
+                ComponentCard {
+                    title: "Raspberry Pi 5"
+                    titleIcon: "qrc:/icons/hardware/cpu.svg"
+                    statusText: piHealthReader.isOnline ? "Online" : "Offline"
+                    statusColor: piHealthReader.isOnline ? "#00ff00" : "#ff0000"
+                    metrics: [
+                        {
+                            label: "CPU Temp",
+                            value: piHealthReader.cpuTemp.toFixed(1) + "°C",
+                            warning: piHealthReader.cpuTemp > 70
+                        },
+                        {
+                            label: "CPU Freq",
+                            value: piHealthReader.cpuFreq + " MHz",
+                            warning: false
+                        },
+                        {
+                            label: "Memory",
+                            value: piHealthReader.memoryPercent + "%",
+                            warning: piHealthReader.memoryPercent > 85
+                        },
+                        {
+                            label: "Disk",
+                            value: piHealthReader.diskPercent + "%",
+                            warning: piHealthReader.diskPercent > 90
+                        },
+                        {
+                            label: "IP Address",
+                            value: piHealthReader.ipAddress,
+                            warning: false
+                        },
+                        {
+                            label: "Uptime",
+                            value: piHealthReader.uptime,
+                            warning: false
                         }
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: AppTheme.spacing.large
-
-                            Text {
-                                text: "SOC:"
-                                color: AppTheme.colors.textSecondary
-                                font.pixelSize: AppTheme.typography.bodyMedium
-                            }
-                            Text {
-                                text: (vehicleData.stm32Battery ?? 0) + " %"
-                                color: AppTheme.colors.text
-                                font.pixelSize: AppTheme.typography.bodyLarge
-                                font.weight: Font.Bold
-                            }
-
-                            Item {
-                                Layout.fillWidth: true
-                            }
-
-                            Text {
-                                text: "Voltage:"
-                                color: AppTheme.colors.textSecondary
-                                font.pixelSize: AppTheme.typography.bodyMedium
-                            }
-                            Text {
-                                text: Number(vehicleData.stm32BatteryVoltage ?? 0).toFixed(2) + " V"
-                                color: AppTheme.colors.text
-                                font.pixelSize: AppTheme.typography.bodyLarge
-                                font.weight: Font.Bold
-                            }
-                        }
-                    }
+                    ]
                 }
 
-                // STM32 internal sensors
-                Rectangle {
-                    Layout.fillWidth: true
-                    radius: 16
-                    color: AppTheme.colors.surfaceElevated
-                    border.width: 1
-                    border.color: AppTheme.colors.outline
-
-                    ColumnLayout {
-                        anchors.fill: parent
-                        anchors.margins: AppTheme.spacing.large
-                        spacing: AppTheme.spacing.medium
-
-                        Text {
-                            text: "STM32 Internal Sensors"
-                            font.pixelSize: AppTheme.typography.titleMedium
-                            font.weight: Font.DemiBold
-                            color: AppTheme.colors.text
+                // ====== STM32 BATTERY & VOLTAGE (CAN 0x200) ======
+                ComponentCard {
+                    title: "STM32 Power Monitor"
+                    titleIcon: "qrc:/icons/hardware/battery.svg"
+                    statusText: vehicleData.stm32Battery > 20 ? "Healthy" : "Low"
+                    statusColor: vehicleData.stm32Battery > 20 ? "#00ff00" : "#ff6600"
+                    metrics: [
+                        {
+                            label: "Battery",
+                            value: vehicleData.stm32Battery + "%",
+                            warning: vehicleData.stm32Battery < 20
+                        },
+                        {
+                            label: "Voltage",
+                            value: (vehicleData.stm32BatteryVoltage || 0).toFixed(2) + " V",
+                            warning: (vehicleData.stm32BatteryVoltage || 0) < 11.0 || (vehicleData.stm32BatteryVoltage || 0) > 13.0
+                        },
+                        {
+                            label: "Source",
+                            value: "CAN 0x200",
+                            warning: false
+                        },
+                        {
+                            label: "Format",
+                            value: "5 bytes (1% + 4×V)",
+                            warning: false
                         }
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: AppTheme.spacing.large
-
-                            Text {
-                                text: "Temp:"
-                                color: AppTheme.colors.textSecondary
-                                font.pixelSize: AppTheme.typography.bodyMedium
-                            }
-                            Text {
-                                text: Number(vehicleData.stm32Temperature ?? 0).toFixed(1) + " °C"
-                                color: AppTheme.colors.text
-                                font.pixelSize: AppTheme.typography.bodyLarge
-                                font.weight: Font.Bold
-                            }
-
-                            Item {
-                                Layout.fillWidth: true
-                            }
-
-                            Text {
-                                text: "Humidity:"
-                                color: AppTheme.colors.textSecondary
-                                font.pixelSize: AppTheme.typography.bodyMedium
-                            }
-                            Text {
-                                text: Number(vehicleData.stm32Humidity ?? 0).toFixed(1) + " %"
-                                color: AppTheme.colors.text
-                                font.pixelSize: AppTheme.typography.bodyLarge
-                                font.weight: Font.Bold
-                            }
-                        }
-                    }
+                    ]
                 }
 
-                // Gear
-                Rectangle {
+                // ====== STM32 ENVIRONMENT (CAN 0x400) ======
+                ComponentCard {
+                    title: "STM32 Environmental"
+                    titleIcon: "qrc:/icons/hardware/sensor.svg"
+                    statusText: "Online"
+                    statusColor: "#00ff00"
+                    metrics: [
+                        {
+                            label: "Temperature",
+                            value: (vehicleData.stm32Temperature || 0).toFixed(1) + "°C",
+                            warning: (vehicleData.stm32Temperature || 0) > 60
+                        },
+                        {
+                            label: "Humidity",
+                            value: (vehicleData.stm32Humidity || 0).toFixed(1) + "%",
+                            warning: (vehicleData.stm32Humidity || 0) > 85
+                        },
+                        {
+                            label: "Source",
+                            value: "CAN 0x400",
+                            warning: false
+                        },
+                        {
+                            label: "Format",
+                            value: "8 bytes (4×T + 4×H)",
+                            warning: false
+                        }
+                    ]
+                }
+
+                Item {
+                    Layout.preferredHeight: AppTheme.spacing.medium
+                }
+            }
+        }
+    }
+
+    // ====== REUSABLE COMPONENT CARD ======
+    component ComponentCard: Rectangle {
+        property string title: ""
+        property string titleIcon: ""
+        property string statusText: ""
+        property color statusColor: "#00ff00"
+        property var metrics: []
+
+        Layout.fillWidth: true
+        Layout.leftMargin: AppTheme.spacing.medium
+        Layout.rightMargin: AppTheme.spacing.medium
+        Layout.topMargin: AppTheme.spacing.small
+        Layout.preferredHeight: cardContent.height + 24
+
+        color: AppTheme.colors.surfaceElevated
+        radius: AppTheme.radius.medium
+        border.width: 1
+        border.color: AppTheme.colors.divider
+
+        ColumnLayout {
+            id: cardContent
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: 12
+            spacing: 8
+
+            // Header
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Image {
+                    source: titleIcon
+                    sourceSize.width: 20
+                    sourceSize.height: 20
+                    visible: titleIcon !== ""
+                }
+
+                Text {
+                    text: title
+                    font.pixelSize: 14
+                    font.weight: Font.Bold
+                    color: "#e6f0ff"
+                }
+
+                Item {
                     Layout.fillWidth: true
-                    radius: 16
-                    color: AppTheme.colors.surfaceElevated
-                    border.width: 1
-                    border.color: AppTheme.colors.outline
+                }
 
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.margins: AppTheme.spacing.large
+                Rectangle {
+                    width: 8
+                    height: 8
+                    radius: 4
+                    color: statusColor
+                }
 
-                        Text {
-                            text: "Current Gear:"
-                            color: AppTheme.colors.textSecondary
-                            font.pixelSize: AppTheme.typography.bodyMedium
-                        }
+                Text {
+                    text: statusText
+                    font.pixelSize: 12
+                    color: "#93a6bf"
+                }
+            }
 
-                        Item {
-                            Layout.fillWidth: true
-                        }
+            // Divider
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 1
+                color: AppTheme.colors.divider
+            }
 
-                        Text {
-                            text: vehicleData.gear ?? "N"
-                            color: AppTheme.colors.text
-                            font.pixelSize: 28
-                            font.weight: Font.Black
+            // Metrics
+            Flow {
+                Layout.fillWidth: true
+                spacing: 12
+
+                Repeater {
+                    model: metrics
+
+                    Item {
+                        width: 240
+                        height: 24
+
+                        RowLayout {
+                            anchors.fill: parent
+                            spacing: 4
+
+                            Text {
+                                text: modelData.label + ":"
+                                font.pixelSize: 11
+                                color: "#93a6bf"
+                                width: 80
+                            }
+
+                            Text {
+                                text: modelData.value
+                                font.pixelSize: 11
+                                color: modelData.warning ? "#ff6600" : "#e6f0ff"
+                                font.weight: Font.Medium
+                            }
                         }
                     }
                 }

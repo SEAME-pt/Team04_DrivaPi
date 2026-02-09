@@ -1,4 +1,4 @@
-#include "gui/kuksa_reader.hpp"
+#include "kuksa_reader.hpp"
 #include <fstream>
 #include <chrono>
 

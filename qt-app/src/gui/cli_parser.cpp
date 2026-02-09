@@ -1,4 +1,4 @@
-#include "gui/cli_parser.hpp"
+#include "cli_parser.hpp"
 #include <QDebug>
 
 namespace drivaui {
@@ -62,7 +62,7 @@ static bool hasRawFlag(const QStringList& args, const QString& flag)
     return false;
 }
 
-bool validateOptions(const QCommandLineParser& parser, const CliOptions& opts, 
+bool validateOptions(const QCommandLineParser& parser, const CliOptions& opts,
                      const RunConfig& config, const QStringList& rawArgs)
 {
     bool ok = true;

@@ -1,4 +1,4 @@
-#include "gui/can_reader.hpp"
+#include "can_reader.hpp"
 #include <cstring>
 
 namespace drivaui {
@@ -43,7 +43,7 @@ bool CANReader::openDevice()
     // --- CRITICAL: NO CONFIGURATION CALLS ---
     // The device must be configured externally (via 'ip link') before running the app.
     // Qt will simply attempt to connect to the existing, configured socket.
-    
+
     connect(m_device, &QCanBusDevice::framesReceived, this, &CANReader::handleFramesReceived);
     connect(m_device, &QCanBusDevice::errorOccurred, this, &CANReader::handleErrorOccurred);
 

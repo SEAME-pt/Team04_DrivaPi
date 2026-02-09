@@ -1,9 +1,17 @@
-#include "models/system_status.hpp"
-#include "models/notification_manager.hpp"
-#include "models/can_logger.hpp"
-#include "gui/app_controller.hpp"
-#include "gui/settings_manager.hpp"
-#include "gui/music_player_controller.hpp"
+#include "app_controller.hpp"
+#include "settings_manager.hpp"
+#include "music_player_controller.hpp"
+#include "vehicle_data.hpp"
+#include "kuksa_reader.hpp"
+#ifdef ENABLE_CAN_MODE
+#include "can_reader.hpp"
+#endif
+
+// Keep models includes as-is since inc/models is also in the include path:
+#include "system_status.hpp"
+#include "notification_manager.hpp"
+#include "can_logger.hpp"
+#include "pi_health_reader.hpp"
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
@@ -16,10 +24,7 @@
 #include <QUrl>
 #include <QMetaObject>
 
-#include "gui/vehicle_data.hpp"
-#include "gui/kuksa_reader.hpp"
 #ifdef ENABLE_CAN_MODE
-#include "gui/can_reader.hpp"
 #endif
 
 namespace drivaui {
@@ -55,6 +60,28 @@ int AppController::run(QGuiApplication& app)
 #endif
 
     const QUrl url(QStringLiteral("qrc:/qml/main.qml"));
+
+    // Create and configure Pi Health Reader
+    QScopedPointer<drivaui::PiHealthReader> piHealth(new drivaui::PiHealthReader());
+
+    // Choose one:
+
+    // Option A: If Qt app runs ON the Raspberry Pi (local)
+    piHealth->setLocalScript("/usr/bin/pi_health.sh");
+
+    // Option B: If Qt app runs on macOS and calls Pi remotely
+    // piHealth->setRemoteSsh("pi@10.21.220.188", "/usr/bin/pi_health.sh");
+
+    piHealth->setIntervalMs(2000);  // Poll every 2 seconds
+
+    // Expose to QML
+    engine.rootContext()->setContextProperty("piHealthReader", piHealth.data());
+
+    // Start polling
+    piHealth->start();
+
+    // Keep it alive (don't delete)
+    piHealth.take();
 
     if (config_.useKuksa) {
         qInfo() << "Starting in KUKSA mode (default)";

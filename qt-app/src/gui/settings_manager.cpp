@@ -1,4 +1,4 @@
-#include "gui/settings_manager.hpp"
+#include "settings_manager.hpp"
 #include <QStandardPaths>
 #include <QFile>
 #include <QDir>

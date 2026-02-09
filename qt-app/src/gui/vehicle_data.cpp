@@ -1,4 +1,4 @@
-#include "gui/vehicle_data.hpp"
+#include "vehicle_data.hpp"
 
 #include <cstring>
 #include <algorithm>
