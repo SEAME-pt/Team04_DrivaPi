@@ -555,11 +555,11 @@ Rectangle {
 
                         Image {
                             source: "qrc:/assets/car.png"
-                            sourceSize.width: 200 * root.s
-                            sourceSize.height: 200 * root.s
+                            sourceSize.width: 150 * root.s
+                            sourceSize.height: 150 * root.s
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.bottom: parent.bottom
-                            anchors.bottomMargin: 26 * root.sy
+                            anchors.bottomMargin: -50 * root.sy
                             opacity: 1.0
                         }
                     }
