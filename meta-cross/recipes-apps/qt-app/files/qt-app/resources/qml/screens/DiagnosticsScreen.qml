@@ -289,37 +289,41 @@ Item {
         border.width: 1
         border.color: warn ? "#5a2424" : "#1a2533"
 
-        // Let GridLayout size the tiles naturally (no fixed heights!)
         Layout.fillWidth: true
         Layout.fillHeight: true
-        Layout.minimumHeight: 50   // small safety, won't explode the layout
+        Layout.minimumHeight: 50
 
-        // tune these two to control label/value distance
-        property int padTop: 10
-        property int padBottom: 10
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 5
+            spacing: 0
 
-        Text {
-            id: labelText
-            text: label
-            anchors.top: parent.top
-            anchors.topMargin: padTop
-            anchors.horizontalCenter: parent.horizontalCenter
-            font.pixelSize: 9
-            font.letterSpacing: 0.6
-            color: "#6A7A8A"
-        }
+            Text {
+                id: labelText
+                text: label
+                Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+                Layout.fillHeight: true
+                font.pixelSize: 9
+                font.letterSpacing: 0.6
+                color: "#6A7A8A"
+                verticalAlignment: Text.AlignVCenter
+            }
 
-        Text {
-            id: valueText
-            text: value
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: padBottom
-            anchors.horizontalCenter: parent.horizontalCenter
-            font.pixelSize: 16
-            font.weight: Font.Bold
-            color: warn ? "#ff6644" : "#00BFFF"
-            opacity: (value === "--") ? 0.55 : 1.0
-            verticalAlignment: Text.AlignVCenter
+            Item {
+                Layout.fillHeight: true
+            }
+
+            Text {
+                id: valueText
+                text: value
+                Layout.alignment: Qt.AlignHCenter | Qt.AlignBottom
+                Layout.fillHeight: true
+                font.pixelSize: 16
+                font.weight: Font.Bold
+                color: warn ? "#ff6644" : "#00BFFF"
+                opacity: (value === "--") ? 0.55 : 1.0
+                verticalAlignment: Text.AlignVCenter
+            }
         }
     }
 }
