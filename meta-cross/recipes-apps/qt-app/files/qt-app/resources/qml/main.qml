@@ -14,10 +14,9 @@ ApplicationWindow {
     height: 400
     title: qsTr("DrivaPi HMI - Multi-Screen Infotainment")
 
-    // ---- Theme fallback (works even if AppTheme singleton is missing on Yocto) ----
+    // ---- Theme fallback (works even if AppTheme singleton fails on Yocto) ----
     QtObject {
         id: theme
-
         property var colors: (typeof AppTheme !== "undefined" && AppTheme.colors) ? AppTheme.colors : ({
                 primary: "#00BFFF",
                 surface: "#05080e",
@@ -27,17 +26,14 @@ ApplicationWindow {
                 warning: "#ffb020",
                 error: "#ff4444"
             })
-
         property var spacing: (typeof AppTheme !== "undefined" && AppTheme.spacing) ? AppTheme.spacing : ({
                 small: 6,
                 medium: 12,
                 large: 16
             })
-
         property var radius: (typeof AppTheme !== "undefined" && AppTheme.radius) ? AppTheme.radius : ({
                 medium: 10
             })
-
         property var typography: (typeof AppTheme !== "undefined" && AppTheme.typography) ? AppTheme.typography : ({
                 bodyMedium: 14
             })
@@ -53,7 +49,6 @@ ApplicationWindow {
         context: Qt.ApplicationShortcut
         onActivated: Qt.quit()
     }
-
     Shortcut {
         sequence: "Ctrl+D"
         context: Qt.ApplicationShortcut
@@ -75,7 +70,6 @@ ApplicationWindow {
     // ====== CONNECTION STATE MONITORING ======
     Connections {
         target: systemStatus
-
         function onConnectionStateChanged() {
             var state = systemStatus.connectionState;
             var mode = systemStatus.connectionMode;
@@ -96,7 +90,7 @@ ApplicationWindow {
         z: 1
         spacing: 0
 
-        // ====== LEFT SIDE: PERSISTENT INSTRUMENT CLUSTER ======
+        // ====== LEFT SIDE: CLUSTER ======
         Item {
             id: clusterContainer
             Layout.fillHeight: true
@@ -124,12 +118,6 @@ ApplicationWindow {
                         easing.type: Easing.InOutCubic
                     }
                 }
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: 200
-                        easing.type: Easing.InOutQuad
-                    }
-                }
             }
 
             Behavior on Layout.preferredWidth {
@@ -151,7 +139,7 @@ ApplicationWindow {
                 }
             }
 
-            // Elegant minimal toggle button
+            // Toggle button (no Effects)
             Rectangle {
                 id: panelToggle
                 anchors.right: parent.right
@@ -177,12 +165,12 @@ ApplicationWindow {
                 border.color: rightPanelVisible ? theme.colors.primary : "#1a2535"
                 border.width: 1
 
-                // Fake glow/shadow (no Effects)
+                // Fake glow
                 Rectangle {
                     anchors.fill: parent
                     anchors.margins: -4
                     radius: parent.radius + 4
-                    color: rightPanelVisible ? theme.colors.primary : "#000000"
+                    color: rightPanelVisible ? theme.colors.primary : "#000"
                     opacity: rightPanelVisible ? 0.18 : 0.10
                     z: -1
                 }
@@ -190,30 +178,23 @@ ApplicationWindow {
                     anchors.fill: parent
                     anchors.margins: -10
                     radius: parent.radius + 10
-                    color: rightPanelVisible ? theme.colors.primary : "#000000"
+                    color: rightPanelVisible ? theme.colors.primary : "#000"
                     opacity: rightPanelVisible ? 0.07 : 0.05
                     z: -2
                 }
 
-                // Grid icon (three horizontal lines)
+                // icon bars
                 Column {
                     anchors.centerIn: parent
                     spacing: 4
-
                     Repeater {
                         model: 3
                         Rectangle {
                             width: 20
                             height: 2
                             radius: 1
-                            color: rightPanelVisible ? theme.colors.primary : "#8FA4B8"
+                            color: rightPanelVisible ? theme.colors.primary : theme.colors.textSecondary
                             anchors.horizontalCenter: parent.horizontalCenter
-
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: 200
-                                }
-                            }
                         }
                     }
                 }
@@ -222,7 +203,6 @@ ApplicationWindow {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-
                     onClicked: rightPanelVisible = !rightPanelVisible
                     onEntered: panelToggle.scale = 1.1
                     onExited: panelToggle.scale = 1.0
@@ -236,14 +216,9 @@ ApplicationWindow {
                         easing.type: Easing.OutBack
                     }
                 }
-                Behavior on border.color {
-                    ColorAnimation {
-                        duration: 200
-                    }
-                }
             }
 
-            // Invisible edge detection area for elegant panel reveal
+            // Edge reveal
             MouseArea {
                 id: edgeDetector
                 anchors.right: parent.right
@@ -252,7 +227,6 @@ ApplicationWindow {
                 width: 5
                 z: 199
                 hoverEnabled: true
-
                 onEntered: edgeHoverTimer.start()
                 onExited: edgeHoverTimer.stop()
 
@@ -268,7 +242,7 @@ ApplicationWindow {
             }
         }
 
-        // ====== RIGHT SIDE: SWIPEABLE CONTENT + VERTICAL TABBAR ======
+        // ====== RIGHT SIDE ======
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -293,7 +267,6 @@ ApplicationWindow {
                 }
             }
 
-            // ====== SWIPEABLE CONTENT SCREENS ======
             SwipeView {
                 id: swipeView
                 Layout.fillWidth: true
@@ -309,35 +282,32 @@ ApplicationWindow {
                 DiagnosticsScreen {}
             }
 
-            // ====== VERTICAL TABBAR ======
             Item {
                 id: verticalTabBar
                 Layout.preferredWidth: 72
                 Layout.fillHeight: true
                 z: 40
-
-                // NOTE: your original had recursion here; keep simple.
                 property int currentIndex: 0
 
                 Rectangle {
                     anchors.fill: parent
                     color: theme.colors.surface
 
-                    // subtle fake glow
+                    // subtle side glow
                     Rectangle {
                         anchors.fill: parent
-                        anchors.margins: -8
+                        anchors.margins: -10
+                        radius: 14
                         color: theme.colors.primary
-                        opacity: 0.035
-                        radius: 10
+                        opacity: 0.03
                         z: -2
                     }
                     Rectangle {
                         anchors.fill: parent
-                        anchors.margins: -16
+                        anchors.margins: -20
+                        radius: 18
                         color: theme.colors.primary
-                        opacity: 0.02
-                        radius: 14
+                        opacity: 0.015
                         z: -3
                     }
                 }
@@ -388,7 +358,7 @@ ApplicationWindow {
         }
     }
 
-    // ====== NOTIFICATION TOAST CONTAINER ======
+    // ====== NOTIFICATION TOASTS ======
     Rectangle {
         id: notificationContainer
         anchors.top: parent.top
@@ -426,7 +396,6 @@ ApplicationWindow {
 
                     opacity: 0
                     Component.onCompleted: opacity = 1
-
                     Behavior on opacity {
                         NumberAnimation {
                             duration: 300
@@ -462,7 +431,7 @@ ApplicationWindow {
         }
     }
 
-    // ====== SIMPLE SAFE SPLASH (no Effects, uses theme fallback) ======
+    // ====== SPLASH SCREEN (premium look, no Effects) ======
     Rectangle {
         id: splashScreen
         anchors.fill: parent
@@ -478,39 +447,257 @@ ApplicationWindow {
             }
         }
 
+        // deep gradient background
+        Rectangle {
+            anchors.fill: parent
+            gradient: Gradient {
+                GradientStop {
+                    position: 0.0
+                    color: "#02040a"
+                }
+                GradientStop {
+                    position: 0.55
+                    color: "#060b14"
+                }
+                GradientStop {
+                    position: 1.0
+                    color: "#05080e"
+                }
+            }
+        }
+
+        // ambient glow
         Rectangle {
             anchors.centerIn: parent
-            width: 360
-            height: 360
-            radius: 180
+            width: 520
+            height: 520
+            radius: 260
             color: theme.colors.primary
             opacity: 0.06
         }
-
-        Text {
+        Rectangle {
             anchors.centerIn: parent
-            text: "DRIVAPI"
-            font.pixelSize: 28
-            font.weight: Font.Light
-            font.letterSpacing: 6
+            width: 760
+            height: 760
+            radius: 380
             color: theme.colors.primary
-            opacity: 0.95
+            opacity: 0.025
+        }
+
+        Item {
+            id: splashCenter
+            anchors.centerIn: parent
+            width: 320
+            height: 320
+
+            // soft halo
+            Rectangle {
+                anchors.centerIn: parent
+                width: 240
+                height: 240
+                radius: 120
+                color: theme.colors.primary
+                opacity: 0.05
+            }
+
+            // animated rings
+            Rectangle {
+                id: ring1
+                anchors.centerIn: parent
+                width: 210
+                height: 210
+                radius: 105
+                color: "transparent"
+                border.color: theme.colors.primary
+                border.width: 1
+                opacity: 0.25
+
+                SequentialAnimation on opacity {
+                    running: showSplashScreen
+                    loops: Animation.Infinite
+                    NumberAnimation {
+                        from: 0.18
+                        to: 0.55
+                        duration: 1400
+                        easing.type: Easing.InOutQuad
+                    }
+                    NumberAnimation {
+                        from: 0.55
+                        to: 0.18
+                        duration: 1400
+                        easing.type: Easing.InOutQuad
+                    }
+                }
+            }
+
+            Rectangle {
+                id: ring2
+                anchors.centerIn: parent
+                width: 170
+                height: 170
+                radius: 85
+                color: "transparent"
+                border.color: theme.colors.primary
+                border.width: 2
+                opacity: 0.0
+
+                SequentialAnimation on opacity {
+                    running: showSplashScreen
+                    PauseAnimation {
+                        duration: 200
+                    }
+                    NumberAnimation {
+                        to: 0.75
+                        duration: 450
+                        easing.type: Easing.OutQuad
+                    }
+                }
+            }
+
+            // logo letter
+            Text {
+                id: logoD
+                anchors.centerIn: parent
+                text: "D"
+                font.pixelSize: 120
+                font.weight: Font.Bold
+                color: theme.colors.primary
+                opacity: 0.0
+                scale: 0.7
+
+                SequentialAnimation on opacity {
+                    running: showSplashScreen
+                    PauseAnimation {
+                        duration: 350
+                    }
+                    NumberAnimation {
+                        to: 1.0
+                        duration: 420
+                        easing.type: Easing.OutQuad
+                    }
+                }
+                SequentialAnimation on scale {
+                    running: showSplashScreen
+                    PauseAnimation {
+                        duration: 350
+                    }
+                    NumberAnimation {
+                        to: 1.0
+                        duration: 650
+                        easing.type: Easing.OutElastic
+                    }
+                }
+            }
+
+            // tiny moving dash "arc" (no Canvas)
+            Rectangle {
+                id: dash
+                width: 34
+                height: 3
+                radius: 2
+                color: theme.colors.primary
+                opacity: 0.65
+
+                property real t: 0
+                x: (splashCenter.width - width) / 2 + Math.cos(t) * 95
+                y: (splashCenter.height - height) / 2 + Math.sin(t) * 95
+
+                Timer {
+                    interval: 16
+                    running: showSplashScreen
+                    repeat: true
+                    onTriggered: dash.t += 0.06
+                }
+            }
         }
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.verticalCenter
-            anchors.topMargin: 42
+            anchors.top: splashCenter.bottom
+            anchors.topMargin: 8
+            text: "DRIVAPI"
+            font.pixelSize: 24
+            font.weight: Font.Light
+            font.letterSpacing: 4
+            color: theme.colors.primary
+            opacity: 0
+
+            SequentialAnimation on opacity {
+                running: showSplashScreen
+                PauseAnimation {
+                    duration: 900
+                }
+                NumberAnimation {
+                    to: 0.9
+                    duration: 450
+                    easing.type: Easing.OutQuad
+                }
+            }
+        }
+
+        Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: splashCenter.bottom
+            anchors.topMargin: 44
             text: "Initializing..."
             font.pixelSize: 12
             font.weight: Font.Light
             font.letterSpacing: 1
             color: theme.colors.textSecondary
-            opacity: 0.8
+            opacity: 0
+
+            SequentialAnimation on opacity {
+                running: showSplashScreen
+                PauseAnimation {
+                    duration: 1150
+                }
+                NumberAnimation {
+                    to: 0.7
+                    duration: 350
+                    easing.type: Easing.OutQuad
+                }
+            }
+        }
+
+        // progress bar
+        Rectangle {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 70
+            width: 260
+            height: 2
+            radius: 1
+            color: theme.colors.primary
+            opacity: 0.18
+
+            Rectangle {
+                height: parent.height
+                radius: 1
+                color: theme.colors.primary
+                width: 0
+                opacity: 0.75
+
+                SequentialAnimation on width {
+                    running: showSplashScreen
+                    loops: Animation.Infinite
+                    NumberAnimation {
+                        from: 0
+                        to: 260
+                        duration: 1700
+                        easing.type: Easing.InOutCubic
+                    }
+                    NumberAnimation {
+                        from: 260
+                        to: 0
+                        duration: 350
+                        easing.type: Easing.InQuad
+                    }
+                }
+            }
         }
     }
 
-    // ====== CUSTOM TAB ICON BUTTON COMPONENT ======
+    // ====== TAB BUTTON (no Effects) ======
     component TabIconButton: Rectangle {
         id: tabButton
         required property bool isActive
@@ -526,16 +713,17 @@ ApplicationWindow {
             radius: 6
             color: tabButton.isActive ? theme.colors.primary : (tabButton.isHovered ? "#FFFFFF" : "transparent")
             opacity: tabButton.isActive ? 1 : (tabButton.isHovered ? 0.3 : 0.0)
-            border.color: tabButton.isActive ? theme.colors.primary : (tabButton.isHovered ? "#8FA4B8" : "transparent")
+            border.color: tabButton.isActive ? theme.colors.primary : (tabButton.isHovered ? theme.colors.textSecondary : "transparent")
             border.width: (tabButton.isActive || tabButton.isHovered) ? 1 : 0
         }
 
+        // subtle glow
         Rectangle {
             anchors.fill: parent
             anchors.margins: -6
             radius: parent.radius + 6
-            color: tabButton.isActive ? theme.colors.primary : "#8FA4B8"
-            opacity: tabButton.isActive ? 0.16 : (tabButton.isHovered ? 0.07 : 0.0)
+            color: theme.colors.primary
+            opacity: tabButton.isActive ? 0.14 : (tabButton.isHovered ? 0.06 : 0.0)
             z: -1
             visible: tabButton.isActive || tabButton.isHovered
         }
@@ -555,13 +743,6 @@ ApplicationWindow {
             fillMode: Image.PreserveAspectFit
             opacity: isActive ? 0.85 : (tabButton.isHovered ? 0.6 : 0.35)
             mipmap: true
-
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: 200
-                    easing.type: Easing.OutQuad
-                }
-            }
         }
 
         MouseArea {
