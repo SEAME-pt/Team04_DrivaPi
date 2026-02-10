@@ -16,7 +16,7 @@ ApplicationWindow {
 
     // ---- Theme fallback (works even if AppTheme singleton is missing on Yocto) ----
     QtObject {
-        id: theme
+        id: Theme
         property var colors: (typeof AppTheme !== "undefined" && AppTheme.colors) ? AppTheme.colors : ({
                 primary: "#00BFFF",
                 surface: "#05080e",
