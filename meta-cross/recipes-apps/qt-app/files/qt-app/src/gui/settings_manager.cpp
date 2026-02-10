@@ -32,7 +32,7 @@ void SettingsManager::loadSettings() {
     } else {
         qDebug() << "Creating new settings file at:" << m_configPath;
         // Set defaults - use the mp3 folder in the project
-        QString projectMp3Path = QCoreApplication::applicationDirPath() + "/../mp3";
+        QString projectMp3Path = QCoreApplication::applicationDirPath() + "/music/mp3";
         m_settings["lastPlayedTrack"] = "";
         m_settings["volume"] = 50;
         m_settings["musicLibraryPath"] = projectMp3Path;
