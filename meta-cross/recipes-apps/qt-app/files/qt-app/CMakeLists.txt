@@ -124,31 +124,15 @@ if(ENABLE_CAN_MODE)
     target_sources(myqtapp PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/inc/gui/can_reader.hpp")
 endif()
 
-# Link libraries - For Yocto/AGL, we need to use different target names
-# Yocto's gRPC doesn't export gRPC::grpc++ target, so we need to find it differently
+# Use pkg-config for gRPC and Abseil to get all dependencies automatically
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GRPC REQUIRED grpc++)
+pkg_check_modules(ABSL REQUIRED absl_hash absl_strings absl_base absl_log_internal_check_op absl_synchronization absl_time)
 
-# Try to find the gRPC and protobuf libraries
-find_library(GRPC_LIB grpc++)
-find_library(GRPC_PP_LIB grpc++_reflection)
-find_library(GRPC_CORE_LIB grpc)
-find_library(GPR_LIB gpr)
-find_library(PROTOBUF_LIB protobuf)
-find_library(ABSL_BASE_LIB absl_base)
-find_library(ABSL_STRINGS_LIB absl_strings)
-find_library(ABSL_LOG_INTERNAL_CHECK_OP_LIB absl_log_internal_check_op)
-
-# Link with found libraries
+# Then link with pkg-config imported targets
 target_link_libraries(myqtapp PRIVATE
     Qt6::Core Qt6::Gui Qt6::Quick Qt6::Qml Qt6::QuickControls2 Qt6::SerialBus Qt6::Network Qt6::Multimedia
     PkgConfig::TAGLIB
-    ${GRPC_LIB}
-    ${GRPC_PP_LIB}
-    ${GRPC_CORE_LIB}
-	${GPR_LIB}
-    ${PROTOBUF_LIB}
-    ${ABSL_BASE_LIB}
-    ${ABSL_STRINGS_LIB}
-    ${ABSL_LOG_INTERNAL_CHECK_OP_LIB}
+    ${GRPC_LIBRARIES}
+    ${ABSL_LIBRARIES}
 )
-
-install(TARGETS myqtapp RUNTIME DESTINATION bin)
