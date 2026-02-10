@@ -8,8 +8,21 @@ import "../theme"
 Rectangle {
     id: root
 
-    // 0..1 loop (seamless)
-    property real roadPhase: 0
+    property real motionPhase: 0
+
+    // Speed used by motion simulation (supports reverse if negative)
+    readonly property real motionSpeedKmh: currentSpeed
+    readonly property real motionSpeedAbs: Math.abs(motionSpeedKmh)
+    readonly property real motionDir: (motionSpeedKmh >= 0) ? 1 : -1
+
+    // REAL-WORLD CALIBRATION: 4 m/s = 14.4 km/h = full intensity
+    readonly property real realMaxSpeedKmh: 14.4
+    readonly property real motionIntensity: clamp(motionSpeedAbs / realMaxSpeedKmh, 0, 1)
+
+    function wrap01(t) {
+        t = t % 1;
+        return t < 0 ? (t + 1) : t;
+    }
 
     // ISO 26262 Fail-Safe: Null/Invalid Data Handling
     property bool vehicleDataAvailable: vehicleData !== null && vehicleData !== undefined
@@ -24,11 +37,12 @@ Rectangle {
     property string currentGear: vehicleDataAvailable && vehicleData.gear ? vehicleData.gear : "P"
     property real tripDistance: vehicleDataAvailable && vehicleData.trip ? vehicleData.trip : 568
     property real powerOutput: vehicleDataAvailable && vehicleData.power ? vehicleData.power : 98
-    // ====== Odometer Logic (Track distance based on speed) ======
-    property real odometerDistance: 0  // Will be updated based on speed
+
+    // ====== Odometer State (FIX for ReferenceError) ======
+    property real odometerDistance: 0
+    property real accumulatedDistance: 0
     property real lastTimestamp: 0
-    property real accumulatedDistance: 0  // Fractional distance accumulator
-    property bool showOdometerReset: false  // Toggle to show reset state
+    property bool showOdometerReset: false
 
     // Initialize odometer with vehicleData value
     Component.onCompleted: {
@@ -116,7 +130,7 @@ Rectangle {
         onTriggered: showOdometerReset = false
     }
 
-    // ====== END Odometer Logic ======"
+    // ====== END Odometer Logic ======
     // Design Constants (ISO 26262 Instrument Cluster Compliance)
     // ============================================================
     // Font Sizes (consolidated for WCAG AA accessibility)
@@ -225,10 +239,7 @@ Rectangle {
         // ==========================================================
         Item {
             id: roadLayer
-            x: contentArea.x
-            y: contentArea.y
-            width: contentArea.width
-            height: contentArea.height
+            anchors.fill: parent
 
             Item {
                 id: roadWindow
@@ -237,76 +248,306 @@ Rectangle {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 anchors.top: parent.top
-                // Keep horizon high enough for the rails to "agree"
-                // (1200x480 target tuned)
                 anchors.topMargin: root.clamp(parent.height * root.horizonMarginRatio, 64 * root.sy, 130 * root.sy)
                 clip: true
-                // --- Perspective tuning (ISO 26262 calibrated parameters) ---
-                // Road perspective optimized for safe lane visualization
-                // Reference: 1200x480@60fps baseline
+
                 property real roadW: width * root.roadWidthFactor
                 property real roadH: height * root.roadHeightFactor
                 property real baseY: -height * Math.abs(root.roadBaseOffset)
-                property real px: root.roadPhase * roadH
+
                 Image {
                     id: roadImg1
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: roadWindow.roadW
                     height: roadWindow.roadH
-                    y: roadWindow.baseY + (roadWindow.px % roadWindow.roadH)
+                    y: roadWindow.baseY
                     source: "qrc:/assets/road.png"
                     fillMode: Image.PreserveAspectCrop
                     smooth: true
-                    // Opacity reduced slightly for better fail-safe visibility of overlaid ADAS
                     opacity: 0.95
                 }
+
                 Image {
                     id: roadImg2
-                    z: 0
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    width: roadWindow.roadW
-                    height: roadWindow.roadH
-                    y: roadImg1.y - roadWindow.roadH
+                    visible: false
                     source: "qrc:/assets/road.png"
-                    fillMode: Image.PreserveAspectCrop
-                    smooth: true
-                    opacity: 0.95
                 }
-                // Fog cap: calm the sky and hide any seam
+
+                // ===== Horizon integration: blur + fade (top only) =====
+                ShaderEffectSource {
+                    id: roadSrc
+                    sourceItem: roadImg1
+                    live: true
+                    recursive: true
+                    hideSource: false
+                }
+
+                Item {
+                    id: horizonBlend
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    height: roadWindow.anchors.topMargin + 180 * root.sy
+                    clip: true
+                    z: 4
+
+                    MultiEffect {
+                        x: roadImg1.x
+                        y: roadImg1.y
+                        width: roadImg1.width
+                        height: roadImg1.height
+                        source: roadSrc
+                        blurEnabled: true
+                        blur: 1.0
+                        opacity: 0.30
+                        brightness: -0.16
+                        contrast: 0.02
+                        saturation: 0.85
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        gradient: Gradient {
+                            GradientStop {
+                                position: 0.00
+                                color: "#05080eff"
+                            }
+                            GradientStop {
+                                position: 0.35
+                                color: "#05080ed0"
+                            }
+                            GradientStop {
+                                position: 0.70
+                                color: "#05080e60"
+                            }
+                            GradientStop {
+                                position: 1.00
+                                color: "#00000000"
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        gradient: Gradient {
+                            GradientStop {
+                                position: 0.00
+                                color: "#05080eff"
+                            }
+                            GradientStop {
+                                position: 0.55
+                                color: "#05080e90"
+                            }
+                            GradientStop {
+                                position: 1.00
+                                color: "#00000000"
+                            }
+                        }
+                        opacity: 0.55
+                    }
+                }
+
+                // ===== Center dashed lane line =====
+                Item {
+                    id: laneLines
+                    width: roadWindow.roadW
+                    x: (parent.width - width) / 2
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    z: 3
+                    visible: true
+                    clip: true
+
+                    readonly property real startY: roadWindow.anchors.topMargin + 120 * root.sy
+                    readonly property int dashCount: 12
+                    readonly property real dashBaseH: 26 * root.sy
+                    readonly property real travel: (height - startY) + dashBaseH * 2
+
+                    function dashY(i) {
+                        return startY - dashBaseH + root.wrap01(root.motionPhase + (i / dashCount)) * travel;
+                    }
+                    function tForY(y) {
+                        return root.clamp((y - startY + dashBaseH) / travel, 0, 1);
+                    }
+                    function dashW(y) {
+                        var t = tForY(y);
+                        return (2.0 + 8.0 * t) * root.s;
+                    }
+                    function dashH(y) {
+                        var t = tForY(y);
+                        return dashBaseH * (0.30 + 0.70 * t);
+                    }
+                    function dashOpacity(y) {
+                        var t = tForY(y);
+                        var baseOpacity = 0.12 + 0.18 * root.motionIntensity;
+                        return baseOpacity * Math.pow(t, 1.35);
+                    }
+
+                    Repeater {
+                        model: laneLines.dashCount
+                        Rectangle {
+                            property real yy: laneLines.dashY(index)
+                            y: yy
+                            width: laneLines.dashW(yy)
+                            height: laneLines.dashH(yy)
+                            x: (parent.width - width) / 2
+                            radius: width / 2
+                            color: "#e6f0ff"
+                            opacity: laneLines.dashOpacity(yy)
+                        }
+                    }
+                }
+
+                // ===== Two faint "flow lines" =====
+                Item {
+                    id: laneFlow
+                    width: roadWindow.roadW * 0.45
+                    x: (parent.width - width) / 2
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    z: 3
+                    visible: true
+                    clip: true
+
+                    readonly property real startY: roadWindow.anchors.topMargin + 140 * root.sy
+                    readonly property int streakCount: 8
+                    readonly property real baseLen: 80 * root.sy
+                    readonly property real travel: (height - startY) + baseLen * 2
+
+                    function yFor(i) {
+                        return startY - baseLen + root.wrap01(root.motionPhase + (i / streakCount)) * travel;
+                    }
+                    function tForY(y) {
+                        return root.clamp((y - startY + baseLen) / travel, 0, 1);
+                    }
+                    function xOffset(t) {
+                        return (8 + 20 * t) * root.s;
+                    }
+
+                    Repeater {
+                        model: laneFlow.streakCount
+                        Item {
+                            property real yy: laneFlow.yFor(index)
+                            readonly property real t: laneFlow.tForY(yy)
+
+                            y: yy
+                            width: parent.width
+                            height: laneFlow.baseLen * (0.4 + 0.8 * t) * (0.6 + 0.6 * root.motionIntensity)
+
+                            readonly property real a: (0.15 + 0.25 * root.motionIntensity) * Math.pow(t, 1.2)
+                            readonly property real w: (2.0 + 4.0 * t) * root.s
+
+                            Rectangle {
+                                x: (parent.width / 2) - laneFlow.xOffset(parent.t) - (parent.w / 2)
+                                width: parent.w
+                                height: parent.height
+                                radius: width / 2
+                                color: "#9fe3ff"
+                                opacity: parent.a
+                            }
+
+                            Rectangle {
+                                x: (parent.width / 2) + laneFlow.xOffset(parent.t) - (parent.w / 2)
+                                width: parent.w
+                                height: parent.height
+                                radius: width / 2
+                                color: "#9fe3ff"
+                                opacity: parent.a
+                            }
+                        }
+                    }
+                }
+
+                // --- Motion Shadows (3 bands) ---
+                Item {
+                    id: motionShadows
+                    anchors.fill: parent
+                    z: 2
+
+                    readonly property real bandH: Math.max(40 * root.sy, parent.height * 0.22)
+                    readonly property real travel: parent.height + bandH * 2
+
+                    function bandY(offset) {
+                        return -bandH + root.wrap01(root.motionPhase + offset) * travel;
+                    }
+
+                    Rectangle {
+                        width: roadWindow.roadW * 0.98
+                        height: motionShadows.bandH
+                        x: (parent.width - width) / 2
+                        y: motionShadows.bandY(0.00)
+                        radius: 22 * root.s
+                        opacity: 0.08 + 0.18 * root.motionIntensity
+                        gradient: Gradient {
+                            GradientStop {
+                                position: 0.0
+                                color: "#00000000"
+                            }
+                            GradientStop {
+                                position: 0.5
+                                color: "#000000"
+                            }
+                            GradientStop {
+                                position: 1.0
+                                color: "#00000000"
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        width: roadWindow.roadW * 0.95
+                        height: motionShadows.bandH * 0.85
+                        x: (parent.width - width) / 2
+                        y: motionShadows.bandY(0.33)
+                        radius: 22 * root.s
+                        opacity: 0.06 + 0.14 * root.motionIntensity
+                        gradient: Gradient {
+                            GradientStop {
+                                position: 0.0
+                                color: "#00000000"
+                            }
+                            GradientStop {
+                                position: 0.5
+                                color: "#000000"
+                            }
+                            GradientStop {
+                                position: 1.0
+                                color: "#00000000"
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        width: roadWindow.roadW * 0.92
+                        height: motionShadows.bandH * 0.75
+                        x: (parent.width - width) / 2
+                        y: motionShadows.bandY(0.66)
+                        radius: 22 * root.s
+                        opacity: 0.05 + 0.10 * root.motionIntensity
+                        gradient: Gradient {
+                            GradientStop {
+                                position: 0.0
+                                color: "#00000000"
+                            }
+                            GradientStop {
+                                position: 0.5
+                                color: "#000000"
+                            }
+                            GradientStop {
+                                position: 1.0
+                                color: "#00000000"
+                            }
+                        }
+                    }
+                }
+
+                // ===== FOG GRADIENT OVERLAYS (FIX: smooth full-height fade, no cutoff) =====
+                // Fog cap: subtle horizon fade
                 Rectangle {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.top: parent.top
-                    z: 3
-                    gradient: Gradient {
-                        GradientStop {
-                            position: 0.00
-                            color: "#05080eff"
-                        }
-                        GradientStop {
-                            position: 0.62
-                            color: "#05080eff"
-                        }
-                        GradientStop {
-                            position: 1.00
-                            color: "#05080e00"
-                        }
-                    }
-                }
-                // ADAS calming band behind the ADAS box (aligned with new ADAS position)
-                Rectangle {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    width: parent.width * 0.62
-                    height: parent.height * 0.22
-                    y: parent.height * 0.46
-                    radius: 32 * root.s
-                    z: 4
-                    color: "#05080e"
-                    opacity: 0.58
-                }
-                // Soft global fade
-                Rectangle {
-                    anchors.fill: parent
+                    anchors.bottom: parent.bottom  // extend to full height
                     z: 5
                     gradient: Gradient {
                         GradientStop {
@@ -314,42 +555,82 @@ Rectangle {
                             color: "#05080eff"
                         }
                         GradientStop {
-                            position: 0.50
-                            color: "#05080eff"  // Changed from 0.30/#e6 for less fade higher up
+                            position: 0.20
+                            color: "#05080ee0"
                         }
                         GradientStop {
-                            position: 0.80
-                            color: "#05080e88"  // Changed from 0.65 for fade starting lower
+                            position: 0.50
+                            color: "#05080e40"
                         }
                         GradientStop {
                             position: 1.00
-                            color: "#05080e00"
+                            color: "#00000000"
                         }
                     }
+                    opacity: 0.65
                 }
+
+                // ADAS calming band behind the ADAS box
                 Rectangle {
-                    anchors.fill: parent
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: parent.width * 0.62
+                    height: parent.height * 0.22
+                    y: parent.height * 0.46
+                    radius: 32 * root.s
                     z: 6
-                    color: "#000000"
-                    opacity: 0.05
+                    color: "#05080e"
+                    opacity: 0.40
                 }
+
+                // Soft global fade (full height, smooth transition)
                 Rectangle {
                     anchors.fill: parent
                     z: 7
-                    color: "#4fb3d9"
-                    opacity: 0.006
+                    gradient: Gradient {
+                        GradientStop {
+                            position: 0.00
+                            color: "#05080eff"
+                        }
+                        GradientStop {
+                            position: 0.30
+                            color: "#05080ec0"
+                        }
+                        GradientStop {
+                            position: 0.70
+                            color: "#05080e30"
+                        }
+                        GradientStop {
+                            position: 1.00
+                            color: "#00000000"
+                        }
+                    }
+                    opacity: 0.50
                 }
-            }
 
-            // Top protection matches roadWindow topMargin
-            Rectangle {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                height: roadWindow.anchors.topMargin
-                color: "#05080e"
-                opacity: 1.0
-                z: 10
+                Rectangle {
+                    anchors.fill: parent
+                    z: 8
+                    color: "#000000"
+                    opacity: 0.02
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    z: 9
+                    color: "#4fb3d9"
+                    opacity: 0.003
+                }
+
+                // Top protection matches roadWindow topMargin
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    height: roadWindow.anchors.topMargin
+                    color: "#05080e"
+                    opacity: 1.0
+                    z: 10
+                }
             }
         }
     }
@@ -364,39 +645,33 @@ Rectangle {
             spacing: 2
             z: 10
 
-            // Top bar
             ClusterTopBar {
                 id: topBar
                 Layout.fillWidth: true
                 z: 20
-                // ISO 26262: Null-safe property access
                 currentGear: root.currentGear
                 batteryLevel: root.currentBattery
-
-                // Connect battery click to show popup
                 onBatteryClicked: batteryPopup.open()
             }
 
-            // Main content area
             Item {
                 id: contentArea
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
-                // Road animation (seamless)
-                NumberAnimation {
-                    id: roadAnim
-                    target: root
-                    property: "roadPhase"
-                    from: 0
-                    to: 1
-                    loops: Animation.Infinite
-                    running: root.vehicleDataAvailable && vehicleData.speed > 0.5
+                Timer {
+                    id: motionTimer
+                    interval: 16
+                    running: true
+                    repeat: true
+                    onTriggered: {
+                        if (root.motionSpeedAbs < 0.5)
+                            return;
 
-                    property real kmh: root.vehicleDataAvailable ? vehicleData.speed : 0
-                    property real clamped: Math.max(10, Math.min(kmh, 160))
-                    duration: Math.max(1000, 4000 - (clamped * 15))
-                    onStopped: root.roadPhase = 0
+                        var normalizedSpeed = root.clamp(root.motionSpeedAbs / root.realMaxSpeedKmh, 0, 1);
+                        var step = (interval / 1000.0) * normalizedSpeed * 0.75;
+                        root.motionPhase = root.wrap01(root.motionPhase + root.motionDir * step);
+                    }
                 }
 
                 // Background grid and glow
@@ -555,6 +830,7 @@ Rectangle {
                         }
 
                         Image {
+                            id: carImg
                             source: "qrc:/assets/car.png"
                             sourceSize.width: 150 * root.s
                             sourceSize.height: 150 * root.s
@@ -562,6 +838,18 @@ Rectangle {
                             anchors.bottom: parent.bottom
                             anchors.bottomMargin: -50 * root.sy
                             opacity: 1.0
+
+                            // Subtler motion (still direction-aware)
+                            transform: [
+                                Translate {
+                                    y: Math.sin(root.motionPhase * 6.28318530718 * 2.0) * (1.2 * root.sy) * root.motionIntensity
+                                },
+                                Rotation {
+                                    origin.x: carImg.width / 2
+                                    origin.y: carImg.height / 2
+                                    angle: Math.sin(root.motionPhase * 6.28318530718) * (0.35 * root.motionIntensity) * root.motionDir
+                                }
+                            ]
                         }
                     }
 
@@ -861,7 +1149,7 @@ Rectangle {
     }
 
     function getAlbumColor(index) {
-        var colors = ["#FF6B35", "#004E89", "#1AE5BE"];  // Orange, Blue, Teal
+        var colors = ["#FF6B35", "#004E89", "#1AE5BE"];
         return colors[index % colors.length];
     }
 }
