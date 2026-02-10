@@ -3,9 +3,9 @@ SUMMARY = "DrivaPi Qt Dashboard"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=7800be09a61cad6da79d8f0c18b1e007"
 
-DEPENDS = "qtbase qtdeclarative qtserialbus qtmultimedia taglib protobuf-native grpc-native protobuf grpc qtbase-native qtdeclarative-native qtwebengine qtpositioning"
+DEPENDS = "qtbase qtdeclarative qtserialbus qtmultimedia taglib protobuf-native grpc-native protobuf grpc qtbase-native qtdeclarative-native qtpositioning"
 
-RDEPENDS:${PN} = "qtbase qtdeclarative qtserialbus qtmultimedia taglib protobuf grpc qtwebengine qtpositioning qtwebengine-qmlplugins qtpositioning-qmlplugins"
+RDEPENDS:${PN} = "qtbase qtdeclarative qtserialbus qtmultimedia taglib protobuf grpc qtpositioning qtpositioning-qmlplugins"
 
 SRC_URI = "file://qt-app"
 

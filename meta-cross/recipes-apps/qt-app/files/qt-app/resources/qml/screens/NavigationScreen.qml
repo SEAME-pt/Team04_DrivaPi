@@ -1,126 +1,378 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
-import QtWebEngine
 import QtPositioning
+import QtLocation
 
 Rectangle {
     id: root
     color: "#000000"
 
+    // UI/state
     property bool showNavPanel: false
     property real currentLat: 0
     property real currentLon: 0
     property bool isNavigating: false
     property string currentDestination: ""
-    property var turnByTurnInstructions: []
+    property var turnByTurnInstructions: []   // [{ instruction: "...", distance: "..." }, ...]
 
-    // Start Waze-mode navigation with animation
-    function startWazeMode(destLat, destLon, destName) {
+    // Destination
+    property real destLat: NaN
+    property real destLon: NaN
+
+    // Route polyline (QtLocation uses list<coordinate>)
+    property var routePath: []                // [ coordinate(), coordinate(), ... ]
+    property real totalDistanceMeters: 0
+    property real totalDurationSeconds: 0
+
+    // --- Helpers ---
+    function _coord(lat, lon) {
+        return QtPositioning.coordinate(lat, lon);
+    }
+
+    function _isValidCoord(lat, lon) {
+        return !isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0;
+    }
+
+    function _fmtDistance(m) {
+        if (!m || m <= 0)
+            return "";
+        if (m >= 1000)
+            return (m / 1000).toFixed(1) + " km";
+        return Math.round(m) + " m";
+    }
+
+    function _parseNumberOrNaN(s) {
+        var v = parseFloat(s);
+        return isNaN(v) ? NaN : v;
+    }
+
+    // Decode OSRM polyline6
+    // Reference: OSRM uses polyline6 by default when geometries=polyline6
+    function _decodePolyline6(str) {
+        var coords = [];
+        var index = 0;
+        var lat = 0;
+        var lon = 0;
+
+        function decodeValue() {
+            var result = 0;
+            var shift = 0;
+            var b;
+            do {
+                b = str.charCodeAt(index++) - 63;
+                result |= (b & 0x1f) << shift;
+                shift += 5;
+            } while (b >= 0x20 && index < str.length)
+
+            var delta = (result & 1) ? ~(result >> 1) : (result >> 1);
+            return delta;
+        }
+
+        while (index < str.length) {
+            lat += decodeValue();
+            lon += decodeValue();
+            coords.push(_coord(lat / 1e6, lon / 1e6));
+        }
+        return coords;
+    }
+
+    // --- OSRM routing (public demo server) ---
+    // NOTE: This hits the internet. If your target has no WAN access, replace serviceUrl with your own OSRM.
+    function requestRoute(fromLat, fromLon, toLat, toLon) {
+        var url = "https://router.project-osrm.org/route/v1/driving/" + fromLon + "," + fromLat + ";" + toLon + "," + toLat + "?overview=full&geometries=polyline6&steps=true&annotations=false";
+
+        console.log("OSRM route:", url);
+
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState !== XMLHttpRequest.DONE)
+                return;
+
+            if (xhr.status !== 200) {
+                console.error("OSRM error:", xhr.status, xhr.responseText);
+                // Fallback: clear route but keep map centered
+                routePath = [];
+                turnByTurnInstructions = [
+                    {
+                        instruction: "Route unavailable (OSRM error)",
+                        distance: ""
+                    }
+                ];
+                return;
+            }
+
+            try {
+                var data = JSON.parse(xhr.responseText);
+                if (!data.routes || data.routes.length === 0) {
+                    console.error("OSRM: no routes");
+                    routePath = [];
+                    turnByTurnInstructions = [
+                        {
+                            instruction: "No route found",
+                            distance: ""
+                        }
+                    ];
+                    return;
+                }
+
+                var r = data.routes[0];
+                totalDistanceMeters = r.distance || 0;
+                totalDurationSeconds = r.duration || 0;
+
+                // Geometry
+                routePath = _decodePolyline6(r.geometry);
+
+                // Steps -> turn-by-turn
+                var tbt = [];
+                if (r.legs && r.legs.length > 0 && r.legs[0].steps) {
+                    for (var i = 0; i < r.legs[0].steps.length; i++) {
+                        var step = r.legs[0].steps[i];
+                        var man = step.maneuver || {};
+                        var name = step.name || "";
+                        var type = man.type || "";
+                        var modifier = man.modifier || "";
+
+                        // Build a human-ish instruction
+                        var text = "";
+                        if (type === "depart")
+                            text = "Start";
+                        else if (type === "arrive")
+                            text = "Arrive";
+                        else if (type === "roundabout")
+                            text = "Roundabout";
+                        else if (type === "turn")
+                            text = "Turn";
+                        else if (type === "merge")
+                            text = "Merge";
+                        else if (type === "on ramp")
+                            text = "On ramp";
+                        else if (type === "off ramp")
+                            text = "Off ramp";
+                        else if (type === "continue")
+                            text = "Continue";
+                        else
+                            text = type ? type : "Continue";
+
+                        if (modifier)
+                            text += " " + modifier;
+                        if (name)
+                            text += " onto " + name;
+
+                        tbt.push({
+                            instruction: text,
+                            distance: _fmtDistance(step.distance || 0)
+                        });
+                    }
+                }
+
+                // Put header entry first
+                var header = "Route: " + _fmtDistance(totalDistanceMeters);
+                tbt.unshift({
+                    instruction: header,
+                    distance: ""
+                });
+
+                turnByTurnInstructions = tbt;
+
+                // Fit map to route bounds
+                fitMapToRoute();
+
+                console.log("OSRM route ok. points:", routePath.length, "steps:", tbt.length);
+            } catch (e) {
+                console.error("OSRM parse error:", e);
+                routePath = [];
+                turnByTurnInstructions = [
+                    {
+                        instruction: "Route parse error",
+                        distance: ""
+                    }
+                ];
+            }
+        };
+
+        xhr.open("GET", url);
+        xhr.send();
+    }
+
+    function fitMapToRoute() {
+        if (!routePath || routePath.length < 2)
+            return;
+
+        var minLat = 90, maxLat = -90, minLon = 180, maxLon = -180;
+        for (var i = 0; i < routePath.length; i++) {
+            var c = routePath[i];
+            minLat = Math.min(minLat, c.latitude);
+            maxLat = Math.max(maxLat, c.latitude);
+            minLon = Math.min(minLon, c.longitude);
+            maxLon = Math.max(maxLon, c.longitude);
+        }
+
+        var tl = _coord(maxLat, minLon);
+        var br = _coord(minLat, maxLon);
+        map.visibleRegion = QtPositioning.rectangle(tl, br);
+    }
+
+    // --- Start/Stop navigation ---
+    function startWazeMode(toLat, toLon, toName) {
+        if (!_isValidCoord(currentLat, currentLon)) {
+            turnByTurnInstructions = [
+                {
+                    instruction: "Waiting for GPS...",
+                    distance: ""
+                }
+            ];
+            return;
+        }
+        if (!_isValidCoord(toLat, toLon)) {
+            turnByTurnInstructions = [
+                {
+                    instruction: "Destination invalid",
+                    distance: ""
+                }
+            ];
+            return;
+        }
+
         isNavigating = true;
-        currentDestination = destName;
-        showNavPanel = false;  // Hide selection panel
+        currentDestination = toName || "Destination";
+        showNavPanel = false;
 
-        // Initialize with mock instructions (will be replaced by real ones)
+        destLat = toLat;
+        destLon = toLon;
+
+        // Quick header while we fetch
         turnByTurnInstructions = [
             {
-                instruction: "Starting navigation...",
+                instruction: "Calculating route...",
                 distance: ""
             }
         ];
 
-        navigateTo(destLat, destLon, destName);
+        requestRoute(currentLat, currentLon, destLat, destLon);
 
-        // Start GPS tracking animation
-        if (positionSource.active) {
-            console.log("Waze mode activated: Following GPS to", destName);
-        }
+        // Follow current position with gentle animation
+        followTimer.restart();
     }
 
-    // Stop navigation
     function stopNavigation() {
         isNavigating = false;
         currentDestination = "";
+        destLat = NaN;
+        destLon = NaN;
+        routePath = [];
+        totalDistanceMeters = 0;
+        totalDurationSeconds = 0;
         turnByTurnInstructions = [];
-        updateMapLocation(currentLat, currentLon);
+        followTimer.stop();
+        // Re-center on current position
+        if (_isValidCoord(currentLat, currentLon)) {
+            map.center = _coord(currentLat, currentLon);
+        }
     }
 
-    // WebEngine profile with mobile user agent and dark theme
-    WebEngineProfile {
-        id: mobileProfile
-        httpUserAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1"
-        storageName: "DrivaPiMaps"
-        persistentCookiesPolicy: WebEngineProfile.ForcePersistentCookies
-        httpCacheType: WebEngineProfile.DiskHttpCache
-    }
-
+    // --- Location ---
     PositionSource {
         id: positionSource
         active: true
-        updateInterval: 5000
+        updateInterval: 2000
 
         onPositionChanged: {
             var lat = position.coordinate.latitude;
             var lon = position.coordinate.longitude;
 
-            if (!isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0) {
-                console.log("GPS: ", lat, lon);
+            if (_isValidCoord(lat, lon)) {
                 currentLat = lat;
                 currentLon = lon;
 
-                // If navigating, update map smoothly with animation
+                // If navigating, keep map following (but not too jumpy)
                 if (isNavigating) {
-                    updateMapWithAnimation(lat, lon);
+                    // map center update is handled by followTimer for smoothness
                 } else {
-                    updateMapLocation(lat, lon);
+                    map.center = _coord(currentLat, currentLon);
                 }
             }
         }
+    }
+
+    // Smooth follow of GPS while navigating
+    Timer {
+        id: followTimer
+        interval: 700
+        repeat: true
+        running: false
+        onTriggered: {
+            if (!isNavigating)
+                return;
+            if (!_isValidCoord(currentLat, currentLon))
+                return;
+            map.center = _coord(currentLat, currentLon);
+        }
+    }
+
+    // --- Map plugin (OSM) ---
+    Plugin {
+        id: mapPlugin
+        name: "osm"
+        // Default OSM tiles. If you want dark tiles, see note below.
     }
 
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
 
-        // Map area - takes most of the space
         Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
             color: "#0F1419"
 
-            WebEngineView {
-                id: mapsView
+            Map {
+                id: map
                 anchors.fill: parent
-                profile: mobileProfile
-                backgroundColor: "#000000"
+                plugin: mapPlugin
+                zoomLevel: 15
+                center: _coord(38.7223, -9.1393) // default Lisbon
 
-                // Grant geolocation to the web content
-                onFeaturePermissionRequested: function (securityOrigin, feature) {
-                    if (feature === WebEngineView.Geolocation) {
-                        grantFeaturePermission(securityOrigin, feature, true);
-                    } else {
-                        grantFeaturePermission(securityOrigin, feature, false);
+                // Current position marker
+                MapQuickItem {
+                    id: currentMarker
+                    anchorPoint.x: 8
+                    anchorPoint.y: 8
+                    coordinate: _isValidCoord(currentLat, currentLon) ? _coord(currentLat, currentLon) : map.center
+                    sourceItem: Rectangle {
+                        width: 16
+                        height: 16
+                        radius: 8
+                        color: "#0066ff"
+                        border.color: "#ffffff"
+                        border.width: 2
                     }
                 }
 
-                Component.onCompleted: {
-                    // Wait a moment for GPS, then initialize
-                    initTimer.start();
-                }
-
-                Timer {
-                    id: initTimer
-                    interval: 1500
-                    running: false
-                    repeat: false
-                    onTriggered: initializeLocation()
-                }
-
-                onLoadingChanged: function (loadRequest) {
-                    if (loadRequest.status === WebEngineView.LoadSucceededStatus) {
-                        // Leaflet/OSM handles dark theme natively
-                        console.log("Map loaded successfully with Leaflet/OSM dark theme");
+                // Destination marker
+                MapQuickItem {
+                    id: destMarker
+                    visible: isNavigating && _isValidCoord(destLat, destLon)
+                    anchorPoint.x: 8
+                    anchorPoint.y: 8
+                    coordinate: _coord(destLat, destLon)
+                    sourceItem: Rectangle {
+                        width: 16
+                        height: 16
+                        radius: 8
+                        color: "#ff3333"
+                        border.color: "#ffffff"
+                        border.width: 2
                     }
+                }
+
+                // Route polyline
+                MapPolyline {
+                    id: routeLine
+                    visible: isNavigating && routePath && routePath.length > 1
+                    line.width: 6
+                    line.color: "#00bfff"
+                    path: routePath
                 }
             }
         }
@@ -139,7 +391,7 @@ Rectangle {
         anchors.top: parent.top
         anchors.margins: 16
         z: 200
-        visible: !isNavigating  // Hide when navigating
+        visible: !isNavigating
 
         Text {
             anchors.centerIn: parent
@@ -203,7 +455,6 @@ Rectangle {
             anchors.margins: 8
             spacing: 4
 
-            // Header with stop button
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 4
@@ -223,9 +474,8 @@ Rectangle {
                 color: "#444"
             }
 
-            // Route info (compact)
             Text {
-                text: "Start: " + currentLat.toFixed(4) + ", " + currentLon.toFixed(4)
+                text: "Start: " + (currentLat ? currentLat.toFixed(4) : "—") + ", " + (currentLon ? currentLon.toFixed(4) : "—")
                 color: "#999999"
                 font.pixelSize: 9
                 elide: Text.ElideRight
@@ -249,7 +499,6 @@ Rectangle {
                 Layout.bottomMargin: 4
             }
 
-            // Turn-by-turn instructions
             ScrollView {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -297,7 +546,7 @@ Rectangle {
         }
     }
 
-    // Navigation panel overlay (calls real routing)
+    // Navigation panel overlay (destination chooser)
     Rectangle {
         id: navPanel
         width: 200
@@ -332,30 +581,9 @@ Rectangle {
             }
 
             Text {
-                text: "Destination:"
+                text: "Destination (coords):"
                 color: "#999999"
                 font.pixelSize: 10
-            }
-
-            TextField {
-                id: destinationInput
-                Layout.fillWidth: true
-                placeholderText: "Enter address or place..."
-                color: "#ffffff"
-                font.pixelSize: 11
-                background: Rectangle {
-                    color: "#1e1e1e"
-                    border.color: destinationInput.focus ? "#0066ff" : "#444"
-                    border.width: 1
-                    radius: 4
-                }
-            }
-
-            Text {
-                text: "Or use coordinates:"
-                color: "#999999"
-                font.pixelSize: 9
-                Layout.topMargin: 4
             }
 
             RowLayout {
@@ -393,21 +621,30 @@ Rectangle {
                 }
             }
 
+            TextField {
+                id: destinationInput
+                Layout.fillWidth: true
+                placeholderText: "Name (optional)"
+                color: "#ffffff"
+                font.pixelSize: 11
+                background: Rectangle {
+                    color: "#1e1e1e"
+                    border.color: destinationInput.focus ? "#0066ff" : "#444"
+                    border.width: 1
+                    radius: 4
+                }
+            }
+
             Button {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 40
                 text: "🚗 START NAVIGATION"
-                enabled: (destinationInput.text !== "") || (latInput.text !== "" && lonInput.text !== "")
+                enabled: latInput.text !== "" && lonInput.text !== ""
                 onClicked: {
-                    var destName = destinationInput.text || "Destination";
-                    var lat = parseFloat(latInput.text);
-                    var lon = parseFloat(lonInput.text);
-
-                    if (!isNaN(lat) && !isNaN(lon)) {
-                        startWazeMode(lat, lon, destName);
-                    } else {
-                        console.log("Geocoding not yet implemented, using coordinates");
-                    }
+                    var lat = _parseNumberOrNaN(latInput.text);
+                    var lon = _parseNumberOrNaN(lonInput.text);
+                    var name = destinationInput.text || "Destination";
+                    startWazeMode(lat, lon, name);
                 }
 
                 background: Rectangle {
@@ -431,411 +668,9 @@ Rectangle {
         }
     }
 
-    // Initialize with GPS or IP geolocation
-    function initializeLocation() {
-        var gpsValid = false;
-
-        // Check if GPS has valid position
-        if (positionSource.position.coordinate && !isNaN(positionSource.position.coordinate.latitude) && positionSource.position.coordinate.latitude !== 0) {
-            gpsValid = true;
-            var lat = positionSource.position.coordinate.latitude;
-            var lon = positionSource.position.coordinate.longitude;
-            updateMapLocation(lat, lon);
-        } else {
-            // No GPS - use IP geolocation
-            console.log("No GPS, using IP geolocation");
-            fetchIPLocation();
-        }
-    }
-
-    // Fetch location based on IP (try multiple APIs)
-    function fetchIPLocation() {
-        var xhr = new XMLHttpRequest();
-
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-                try {
-                    var data = JSON.parse(xhr.responseText);
-                    console.log("IP Location:", data.lat || data.latitude, data.lon || data.longitude);
-                    updateMapLocation(data.lat || data.latitude, data.lon || data.longitude);
-                } catch (e) {
-                    console.error("Failed to parse IP location, trying fallback");
-                    // Try fallback API
-                    tryFallbackIP();
-                }
-            } else if (xhr.readyState === XMLHttpRequest.DONE && xhr.status !== 200) {
-                console.error("IP location request failed, trying fallback");
-                tryFallbackIP();
-            }
-        };
-
-        // Try ipapi.co first (more reliable)
-        console.log("Fetching IP location from ipapi.co");
-        xhr.open("GET", "https://ipapi.co/json/");
-        xhr.send();
-    }
-
-    // Fallback IP geolocation
-    function tryFallbackIP() {
-        var xhr = new XMLHttpRequest();
-
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-                try {
-                    var data = JSON.parse(xhr.responseText);
-                    console.log("Fallback IP Location:", data.latitude, data.longitude);
-                    updateMapLocation(data.latitude, data.longitude);
-                } catch (e) {
-                    console.error("Fallback IP failed, using default");
-                    updateMapLocation(38.7223, -9.1393);
-                }
-            } else if (xhr.readyState === XMLHttpRequest.DONE) {
-                console.error("Fallback IP request failed, using default");
-                updateMapLocation(38.7223, -9.1393);
-            }
-        };
-
-        // Fallback to freegeoip
-        console.log("Fetching IP location from freegeoip.app");
-        xhr.open("GET", "https://freegeoip.app/json/");
-        xhr.send();
-    }
-
-    // Update map with coordinates - Leaflet OSM with dark theme
-    function updateMapLocation(lat, lon) {
-        if (isNaN(lat) || isNaN(lon)) {
-            lat = 38.7223;
-            lon = -9.1393;
-        }
-
-        currentLat = lat;
-        currentLon = lon;
-
-        // Build HTML with Leaflet + OSM with dark theme
-        var html = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-                <style>
-                    * { margin: 0; padding: 0; }
-                    body { height: 100vh; background: #1e1e1e; }
-                    #map { height: 100%; width: 100%; }
-
-                    /* Dark theme - override leaflet defaults */
-                    .leaflet-control-zoom {
-                        background: #2d2d2d !important;
-                        border: 1px solid #444 !important;
-                    }
-                    .leaflet-control-zoom a {
-                        background: #2d2d2d !important;
-                        color: #fff !important;
-                        border-bottom: 1px solid #444 !important;
-                    }
-                    .leaflet-control-attribution {
-                        background: rgba(0,0,0,0.8) !important;
-                        color: #999 !important;
-                        font-size: 11px;
-                    }
-                </style>
-            </head>
-            <body>
-                <div id="map"></div>
-                <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-                <script>
-                    // Initialize map
-                    var map = L.map('map').setView([${lat}, ${lon}], 15);
-
-                    // Dark theme tile layer
-                    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                        attribution: '© OpenStreetMap, © CartoDB',
-                        maxZoom: 20,
-                        crossOrigin: true
-                    }).addTo(map);
-
-                    // Add marker for current location
-                    L.marker([${lat}, ${lon}], {
-                        title: 'Your Location'
-                    }).addTo(map).bindPopup('<b>Current Location</b><br>' +
-                        '${lat.toFixed(4)}, ${lon.toFixed(4)}');
-
-                    // Add circle around location
-                    L.circle([${lat}, ${lon}], {
-                        color: '#00bfff',
-                        fill: true,
-                        fillColor: '#00bfff',
-                        fillOpacity: 0.1,
-                        radius: 50
-                    }).addTo(map);
-
-                    console.log('Map loaded at', ${lat}, ${lon});
-                </script>
-            </body>
-            </html>
-        `;
-
-        console.log("Loading Leaflet/OSM map (dark theme):", lat, lon);
-        mapsView.url = "data:text/html;charset=utf-8," + encodeURIComponent(html);
-    }
-
-    // Update map with smooth animation (for GPS tracking during navigation)
-    function updateMapWithAnimation(lat, lon) {
-        if (isNaN(lat) || isNaN(lon)) {
-            return;
-        }
-
-        // Inject JavaScript to smoothly pan to new position
-        mapsView.runJavaScript(`
-            if (typeof map !== 'undefined' && map) {
-                map.panTo([${lat}, ${lon}], {animate: true, duration: 1.0});
-
-                // Update current position marker if it exists
-                if (typeof currentPosMarker !== 'undefined') {
-                    currentPosMarker.setLatLng([${lat}, ${lon}]);
-                } else {
-                    currentPosMarker = L.circleMarker([${lat}, ${lon}], {
-                        radius: 8,
-                        fillColor: '#0066ff',
-                        color: '#fff',
-                        weight: 2,
-                        opacity: 1,
-                        fillOpacity: 0.8
-                    }).addTo(map);
-                }
-            }
-        `);
-
-        console.log("Animated map update:", lat, lon);
-    }
-
-    // Navigate to destination (optional - for future route planning)
-    function navigateTo(destLat, destLon, destName) {
-        // Get current position or use last known position
-        var startLat = positionSource.position.coordinate.latitude;
-        var startLon = positionSource.position.coordinate.longitude;
-
-        if (isNaN(startLat) || isNaN(startLon) || startLat === 0 || startLon === 0) {
-            startLat = currentLat;
-            startLon = currentLon;
-        }
-
-        if (isNaN(startLat) || isNaN(startLon) || startLat === 0 || startLon === 0) {
-            console.error("Current position not available");
-            return;
-        }
-
-        if (isNaN(destLat) || isNaN(destLon)) {
-            console.error("Destination position invalid");
-            return;
-        }
-
-        // Build navigation HTML with real routing (OSRM)
-        var html = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-                <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
-                <style>
-                    * { margin: 0; padding: 0; }
-                    body { height: 100vh; background: #1e1e1e; font-family: Arial, sans-serif; }
-                    #map { height: 100%; width: 100%; }
-
-                    .info-panel {
-                        position: absolute;
-                        top: 10px;
-                        right: 10px;
-                        background: #2d2d2d;
-                        color: #fff;
-                        padding: 15px;
-                        border-radius: 5px;
-                        max-width: 250px;
-                        z-index: 1000;
-                        border: 1px solid #444;
-                    }
-
-                    .leaflet-routing-container {
-                        background: #2d2d2d !important;
-                        color: #fff !important;
-                        border: 1px solid #444 !important;
-                        border-radius: 5px !important;
-                        max-height: 50vh;
-                        overflow: auto;
-                    }
-
-                    .leaflet-routing-alt {
-                        background: #2d2d2d !important;
-                        color: #fff !important;
-                        border-top: 1px solid #444 !important;
-                    }
-
-                    .leaflet-routing-geocoders input {
-                        background: #1e1e1e !important;
-                        color: #fff !important;
-                        border: 1px solid #444 !important;
-                    }
-
-                    .info-panel h3 {
-                        margin: 0 0 10px 0;
-                        color: #00bfff;
-                    }
-
-                    .info-panel p {
-                        margin: 5px 0;
-                        font-size: 12px;
-                    }
-
-                    /* Dark theme controls */
-                    .leaflet-control-zoom {
-                        background: #2d2d2d !important;
-                        border: 1px solid #444 !important;
-                    }
-                    .leaflet-control-zoom a {
-                        background: #2d2d2d !important;
-                        color: #fff !important;
-                        border-bottom: 1px solid #444 !important;
-                    }
-                    .leaflet-control-attribution {
-                        background: rgba(0,0,0,0.8) !important;
-                        color: #999 !important;
-                        font-size: 11px;
-                    }
-                </style>
-            </head>
-            <body>
-                <div id="map"></div>
-                <div class="info-panel">
-                    <h3>🧭 Navigation</h3>
-                    <p><b>Start:</b> ${startLat.toFixed(4)}, ${startLon.toFixed(4)}</p>
-                    <p><b>Destination:</b> ${destName || 'Waypoint'}</p>
-                    <p><b>Target:</b> ${destLat.toFixed(4)}, ${destLon.toFixed(4)}</p>
-                </div>
-                <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-                <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
-                <script>
-                    var startLat = ${startLat};
-                    var startLon = ${startLon};
-                    var destLat = ${destLat};
-                    var destLon = ${destLon};
-
-                    // Initialize map centered on route midpoint
-                    var midLat = (startLat + destLat) / 2;
-                    var midLon = (startLon + destLon) / 2;
-                    var map = L.map('map').setView([midLat, midLon], 13);
-
-                    // Dark theme tile layer
-                    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                        attribution: '© OpenStreetMap, © CartoDB',
-                        maxZoom: 20,
-                        crossOrigin: true
-                    }).addTo(map);
-
-                    // Real routing using OSRM (turn-by-turn)
-                    var currentPosMarker = null;  // Store marker for animation updates
-
-                    var routingControl = L.Routing.control({
-                        waypoints: [
-                            L.latLng(startLat, startLon),
-                            L.latLng(destLat, destLon)
-                        ],
-                        routeWhileDragging: false,
-                        showAlternatives: false,
-                        fitSelectedRoutes: true,
-                        lineOptions: {
-                            styles: [{ color: '#00bfff', opacity: 0.9, weight: 5 }]
-                        },
-                        altLineOptions: {
-                            styles: [{ color: '#666', opacity: 0.6, weight: 4 }]
-                        },
-                        router: L.Routing.osrmv1({
-                            serviceUrl: 'https://router.project-osrm.org/route/v1'
-                        }),
-                        createMarker: function(i, wp) {
-                            var color = i === 0 ? '#0066ff' : '#ff3333';
-                            return L.circleMarker(wp.latLng, {
-                                radius: 8,
-                                fillColor: color,
-                                color: '#fff',
-                                weight: 2,
-                                opacity: 1,
-                                fillOpacity: 0.8
-                            });
-                        }
-                    }).addTo(map);
-
-                    routingControl.on('routesfound', function(e) {
-                        console.log('Routes found:', e.routes.length);
-                        // Zoom to show full route with padding
-                        var bounds = L.latLngBounds([startLat, startLon], [destLat, destLon]);
-                        map.fitBounds(bounds, {padding: [50, 50], maxZoom: 14});
-
-                        // Extract turn-by-turn instructions
-                        if (e.routes.length > 0 && e.routes[0].instructions) {
-                            var instructions = [];
-                            for (var i = 0; i < e.routes[0].instructions.length; i++) {
-                                var instr = e.routes[0].instructions[i];
-                                instructions.push({
-                                    instruction: instr.text || instr.road || 'Continue',
-                                    distance: (instr.distance >= 1000 ?
-                                        (instr.distance / 1000).toFixed(1) + ' km' :
-                                        Math.round(instr.distance) + ' m')
-                                });
-                            }
-                            // Store in window object for QML to retrieve
-                            window.routingInstructions = instructions;
-                            console.log('Instructions stored:', instructions.length);
-                        }
-                    });
-
-                    routingControl.on('routingerror', function(err) {
-                        console.error('Routing error:', err);
-                        // Fallback: draw straight line if routing fails
-                        L.polyline([
-                            [startLat, startLon],
-                            [destLat, destLon]
-                        ], {
-                            color: '#00bfff',
-                            weight: 3,
-                            opacity: 0.7,
-                            dashArray: '5, 5'
-                        }).addTo(map);
-                    });
-
-                    console.log('Navigation route loaded');
-                </script>
-            </body>
-            </html>
-        `;
-
-        console.log("Navigating to destination:", destName, destLat, destLon);
-        mapsView.url = "data:text/html;charset=utf-8," + encodeURIComponent(html);
-
-        // Wait for routing to complete, then extract instructions
-        extractInstructionsTimer.restart();
-    }
-
-    // Timer to extract routing instructions after they're calculated
-    Timer {
-        id: extractInstructionsTimer
-        interval: 3000
-        running: false
-        repeat: false
-        onTriggered: {
-            mapsView.runJavaScript("typeof window.routingInstructions !== 'undefined' ? JSON.stringify(window.routingInstructions) : '[]'", function (result) {
-                try {
-                    var instructions = JSON.parse(result);
-                    if (instructions && instructions.length > 0) {
-                        turnByTurnInstructions = instructions;
-                        console.log("Loaded", instructions.length, "turn-by-turn instructions");
-                    }
-                } catch (e) {
-                    console.error("Failed to parse instructions:", e);
-                }
-            });
-        }
+    // Initial centering once we get GPS
+    Component.onCompleted: {
+        // If GPS never comes, keep Lisbon default.
+        // Once we get a valid coordinate, PositionSource will center the map.
     }
 }
