@@ -1,4 +1,3 @@
-// File: resources/qml/screens/DiagnosticsScreen.qml
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -8,7 +7,7 @@ Item {
     id: root
     clip: true
 
-    //darken background to match cluster style
+    // darken background to match cluster style
     Rectangle {
         anchors.fill: parent
         color: "#05080e"
@@ -120,7 +119,6 @@ Item {
                         value: rpiOnline ? fmtInt(piHealthReader.diskPercent, "%") : "--"
                         warn: rpiOnline && piHealthReader.diskPercent > 90
                     }
-
                     MetricTileMini {
                         label: "FREQ"
                         value: rpiOnline ? fmtInt(piHealthReader.cpuFreq, "MHz") : "--"
