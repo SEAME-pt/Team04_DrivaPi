@@ -504,7 +504,7 @@ ApplicationWindow {
             text: "Initializing..."
             font.pixelSize: 12
             font.weight: Font.Light
-            font.letterSpacing: 1
+            letterSpacing: 1
             color: theme.colors.textSecondary
             opacity: 0.8
         }
