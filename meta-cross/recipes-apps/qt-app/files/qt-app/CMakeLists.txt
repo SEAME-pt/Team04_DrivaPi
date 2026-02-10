@@ -141,6 +141,10 @@ target_link_libraries(myqtapp PRIVATE
 
 include(GNUInstallDirs)
 
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/resources/qml/"
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/qt-app/resources/qml"
+        FILES_MATCHING PATTERN "*.qml" PATTERN "*.js" PATTERN "*.png" PATTERN "*.jpg" PATTERN "*.svg")
+
 install(TARGETS myqtapp
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
