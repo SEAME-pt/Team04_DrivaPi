@@ -127,6 +127,7 @@ endif()
 # Use pkg-config for gRPC and Abseil to get all dependencies automatically
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GRPC REQUIRED grpc++)
+pkg_check_modules(PROTOBUF REQUIRED protobuf)
 pkg_check_modules(ABSL REQUIRED absl_hash absl_strings absl_base absl_log_internal_check_op absl_synchronization absl_time)
 
 # Then link with pkg-config imported targets
@@ -135,4 +136,5 @@ target_link_libraries(myqtapp PRIVATE
     PkgConfig::TAGLIB
     ${GRPC_LIBRARIES}
     ${ABSL_LIBRARIES}
+	${PROTOBUF_LIBRARIES}
 )
