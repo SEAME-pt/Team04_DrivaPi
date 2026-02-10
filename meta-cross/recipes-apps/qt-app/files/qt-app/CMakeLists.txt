@@ -151,16 +151,12 @@ add_executable(kuksa_feeder
     ${GEN_PROTO_SRCS}
 )
 
-# Ensure generated files exist before compiling
-add_dependencies(myqtapp)
+# DO NOT ADD add_dependencies() HERE - they're already in the executables
 
 target_include_directories(myqtapp PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/inc/gui
     ${CMAKE_CURRENT_SOURCE_DIR}/inc/models
     ${GEN_DIR}
-    ${GRPC_INCLUDE_DIRS}
-    ${PROTOBUF_INCLUDE_DIRS}
-    ${ABSL_INCLUDE_DIRS}
 )
 
 target_include_directories(kuksa_feeder PRIVATE
