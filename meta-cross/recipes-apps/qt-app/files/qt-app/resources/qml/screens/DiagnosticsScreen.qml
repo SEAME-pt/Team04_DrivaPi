@@ -293,36 +293,34 @@ Item {
         Layout.fillHeight: true
         Layout.minimumHeight: 50
 
-        ColumnLayout {
+        Column {
             anchors.fill: parent
             anchors.margins: 5
-            spacing: 0
+            spacing: 2
 
             Text {
-                id: labelText
+                width: parent.width
                 text: label
-                Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
-                Layout.fillHeight: true
+                horizontalAlignment: Text.AlignHCenter
                 font.pixelSize: 9
                 font.letterSpacing: 0.6
                 color: "#6A7A8A"
-                verticalAlignment: Text.AlignVCenter
             }
 
             Item {
-                Layout.fillHeight: true
+                width: parent.width
+                height: parent.height - labelText.height - valueText.height - 7
             }
 
             Text {
                 id: valueText
+                width: parent.width
                 text: value
-                Layout.alignment: Qt.AlignHCenter | Qt.AlignBottom
-                Layout.fillHeight: true
+                horizontalAlignment: Text.AlignHCenter
                 font.pixelSize: 16
                 font.weight: Font.Bold
                 color: warn ? "#ff6644" : "#00BFFF"
                 opacity: (value === "--") ? 0.55 : 1.0
-                verticalAlignment: Text.AlignVCenter
             }
         }
     }
