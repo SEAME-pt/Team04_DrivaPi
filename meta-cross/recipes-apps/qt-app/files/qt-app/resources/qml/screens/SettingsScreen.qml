@@ -1,875 +1,372 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
 import "../theme"
+import "../store"
 
 Rectangle {
     id: root
-    color: AppTheme.colors.surface
-    
-    // ====== SCROLLABLE SETTINGS LIST ======
-    Flickable {
-        anchors.fill: parent
-        contentHeight: settingsColumn.implicitHeight
-        clip: true
-        
-        ColumnLayout {
-            id: settingsColumn
-            width: parent.width
-            spacing: 0
-            
-            // ====== SECTION 1: Connection ======
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 60
-                color: AppTheme.colors.surfaceVariant
-                
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: AppTheme.spacing.medium
-                    spacing: AppTheme.spacing.medium
-                    
-                    Image {
-                        source: "qrc:/icons/hardware/network.svg"
-                        sourceSize.width: 20
-                        sourceSize.height: 20
-                        Layout.alignment: Qt.AlignVCenter
-                    }
-                    
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: AppTheme.spacing.xxSmall
-                        
-                        Text {
-                            text: "Connection Mode"
-                            color: AppTheme.colors.text
-                            font.pixelSize: AppTheme.typography.labelLarge
-                            font.weight: Font.Bold
-                        }
-                    
-                        RowLayout {
-                            spacing: AppTheme.spacing.medium
-                            
-                            Rectangle {
-                                width: 60
-                                height: 32
-                                radius: AppTheme.radius.small
-                                color: AppTheme.colors.primary
-                                
-                                Text {
-                                    text: "CAN"
-                                    color: AppTheme.colors.text
-                                    font.pixelSize: AppTheme.typography.labelSmall
-                                    anchors.centerIn: parent
-                                }
-                            }
-                            
-                            Rectangle {
-                                width: 70
-                                height: 32
-                                radius: AppTheme.radius.small
-                                color: AppTheme.colors.surfaceElevated
-                                
-                                Text {
-                                    text: "KUKSA"
-                                    color: AppTheme.colors.textSecondary
-                                    font.pixelSize: AppTheme.typography.labelSmall
-                                    anchors.centerIn: parent
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-            Rectangle { Layout.fillWidth: true; height: 1; color: AppTheme.colors.divider }
-            
-            // ====== SECTION 2: Display ======
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 60
-                color: AppTheme.colors.surface
-                
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: AppTheme.spacing.medium
-                    spacing: AppTheme.spacing.medium
-                    
-                    Image {
-                        source: "qrc:/icons/settings/display.svg"
-                        sourceSize.width: 20
-                        sourceSize.height: 20
-                        Layout.alignment: Qt.AlignVCenter
-                    }
-                    
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: AppTheme.spacing.xxSmall
-                        
-                        Text {
-                            text: "Display Mode"
-                            color: AppTheme.colors.text
-                            font.pixelSize: AppTheme.typography.labelLarge
-                            font.weight: Font.Bold
-                        }
-                    
-                        RowLayout {
-                            spacing: AppTheme.spacing.medium
-                            
-                            Rectangle {
-                                width: 80
-                                height: 32
-                                radius: AppTheme.radius.small
-                                color: AppTheme.colors.surfaceElevated
-                                
-                                RowLayout {
-                                    anchors.centerIn: parent
-                                    spacing: 4
-                                    
-                                    Image {
-                                        source: "qrc:/icons/settings/theme-dark.svg"
-                                        sourceSize.width: 14
-                                        sourceSize.height: 14
-                                    }
-                                    
-                                    Text {
-                                        text: "Dark"
-                                        color: AppTheme.colors.text
-                                        font.pixelSize: AppTheme.typography.labelSmall
-                                    }
-                                }
-                            }
-                            
-                            Rectangle {
-                                width: 80
-                                height: 32
-                                radius: AppTheme.radius.small
-                                color: AppTheme.colors.surfaceVariant
-                                
-                                RowLayout {
-                                    anchors.centerIn: parent
-                                    spacing: 4
-                                    
-                                    Image {
-                                        source: "qrc:/icons/settings/theme-light.svg"
-                                        sourceSize.width: 14
-                                        sourceSize.height: 14
-                                    }
-                                    
-                                    Text {
-                                        text: "Light"
-                                        color: AppTheme.colors.textSecondary
-                                        font.pixelSize: AppTheme.typography.labelSmall
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-            Rectangle { Layout.fillWidth: true; height: 1; color: AppTheme.colors.divider }
-            
-            // ====== SECTION 3: Audio ======
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 60
-                color: AppTheme.colors.surfaceVariant
-                
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: AppTheme.spacing.medium
-                    spacing: AppTheme.spacing.medium
-                    
-                    Image {
-                        source: "qrc:/icons/controls/volume-high.svg"
-                        sourceSize.width: 20
-                        sourceSize.height: 20
-                        Layout.alignment: Qt.AlignVCenter
-                    }
-                    
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: AppTheme.spacing.small
-                        
-                        Text {
-                            text: "Audio Volume"
-                            color: AppTheme.colors.text
-                            font.pixelSize: AppTheme.typography.labelLarge
-                            font.weight: Font.Bold
-                        }
-                        
-                        RowLayout {
-                            spacing: AppTheme.spacing.small
-                            
-                            Image {
-                                source: "qrc:/icons/controls/volume-mute.svg"
-                                sourceSize.width: 16
-                                sourceSize.height: 16
-                            }
-                            
-                            Rectangle {
-                                Layout.fillWidth: true
-                                height: 4
-                                radius: 2
-                                color: AppTheme.colors.surfaceElevated
-                                
-                                Rectangle {
-                                    width: parent.width * 0.6
-                                    height: parent.height
-                                    radius: 2
-                                    color: AppTheme.colors.primary
-                                }
-                            }
-                            
-                            Image {
-                                source: "qrc:/icons/controls/volume-high.svg"
-                                sourceSize.width: 16
-                                sourceSize.height: 16
-                            }
-                        }
+    color: "transparent" // let the right panel background show through (cluster-like)
 
-                        RowLayout {
-                            spacing: AppTheme.spacing.small
-                            
-                            Image {
-                                source: "qrc:/icons/controls/volume-low.svg"
-                                sourceSize.width: 16
-                                sourceSize.height: 16
-                            }
-                            
-                            Text {
-                                text: "Night mode volume"
-                                color: AppTheme.colors.textSecondary
-                                font.pixelSize: AppTheme.typography.labelSmall
-                            }
-                        }
+    // Compact models
+    readonly property var themeModel: ["Dark", "Light", "Auto"]
+    readonly property var speedModel: ["km/h", "m/s", "mph"]
+    readonly property var tempModel: ["°C", "°F", "K"]
+    readonly property var distanceModel: ["km", "mi", "m"]
+    readonly property var windModel: ["m/s", "km/h", "mph"]
+    readonly property var precipModel: ["mm", "in"]
+
+    function idx(model, value) {
+        var i = model.indexOf(value)
+        return i < 0 ? 0 : i
+    }
+
+    // Panel background (dark glass card like Cluster bottom bar)
+    Rectangle {
+        anchors.fill: parent
+        radius: 10
+        color: "#070c13cc"
+        border.color: "#232a35"
+        border.width: 1
+    }
+
+    ColumnLayout {
+        anchors.fill: parent
+        anchors.margins: 10
+        spacing: 6
+
+        Text {
+            text: "Settings"
+            color: AppTheme.colors.primary
+            font.pixelSize: 14
+            font.weight: Font.Bold
+        }
+
+        // ---- helper: compact row ----
+        // (repeated explicitly to keep QML simple/robust)
+
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 28
+            spacing: 8
+
+            Text {
+                text: "Theme"
+                Layout.preferredWidth: 70
+                color: "#93a6bf"
+                font.pixelSize: 11
+                verticalAlignment: Text.AlignVCenter
+            }
+
+            ComboBox {
+                id: themeBox
+                Layout.fillWidth: true
+                Layout.preferredHeight: 28
+                model: themeModel
+                currentIndex: idx(themeModel, SettingsStore.themeMode)
+                onActivated: SettingsStore.themeMode = textAt(index)
+
+                font.pixelSize: 11
+                contentItem: Text {
+                    text: themeBox.displayText
+                    color: "#e6f0ff"
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                    leftPadding: 8
+                }
+                background: Rectangle {
+                    radius: 7
+                    color: "#0b1420"
+                    border.color: "#232a35"
+                    border.width: 1
+                }
+                indicator: Rectangle {
+                    width: 10; height: 10; radius: 2
+                    color: "#4fb3d9"
+                    anchors.right: parent.right
+                    anchors.rightMargin: 8
+                    anchors.verticalCenter: parent.verticalCenter
+                    opacity: 0.95
+                }
+                delegate: ItemDelegate {
+                    width: themeBox.width
+                    height: 26
+                    contentItem: Text {
+                        text: modelData
+                        color: "#e6f0ff"
+                        font.pixelSize: 11
+                        verticalAlignment: Text.AlignVCenter
+                        leftPadding: 8
+                    }
+                    background: Rectangle {
+                        color: (index === themeBox.currentIndex) ? "#101e2c" : "transparent"
                     }
                 }
-            }
-            
-            Rectangle { Layout.fillWidth: true; height: 1; color: AppTheme.colors.divider }
-            
-            // ====== SECTION 4: Connectivity ======
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 90
-                color: AppTheme.colors.surface
-                
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: AppTheme.spacing.medium
-                    spacing: AppTheme.spacing.medium
-                    
-                    Image {
-                        source: "qrc:/icons/settings/wifi.svg"
-                        sourceSize.width: 20
-                        sourceSize.height: 20
-                        Layout.alignment: Qt.AlignTop
+                popup: Popup {
+                    y: themeBox.height + 4
+                    width: themeBox.width
+                    padding: 4
+                    background: Rectangle {
+                        radius: 8
+                        color: "#0b1420"
+                        border.color: "#232a35"
+                        border.width: 1
                     }
-                    
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: AppTheme.spacing.small
-                        
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: AppTheme.spacing.small
-                            
-                            Text {
-                                text: "WiFi"
-                                color: AppTheme.colors.text
-                                font.pixelSize: AppTheme.typography.labelLarge
-                                font.weight: Font.Bold
-                                Layout.fillWidth: true
-                            }
-                            
-                            Image {
-                                source: "qrc:/icons/settings/toggle-on.svg"
-                                sourceSize.width: 40
-                                sourceSize.height: 20
-                            }
-                        }
-                        
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: AppTheme.spacing.small
-                            
-                            Image {
-                                source: "qrc:/icons/settings/bluetooth.svg"
-                                sourceSize.width: 16
-                                sourceSize.height: 16
-                            }
-                            
-                            Text {
-                                text: "Bluetooth"
-                                color: AppTheme.colors.text
-                                font.pixelSize: AppTheme.typography.labelLarge
-                                font.weight: Font.Bold
-                                Layout.fillWidth: true
-                            }
-                            
-                            Image {
-                                source: "qrc:/icons/settings/toggle-off.svg"
-                                sourceSize.width: 40
-                                sourceSize.height: 20
-                            }
-                        }
+                    contentItem: ListView {
+                        clip: true
+                        implicitHeight: Math.min(contentHeight, 6 * 26)
+                        model: themeBox.delegateModel
                     }
                 }
-            }
-            
-            Rectangle { Layout.fillWidth: true; height: 1; color: AppTheme.colors.divider }
-            
-            // ====== SECTION 5: Developer ======
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 60
-                color: AppTheme.colors.surfaceVariant
-                
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: AppTheme.spacing.medium
-                    spacing: AppTheme.spacing.xxSmall
-                    
-                    RowLayout {
-                        Layout.fillWidth: true
-                        
-                        Text {
-                            text: "Debug Mode"
-                            color: AppTheme.colors.text
-                            font.pixelSize: AppTheme.typography.labelLarge
-                            font.weight: Font.Bold
-                            Layout.fillWidth: true
-                        }
-                        
-                        Rectangle {
-                            width: 50
-                            height: 28
-                            radius: 14
-                            color: AppTheme.colors.surfaceElevated
-                            
-                            Rectangle {
-                                width: 24
-                                height: 24
-                                radius: 12
-                                color: AppTheme.colors.textTertiary
-                                anchors.verticalCenter: parent.verticalCenter
-                                x: 2
-                            }
-                        }
-                    }
-                    
-                    Text {
-                        text: "Enable verbose logging and diagnostics"
-                        color: AppTheme.colors.textSecondary
-                        font.pixelSize: AppTheme.typography.labelSmall
-                    }
-                }
-            }
-            
-            Rectangle { Layout.fillWidth: true; height: 1; color: AppTheme.colors.divider }
-            
-            // ====== SECTION 6: Brightness Control ======
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 70
-                color: AppTheme.colors.surface
-                
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: AppTheme.spacing.medium
-                    spacing: AppTheme.spacing.small
-                    
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: AppTheme.spacing.medium
-                        
-                        Image {
-                            source: "qrc:/icons/settings/brightness.svg"
-                            sourceSize.width: 20
-                            sourceSize.height: 20
-                        }
-                        
-                        Text {
-                            text: "Screen Brightness"
-                            color: AppTheme.colors.text
-                            font.pixelSize: AppTheme.typography.labelLarge
-                            font.weight: Font.Bold
-                            Layout.fillWidth: true
-                        }
-                    }
-                    
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: AppTheme.spacing.small
-                        
-                        Image {
-                            source: "qrc:/icons/settings/brightness-low.svg"
-                            sourceSize.width: 16
-                            sourceSize.height: 16
-                        }
-                        
-                        Rectangle {
-                            Layout.fillWidth: true
-                            height: 4
-                            radius: 2
-                            color: AppTheme.colors.surfaceElevated
-                            
-                            Rectangle {
-                                width: parent.width * 0.75
-                                height: parent.height
-                                radius: 2
-                                color: AppTheme.colors.warning
-                            }
-                        }
-                        
-                        Image {
-                            source: "qrc:/icons/settings/brightness-high.svg"
-                            sourceSize.width: 16
-                            sourceSize.height: 16
-                        }
-                    }
-                }
-            }
-            
-            Rectangle { Layout.fillWidth: true; height: 1; color: AppTheme.colors.divider }
-            
-            // ====== SECTION 7: Language & Localization ======
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 60
-                color: AppTheme.colors.surfaceVariant
-                
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: AppTheme.spacing.medium
-                    spacing: AppTheme.spacing.medium
-                    
-                    Image {
-                        source: "qrc:/icons/settings/language.svg"
-                        sourceSize.width: 20
-                        sourceSize.height: 20
-                        Layout.alignment: Qt.AlignVCenter
-                    }
-                    
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: AppTheme.spacing.xxSmall
-                        
-                        Text {
-                            text: "Language"
-                            color: AppTheme.colors.text
-                            font.pixelSize: AppTheme.typography.labelLarge
-                            font.weight: Font.Bold
-                        }
-                        
-                        RowLayout {
-                            spacing: AppTheme.spacing.medium
-                            
-                            Rectangle {
-                                width: 80
-                                height: 32
-                                radius: AppTheme.radius.small
-                                color: AppTheme.colors.primary
-                                
-                                Text {
-                                    text: "English"
-                                    color: AppTheme.colors.text
-                                    font.pixelSize: AppTheme.typography.labelSmall
-                                    anchors.centerIn: parent
-                                }
-                            }
-                            
-                            Rectangle {
-                                width: 70
-                                height: 32
-                                radius: AppTheme.radius.small
-                                color: AppTheme.colors.surfaceElevated
-                                
-                                Text {
-                                    text: "Español"
-                                    color: AppTheme.colors.textSecondary
-                                    font.pixelSize: AppTheme.typography.labelSmall
-                                    anchors.centerIn: parent
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-            Rectangle { Layout.fillWidth: true; height: 1; color: AppTheme.colors.divider }
-            
-            // ====== SECTION 8: Theme Selection ======
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 60
-                color: AppTheme.colors.surface
-                
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: AppTheme.spacing.medium
-                    spacing: AppTheme.spacing.medium
-                    
-                    Image {
-                        source: "qrc:/icons/settings/theme-auto.svg"
-                        sourceSize.width: 20
-                        sourceSize.height: 20
-                        Layout.alignment: Qt.AlignVCenter
-                    }
-                    
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: AppTheme.spacing.xxSmall
-                        
-                        Text {
-                            text: "Theme"
-                            color: AppTheme.colors.text
-                            font.pixelSize: AppTheme.typography.labelLarge
-                            font.weight: Font.Bold
-                        }
-                        
-                        RowLayout {
-                            spacing: AppTheme.spacing.medium
-                            
-                            Rectangle {
-                                width: 70
-                                height: 32
-                                radius: AppTheme.radius.small
-                                color: AppTheme.colors.surfaceVariant
-                                
-                                RowLayout {
-                                    anchors.centerIn: parent
-                                    spacing: 4
-                                    
-                                    Image {
-                                        source: "qrc:/icons/settings/theme-light.svg"
-                                        sourceSize.width: 14
-                                        sourceSize.height: 14
-                                    }
-                                    
-                                    Text {
-                                        text: "Light"
-                                        color: AppTheme.colors.text
-                                        font.pixelSize: AppTheme.typography.labelSmall
-                                    }
-                                }
-                            }
-                            
-                            Rectangle {
-                                width: 70
-                                height: 32
-                                radius: AppTheme.radius.small
-                                color: AppTheme.colors.primary
-                                
-                                RowLayout {
-                                    anchors.centerIn: parent
-                                    spacing: 4
-                                    
-                                    Image {
-                                        source: "qrc:/icons/settings/theme-dark.svg"
-                                        sourceSize.width: 14
-                                        sourceSize.height: 14
-                                    }
-                                    
-                                    Text {
-                                        text: "Dark"
-                                        color: AppTheme.colors.text
-                                        font.pixelSize: AppTheme.typography.labelSmall
-                                    }
-                                }
-                            }
-                            
-                            Rectangle {
-                                width: 70
-                                height: 32
-                                radius: AppTheme.radius.small
-                                color: AppTheme.colors.surfaceVariant
-                                
-                                RowLayout {
-                                    anchors.centerIn: parent
-                                    spacing: 4
-                                    
-                                    Image {
-                                        source: "qrc:/icons/settings/theme-auto.svg"
-                                        sourceSize.width: 14
-                                        sourceSize.height: 14
-                                    }
-                                    
-                                    Text {
-                                        text: "Auto"
-                                        color: AppTheme.colors.text
-                                        font.pixelSize: AppTheme.typography.labelSmall
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-            Rectangle { Layout.fillWidth: true; height: 1; color: AppTheme.colors.divider }
-            
-            // ====== SECTION 9: Input Devices ======
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 90
-                color: AppTheme.colors.surfaceVariant
-                
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: AppTheme.spacing.medium
-                    spacing: AppTheme.spacing.small
-                    
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: AppTheme.spacing.medium
-                        
-                        Image {
-                            source: "qrc:/icons/settings/keyboard.svg"
-                            sourceSize.width: 20
-                            sourceSize.height: 20
-                        }
-                        
-                        Text {
-                            text: "Input Devices"
-                            color: AppTheme.colors.text
-                            font.pixelSize: AppTheme.typography.labelLarge
-                            font.weight: Font.Bold
-                        }
-                    }
-                    
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: AppTheme.spacing.small
-                        
-                        Rectangle {
-                            width: 30
-                            height: 30
-                            color: AppTheme.colors.primary
-                            radius: AppTheme.radius.small
-                            
-                            Image {
-                                anchors.centerIn: parent
-                                source: "qrc:/icons/settings/keyboard.svg"
-                                sourceSize.width: 16
-                                sourceSize.height: 16
-                            }
-                        }
-                        
-                        Text {
-                            text: "Keyboard Enabled"
-                            color: AppTheme.colors.text
-                            font.pixelSize: AppTheme.typography.bodySmall
-                            Layout.fillWidth: true
-                        }
-                        
-                        Image {
-                            source: "qrc:/icons/settings/toggle-on.svg"
-                            sourceSize.width: 36
-                            sourceSize.height: 18
-                        }
-                    }
-                    
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: AppTheme.spacing.small
-                        
-                        Rectangle {
-                            width: 30
-                            height: 30
-                            color: AppTheme.colors.surfaceElevated
-                            radius: AppTheme.radius.small
-                            
-                            Image {
-                                anchors.centerIn: parent
-                                source: "qrc:/icons/settings/usb.svg"
-                                sourceSize.width: 16
-                                sourceSize.height: 16
-                            }
-                        }
-                        
-                        Text {
-                            text: "USB Mode: Mass Storage"
-                            color: AppTheme.colors.text
-                            font.pixelSize: AppTheme.typography.bodySmall
-                            Layout.fillWidth: true
-                        }
-                        
-                        Image {
-                            source: "qrc:/icons/settings/toggle-off.svg"
-                            sourceSize.width: 36
-                            sourceSize.height: 18
-                        }
-                    }
-                }
-            }
-            
-            Rectangle { Layout.fillWidth: true; height: 1; color: AppTheme.colors.divider }
-            
-            // ====== SECTION 10: Audio & Peripherals ======
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 90
-                color: AppTheme.colors.surface
-                
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: AppTheme.spacing.medium
-                    spacing: AppTheme.spacing.small
-                    
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: AppTheme.spacing.medium
-                        
-                        Image {
-                            source: "qrc:/icons/settings/aux.svg"
-                            sourceSize.width: 20
-                            sourceSize.height: 20
-                        }
-                        
-                        Text {
-                            text: "Audio & Peripherals"
-                            color: AppTheme.colors.text
-                            font.pixelSize: AppTheme.typography.labelLarge
-                            font.weight: Font.Bold
-                        }
-                    }
-                    
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: AppTheme.spacing.small
-                        
-                        Rectangle {
-                            width: 30
-                            height: 30
-                            color: AppTheme.colors.surfaceElevated
-                            radius: AppTheme.radius.small
-                            
-                            Image {
-                                anchors.centerIn: parent
-                                source: "qrc:/icons/settings/aux.svg"
-                                sourceSize.width: 16
-                                sourceSize.height: 16
-                            }
-                        }
-                        
-                        Text {
-                            text: "AUX Input"
-                            color: AppTheme.colors.text
-                            font.pixelSize: AppTheme.typography.bodySmall
-                            Layout.fillWidth: true
-                        }
-                        
-                        Image {
-                            source: "qrc:/icons/settings/toggle-on.svg"
-                            sourceSize.width: 36
-                            sourceSize.height: 18
-                        }
-                    }
-                    
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: AppTheme.spacing.small
-                        
-                        Rectangle {
-                            width: 30
-                            height: 30
-                            color: AppTheme.colors.surfaceElevated
-                            radius: AppTheme.radius.small
-                            
-                            Image {
-                                anchors.centerIn: parent
-                                source: "qrc:/icons/settings/bluetooth-off.svg"
-                                sourceSize.width: 16
-                                sourceSize.height: 16
-                            }
-                        }
-                        
-                        Text {
-                            text: "Bluetooth Audio"
-                            color: AppTheme.colors.text
-                            font.pixelSize: AppTheme.typography.bodySmall
-                            Layout.fillWidth: true
-                        }
-                        
-                        Image {
-                            source: "qrc:/icons/settings/toggle-off.svg"
-                            sourceSize.width: 36
-                            sourceSize.height: 18
-                        }
-                    }
-                }
-            }
-            
-            Rectangle { Layout.fillWidth: true; height: 1; color: AppTheme.colors.divider }
-            
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 100
-                color: AppTheme.colors.surfaceVariant
-                
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: AppTheme.spacing.medium
-                    spacing: AppTheme.spacing.small
-                    
-                    Text {
-                        text: "About DrivaPi HMI"
-                        color: AppTheme.colors.text
-                        font.pixelSize: AppTheme.typography.labelLarge
-                        font.weight: Font.Bold
-                    }
-                    
-                    ColumnLayout {
-                        spacing: AppTheme.spacing.xxSmall
-                        
-                        RowLayout {
-                            spacing: AppTheme.spacing.medium
-                            
-                            Text {
-                                text: "Version:"
-                                color: AppTheme.colors.textSecondary
-                                font.pixelSize: AppTheme.typography.bodySmall
-                            }
-                            
-                            Text {
-                                text: "1.0.0-beta"
-                                color: AppTheme.colors.primary
-                                font.pixelSize: AppTheme.typography.bodySmall
-                                font.weight: Font.Bold
-                            }
-                        }
-                        
-                        RowLayout {
-                            spacing: AppTheme.spacing.medium
-                            
-                            Text {
-                                text: "Build Date:"
-                                color: AppTheme.colors.textSecondary
-                                font.pixelSize: AppTheme.typography.bodySmall
-                            }
-                            
-                            Text {
-                                text: "2026-01-20"
-                                color: AppTheme.colors.text
-                                font.pixelSize: AppTheme.typography.bodySmall
-                            }
-                        }
-                        
-                        Text {
-                            text: "ISO 26262 Compliant • Automotive Grade"
-                            color: AppTheme.colors.textTertiary
-                            font.pixelSize: AppTheme.typography.labelSmall
-                        }
-                    }
-                }
-            }
-            
-            Item {
-                Layout.fillWidth: true
-                Layout.preferredHeight: AppTheme.spacing.large
             }
         }
+
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 28
+            spacing: 8
+
+            Text {
+                text: "Bright"
+                Layout.preferredWidth: 70
+                color: "#93a6bf"
+                font.pixelSize: 11
+                verticalAlignment: Text.AlignVCenter
+            }
+
+            Slider {
+                id: brightSlider
+                Layout.fillWidth: true
+                Layout.preferredHeight: 28
+                from: 0
+                to: 1
+                value: SettingsStore.screenBrightness
+                onValueChanged: SettingsStore.screenBrightness = value
+
+                background: Rectangle {
+                    x: 0
+                    y: (parent.height - 4) / 2
+                    width: parent.width
+                    height: 4
+                    radius: 2
+                    color: "#0b1420"
+                    border.color: "#232a35"
+                    border.width: 1
+
+                    Rectangle {
+                        width: parent.width * brightSlider.visualPosition
+                        height: parent.height
+                        radius: 2
+                        color: "#4fb3d9"
+                        opacity: 0.95
+                    }
+                }
+
+                handle: Rectangle {
+                    width: 12
+                    height: 12
+                    radius: 6
+                    color: "#4fb3d9"
+                    border.color: "#05080e"
+                    border.width: 1
+                }
+            }
+        }
+
+        Rectangle { Layout.fillWidth: true; height: 1; color: "#232a35"; opacity: 0.8 }
+
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 28
+            spacing: 8
+
+            Text { text: "Speed"; Layout.preferredWidth: 70; color: "#93a6bf"; font.pixelSize: 11 }
+            ComboBox {
+                id: speedBox
+                Layout.fillWidth: true
+                Layout.preferredHeight: 28
+                model: speedModel
+                currentIndex: idx(speedModel, SettingsStore.speedUnit)
+                onActivated: SettingsStore.speedUnit = textAt(index)
+
+                font.pixelSize: 11
+                contentItem: Text { text: speedBox.displayText; color: "#e6f0ff"; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight; leftPadding: 8 }
+                background: Rectangle { radius: 7; color: "#0b1420"; border.color: "#232a35"; border.width: 1 }
+                indicator: Rectangle { width: 10; height: 10; radius: 2; color: "#4fb3d9"; anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter }
+
+                delegate: ItemDelegate {
+                    width: speedBox.width
+                    height: 26
+                    contentItem: Text {
+                        text: modelData
+                        color: "#e6f0ff"
+                        font.pixelSize: 11
+                        verticalAlignment: Text.AlignVCenter
+                        leftPadding: 8
+                    }
+                    background: Rectangle {
+                        color: (index === speedBox.currentIndex) ? "#101e2c" : "transparent"
+                    }
+                }
+                popup: Popup {
+                    y: speedBox.height + 4
+                    width: speedBox.width
+                    padding: 4
+                    background: Rectangle {
+                        radius: 8
+                        color: "#0b1420"
+                        border.color: "#232a35"
+                        border.width: 1
+                    }
+                    contentItem: ListView {
+                        clip: true
+                        implicitHeight: Math.min(contentHeight, 6 * 26)
+                        model: speedBox.delegateModel
+                    }
+                }
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 28
+            spacing: 8
+
+            Text { text: "Temp"; Layout.preferredWidth: 70; color: "#93a6bf"; font.pixelSize: 11 }
+            ComboBox {
+                id: tempBox
+                Layout.fillWidth: true
+                Layout.preferredHeight: 28
+                model: tempModel
+                currentIndex: idx(tempModel, SettingsStore.temperatureUnit)
+                onActivated: SettingsStore.temperatureUnit = textAt(index)
+
+                font.pixelSize: 11
+                contentItem: Text { text: tempBox.displayText; color: "#e6f0ff"; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight; leftPadding: 8 }
+                background: Rectangle { radius: 7; color: "#0b1420"; border.color: "#232a35"; border.width: 1 }
+                indicator: Rectangle { width: 10; height: 10; radius: 2; color: "#4fb3d9"; anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter }
+
+                delegate: ItemDelegate {
+                    width: tempBox.width
+                    height: 26
+                    contentItem: Text { text: modelData; color: "#e6f0ff"; font.pixelSize: 11; verticalAlignment: Text.AlignVCenter; leftPadding: 8 }
+                    background: Rectangle { color: (index === tempBox.currentIndex) ? "#101e2c" : "transparent" }
+                }
+                popup: Popup {
+                    y: tempBox.height + 4
+                    width: tempBox.width
+                    padding: 4
+                    background: Rectangle { radius: 8; color: "#0b1420"; border.color: "#232a35"; border.width: 1 }
+                    contentItem: ListView { clip: true; implicitHeight: Math.min(contentHeight, 6 * 26); model: tempBox.delegateModel }
+                }
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 28
+            spacing: 8
+
+            Text { text: "Distance"; Layout.preferredWidth: 70; color: "#93a6bf"; font.pixelSize: 11 }
+            ComboBox {
+                id: distBox
+                Layout.fillWidth: true
+                Layout.preferredHeight: 28
+                model: distanceModel
+                currentIndex: idx(distanceModel, SettingsStore.distanceUnit)
+                onActivated: SettingsStore.distanceUnit = textAt(index)
+
+                font.pixelSize: 11
+                contentItem: Text { text: distBox.displayText; color: "#e6f0ff"; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight; leftPadding: 8 }
+                background: Rectangle { radius: 7; color: "#0b1420"; border.color: "#232a35"; border.width: 1 }
+                indicator: Rectangle { width: 10; height: 10; radius: 2; color: "#4fb3d9"; anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter }
+
+                delegate: ItemDelegate {
+                    width: distBox.width
+                    height: 26
+                    contentItem: Text { text: modelData; color: "#e6f0ff"; font.pixelSize: 11; verticalAlignment: Text.AlignVCenter; leftPadding: 8 }
+                    background: Rectangle { color: (index === distBox.currentIndex) ? "#101e2c" : "transparent" }
+                }
+                popup: Popup {
+                    y: distBox.height + 4
+                    width: distBox.width
+                    padding: 4
+                    background: Rectangle { radius: 8; color: "#0b1420"; border.color: "#232a35"; border.width: 1 }
+                    contentItem: ListView { clip: true; implicitHeight: Math.min(contentHeight, 6 * 26); model: distBox.delegateModel }
+                }
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 28
+            spacing: 8
+
+            Text { text: "Wind"; Layout.preferredWidth: 70; color: "#93a6bf"; font.pixelSize: 11 }
+            ComboBox {
+                id: windBox
+                Layout.fillWidth: true
+                Layout.preferredHeight: 28
+                model: windModel
+                currentIndex: idx(windModel, SettingsStore.windSpeedUnit)
+                onActivated: SettingsStore.windSpeedUnit = textAt(index)
+
+                font.pixelSize: 11
+                contentItem: Text { text: windBox.displayText; color: "#e6f0ff"; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight; leftPadding: 8 }
+                background: Rectangle { radius: 7; color: "#0b1420"; border.color: "#232a35"; border.width: 1 }
+                indicator: Rectangle { width: 10; height: 10; radius: 2; color: "#4fb3d9"; anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter }
+
+                delegate: ItemDelegate {
+                    width: windBox.width
+                    height: 26
+                    contentItem: Text { text: modelData; color: "#e6f0ff"; font.pixelSize: 11; verticalAlignment: Text.AlignVCenter; leftPadding: 8 }
+                    background: Rectangle { color: (index === windBox.currentIndex) ? "#101e2c" : "transparent" }
+                }
+                popup: Popup {
+                    y: windBox.height + 4
+                    width: windBox.width
+                    padding: 4
+                    background: Rectangle { radius: 8; color: "#0b1420"; border.color: "#232a35"; border.width: 1 }
+                    contentItem: ListView { clip: true; implicitHeight: Math.min(contentHeight, 6 * 26); model: windBox.delegateModel }
+                }
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 28
+            spacing: 8
+
+            Text { text: "Precip"; Layout.preferredWidth: 70; color: "#93a6bf"; font.pixelSize: 11 }
+            ComboBox {
+                id: precipBox
+                Layout.fillWidth: true
+                Layout.preferredHeight: 28
+                model: precipModel
+                currentIndex: idx(precipModel, SettingsStore.precipitationUnit)
+                onActivated: SettingsStore.precipitationUnit = textAt(index)
+
+                font.pixelSize: 11
+                contentItem: Text { text: precipBox.displayText; color: "#e6f0ff"; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight; leftPadding: 8 }
+                background: Rectangle { radius: 7; color: "#0b1420"; border.color: "#232a35"; border.width: 1 }
+                indicator: Rectangle { width: 10; height: 10; radius: 2; color: "#4fb3d9"; anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter }
+
+                delegate: ItemDelegate {
+                    width: precipBox.width
+                    height: 26
+                    contentItem: Text { text: modelData; color: "#e6f0ff"; font.pixelSize: 11; verticalAlignment: Text.AlignVCenter; leftPadding: 8 }
+                    background: Rectangle { color: (index === precipBox.currentIndex) ? "#101e2c" : "transparent" }
+                }
+                popup: Popup {
+                    y: precipBox.height + 4
+                    width: precipBox.width
+                    padding: 4
+                    background: Rectangle { radius: 8; color: "#0b1420"; border.color: "#232a35"; border.width: 1 }
+                    contentItem: ListView { clip: true; implicitHeight: Math.min(contentHeight, 6 * 26); model: precipBox.delegateModel }
+                }
+            }
+        }
+
+        Item { Layout.fillHeight: true } // pushes content up, guarantees no scroll
     }
 }
