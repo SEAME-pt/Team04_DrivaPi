@@ -22,37 +22,24 @@ pkg_check_modules(TAGLIB REQUIRED IMPORTED_TARGET taglib)
 # ------------------------
 # gRPC / Protobuf / Abseil (Yocto-friendly)
 # ------------------------
-# Prefer tool paths passed in from Yocto recipe
-if(NOT DEFINED Protobuf_PROTOC_EXECUTABLE)
-    # Let gRPC find protobuf first to avoid duplicate target definitions
-    find_package(gRPC REQUIRED)
-    find_package(Protobuf REQUIRED)
-    
-    # Get the grpc_cpp_plugin executable from gRPC's target
-    get_target_property(GRPC_CPP_PLUGIN_EXECUTABLE gRPC::grpc_cpp_plugin LOCATION)
-    
-    if(NOT GRPC_CPP_PLUGIN_EXECUTABLE)
-        message(FATAL_ERROR "grpc_cpp_plugin not found")
-    endif()
-    
-    message(STATUS "Using protoc: ${Protobuf_PROTOC_EXECUTABLE}")
-    message(STATUS "Using grpc_cpp_plugin: ${GRPC_CPP_PLUGIN_EXECUTABLE}")
-else()
-    message(STATUS "Using protoc from recipe: ${Protobuf_PROTOC_EXECUTABLE}")
-    # In Yocto builds, tools are pre-defined
-    set(GRPC_CPP_PLUGIN_EXECUTABLE ${gRPC_PLUGIN_EXECUTABLE})
-    message(STATUS "Using grpc_cpp_plugin from recipe: ${GRPC_CPP_PLUGIN_EXECUTABLE}")
+# Use find_package ONLY for getting protoc and grpc_cpp_plugin executables
+find_package(gRPC REQUIRED)
+find_package(Protobuf REQUIRED)
+
+# Get the grpc_cpp_plugin executable from gRPC's target
+get_target_property(GRPC_CPP_PLUGIN_EXECUTABLE gRPC::grpc_cpp_plugin LOCATION)
+
+if(NOT GRPC_CPP_PLUGIN_EXECUTABLE)
+    message(FATAL_ERROR "grpc_cpp_plugin not found")
 endif()
 
-# Abseil (CMake package might exist, but we will link using pkg-config below)
-find_package(absl REQUIRED)
+message(STATUS "Using protoc: ${Protobuf_PROTOC_EXECUTABLE}")
+message(STATUS "Using grpc_cpp_plugin: ${GRPC_CPP_PLUGIN_EXECUTABLE}")
 
-# Use pkg-config to get link flags/libs reliably on Yocto
-pkg_check_modules(GRPC REQUIRED grpc++)
-pkg_check_modules(PROTOBUF REQUIRED protobuf)
-
-# NOTE: absl pkg-config module names vary; you were using these already
-pkg_check_modules(ABSL REQUIRED
+# Use pkg-config for actual linking (more reliable)
+pkg_check_modules(GRPC REQUIRED IMPORTED_TARGET grpc++)
+pkg_check_modules(PROTOBUF REQUIRED IMPORTED_TARGET protobuf)
+pkg_check_modules(ABSL REQUIRED IMPORTED_TARGET
     absl_hash
     absl_strings
     absl_base
@@ -99,6 +86,9 @@ set(GEN_PROTO_SRCS
     "${GEN_DIR}/kuksa/val/v2/val.grpc.pb.cc"
     "${GEN_DIR}/kuksa/val/v2/types.pb.cc"
 )
+
+# Mark generated files as generated
+set_source_files_properties(${GEN_PROTO_SRCS} PROPERTIES GENERATED TRUE)
 
 # ------------------------
 # App Sources
@@ -153,12 +143,15 @@ add_executable(kuksa_feeder
 )
 
 # Ensure generated files exist before compiling
-add_dependencies(myqtapp kuksa_feeder)
+add_dependencies(myqtapp)
 
 target_include_directories(myqtapp PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/inc/gui
     ${CMAKE_CURRENT_SOURCE_DIR}/inc/models
     ${GEN_DIR}
+    ${GRPC_INCLUDE_DIRS}
+    ${PROTOBUF_INCLUDE_DIRS}
+    ${ABSL_INCLUDE_DIRS}
 )
 
 target_include_directories(kuksa_feeder PRIVATE
@@ -197,33 +190,18 @@ target_link_libraries(myqtapp PRIVATE
     Qt6::Core Qt6::Gui Qt6::Quick Qt6::Qml Qt6::QuickControls2
     Qt6::SerialBus Qt6::Network Qt6::Multimedia
     PkgConfig::TAGLIB
-    ${GRPC_LIBRARIES}
-    ${PROTOBUF_LIBRARIES}
-    ${ABSL_LIBRARIES}
+    PkgConfig::GRPC
+    PkgConfig::PROTOBUF
+    PkgConfig::ABSL
 )
 
 target_link_libraries(kuksa_feeder PRIVATE
-    ${GRPC_LIBRARIES}
-    ${PROTOBUF_LIBRARIES}
-    ${ABSL_LIBRARIES}
+    PkgConfig::GRPC
+    PkgConfig::PROTOBUF
+    PkgConfig::ABSL
 )
 
-# Add include directories from pkg-config
-target_include_directories(myqtapp PRIVATE 
-    ${GRPC_INCLUDE_DIRS} 
-    ${PROTOBUF_INCLUDE_DIRS} 
-    ${ABSL_INCLUDE_DIRS}
-)
-
-target_include_directories(kuksa_feeder PRIVATE 
-    ${GRPC_INCLUDE_DIRS} 
-    ${PROTOBUF_INCLUDE_DIRS} 
-    ${ABSL_INCLUDE_DIRS}
-)
-
-# If pkg-config didn't propagate include dirs (rare), uncomment:
-# target_include_directories(myqtapp PRIVATE ${GRPC_INCLUDE_DIRS} ${PROTOBUF_INCLUDE_DIRS} ${ABSL_INCLUDE_DIRS})
-# target_include_directories(kuksa_feeder PRIVATE ${GRPC_INCLUDE_DIRS} ${PROTOBUF_INCLUDE_DIRS} ${ABSL_INCLUDE_DIRS})
+# Remove the old include_directories calls - pkg-config targets handle them automatically
 
 # ------------------------
 # Install

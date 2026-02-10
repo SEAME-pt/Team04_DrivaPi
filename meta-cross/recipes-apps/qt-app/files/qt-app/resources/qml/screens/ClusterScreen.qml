@@ -17,7 +17,7 @@ Rectangle {
     // Demo / fallback (replace with your real signal if you have it)
     // ISO 26262 ASIL requirement: Valid fallback for critical safety display
     property int speedLimitValue: vehicleDataAvailable && vehicleData.speedLimit ? Math.round(vehicleData.speedLimit) : 120
-    property real currentSpeed: vehicleDataAvailable && vehicleData.speed ? vehicleData.speed * 3.6 : 0
+    property real currentSpeed: vehicleDataAvailable && vehicleData.speed ? vehicleData.speed : 0
     property int currentBattery: vehicleDataAvailable && vehicleData.battery !== undefined ? vehicleData.battery : 0
     property int stm32Battery: vehicleDataAvailable && vehicleData.stm32Battery !== undefined ? vehicleData.stm32Battery : 0
     property int rpiBattery: vehicleDataAvailable && vehicleData.rpiBattery !== undefined ? vehicleData.rpiBattery : 0
@@ -253,7 +253,7 @@ Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: roadWindow.roadW
                     height: roadWindow.roadH
-                    y: roadWindow.baseY + roadWindow.px
+                    y: roadWindow.baseY + (roadWindow.px % roadWindow.roadH)
                     source: "qrc:/assets/road.png"
                     fillMode: Image.PreserveAspectCrop
                     smooth: true
@@ -395,7 +395,7 @@ Rectangle {
 
                     property real kmh: root.vehicleDataAvailable ? vehicleData.speed * 3.6 : 0
                     property real clamped: Math.max(10, Math.min(kmh, 160))
-                    duration: 1400 - (clamped * 6)
+                    duration: Math.max(1000, 4000 - (clamped * 15))
                     onStopped: root.roadPhase = 0
                 }
 
@@ -465,7 +465,7 @@ Rectangle {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
 
-                        // ISO 26262 ADAS / Warnings Area (ASIL-Compliant Display)
+                        // ISO 26266 ADAS / Warnings Area (ASIL-Compliant Display)
                         // Purpose: Display critical safety information including speed limit and ADAS status
                         // Visibility: High-contrast display for driver awareness
                         // Update Frequency: Real-time from vehicleData signals
