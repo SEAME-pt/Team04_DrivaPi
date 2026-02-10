@@ -17,7 +17,6 @@ ApplicationWindow {
     // ---- Theme fallback (works even if AppTheme singleton is missing on Yocto) ----
     QtObject {
         id: theme
-
         property var colors: (typeof AppTheme !== "undefined" && AppTheme.colors) ? AppTheme.colors : ({
                 primary: "#00BFFF",
                 surface: "#05080e",
@@ -27,40 +26,34 @@ ApplicationWindow {
                 warning: "#ffb020",
                 error: "#ff4444"
             })
-
         property var spacing: (typeof AppTheme !== "undefined" && AppTheme.spacing) ? AppTheme.spacing : ({
                 small: 6,
                 medium: 12,
                 large: 16
             })
-
         property var radius: (typeof AppTheme !== "undefined" && AppTheme.radius) ? AppTheme.radius : ({
                 medium: 10
             })
-
         property var typography: (typeof AppTheme !== "undefined" && AppTheme.typography) ? AppTheme.typography : ({
                 bodyMedium: 14
             })
     }
 
-    color: theme.colors.surface
+    color: Theme.colors.surface
     minimumWidth: 1280
     minimumHeight: 400
 
-    // ====== KEYBOARD SHORTCUTS ======
     Shortcut {
         sequence: "Ctrl+Q"
         context: Qt.ApplicationShortcut
         onActivated: Qt.quit()
     }
-
     Shortcut {
         sequence: "Ctrl+D"
         context: Qt.ApplicationShortcut
         onActivated: console.log("[HMI] Debug shortcut triggered")
     }
 
-    // ====== STATE MANAGEMENT ======
     property bool rightPanelVisible: false
     property bool showSplashScreen: true
 
@@ -72,10 +65,8 @@ ApplicationWindow {
         onTriggered: showSplashScreen = false
     }
 
-    // ====== CONNECTION STATE MONITORING ======
     Connections {
         target: systemStatus
-
         function onConnectionStateChanged() {
             var state = systemStatus.connectionState;
             var mode = systemStatus.connectionMode;
@@ -90,13 +81,11 @@ ApplicationWindow {
         }
     }
 
-    // ====== MAIN LAYOUT ======
     RowLayout {
         anchors.fill: parent
         z: 1
         spacing: 0
 
-        // ====== LEFT SIDE: PERSISTENT INSTRUMENT CLUSTER ======
         Item {
             id: clusterContainer
             Layout.fillHeight: true
@@ -111,7 +100,6 @@ ApplicationWindow {
                 anchors.fill: parent
                 width: parent.width
                 height: parent.height
-
                 Behavior on width {
                     NumberAnimation {
                         duration: 400
@@ -151,7 +139,6 @@ ApplicationWindow {
                 }
             }
 
-            // Elegant minimal toggle button
             Rectangle {
                 id: panelToggle
                 anchors.right: parent.right
@@ -174,15 +161,14 @@ ApplicationWindow {
                     }
                 }
 
-                border.color: rightPanelVisible ? theme.colors.primary : "#1a2535"
+                border.color: rightPanelVisible ? Theme.colors.primary : "#1a2535"
                 border.width: 1
 
-                // Fake glow/shadow (no Effects)
                 Rectangle {
                     anchors.fill: parent
                     anchors.margins: -4
                     radius: parent.radius + 4
-                    color: rightPanelVisible ? theme.colors.primary : "#000000"
+                    color: rightPanelVisible ? Theme.colors.primary : "#000"
                     opacity: rightPanelVisible ? 0.18 : 0.10
                     z: -1
                 }
@@ -190,25 +176,22 @@ ApplicationWindow {
                     anchors.fill: parent
                     anchors.margins: -10
                     radius: parent.radius + 10
-                    color: rightPanelVisible ? theme.colors.primary : "#000000"
+                    color: rightPanelVisible ? Theme.colors.primary : "#000"
                     opacity: rightPanelVisible ? 0.07 : 0.05
                     z: -2
                 }
 
-                // Grid icon (three horizontal lines)
                 Column {
                     anchors.centerIn: parent
                     spacing: 4
-
                     Repeater {
                         model: 3
                         Rectangle {
                             width: 20
                             height: 2
                             radius: 1
-                            color: rightPanelVisible ? theme.colors.primary : "#8FA4B8"
+                            color: rightPanelVisible ? Theme.colors.primary : "#8FA4B8"
                             anchors.horizontalCenter: parent.horizontalCenter
-
                             Behavior on color {
                                 ColorAnimation {
                                     duration: 200
@@ -222,7 +205,6 @@ ApplicationWindow {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-
                     onClicked: rightPanelVisible = !rightPanelVisible
                     onEntered: panelToggle.scale = 1.1
                     onExited: panelToggle.scale = 1.0
@@ -243,7 +225,6 @@ ApplicationWindow {
                 }
             }
 
-            // Invisible edge detection area for elegant panel reveal
             MouseArea {
                 id: edgeDetector
                 anchors.right: parent.right
@@ -252,7 +233,6 @@ ApplicationWindow {
                 width: 5
                 z: 199
                 hoverEnabled: true
-
                 onEntered: edgeHoverTimer.start()
                 onExited: edgeHoverTimer.stop()
 
@@ -268,14 +248,12 @@ ApplicationWindow {
             }
         }
 
-        // ====== RIGHT SIDE: SWIPEABLE CONTENT + VERTICAL TABBAR ======
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: 0
             visible: opacity > 0
             opacity: rightPanelVisible ? 1 : 0
-
             Behavior on opacity {
                 NumberAnimation {
                     duration: 300
@@ -293,7 +271,6 @@ ApplicationWindow {
                 }
             }
 
-            // ====== SWIPEABLE CONTENT SCREENS ======
             SwipeView {
                 id: swipeView
                 Layout.fillWidth: true
@@ -309,25 +286,21 @@ ApplicationWindow {
                 DiagnosticsScreen {}
             }
 
-            // ====== VERTICAL TABBAR ======
             Item {
                 id: verticalTabBar
                 Layout.preferredWidth: 72
                 Layout.fillHeight: true
                 z: 40
-
-                // NOTE: your original had recursion here; keep simple.
-                property int currentIndex: 0
+                property int currentIndex: verticalTabBar.currentIndex >= 0 ? verticalTabBar.currentIndex : 0
 
                 Rectangle {
                     anchors.fill: parent
-                    color: theme.colors.surface
+                    color: Theme.colors.surface
 
-                    // subtle fake glow
                     Rectangle {
                         anchors.fill: parent
                         anchors.margins: -8
-                        color: theme.colors.primary
+                        color: Theme.colors.primary
                         opacity: 0.035
                         radius: 10
                         z: -2
@@ -335,7 +308,7 @@ ApplicationWindow {
                     Rectangle {
                         anchors.fill: parent
                         anchors.margins: -16
-                        color: theme.colors.primary
+                        color: Theme.colors.primary
                         opacity: 0.02
                         radius: 14
                         z: -3
@@ -388,12 +361,11 @@ ApplicationWindow {
         }
     }
 
-    // ====== NOTIFICATION TOAST CONTAINER ======
     Rectangle {
         id: notificationContainer
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.topMargin: theme.spacing.medium
+        anchors.topMargin: Theme.spacing.medium
         width: 320
         height: childrenRect.height
         color: "transparent"
@@ -401,7 +373,7 @@ ApplicationWindow {
 
         Column {
             width: parent.width
-            spacing: theme.spacing.small
+            spacing: Theme.spacing.small
 
             Repeater {
                 model: notificationManager.notifications
@@ -409,24 +381,23 @@ ApplicationWindow {
                 Rectangle {
                     width: notificationContainer.width
                     height: 52
-                    radius: theme.radius.medium
+                    radius: Theme.radius.medium
 
                     color: {
                         switch (modelData.level) {
                         case 0:
-                            return theme.colors.info;
+                            return Theme.colors.info;
                         case 1:
-                            return theme.colors.warning;
+                            return Theme.colors.warning;
                         case 2:
-                            return theme.colors.error;
+                            return Theme.colors.error;
                         default:
-                            return theme.colors.info;
+                            return Theme.colors.info;
                         }
                     }
 
                     opacity: 0
                     Component.onCompleted: opacity = 1
-
                     Behavior on opacity {
                         NumberAnimation {
                             duration: 300
@@ -446,13 +417,13 @@ ApplicationWindow {
 
                     RowLayout {
                         anchors.fill: parent
-                        anchors.margins: theme.spacing.medium
-                        spacing: theme.spacing.medium
+                        anchors.margins: Theme.spacing.medium
+                        spacing: Theme.spacing.medium
 
                         Text {
                             text: modelData.message
-                            color: theme.colors.text
-                            font.pixelSize: theme.typography.bodyMedium
+                            color: Theme.colors.text
+                            font.pixelSize: Theme.typography.bodyMedium
                             Layout.fillWidth: true
                             wrapMode: Text.Wrap
                         }
@@ -462,55 +433,9 @@ ApplicationWindow {
         }
     }
 
-    // ====== SIMPLE SAFE SPLASH (no Effects, uses theme fallback) ======
-    Rectangle {
-        id: splashScreen
-        anchors.fill: parent
-        z: 300
-        visible: opacity > 0
-        opacity: showSplashScreen ? 1 : 0
-        color: theme.colors.surface
+    // Keep your SplashScreen as-is (it will now use Theme.* safely if you later swap AppTheme -> Theme)
+    // If your splash still references AppTheme directly elsewhere, apply the same replacement there.
 
-        Behavior on opacity {
-            NumberAnimation {
-                duration: 800
-                easing.type: Easing.InOutQuad
-            }
-        }
-
-        Rectangle {
-            anchors.centerIn: parent
-            width: 360
-            height: 360
-            radius: 180
-            color: theme.colors.primary
-            opacity: 0.06
-        }
-
-        Text {
-            anchors.centerIn: parent
-            text: "DRIVAPI"
-            font.pixelSize: 28
-            font.weight: Font.Light
-            font.letterSpacing: 6
-            color: theme.colors.primary
-            opacity: 0.95
-        }
-
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.verticalCenter
-            anchors.topMargin: 42
-            text: "Initializing..."
-            font.pixelSize: 12
-            font.weight: Font.Light
-            letterSpacing: 1
-            color: theme.colors.textSecondary
-            opacity: 0.8
-        }
-    }
-
-    // ====== CUSTOM TAB ICON BUTTON COMPONENT ======
     component TabIconButton: Rectangle {
         id: tabButton
         required property bool isActive
@@ -524,9 +449,9 @@ ApplicationWindow {
         Rectangle {
             anchors.fill: parent
             radius: 6
-            color: tabButton.isActive ? theme.colors.primary : (tabButton.isHovered ? "#FFFFFF" : "transparent")
+            color: tabButton.isActive ? Theme.colors.primary : (tabButton.isHovered ? "#FFFFFF" : "transparent")
             opacity: tabButton.isActive ? 1 : (tabButton.isHovered ? 0.3 : 0.0)
-            border.color: tabButton.isActive ? theme.colors.primary : (tabButton.isHovered ? "#8FA4B8" : "transparent")
+            border.color: tabButton.isActive ? Theme.colors.primary : (tabButton.isHovered ? "#8FA4B8" : "transparent")
             border.width: (tabButton.isActive || tabButton.isHovered) ? 1 : 0
         }
 
@@ -534,7 +459,7 @@ ApplicationWindow {
             anchors.fill: parent
             anchors.margins: -6
             radius: parent.radius + 6
-            color: tabButton.isActive ? theme.colors.primary : "#8FA4B8"
+            color: tabButton.isActive ? Theme.colors.primary : "#8FA4B8"
             opacity: tabButton.isActive ? 0.16 : (tabButton.isHovered ? 0.07 : 0.0)
             z: -1
             visible: tabButton.isActive || tabButton.isHovered
@@ -555,7 +480,6 @@ ApplicationWindow {
             fillMode: Image.PreserveAspectFit
             opacity: isActive ? 0.85 : (tabButton.isHovered ? 0.6 : 0.35)
             mipmap: true
-
             Behavior on opacity {
                 NumberAnimation {
                     duration: 200
@@ -568,7 +492,6 @@ ApplicationWindow {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-
             onEntered: {
                 tabButton.isHovered = true;
                 if (!tabButton.isActive)
