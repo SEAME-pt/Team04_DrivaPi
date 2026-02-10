@@ -203,9 +203,9 @@ int AppController::run(QGuiApplication& app)
 
     if (!engine.rootObjects().isEmpty()) {
         QWindow* window = qobject_cast<QWindow*>(engine.rootObjects().first());
-        // if (window) {
-        //     window->showFullScreen();
-        // }
+        if (window) {
+            window->showFullScreen();
+        }
     }
 
     return app.exec();

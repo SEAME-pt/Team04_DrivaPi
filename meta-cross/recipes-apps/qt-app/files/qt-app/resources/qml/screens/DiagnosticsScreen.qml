@@ -7,31 +7,6 @@ Item {
     id: root
     clip: true
 
-    // ---- Theme fallback (works even if AppTheme singleton is missing on Yocto) ----
-    QtObject {
-        id: theme
-        property var colors: (typeof AppTheme !== "undefined" && AppTheme.colors) ? AppTheme.colors : ({
-                primary: "#00BFFF",
-                surface: "#05080e",
-                text: "#e6f0ff",
-                textSecondary: "#8FA4B8",
-                info: "#1a4d5c",
-                warning: "#ffb020",
-                error: "#ff4444"
-            })
-        property var spacing: (typeof AppTheme !== "undefined" && AppTheme.spacing) ? AppTheme.spacing : ({
-                small: 6,
-                medium: 12,
-                large: 16
-            })
-        property var radius: (typeof AppTheme !== "undefined" && AppTheme.radius) ? AppTheme.radius : ({
-                medium: 10
-            })
-        property var typography: (typeof AppTheme !== "undefined" && AppTheme.typography) ? AppTheme.typography : ({
-                bodyMedium: 14
-            })
-    }
-
     // darken background to match cluster style
     Rectangle {
         anchors.fill: parent
@@ -55,7 +30,7 @@ Item {
         return Math.round(n) + (unit || "");
     }
 
-    // Online heuristics
+    // Online heuristics (replace with proper flags if you add them)
     property bool rpiOnline: !!piHealthReader && piHealthReader.isOnline
     property bool stmOnline: !!vehicleData && (vehicleData.stm32BatteryVoltage > 0 || vehicleData.stm32Battery > 0 || vehicleData.stm32Temperature !== 0 || vehicleData.stm32Humidity !== 0)
 
@@ -79,7 +54,7 @@ Item {
                 width: 3
                 height: 22
                 radius: 2
-                color: Theme.colors.primary
+                color: AppTheme.colors.primary
                 opacity: 0.9
             }
 
@@ -88,7 +63,7 @@ Item {
                 font.pixelSize: 14
                 font.weight: Font.Bold
                 font.letterSpacing: 1
-                color: Theme.colors.text
+                color: AppTheme.colors.text
                 opacity: 0.95
             }
 
@@ -105,6 +80,7 @@ Item {
             }
         }
 
+        // ===== Cards container =====
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -141,7 +117,6 @@ Item {
                         value: rpiOnline ? fmtInt(piHealthReader.diskPercent, "%") : "--"
                         warn: rpiOnline && piHealthReader.diskPercent > 90
                     }
-
                     MetricTileMini {
                         label: "FREQ"
                         value: rpiOnline ? fmtInt(piHealthReader.cpuFreq, "MHz") : "--"
@@ -201,6 +176,7 @@ Item {
         }
     }
 
+    // ===== Card shell (no QtQuick.Effects) =====
     component StatusCardCompact: Item {
         required property string title
         required property string icon
@@ -212,7 +188,7 @@ Item {
             anchors.fill: card
             anchors.margins: -2
             radius: 12
-            color: "#000"
+            color: "#000000"
             opacity: 0.22
             z: 0
         }
@@ -220,7 +196,7 @@ Item {
             anchors.fill: card
             anchors.margins: -6
             radius: 16
-            color: "#000"
+            color: "#000000"
             opacity: 0.10
             z: 0
         }
@@ -265,7 +241,7 @@ Item {
                             font.pixelSize: 11
                             font.weight: Font.Bold
                             font.letterSpacing: 0.8
-                            color: Theme.colors.text
+                            color: "#e6f0ff"
                         }
 
                         Item {
@@ -276,7 +252,7 @@ Item {
                             width: 8
                             height: 8
                             radius: 4
-                            color: online ? "#00ff88" : "#666"
+                            color: online ? "#00ff88" : "#666666"
                         }
 
                         Rectangle {
@@ -287,7 +263,6 @@ Item {
                             color: "#2a1f10"
                             border.width: 1
                             border.color: "#7a4d1a"
-
                             Text {
                                 id: warnText
                                 anchors.centerIn: parent
