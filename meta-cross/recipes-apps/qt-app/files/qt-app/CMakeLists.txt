@@ -24,15 +24,22 @@ pkg_check_modules(TAGLIB REQUIRED IMPORTED_TARGET taglib)
 # ------------------------
 # Prefer tool paths passed in from Yocto recipe
 if(NOT DEFINED Protobuf_PROTOC_EXECUTABLE)
+    # Let gRPC find protobuf first to avoid duplicate target definitions
+    find_package(gRPC REQUIRED)
     find_package(Protobuf REQUIRED)
+    
+    # Get the grpc_cpp_plugin executable from gRPC's target
+    get_target_property(GRPC_CPP_PLUGIN_EXECUTABLE gRPC::grpc_cpp_plugin LOCATION)
+    
+    if(NOT GRPC_CPP_PLUGIN_EXECUTABLE)
+        message(FATAL_ERROR "grpc_cpp_plugin not found")
+    endif()
+    
+    message(STATUS "Using protoc: ${Protobuf_PROTOC_EXECUTABLE}")
+    message(STATUS "Using grpc_cpp_plugin: ${GRPC_CPP_PLUGIN_EXECUTABLE}")
 else()
     message(STATUS "Using protoc from recipe: ${Protobuf_PROTOC_EXECUTABLE}")
-endif()
-
-if(NOT DEFINED gRPC_PLUGIN_EXECUTABLE)
-    find_package(gRPC REQUIRED)
-    find_program(GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin)
-else()
+    # In Yocto builds, tools are pre-defined
     set(GRPC_CPP_PLUGIN_EXECUTABLE ${gRPC_PLUGIN_EXECUTABLE})
     message(STATUS "Using grpc_cpp_plugin from recipe: ${GRPC_CPP_PLUGIN_EXECUTABLE}")
 endif()
@@ -199,6 +206,19 @@ target_link_libraries(kuksa_feeder PRIVATE
     ${GRPC_LIBRARIES}
     ${PROTOBUF_LIBRARIES}
     ${ABSL_LIBRARIES}
+)
+
+# Add include directories from pkg-config
+target_include_directories(myqtapp PRIVATE 
+    ${GRPC_INCLUDE_DIRS} 
+    ${PROTOBUF_INCLUDE_DIRS} 
+    ${ABSL_INCLUDE_DIRS}
+)
+
+target_include_directories(kuksa_feeder PRIVATE 
+    ${GRPC_INCLUDE_DIRS} 
+    ${PROTOBUF_INCLUDE_DIRS} 
+    ${ABSL_INCLUDE_DIRS}
 )
 
 # If pkg-config didn't propagate include dirs (rare), uncomment:
