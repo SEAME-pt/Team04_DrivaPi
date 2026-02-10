@@ -138,3 +138,9 @@ target_link_libraries(myqtapp PRIVATE
     ${ABSL_LIBRARIES}
 	${PROTOBUF_LIBRARIES}
 )
+
+include(GNUInstallDirs)
+
+install(TARGETS myqtapp
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
