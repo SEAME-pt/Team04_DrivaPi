@@ -17,17 +17,14 @@ Rectangle {
     readonly property var precipModel: ["mm", "in"]
 
     function idx(model, value) {
-        var i = model.indexOf(value)
-        return i < 0 ? 0 : i
+        var i = model.indexOf(value);
+        return i < 0 ? 0 : i;
     }
 
     // Panel background (dark glass card like Cluster bottom bar)
     Rectangle {
         anchors.fill: parent
-        radius: 10
-        color: "#070c13cc"
-        border.color: "#232a35"
-        border.width: 1
+        color: "#05080e"
     }
 
     ColumnLayout {
@@ -81,7 +78,9 @@ Rectangle {
                     border.width: 1
                 }
                 indicator: Rectangle {
-                    width: 10; height: 10; radius: 2
+                    width: 10
+                    height: 10
+                    radius: 2
                     color: "#4fb3d9"
                     anchors.right: parent.right
                     anchors.rightMargin: 8
@@ -173,14 +172,24 @@ Rectangle {
             }
         }
 
-        Rectangle { Layout.fillWidth: true; height: 1; color: "#232a35"; opacity: 0.8 }
+        Rectangle {
+            Layout.fillWidth: true
+            height: 1
+            color: "#232a35"
+            opacity: 0.8
+        }
 
         RowLayout {
             Layout.fillWidth: true
             Layout.preferredHeight: 28
             spacing: 8
 
-            Text { text: "Speed"; Layout.preferredWidth: 70; color: "#93a6bf"; font.pixelSize: 11 }
+            Text {
+                text: "Speed"
+                Layout.preferredWidth: 70
+                color: "#93a6bf"
+                font.pixelSize: 11
+            }
             ComboBox {
                 id: speedBox
                 Layout.fillWidth: true
@@ -190,9 +199,28 @@ Rectangle {
                 onActivated: SettingsStore.speedUnit = textAt(index)
 
                 font.pixelSize: 11
-                contentItem: Text { text: speedBox.displayText; color: "#e6f0ff"; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight; leftPadding: 8 }
-                background: Rectangle { radius: 7; color: "#0b1420"; border.color: "#232a35"; border.width: 1 }
-                indicator: Rectangle { width: 10; height: 10; radius: 2; color: "#4fb3d9"; anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter }
+                contentItem: Text {
+                    text: speedBox.displayText
+                    color: "#e6f0ff"
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                    leftPadding: 8
+                }
+                background: Rectangle {
+                    radius: 7
+                    color: "#0b1420"
+                    border.color: "#232a35"
+                    border.width: 1
+                }
+                indicator: Rectangle {
+                    width: 10
+                    height: 10
+                    radius: 2
+                    color: "#4fb3d9"
+                    anchors.right: parent.right
+                    anchors.rightMargin: 8
+                    anchors.verticalCenter: parent.verticalCenter
+                }
 
                 delegate: ItemDelegate {
                     width: speedBox.width
@@ -232,7 +260,12 @@ Rectangle {
             Layout.preferredHeight: 28
             spacing: 8
 
-            Text { text: "Temp"; Layout.preferredWidth: 70; color: "#93a6bf"; font.pixelSize: 11 }
+            Text {
+                text: "Temp"
+                Layout.preferredWidth: 70
+                color: "#93a6bf"
+                font.pixelSize: 11
+            }
             ComboBox {
                 id: tempBox
                 Layout.fillWidth: true
@@ -242,22 +275,58 @@ Rectangle {
                 onActivated: SettingsStore.temperatureUnit = textAt(index)
 
                 font.pixelSize: 11
-                contentItem: Text { text: tempBox.displayText; color: "#e6f0ff"; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight; leftPadding: 8 }
-                background: Rectangle { radius: 7; color: "#0b1420"; border.color: "#232a35"; border.width: 1 }
-                indicator: Rectangle { width: 10; height: 10; radius: 2; color: "#4fb3d9"; anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter }
+                contentItem: Text {
+                    text: tempBox.displayText
+                    color: "#e6f0ff"
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                    leftPadding: 8
+                }
+                background: Rectangle {
+                    radius: 7
+                    color: "#0b1420"
+                    border.color: "#232a35"
+                    border.width: 1
+                }
+                indicator: Rectangle {
+                    width: 10
+                    height: 10
+                    radius: 2
+                    color: "#4fb3d9"
+                    anchors.right: parent.right
+                    anchors.rightMargin: 8
+                    anchors.verticalCenter: parent.verticalCenter
+                }
 
                 delegate: ItemDelegate {
                     width: tempBox.width
                     height: 26
-                    contentItem: Text { text: modelData; color: "#e6f0ff"; font.pixelSize: 11; verticalAlignment: Text.AlignVCenter; leftPadding: 8 }
-                    background: Rectangle { color: (index === tempBox.currentIndex) ? "#101e2c" : "transparent" }
+                    contentItem: Text {
+                        text: modelData
+                        color: "#e6f0ff"
+                        font.pixelSize: 11
+                        verticalAlignment: Text.AlignVCenter
+                        leftPadding: 8
+                    }
+                    background: Rectangle {
+                        color: (index === tempBox.currentIndex) ? "#101e2c" : "transparent"
+                    }
                 }
                 popup: Popup {
                     y: tempBox.height + 4
                     width: tempBox.width
                     padding: 4
-                    background: Rectangle { radius: 8; color: "#0b1420"; border.color: "#232a35"; border.width: 1 }
-                    contentItem: ListView { clip: true; implicitHeight: Math.min(contentHeight, 6 * 26); model: tempBox.delegateModel }
+                    background: Rectangle {
+                        radius: 8
+                        color: "#0b1420"
+                        border.color: "#232a35"
+                        border.width: 1
+                    }
+                    contentItem: ListView {
+                        clip: true
+                        implicitHeight: Math.min(contentHeight, 6 * 26)
+                        model: tempBox.delegateModel
+                    }
                 }
             }
         }
@@ -267,7 +336,12 @@ Rectangle {
             Layout.preferredHeight: 28
             spacing: 8
 
-            Text { text: "Distance"; Layout.preferredWidth: 70; color: "#93a6bf"; font.pixelSize: 11 }
+            Text {
+                text: "Distance"
+                Layout.preferredWidth: 70
+                color: "#93a6bf"
+                font.pixelSize: 11
+            }
             ComboBox {
                 id: distBox
                 Layout.fillWidth: true
@@ -277,22 +351,58 @@ Rectangle {
                 onActivated: SettingsStore.distanceUnit = textAt(index)
 
                 font.pixelSize: 11
-                contentItem: Text { text: distBox.displayText; color: "#e6f0ff"; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight; leftPadding: 8 }
-                background: Rectangle { radius: 7; color: "#0b1420"; border.color: "#232a35"; border.width: 1 }
-                indicator: Rectangle { width: 10; height: 10; radius: 2; color: "#4fb3d9"; anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter }
+                contentItem: Text {
+                    text: distBox.displayText
+                    color: "#e6f0ff"
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                    leftPadding: 8
+                }
+                background: Rectangle {
+                    radius: 7
+                    color: "#0b1420"
+                    border.color: "#232a35"
+                    border.width: 1
+                }
+                indicator: Rectangle {
+                    width: 10
+                    height: 10
+                    radius: 2
+                    color: "#4fb3d9"
+                    anchors.right: parent.right
+                    anchors.rightMargin: 8
+                    anchors.verticalCenter: parent.verticalCenter
+                }
 
                 delegate: ItemDelegate {
                     width: distBox.width
                     height: 26
-                    contentItem: Text { text: modelData; color: "#e6f0ff"; font.pixelSize: 11; verticalAlignment: Text.AlignVCenter; leftPadding: 8 }
-                    background: Rectangle { color: (index === distBox.currentIndex) ? "#101e2c" : "transparent" }
+                    contentItem: Text {
+                        text: modelData
+                        color: "#e6f0ff"
+                        font.pixelSize: 11
+                        verticalAlignment: Text.AlignVCenter
+                        leftPadding: 8
+                    }
+                    background: Rectangle {
+                        color: (index === distBox.currentIndex) ? "#101e2c" : "transparent"
+                    }
                 }
                 popup: Popup {
                     y: distBox.height + 4
                     width: distBox.width
                     padding: 4
-                    background: Rectangle { radius: 8; color: "#0b1420"; border.color: "#232a35"; border.width: 1 }
-                    contentItem: ListView { clip: true; implicitHeight: Math.min(contentHeight, 6 * 26); model: distBox.delegateModel }
+                    background: Rectangle {
+                        radius: 8
+                        color: "#0b1420"
+                        border.color: "#232a35"
+                        border.width: 1
+                    }
+                    contentItem: ListView {
+                        clip: true
+                        implicitHeight: Math.min(contentHeight, 6 * 26)
+                        model: distBox.delegateModel
+                    }
                 }
             }
         }
@@ -302,7 +412,12 @@ Rectangle {
             Layout.preferredHeight: 28
             spacing: 8
 
-            Text { text: "Wind"; Layout.preferredWidth: 70; color: "#93a6bf"; font.pixelSize: 11 }
+            Text {
+                text: "Wind"
+                Layout.preferredWidth: 70
+                color: "#93a6bf"
+                font.pixelSize: 11
+            }
             ComboBox {
                 id: windBox
                 Layout.fillWidth: true
@@ -312,22 +427,58 @@ Rectangle {
                 onActivated: SettingsStore.windSpeedUnit = textAt(index)
 
                 font.pixelSize: 11
-                contentItem: Text { text: windBox.displayText; color: "#e6f0ff"; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight; leftPadding: 8 }
-                background: Rectangle { radius: 7; color: "#0b1420"; border.color: "#232a35"; border.width: 1 }
-                indicator: Rectangle { width: 10; height: 10; radius: 2; color: "#4fb3d9"; anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter }
+                contentItem: Text {
+                    text: windBox.displayText
+                    color: "#e6f0ff"
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                    leftPadding: 8
+                }
+                background: Rectangle {
+                    radius: 7
+                    color: "#0b1420"
+                    border.color: "#232a35"
+                    border.width: 1
+                }
+                indicator: Rectangle {
+                    width: 10
+                    height: 10
+                    radius: 2
+                    color: "#4fb3d9"
+                    anchors.right: parent.right
+                    anchors.rightMargin: 8
+                    anchors.verticalCenter: parent.verticalCenter
+                }
 
                 delegate: ItemDelegate {
                     width: windBox.width
                     height: 26
-                    contentItem: Text { text: modelData; color: "#e6f0ff"; font.pixelSize: 11; verticalAlignment: Text.AlignVCenter; leftPadding: 8 }
-                    background: Rectangle { color: (index === windBox.currentIndex) ? "#101e2c" : "transparent" }
+                    contentItem: Text {
+                        text: modelData
+                        color: "#e6f0ff"
+                        font.pixelSize: 11
+                        verticalAlignment: Text.AlignVCenter
+                        leftPadding: 8
+                    }
+                    background: Rectangle {
+                        color: (index === windBox.currentIndex) ? "#101e2c" : "transparent"
+                    }
                 }
                 popup: Popup {
                     y: windBox.height + 4
                     width: windBox.width
                     padding: 4
-                    background: Rectangle { radius: 8; color: "#0b1420"; border.color: "#232a35"; border.width: 1 }
-                    contentItem: ListView { clip: true; implicitHeight: Math.min(contentHeight, 6 * 26); model: windBox.delegateModel }
+                    background: Rectangle {
+                        radius: 8
+                        color: "#0b1420"
+                        border.color: "#232a35"
+                        border.width: 1
+                    }
+                    contentItem: ListView {
+                        clip: true
+                        implicitHeight: Math.min(contentHeight, 6 * 26)
+                        model: windBox.delegateModel
+                    }
                 }
             }
         }
@@ -337,7 +488,12 @@ Rectangle {
             Layout.preferredHeight: 28
             spacing: 8
 
-            Text { text: "Precip"; Layout.preferredWidth: 70; color: "#93a6bf"; font.pixelSize: 11 }
+            Text {
+                text: "Precip"
+                Layout.preferredWidth: 70
+                color: "#93a6bf"
+                font.pixelSize: 11
+            }
             ComboBox {
                 id: precipBox
                 Layout.fillWidth: true
@@ -347,26 +503,64 @@ Rectangle {
                 onActivated: SettingsStore.precipitationUnit = textAt(index)
 
                 font.pixelSize: 11
-                contentItem: Text { text: precipBox.displayText; color: "#e6f0ff"; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight; leftPadding: 8 }
-                background: Rectangle { radius: 7; color: "#0b1420"; border.color: "#232a35"; border.width: 1 }
-                indicator: Rectangle { width: 10; height: 10; radius: 2; color: "#4fb3d9"; anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter }
+                contentItem: Text {
+                    text: precipBox.displayText
+                    color: "#e6f0ff"
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                    leftPadding: 8
+                }
+                background: Rectangle {
+                    radius: 7
+                    color: "#0b1420"
+                    border.color: "#232a35"
+                    border.width: 1
+                }
+                indicator: Rectangle {
+                    width: 10
+                    height: 10
+                    radius: 2
+                    color: "#4fb3d9"
+                    anchors.right: parent.right
+                    anchors.rightMargin: 8
+                    anchors.verticalCenter: parent.verticalCenter
+                }
 
                 delegate: ItemDelegate {
                     width: precipBox.width
                     height: 26
-                    contentItem: Text { text: modelData; color: "#e6f0ff"; font.pixelSize: 11; verticalAlignment: Text.AlignVCenter; leftPadding: 8 }
-                    background: Rectangle { color: (index === precipBox.currentIndex) ? "#101e2c" : "transparent" }
+                    contentItem: Text {
+                        text: modelData
+                        color: "#e6f0ff"
+                        font.pixelSize: 11
+                        verticalAlignment: Text.AlignVCenter
+                        leftPadding: 8
+                    }
+                    background: Rectangle {
+                        color: (index === precipBox.currentIndex) ? "#101e2c" : "transparent"
+                    }
                 }
                 popup: Popup {
                     y: precipBox.height + 4
                     width: precipBox.width
                     padding: 4
-                    background: Rectangle { radius: 8; color: "#0b1420"; border.color: "#232a35"; border.width: 1 }
-                    contentItem: ListView { clip: true; implicitHeight: Math.min(contentHeight, 6 * 26); model: precipBox.delegateModel }
+                    background: Rectangle {
+                        radius: 8
+                        color: "#0b1420"
+                        border.color: "#232a35"
+                        border.width: 1
+                    }
+                    contentItem: ListView {
+                        clip: true
+                        implicitHeight: Math.min(contentHeight, 6 * 26)
+                        model: precipBox.delegateModel
+                    }
                 }
             }
         }
 
-        Item { Layout.fillHeight: true } // pushes content up, guarantees no scroll
+        Item {
+            Layout.fillHeight: true
+        } // pushes content up, guarantees no scroll
     }
 }
