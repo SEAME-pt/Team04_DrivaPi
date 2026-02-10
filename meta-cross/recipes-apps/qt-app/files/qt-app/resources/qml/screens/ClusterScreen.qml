@@ -393,7 +393,7 @@ Rectangle {
                     loops: Animation.Infinite
                     running: root.vehicleDataAvailable && vehicleData.speed > 0.5
 
-                    property real kmh: root.vehicleDataAvailable ? vehicleData.speed * 3.6 : 0
+                    property real kmh: root.vehicleDataAvailable ? vehicleData.speed : 0
                     property real clamped: Math.max(10, Math.min(kmh, 160))
                     duration: Math.max(1000, 4000 - (clamped * 15))
                     onStopped: root.roadPhase = 0

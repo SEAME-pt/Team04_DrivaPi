@@ -240,7 +240,7 @@ void VehicleData::handleCanMessage(const QByteArray &payload, uint32_t canId)
     if (canId == SPEED_CAN_ID) {
         if (dlc < 4) return;
         const float speed_mps = readFloatLe(&data[0]);
-        const float speed_kmh = speed_mps * 3.6f;
+        const float speed_kmh = speed_mps;
         setSpeed(speed_kmh);
         return;
     }
