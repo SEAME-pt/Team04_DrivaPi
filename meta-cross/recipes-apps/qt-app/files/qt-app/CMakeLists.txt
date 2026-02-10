@@ -143,6 +143,7 @@ target_link_libraries(myqtapp PRIVATE
     ${GRPC_LIB}
     ${GRPC_PP_LIB}
     ${GRPC_CORE_LIB}
+	${GPR_LIB}
     ${PROTOBUF_LIB}
     ${ABSL_BASE_LIB}
     ${ABSL_STRINGS_LIB}
