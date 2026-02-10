@@ -884,8 +884,9 @@ ApplicationWindow {
             shadowOpacity: isActive ? 0.45 : 0.18
         }
 
-        // Icon - elegant and minimal
+        // Icon - elegant and minimal with white color overlay
         Image {
+            id: iconImage
             anchors.centerIn: parent
             width: 24
             height: 24
@@ -893,6 +894,14 @@ ApplicationWindow {
             fillMode: Image.PreserveAspectFit
             opacity: isActive ? 0.85 : (tabButton.isHovered ? 0.6 : 0.35)
             mipmap: true
+
+            // Force all icons to white via brightness boost (compatible with all Qt versions)
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                brightness: 2.0
+                contrast: 1.3
+                saturation: 0.0  // Desaturate to pure white/gray
+            }
 
             Behavior on opacity {
                 NumberAnimation {
