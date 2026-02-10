@@ -3,6 +3,7 @@
 #include "music_player_controller.hpp"
 #include "vehicle_data.hpp"
 #include "kuksa_reader.hpp"
+
 #ifdef ENABLE_CAN_MODE
 #include "can_reader.hpp"
 #endif
@@ -23,18 +24,38 @@
 #include <QDebug>
 #include <QUrl>
 #include <QMetaObject>
-
-#ifdef ENABLE_CAN_MODE
-#endif
+#include <QFileInfo>
 
 namespace drivaui {
 
 AppController::AppController(const RunConfig& config)
     : config_(config) {}
 
+static QUrl pickQmlEntryPoint(QQmlApplicationEngine &engine)
+{
+    // Prefer installed QML on target (easy to update via RPM)
+    const QString diskQml = "/usr/share/qt-app/resources/qml/main.qml";
+
+    if (QFileInfo::exists(diskQml)) {
+        qInfo() << "Loading QML from disk:" << diskQml;
+
+        // Make local imports work (e.g. import "components")
+        engine.addImportPath("/usr/share/qt-app/resources/qml");
+
+        // If you use qmldir-based modules under that tree, this helps too
+        // engine.addImportPath("/usr/share/qt-app/resources");
+
+        return QUrl::fromLocalFile(diskQml);
+    }
+
+    qInfo() << "Loading QML from resources (qrc): qrc:/qml/main.qml";
+    return QUrl(QStringLiteral("qrc:/qml/main.qml"));
+}
+
 int AppController::run(QGuiApplication& app)
 {
     QQmlApplicationEngine engine;
+
     QScopedPointer<VehicleData> vehicleData(new VehicleData());
     QScopedPointer<SystemStatus> systemStatus(new SystemStatus());
     QScopedPointer<NotificationManager> notificationManager(NotificationManager::instance());
@@ -44,7 +65,9 @@ int AppController::run(QGuiApplication& app)
     QScopedPointer<SettingsManager> settingsManager(new SettingsManager());
 
     // --- Music Player Controller ---
-    QScopedPointer<MusicPlayerController> musicPlayerController(new MusicPlayerController(settingsManager.data()));
+    QScopedPointer<MusicPlayerController> musicPlayerController(
+        new MusicPlayerController(settingsManager.data())
+    );
 
     engine.rootContext()->setContextProperty("vehicleData", vehicleData.data());
     engine.rootContext()->setContextProperty("systemStatus", systemStatus.data());
@@ -55,16 +78,13 @@ int AppController::run(QGuiApplication& app)
 
     QThread* workerThread = new QThread(&app);
     kuksa::KUKSAReader* kuksaReader = nullptr;
+
 #ifdef ENABLE_CAN_MODE
     CANReader* canReader = nullptr;
 #endif
 
-    const QUrl url(QStringLiteral("qrc:/qml/main.qml"));
-
     // Create and configure Pi Health Reader
     QScopedPointer<drivaui::PiHealthReader> piHealth(new drivaui::PiHealthReader());
-
-    // Choose one:
 
     // Option A: If Qt app runs ON the Raspberry Pi (local)
     piHealth->setLocalScript("/usr/bin/pi_health.sh");
@@ -170,6 +190,8 @@ int AppController::run(QGuiApplication& app)
         }
     });
 
+    const QUrl url = pickQmlEntryPoint(engine);
+
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
                      &app, [url](QObject* obj, const QUrl& objUrl) {
                          if (!obj && url == objUrl)
@@ -190,3 +212,4 @@ int AppController::run(QGuiApplication& app)
 }
 
 }  // namespace drivaui
+
