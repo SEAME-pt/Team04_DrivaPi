@@ -1,19 +1,13 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import QtQuick.Effects
+import "../theme"
 
 Item {
     id: root
     clip: true
 
-    // Color palette (hardcoded)
-    readonly property color colorPrimary: "#0084FF"
-    readonly property color colorText: "#FFFFFF"
-    readonly property color colorSurface: "#13171f"
-    readonly property color colorBorder: "#1a2533"
-
-    //darken background to match cluster style
+    // darken background to match cluster style
     Rectangle {
         anchors.fill: parent
         color: "#05080e"
@@ -60,7 +54,7 @@ Item {
                 width: 3
                 height: 22
                 radius: 2
-                color: root.colorPrimary
+                color: AppTheme.colors.primary
                 opacity: 0.9
             }
 
@@ -69,7 +63,7 @@ Item {
                 font.pixelSize: 14
                 font.weight: Font.Bold
                 font.letterSpacing: 1
-                color: root.colorText
+                color: AppTheme.colors.text
                 opacity: 0.95
             }
 
@@ -125,7 +119,6 @@ Item {
                         value: rpiOnline ? fmtInt(piHealthReader.diskPercent, "%") : "--"
                         warn: rpiOnline && piHealthReader.diskPercent > 90
                     }
-
                     MetricTileMini {
                         label: "FREQ"
                         value: rpiOnline ? fmtInt(piHealthReader.cpuFreq, "MHz") : "--"
@@ -133,13 +126,11 @@ Item {
                     }
                     MetricTileMini {
                         label: "BAT"
-                        // expects PiHealthReader Q_PROPERTY batteryPercent
                         value: rpiOnline ? fmtInt(piHealthReader.batteryPercent, "%") : "--"
                         warn: rpiOnline && safeNum(piHealthReader.batteryPercent) < 20
                     }
                     MetricTileMini {
                         label: "VOLT"
-                        // expects PiHealthReader Q_PROPERTY batteryVoltage
                         value: rpiOnline ? fmt(piHealthReader.batteryVoltage, 2, "V") : "--"
                         warn: rpiOnline && (safeNum(piHealthReader.batteryVoltage) < 11.0 || safeNum(piHealthReader.batteryVoltage) > 13.0)
                     }
@@ -189,97 +180,113 @@ Item {
     }
 
     // ===== Card shell (compact; content fills remaining) =====
-    component StatusCardCompact: Rectangle {
+    component StatusCardCompact: Item {
         required property string title
         required property string icon
         required property bool online
         required property bool warn
         default property alias content: contentArea.data
 
-        radius: 10
-        color: root.colorSurface
-        border.width: 1
-        border.color: online ? "#1a4d5c" : "#242a33"
-        opacity: online ? 1.0 : 0.72
-
-        layer.enabled: true
-        layer.effect: MultiEffect {
-            shadowEnabled: true
-            shadowBlur: 18
-            shadowOpacity: 0.18
+        // Simple “fake shadow” that works on every Qt build (no Effects module)
+        Rectangle {
+            anchors.fill: card
+            anchors.margins: -2
+            radius: 12
+            color: "#000000"
+            opacity: 0.22
+            z: 0
+        }
+        Rectangle {
+            anchors.fill: card
+            anchors.margins: -6
+            radius: 16
+            color: "#000000"
+            opacity: 0.10
+            z: 0
         }
 
-        ColumnLayout {
+        Rectangle {
+            id: card
             anchors.fill: parent
-            anchors.margins: 0
-            spacing: 0
+            radius: 10
+            color: "#13171f"
+            border.width: 1
+            border.color: online ? "#1a4d5c" : "#242a33"
+            opacity: online ? 1.0 : 0.72
+            z: 1
 
-            // header strip
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 32
-                radius: 10
-                color: "#0d1117"
-                border.width: 1
-                border.color: root.colorBorder
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 0
+                spacing: 0
 
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 10
-                    spacing: 8
+                // header strip
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 32
+                    radius: 10
+                    color: "#0d1117"
+                    border.width: 1
+                    border.color: "#1a2533"
 
-                    Image {
-                        source: icon
-                        sourceSize.width: 16
-                        sourceSize.height: 16
-                        opacity: 0.8
-                    }
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 10
+                        anchors.rightMargin: 10
+                        spacing: 8
 
-                    Text {
-                        text: title
-                        font.pixelSize: 11
-                        font.weight: Font.Bold
-                        font.letterSpacing: 0.8
-                        color: root.colorText
-                    }
+                        Image {
+                            source: icon
+                            sourceSize.width: 16
+                            sourceSize.height: 16
+                            opacity: 0.8
+                        }
 
-                    Item {
-                        Layout.fillWidth: true
-                    }
-
-                    Rectangle {
-                        width: 8
-                        height: 8
-                        radius: 4
-                        color: online ? "#00ff88" : "#666666"
-                    }
-
-                    Rectangle {
-                        visible: warn
-                        radius: 999
-                        height: 18
-                        implicitWidth: warnText.implicitWidth + 14
-                        color: "#2a1f10"
-                        border.width: 1
-                        border.color: "#7a4d1a"
                         Text {
-                            id: warnText
-                            anchors.centerIn: parent
-                            text: "WARN"
-                            font.pixelSize: 9
+                            text: title
+                            font.pixelSize: 11
                             font.weight: Font.Bold
-                            color: "#ffb36a"
+                            font.letterSpacing: 0.8
+                            color: "#e6f0ff"
+                        }
+
+                        Item {
+                            Layout.fillWidth: true
+                        }
+
+                        Rectangle {
+                            width: 8
+                            height: 8
+                            radius: 4
+                            color: online ? "#00ff88" : "#666666"
+                        }
+
+                        Rectangle {
+                            visible: warn
+                            radius: 999
+                            height: 18
+                            implicitWidth: warnText.implicitWidth + 14
+                            color: "#2a1f10"
+                            border.width: 1
+                            border.color: "#7a4d1a"
+                            Text {
+                                id: warnText
+                                anchors.centerIn: parent
+                                text: "WARN"
+                                font.pixelSize: 9
+                                font.weight: Font.Bold
+                                color: "#ffb36a"
+                            }
                         }
                     }
                 }
-            }
 
-            // content area
-            Item {
-                id: contentArea
-                Layout.fillWidth: true
-                Layout.fillHeight: true
+                // content area
+                Item {
+                    id: contentArea
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                }
             }
         }
     }
@@ -292,7 +299,7 @@ Item {
         radius: 8
         color: warn ? "#2d1a1a" : "#0d1117"
         border.width: 1
-        border.color: warn ? "#5a2424" : root.colorBorder
+        border.color: warn ? "#5a2424" : "#1a2533"
 
         Layout.fillWidth: true
         Layout.fillHeight: true
