@@ -2,11 +2,16 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Effects
-import "../theme"
 
 Item {
     id: root
     clip: true
+
+    // Color palette (hardcoded)
+    readonly property color colorPrimary: "#0084FF"
+    readonly property color colorText: "#FFFFFF"
+    readonly property color colorSurface: "#13171f"
+    readonly property color colorBorder: "#1a2533"
 
     //darken background to match cluster style
     Rectangle {
@@ -55,7 +60,7 @@ Item {
                 width: 3
                 height: 22
                 radius: 2
-                color: AppTheme.colors.primary
+                color: root.colorPrimary
                 opacity: 0.9
             }
 
@@ -64,7 +69,7 @@ Item {
                 font.pixelSize: 14
                 font.weight: Font.Bold
                 font.letterSpacing: 1
-                color: AppTheme.colors.text
+                color: root.colorText
                 opacity: 0.95
             }
 
@@ -192,7 +197,7 @@ Item {
         default property alias content: contentArea.data
 
         radius: 10
-        color: "#13171f"
+        color: root.colorSurface
         border.width: 1
         border.color: online ? "#1a4d5c" : "#242a33"
         opacity: online ? 1.0 : 0.72
@@ -216,7 +221,7 @@ Item {
                 radius: 10
                 color: "#0d1117"
                 border.width: 1
-                border.color: "#1a2533"
+                border.color: root.colorBorder
 
                 RowLayout {
                     anchors.fill: parent
@@ -236,7 +241,7 @@ Item {
                         font.pixelSize: 11
                         font.weight: Font.Bold
                         font.letterSpacing: 0.8
-                        color: "#e6f0ff"
+                        color: root.colorText
                     }
 
                     Item {
@@ -287,14 +292,12 @@ Item {
         radius: 8
         color: warn ? "#2d1a1a" : "#0d1117"
         border.width: 1
-        border.color: warn ? "#5a2424" : "#1a2533"
+        border.color: warn ? "#5a2424" : root.colorBorder
 
-        // Let GridLayout size the tiles naturally (no fixed heights!)
         Layout.fillWidth: true
         Layout.fillHeight: true
-        Layout.minimumHeight: 50   // small safety, won't explode the layout
+        Layout.minimumHeight: 50
 
-        // tune these two to control label/value distance
         property int padTop: 10
         property int padBottom: 10
 
