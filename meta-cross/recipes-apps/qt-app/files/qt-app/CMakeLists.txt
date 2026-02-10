@@ -22,12 +22,21 @@ pkg_check_modules(TAGLIB REQUIRED IMPORTED_TARGET taglib)
 # ------------------------
 # gRPC / Protobuf / Abseil (Yocto-friendly)
 # ------------------------
-# Use find_package ONLY for getting protoc and grpc_cpp_plugin executables
-find_package(gRPC REQUIRED)
-find_package(Protobuf REQUIRED)
+# Find gRPC FIRST (it will find Protobuf as a dependency)
+find_package(gRPC QUIET)
 
-# Get the grpc_cpp_plugin executable from gRPC's target
-get_target_property(GRPC_CPP_PLUGIN_EXECUTABLE gRPC::grpc_cpp_plugin LOCATION)
+# Only call find_package(Protobuf) if gRPC didn't find it
+if(NOT TARGET protobuf::protoc)
+    find_package(Protobuf REQUIRED)
+endif()
+
+# Get grpc_cpp_plugin executable
+if(TARGET gRPC::grpc_cpp_plugin)
+    get_target_property(GRPC_CPP_PLUGIN_EXECUTABLE gRPC::grpc_cpp_plugin LOCATION)
+else()
+    # Fallback for Yocto: search PATH for the plugin
+    find_program(GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin REQUIRED)
+endif()
 
 if(NOT GRPC_CPP_PLUGIN_EXECUTABLE)
     message(FATAL_ERROR "grpc_cpp_plugin not found")
@@ -36,7 +45,7 @@ endif()
 message(STATUS "Using protoc: ${Protobuf_PROTOC_EXECUTABLE}")
 message(STATUS "Using grpc_cpp_plugin: ${GRPC_CPP_PLUGIN_EXECUTABLE}")
 
-# Use pkg-config for actual linking (more reliable)
+# Use pkg-config for linking (more reliable on Yocto)
 pkg_check_modules(GRPC REQUIRED IMPORTED_TARGET grpc++)
 pkg_check_modules(PROTOBUF REQUIRED IMPORTED_TARGET protobuf)
 pkg_check_modules(ABSL REQUIRED IMPORTED_TARGET
