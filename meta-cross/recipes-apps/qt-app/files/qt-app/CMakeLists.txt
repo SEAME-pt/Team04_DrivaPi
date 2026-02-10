@@ -14,10 +14,23 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(TAGLIB REQUIRED IMPORTED_TARGET taglib)
 
 # --- Find Kuksa Middleware Dependencies ---
-# Note: gRPC finds Protobuf internally, don't call find_package(Protobuf) explicitly to avoid target conflicts
-find_package(gRPC REQUIRED)
-find_program(gRPC_PLUGIN_EXECUTABLE grpc_cpp_plugin) # Tool to generate network code
-find_package(absl REQUIRED) # Google common libraries (Critical dependency)
+# In Yocto/AGL, we need to handle protobuf/gRPC differently
+# Check if the variables are passed from the recipe
+if(NOT DEFINED Protobuf_PROTOC_EXECUTABLE)
+    find_package(Protobuf REQUIRED)
+else()
+    message(STATUS "Using protoc from recipe: ${Protobuf_PROTOC_EXECUTABLE}")
+endif()
+
+if(NOT DEFINED gRPC_PLUGIN_EXECUTABLE)
+    find_package(gRPC REQUIRED)
+    find_program(GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin)
+else()
+    set(GRPC_CPP_PLUGIN_EXECUTABLE ${gRPC_PLUGIN_EXECUTABLE})
+    message(STATUS "Using grpc_cpp_plugin from recipe: ${gRPC_PLUGIN_EXECUTABLE}")
+endif()
+
+find_package(absl REQUIRED) # Google common libraries
 
 # --- Protocol Buffers Code Generation (VAL v2) ---
 # Define paths for input (.proto) and output (generated C++)
@@ -30,19 +43,20 @@ set(GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 file(MAKE_DIRECTORY ${GEN_DIR})
 
 # Command to auto-generate C++ sources from VAL v2 .proto files before compilation
+# FIXED: Use the variables passed from the recipe instead of target expressions
 add_custom_command(
     OUTPUT "${GEN_DIR}/kuksa/val/v2/val.pb.cc" "${GEN_DIR}/kuksa/val/v2/val.pb.h"
            "${GEN_DIR}/kuksa/val/v2/val.grpc.pb.cc" "${GEN_DIR}/kuksa/val/v2/val.grpc.pb.h"
            "${GEN_DIR}/kuksa/val/v2/types.pb.cc" "${GEN_DIR}/kuksa/val/v2/types.pb.h"
-    # Step 1: Generate gRPC Network Stubs
-    COMMAND "$<TARGET_FILE:protobuf::protoc>"
+    # Use the protoc executable from the recipe variable
+    COMMAND ${Protobuf_PROTOC_EXECUTABLE}
         "--grpc_out=${GEN_DIR}"
-        "--plugin=protoc-gen-grpc=$<TARGET_FILE:gRPC::grpc_cpp_plugin>"
+        "--plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN_EXECUTABLE}"
         "-I${PROTO_DIR}"
         "${PROTO_DIR}/kuksa/val/v2/val.proto"
         "${PROTO_DIR}/kuksa/val/v2/types.proto"
-    # Step 2: Generate Data Serialization Classes
-    COMMAND "$<TARGET_FILE:protobuf::protoc>"
+    # Generate protobuf serialization code
+    COMMAND ${Protobuf_PROTOC_EXECUTABLE}
         "--cpp_out=${GEN_DIR}"
         "-I${PROTO_DIR}"
         "${PROTO_DIR}/kuksa/val/v2/val.proto"
@@ -62,7 +76,6 @@ set(QT_APP_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/gui/kuksa_reader.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/gui/settings_manager.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/gui/music_player_controller.cpp"
-	""
 )
 
 if(ENABLE_CAN_MODE)
@@ -77,21 +90,8 @@ set(MODEL_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/models/pi_health_reader.cpp"
 )
 
-# # --- Feeder Sources ---
-# set(FEEDER_SOURCES
-#     "${CMAKE_CURRENT_SOURCE_DIR}/src/feeder/main.cpp"
-#     "${CMAKE_CURRENT_SOURCE_DIR}/src/feeder/publisher.cpp"
-#     "${CMAKE_CURRENT_SOURCE_DIR}/src/feeder/handlers.cpp"
-#     "${CMAKE_CURRENT_SOURCE_DIR}/src/feeder/feeder_cli.cpp"
-#     "${CMAKE_CURRENT_SOURCE_DIR}/src/feeder/feeder_signal.cpp"
-#     "${CMAKE_CURRENT_SOURCE_DIR}/src/feeder/feeder_can.cpp"
-# )
-
 # --- Qt Application Target ---
 add_executable(myqtapp ${QT_APP_SOURCES} ${MODEL_SOURCES})
-
-# # --- Feeder Target ---
-# add_executable(kuksa_feeder ${FEEDER_SOURCES})
 
 target_include_directories(myqtapp PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/inc/gui
@@ -103,14 +103,9 @@ if(ENABLE_CAN_MODE)
     target_compile_definitions(myqtapp PRIVATE ENABLE_CAN_MODE=1)
 endif()
 
-# target_include_directories(kuksa_feeder PRIVATE
-#     ${CMAKE_CURRENT_SOURCE_DIR}/inc/feeder
-#     ${GEN_DIR}
-# )
-
 target_sources(myqtapp PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/resources/resources.qrc"
-	"${CMAKE_CURRENT_SOURCE_DIR}/resources/qml.qrc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/resources/qml.qrc"
     "${CMAKE_CURRENT_SOURCE_DIR}/inc/gui/app_controller.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/inc/gui/cli_parser.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/inc/gui/vehicle_data.hpp"
@@ -130,12 +125,7 @@ if(ENABLE_CAN_MODE)
     target_sources(myqtapp PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/inc/gui/can_reader.hpp")
 endif()
 
-# target_sources(kuksa_feeder PRIVATE
-#     "${GEN_DIR}/kuksa/val/v2/val.pb.cc"
-#     "${GEN_DIR}/kuksa/val/v2/val.grpc.pb.cc"
-#     "${GEN_DIR}/kuksa/val/v2/types.pb.cc"
-# )
-
+# Link libraries - Use absolute paths for Yocto/AGL
 target_link_libraries(myqtapp PRIVATE
     Qt6::Core Qt6::Gui Qt6::Quick Qt6::Qml Qt6::QuickControls2 Qt6::SerialBus Qt6::Network Qt6::Multimedia
     PkgConfig::TAGLIB
@@ -143,15 +133,7 @@ target_link_libraries(myqtapp PRIVATE
     protobuf::libprotobuf  # The Serialization Library
     absl::base             # Abseil Base (Required by gRPC)
     absl::strings          # Abseil Strings
-    absl::log_internal_check_op # <--- Critical fix for "Undefined Symbol" linker errors
+    absl::log_internal_check_op
 )
-
-# target_link_libraries(kuksa_feeder PRIVATE
-#     gRPC::grpc++           # The gRPC Transport Layer
-#     protobuf::libprotobuf  # The Serialization Library
-#     absl::base             # Abseil Base (Required by gRPC)
-#     absl::strings          # Abseil Strings
-#     absl::log_internal_check_op
-# )
 
 install(TARGETS myqtapp RUNTIME DESTINATION bin)
