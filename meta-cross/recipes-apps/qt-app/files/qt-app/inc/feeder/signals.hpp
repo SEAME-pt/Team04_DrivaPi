@@ -9,8 +9,6 @@
 
 namespace vss {
 
-namespace vss {
-
 // Speed (official VSS)
 constexpr const char* VEHICLE_SPEED = "Vehicle.Speed";  // km/h (float)
 

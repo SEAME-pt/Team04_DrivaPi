@@ -17,7 +17,7 @@ constexpr uint32_t ID_SPEED = 0x100;
 // 0x200: 5 bytes:
 //   [0]   uint8 battery percentage (0..100)
 //   [1..4] float battery voltage (LE)
-constexpr uint32_t ID_BATTERY_12V = 0x200;
+constexpr uint32_t ID_STM32_BATTERY = 0x200;
 
 // 0x300: 1 byte:
 //   [0] uint8 gear: 0=N, 1=R, 2=D
