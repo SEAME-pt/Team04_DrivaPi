@@ -3,31 +3,9 @@ SUMMARY = "DrivaPi Qt Dashboard"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=7800be09a61cad6da79d8f0c18b1e007"
 
-DEPENDS = " \
-    qtbase qtdeclarative qtserialbus qtmultimedia \
-    taglib \
-    protobuf-native grpc-native protobuf grpc \
-    qtbase-native qtdeclarative-native \
-    qtpositioning qtlocation qt5compat qtshadertools \
-"
+DEPENDS = "qtbase qtdeclarative qtserialbus qtmultimedia taglib protobuf-native grpc-native protobuf grpc qtbase-native qtdeclarative-native qtpositioning qtlocation qt5compat qtshadertools"
 
-RDEPENDS:${PN} = " \
-    qtbase qtdeclarative qtserialbus qtmultimedia \
-    taglib \
-    protobuf grpc \
-    qtpositioning qtpositioning-qmlplugins \
-    qtlocation qtlocation-qmlplugins \
-    qt5compat qt5compat-qmlplugins \
-    qtshadertools qtshadertools-qmlplugins \
-    \
-    gstreamer1.0 \
-    gstreamer1.0-tools \
-    gstreamer1.0-plugins-base \
-    gstreamer1.0-plugins-good \
-    gstreamer1.0-plugins-bad \
-    gstreamer1.0-plugins-ugly \
-    gstreamer1.0-libav \
-"
+RDEPENDS:${PN} = "qtbase qtdeclarative qtserialbus qtmultimedia taglib protobuf grpc qtpositioning qtpositioning-qmlplugins qtlocation qtlocation-qmlplugins qt5compat qt5compat-qmlplugins qtshadertools qtshadertools-qmlplugins"
 
 SRC_URI = "file://qt-app"
 
