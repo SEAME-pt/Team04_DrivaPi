@@ -18,7 +18,6 @@ DEPENDS = "\
     qtlocation \
     qt5compat \
     qtshadertools \
-    qtquickeffects \
 "
 
 # Runtime dependencies - MUST include all required QML plugins
@@ -38,7 +37,6 @@ RDEPENDS:${PN} = "\
     qt5compat \
     qt5compat-qmlplugins \
     qtshadertools \
-    qtquickeffects-qmlplugins \
 "
 
 SRC_URI = "file://qt-app"
