@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
 import "../theme"
 
 // Battery Status Popup - Shows both STM32 and RPi battery levels
@@ -54,13 +53,16 @@ Item {
         border.width: 1
         radius: 8
 
-        // Subtle glow effect
-        layer.enabled: true
-        layer.effect: MultiEffect {
-            shadowEnabled: true
-            shadowBlur: 15
-            shadowColor: "#00BFFF20"
-            shadowOpacity: 0.5
+        // Subtle glow effect using shadow rectangle
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: -4
+            radius: parent.radius
+            color: "transparent"
+            border.color: "#00BFFF"
+            border.width: 1
+            opacity: 0.1
+            z: -1
         }
 
         ColumnLayout {

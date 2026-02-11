@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
 import QtQuick.Controls
 import "../components"
 import "../theme"
@@ -274,14 +273,7 @@ Rectangle {
                 }
 
                 // ===== Horizon integration: blur + fade (top only) =====
-                ShaderEffectSource {
-                    id: roadSrc
-                    sourceItem: roadImg1
-                    live: true
-                    recursive: true
-                    hideSource: false
-                }
-
+                // Simplified horizon blend without MultiEffect
                 Item {
                     id: horizonBlend
                     anchors.left: parent.left
@@ -291,18 +283,17 @@ Rectangle {
                     clip: true
                     z: 4
 
-                    MultiEffect {
+                    // Blurred road image (using opacity/scale for subtle effect)
+                    Image {
                         x: roadImg1.x
                         y: roadImg1.y
                         width: roadImg1.width
                         height: roadImg1.height
-                        source: roadSrc
-                        blurEnabled: true
-                        blur: 1.0
-                        opacity: 0.30
-                        brightness: -0.16
-                        contrast: 0.02
-                        saturation: 0.85
+                        source: roadImg1.source
+                        fillMode: Image.PreserveAspectCrop
+                        smooth: true
+                        opacity: 0.15
+                        scale: 1.05  // Slightly enlarged for blur effect
                     }
 
                     Rectangle {

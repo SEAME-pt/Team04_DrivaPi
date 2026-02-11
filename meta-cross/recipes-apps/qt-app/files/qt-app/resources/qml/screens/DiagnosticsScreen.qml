@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import QtQuick.Effects
 import "../theme"
 
 Item {
@@ -197,11 +196,25 @@ Item {
         border.color: online ? "#1a4d5c" : "#242a33"
         opacity: online ? 1.0 : 0.72
 
-        layer.enabled: true
-        layer.effect: MultiEffect {
-            shadowEnabled: true
-            shadowBlur: 18
-            shadowOpacity: 0.18
+        // Shadow effect using nested rectangles (replaces MultiEffect)
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: -8
+            radius: parent.radius
+            color: "transparent"
+            border.color: "#00000033"
+            border.width: 1
+            z: -1
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: -12
+            radius: parent.radius + 4
+            color: "transparent"
+            border.color: "#00000018"
+            border.width: 1
+            z: -2
         }
 
         ColumnLayout {

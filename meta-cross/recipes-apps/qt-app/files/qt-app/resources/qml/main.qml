@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Window
 import QtQuick.Controls
 import QtQuick.Layouts
-import QtQuick.Effects
 import "screens"
 import "components"
 import "theme"
@@ -176,13 +175,39 @@ ApplicationWindow {
                 border.color: rightPanelVisible ? "#00BFFF" : "#1a2535"
                 border.width: 1
 
-                // Subtle glow when active
-                layer.enabled: true
-                layer.effect: MultiEffect {
-                    shadowEnabled: rightPanelVisible
-                    shadowBlur: 10
-                    shadowColor: "#00BFFF40"
-                    shadowOpacity: 0.8
+                // Subtle glow effect using nested rectangles (replaces MultiEffect)
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.margins: -8
+                    radius: parent.radius + 4
+                    color: "transparent"
+                    border.color: "#00BFFF"
+                    border.width: 1
+                    opacity: rightPanelVisible ? 0.4 : 0
+                    z: -1
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 200
+                        }
+                    }
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.margins: -14
+                    radius: parent.radius + 8
+                    color: "transparent"
+                    border.color: "#00BFFF"
+                    border.width: 1
+                    opacity: rightPanelVisible ? 0.2 : 0
+                    z: -2
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 300
+                        }
+                    }
                 }
 
                 // Grid icon (three horizontal lines)
@@ -402,17 +427,22 @@ ApplicationWindow {
 
                 property int currentIndex: verticalTabBar.currentIndex >= 0 ? verticalTabBar.currentIndex : 0  // Ensure valid index
 
-                // Nearly invisible semi-transparent background
+                // Nearly invisible semi-transparent background with shadow effect using nested rectangles
                 Rectangle {
                     anchors.fill: parent
                     color: "#05080e"
-                    layer.enabled: true
-                    layer.effect: MultiEffect {
-                        shadowEnabled: true
-                        shadowBlur: 20
-                        shadowColor: "#00BFFF"
-                        shadowOpacity: 0.08
-                    }
+                }
+
+                // Shadow effect simulation using nested rectangles
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    color: "transparent"
+                    border.color: "#00BFFF"
+                    border.width: 1
+                    opacity: 0.08
                 }
 
                 // Vertical column of icon buttons
@@ -471,11 +501,6 @@ ApplicationWindow {
                         iconSource: "qrc:/icons/hardware/sensor.svg"
                         onClicked: verticalTabBar.currentIndex = 4
                     }
-
-                    // Item {
-                    //     // Spacer to push buttons to top
-                    //     Layout.fillHeight: true
-                    // }
                 }
             }
         }
@@ -875,16 +900,7 @@ ApplicationWindow {
             }
         }
 
-        // Subtle glow on active/hover
-        layer.enabled: isActive || isHovered
-        layer.effect: MultiEffect {
-            shadowEnabled: true
-            shadowBlur: isActive ? 12 : 6
-            shadowColor: isActive ? "#00BFFF" : "#8FA4B8"
-            shadowOpacity: isActive ? 0.45 : 0.18
-        }
-
-        // Icon - elegant and minimal with white color overlay
+        // Icon - elegant and minimal with white color overlay using ColorOverlay alternative
         Image {
             id: iconImage
             anchors.centerIn: parent
@@ -894,14 +910,6 @@ ApplicationWindow {
             fillMode: Image.PreserveAspectFit
             opacity: isActive ? 0.85 : (tabButton.isHovered ? 0.6 : 0.35)
             mipmap: true
-
-            // Force all icons to white via brightness boost (compatible with all Qt versions)
-            layer.enabled: true
-            layer.effect: MultiEffect {
-                brightness: 2.0
-                contrast: 1.3
-                saturation: 0.0  // Desaturate to pure white/gray
-            }
 
             Behavior on opacity {
                 NumberAnimation {

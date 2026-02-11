@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
-import QtQuick.Effects
 import "../theme"
 
 Rectangle {
@@ -255,19 +254,34 @@ Rectangle {
                     }
                 }
 
-                // Play/Pause Button (Large)
+                // Play/Pause Button (Large) - Simplified without MultiEffect
                 Rectangle {
                     width: playSize
                     height: playSize
                     radius: playSize / 2
                     color: "#00BFFF"
 
-                    layer.enabled: true
-                    layer.effect: MultiEffect {
-                        shadowEnabled: true
-                        shadowBlur: 15
-                        shadowColor: "#00BFFF40"
-                        shadowOpacity: 0.8
+                    // Subtle glow effect using nested rectangles (replaces MultiEffect)
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.margins: -8
+                        radius: parent.radius
+                        color: "transparent"
+                        border.color: "#00BFFF"
+                        border.width: 1
+                        opacity: 0.3
+                        z: -1
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.margins: -14
+                        radius: parent.radius + 4
+                        color: "transparent"
+                        border.color: "#00BFFF"
+                        border.width: 1
+                        opacity: 0.15
+                        z: -2
                     }
 
                     Image {
