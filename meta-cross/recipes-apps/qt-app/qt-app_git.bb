@@ -7,7 +7,10 @@ DEPENDS = "qtbase qtdeclarative qtserialbus qtmultimedia taglib protobuf-native 
 
 RDEPENDS:${PN} = "qtbase qtdeclarative qtserialbus qtmultimedia taglib protobuf grpc qtpositioning qtpositioning-qmlplugins qtlocation qtlocation-qmlplugins qt5compat qt5compat-qmlplugins qtshadertools qtshadertools-qmlplugins"
 
-SRC_URI = "file://qt-app"
+SRC_URI =
+	"file://qt-app \
+	file://qt-app/main.cpp \
+	file://qt-app/*.qml \"
 
 S = "${WORKDIR}/qt-app"
 
