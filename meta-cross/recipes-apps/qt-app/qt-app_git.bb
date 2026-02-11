@@ -10,7 +10,8 @@ RDEPENDS:${PN} = "qtbase qtdeclarative qtserialbus qtmultimedia taglib protobuf 
 SRC_URI =
 	"file://qt-app \
 	file://qt-app/main.cpp \
-	file://qt-app/*.qml \"
+	file://qt-app/resources/qml/*.qml \
+	file://qt-app/resources/qml/../*.qml \"
 
 S = "${WORKDIR}/qt-app"
 
