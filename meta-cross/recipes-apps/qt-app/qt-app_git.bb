@@ -3,41 +3,9 @@ SUMMARY = "DrivaPi Qt Dashboard"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=7800be09a61cad6da79d8f0c18b1e007"
 
-# Build-time dependencies
-DEPENDS = "\
-    qtbase \
-    qtdeclarative \
-    qtserialbus \
-    qtmultimedia \
-    taglib \
-    protobuf-native \
-    grpc-native \
-    qtbase-native \
-    qtdeclarative-native \
-    qtpositioning \
-    qtlocation \
-    qt5compat \
-    qtshadertools \
-"
+DEPENDS = "qtbase qtdeclarative qtserialbus qtmultimedia taglib protobuf-native grpc-native protobuf grpc qtbase-native qtdeclarative-native qtpositioning qtlocation qt5compat qtshadertools"
 
-# Runtime dependencies - MUST include all required QML plugins
-RDEPENDS:${PN} = "\
-    qtbase \
-    qtdeclarative-qmlplugins \
-    qtserialbus \
-    qtmultimedia \
-    qtmultimedia-qmlplugins \
-    taglib \
-    protobuf \
-    grpc \
-    qtpositioning \
-    qtpositioning-qmlplugins \
-    qtlocation \
-    qtlocation-qmlplugins \
-    qt5compat \
-    qt5compat-qmlplugins \
-    qtshadertools \
-"
+RDEPENDS:${PN} = "qtbase qtdeclarative qtserialbus qtmultimedia taglib protobuf grpc qtpositioning qtpositioning-qmlplugins qtlocation qtlocation-qmlplugins qt5compat qt5compat-qmlplugins qtshadertools qtshadertools-qmlplugins"
 
 SRC_URI = "file://qt-app"
 
