@@ -170,7 +170,6 @@ endif()
 
 # QRC sources only needed for app
 target_sources(myqtapp PRIVATE
-    "${CMAKE_CURRENT_SOURCE_DIR}/resources/resources.qrc"
     "${CMAKE_CURRENT_SOURCE_DIR}/resources/qml.qrc"
     "${CMAKE_CURRENT_SOURCE_DIR}/inc/gui/app_controller.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/inc/gui/cli_parser.hpp"
@@ -215,7 +214,7 @@ include(GNUInstallDirs)
 
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/resources/qml/"
         DESTINATION "${CMAKE_INSTALL_DATADIR}/qt-app/resources/qml"
-        FILES_MATCHING PATTERN "*.qml" PATTERN "*.js" PATTERN "*.png" PATTERN "*.jpg" PATTERN "*.svg")
+        FILES_MATCHING PATTERN "*.qml" PATTERN "*.js" PATTERN "*.png" PATTERN "*.jpg" PATTERN "*.svg" PATTERN "qmldir" PATTERN "*.frag" PATTERN "*.qsb")
 
 install(TARGETS myqtapp kuksa_feeder
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
