@@ -33,6 +33,8 @@ public:
     QString theme() const;
     void setTheme(const QString& thm);
 
+	QString getDefaultMusicPath() const;
+
 signals:
     void lastPlayedTrackChanged();
     void volumeChanged();

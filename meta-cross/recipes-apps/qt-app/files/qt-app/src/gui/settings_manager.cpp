@@ -19,6 +19,27 @@ QString SettingsManager::getConfigPath() const {
     return configDir + "/settings.json";
 }
 
+QString SettingsManager::getDefaultMusicPath() const {
+    // Production path (AGL): /usr/mp3
+    QString aglPath = "/usr/mp3";
+    if (QDir(aglPath).exists()) {
+        qDebug() << "Using AGL music path:" << aglPath;
+        return aglPath;
+    }
+
+    // Development fallback: project-relative music/mp3
+    QString devPath = QCoreApplication::applicationDirPath() + "/music/mp3";
+    if (QDir(devPath).exists()) {
+        qDebug() << "Using development music path:" << devPath;
+        return devPath;
+    }
+
+    // Last resort: user's Music folder
+    QString musicDir = QStandardPaths::writableLocation(QStandardPaths::MusicLocation);
+    qDebug() << "Using fallback music path:" << musicDir;
+    return musicDir;
+}
+
 void SettingsManager::loadSettings() {
     QFile file(m_configPath);
     if (file.exists() && file.open(QIODevice::ReadOnly)) {
@@ -31,11 +52,10 @@ void SettingsManager::loadSettings() {
         qDebug() << "Settings loaded from:" << m_configPath;
     } else {
         qDebug() << "Creating new settings file at:" << m_configPath;
-        // Set defaults - use the mp3 folder in the project
-        QString projectMp3Path = QCoreApplication::applicationDirPath() + "/music/mp3";
+        // Set defaults
         m_settings["lastPlayedTrack"] = "";
         m_settings["volume"] = 50;
-        m_settings["musicLibraryPath"] = projectMp3Path;
+        m_settings["musicLibraryPath"] = getDefaultMusicPath();  // Auto-detect path
         m_settings["theme"] = "dark";
         saveSettings();
     }
@@ -88,13 +108,27 @@ void SettingsManager::setVolume(int vol) {
 }
 
 QString SettingsManager::musicLibraryPath() const {
-    return m_settings.contains("musicLibraryPath") ? m_settings.value("musicLibraryPath").toString() : QStandardPaths::writableLocation(QStandardPaths::MusicLocation);
+    // Return the configured path; if missing, auto-detect
+    if (m_settings.contains("musicLibraryPath")) {
+        QString configuredPath = m_settings.value("musicLibraryPath").toString();
+        if (!configuredPath.isEmpty() && QDir(configuredPath).exists()) {
+            return configuredPath;
+        }
+    }
+    // Fall back to auto-detection if configured path doesn't exist
+    return getDefaultMusicPath();
 }
 
 void SettingsManager::setMusicLibraryPath(const QString& path) {
-    m_settings["musicLibraryPath"] = path;
-    saveSettings();
-    emit musicLibraryPathChanged();
+    // Validate path exists before saving
+    if (QDir(path).exists()) {
+        m_settings["musicLibraryPath"] = path;
+        saveSettings();
+        emit musicLibraryPathChanged();
+        qDebug() << "Music library path updated to:" << path;
+    } else {
+        qWarning() << "Music library path does not exist:" << path;
+    }
 }
 
 QString SettingsManager::theme() const {
