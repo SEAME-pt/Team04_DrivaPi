@@ -10,14 +10,14 @@ using kuksa::val::v2::Datapoint;
 
 static constexpr const char* PATH_SPEED        = "Vehicle.Speed";
 
-// Match your edited vss_v6.json :contentReference[oaicite:1]{index=1}
-static constexpr const char* PATH_LV_PERCENT   = "Vehicle.LowVoltageBattery.StateOfCharge";
-static constexpr const char* PATH_LV_VOLT      = "Vehicle.LowVoltageBattery.CurrentVoltage";
+// Match the actual KUKSA feeder output paths
+static constexpr const char* PATH_BATTERY_PERCENT   = "Vehicle.Powertrain.TractionBattery.StateOfCharge.Displayed";
+static constexpr const char* PATH_BATTERY_VOLT      = "Vehicle.Powertrain.TractionBattery.CurrentVoltage";
 
 static constexpr const char* PATH_CURRENT_GEAR = "Vehicle.Powertrain.Transmission.CurrentGear";
 
-static constexpr const char* PATH_STM32_TEMP   = "Vehicle.ControlUnit.STM32.Health.Resources.Temperature";
-static constexpr const char* PATH_STM32_HUM    = "Vehicle.ControlUnit.STM32.Health.Resources.Humidity";
+static constexpr const char* PATH_STM32_TEMP   = "Vehicle.Cabin.Temperature";
+static constexpr const char* PATH_STM32_HUM    = "Vehicle.Cabin.Humidity";
 
 KUKSAReader::KUKSAReader(QObject *parent)
     : QObject(parent)
@@ -109,8 +109,8 @@ void KUKSAReader::start()
     // Subscribe to the required signals (plus speed if used elsewhere)
     request.add_signal_paths(PATH_SPEED);
 
-    request.add_signal_paths(PATH_LV_PERCENT);
-    request.add_signal_paths(PATH_LV_VOLT);
+    request.add_signal_paths(PATH_BATTERY_PERCENT);
+    request.add_signal_paths(PATH_BATTERY_VOLT);
 
     request.add_signal_paths(PATH_CURRENT_GEAR);
 
@@ -127,11 +127,11 @@ void KUKSAReader::start()
             emit speedReceived(readFloat(it->second, 0.0f));
         }
 
-        if (auto it = entries.find(PATH_LV_PERCENT); it != entries.end()) {
+        if (auto it = entries.find(PATH_BATTERY_PERCENT); it != entries.end()) {
             emit lvBatteryPercentReceived(readInt(it->second, 0));
         }
 
-        if (auto it = entries.find(PATH_LV_VOLT); it != entries.end()) {
+        if (auto it = entries.find(PATH_BATTERY_VOLT); it != entries.end()) {
             emit lvBatteryVoltageReceived(readFloat(it->second, 0.0f));
         }
 
