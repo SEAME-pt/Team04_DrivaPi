@@ -6,38 +6,52 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
-  checks: write
   actions: read
   security-events: write
 
 jobs:
   run-tests:
     uses: ./.github/workflows/unit_tests.yml
+    permissions:
+      contents: read
+      actions: read
+      security-events: none
 
   run-codeql:
     uses: ./.github/workflows/firmware_static.yml
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
 
   tsf-validation:
     needs: [run-tests, run-codeql]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      security-events: none
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-          graphviz
+          sudo apt-get install -y graphviz
 
       - name: Download Verification Artifacts
         uses: actions/download-artifact@v7
         with:
           name: verification-artifacts
           path: artifacts/verification
+
+      - name: Download Unit Test Summary
+        uses: actions/download-artifact@v7
+        with:
+          name: unit-test-summary
+          path: artifacts/unit_tests
 
       - name: Download CodeQL Artifacts
         uses: actions/download-artifact@v7
@@ -67,7 +81,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pyyaml typing_extensions
-          git clone https://gitlab.com/CodethinkLabs/trustable/trustable.git /tmp/trustable
+          git clone https://gitlab.eclipse.org/eclipse/tsf/tsf.git /tmp/trustable
           cd /tmp/trustable
           pip install .
           cd -
@@ -132,6 +146,41 @@ jobs:
             echo "publish_ok=false" >> $GITHUB_OUTPUT
           fi
 
+      - name: Create TSF comment body (markdown)
+        if: always()
+        run: |
+          mkdir -p artifacts/tsf
+          UNIT="artifacts/unit_tests/unit_test_summary.md"
+
+          echo "## 🔍 TSF Validation Results" > artifacts/tsf/tsf_comment.md
+          echo "" >> artifacts/tsf/tsf_comment.md
+          echo "| Check | Status |" >> artifacts/tsf/tsf_comment.md
+          echo "|-------|--------|" >> artifacts/tsf/tsf_comment.md
+          echo "| **trudag lint** | ${{ steps.lint.outputs.lint_ok == 'true' && '✅ PASSED' || '❌ FAILED' }} |" >> artifacts/tsf/tsf_comment.md
+          echo "| **trudag score** | ${{ steps.scores.outputs.score_ok == 'true' && '✅ PASSED' || '❌ FAILED' }} |" >> artifacts/tsf/tsf_comment.md
+          echo "| **trudag publish** | ${{ steps.publish.outputs.publish_ok == 'true' && '✅ PASSED' || '❌ FAILED' }} |" >> artifacts/tsf/tsf_comment.md
+          echo "" >> artifacts/tsf/tsf_comment.md
+
+          echo "### 📋 Lint Output" >> artifacts/tsf/tsf_comment.md
+          echo '```' >> artifacts/tsf/tsf_comment.md
+          echo "${{ steps.summary.outputs.lint_summary }}" >> artifacts/tsf/tsf_comment.md
+          echo '```' >> artifacts/tsf/tsf_comment.md
+          echo "" >> artifacts/tsf/tsf_comment.md
+
+          echo "### 📊 Traceability Graph" >> artifacts/tsf/tsf_comment.md
+          echo "${{ steps.graph.outputs.graph_generated == 'true' && '✅ Graph generated successfully' || '❌ Graph generation failed' }}" >> artifacts/tsf/tsf_comment.md
+          echo "" >> artifacts/tsf/tsf_comment.md
+
+          echo "**Download artifacts to view**: [TSF Validation Results](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> artifacts/tsf/tsf_comment.md
+          echo "- Traceability graph: \`tsf-validation-artifacts/traceability_graph.svg\`" >> artifacts/tsf/tsf_comment.md
+          echo "- Full TSF reports in artifact archive" >> artifacts/tsf/tsf_comment.md
+
+          if [ -f "$UNIT" ]; then
+            echo "" >> artifacts/tsf/tsf_comment.md
+            echo "---" >> artifacts/tsf/tsf_comment.md
+            cat "$UNIT" >> artifacts/tsf/tsf_comment.md
+          fi
+
       - name: Upload TSF artifacts
         uses: actions/upload-artifact@v6
         if: always()
@@ -142,29 +191,10 @@ jobs:
             .dotstop.dot
           retention-days: 30
 
-      - name: Comment PR with validation results
-        if: github.event_name == 'pull_request'
-        uses: peter-evans/create-or-update-comment@v5
+      - name: Upload TSF comment artifact
+        uses: actions/upload-artifact@v6
+        if: always()
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            ## 🔍 TSF Validation Results
-
-            | Check | Status |
-            |-------|--------|
-            | **trudag lint** | ${{ steps.lint.outputs.lint_ok == 'true' && '✅ PASSED' || '❌ FAILED' }} |
-            | **trudag score** | ${{ steps.scores.outputs.score_ok == 'true' && '✅ PASSED' || '❌ FAILED' }} |
-            | **trudag publish** | ${{ steps.publish.outputs.publish_ok == 'true' && '✅ PASSED' || '❌ FAILED' }} |
-
-            ### 📋 Lint Output
-            ```
-            ${{ steps.summary.outputs.lint_summary }}
-            ```
-
-            ### 📊 Traceability Graph
-            ${{ steps.graph.outputs.graph_generated == 'true' && '✅ Graph generated successfully' || '❌ Graph generation failed' }}
-
-            **Download artifacts to view**: [TSF Validation Results](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            - Traceability graph: `tsf-validation-artifacts/traceability_graph.svg`
-            - Full TSF reports in artifact archive
+          name: tsf-comment
+          path: artifacts/tsf/tsf_comment.md
+          retention-days: 30

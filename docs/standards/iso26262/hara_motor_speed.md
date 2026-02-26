@@ -2,38 +2,33 @@
 
 ## 1. Item Definition & Assumptions
 - **Item:** DrivaPi Speed Sensor Software Component.
-- **Function:** Reads inputs from a hall-effect encoder, calculates linear velocity, and reports it to the main control loop/dashboard.
-- **Operational Context:** Lab environment or controlled test track.
-- **Assumption:** The vehicle is small-scale (RC type) or educational; operators are trained to recognize mechanical noise.
+- **Function:** Reads hall-effect encoder, calculates/reports velocity.
+- **Operational Context:** Lab or controlled test track.
+- **Assumption:** Small-scale vehicle; trained operators recognize cues (noise/vibration).
 
 ## 2. Hazard Analysis
-We identified one primary hazard related to the speed sensing logic.
-
 | ID | Hazard Description | Operational Situation | Cause of Hazard |
 |:---|:---|:---|:---|
-| **H-01** | **False Zero Speed Indication** (System reports 0 m/s while moving) | **Maintenance / Tuning:** Operator is close to the vehicle, relying on the dashboard/logs to determine if it is safe to touch the wheels/drivetrain. | Software bug (e.g., variable overflow, division by zero crash, or stuck logic) causing the reported speed to freeze at 0. |
+| **H-01** | **False Zero Speed Indication** (Reports 0 m/s while moving) | Maintenance/tuning near vehicle. | Bug (overflow, timeout) freezing speed at 0. |
 
 ## 3. Risk Assessment (ISO 26262)
-
 ### Severity (S)
 * **Score:** **S1** (Light to moderate injuries)
-* **Rationale:** The DrivaPi electric motors have torque. If an operator touches a spinning wheel/gear believing it is stopped, it may cause friction burns, cuts, or bruises. Life-threatening injuries are not expected given the motor size.
+* **Rationale:** Minor friction burns/cuts from wheel (S1 per Annex B).
 
 ### Exposure (E)
-* **Score:** **E2** (Low probability, <10%)
-* **Rationale:** Operators usually rely on visual confirmation (looking at the wheel). Relying *solely* on the software value happens primarily during remote debugging or specific calibration tasks.
+* **Score:** **E2** (Very low, <10%)
+* **Rationale:** Software reliance rare (visual/noise primary) (E2 per Table B.2).
 
 ### Controllability (C)
 * **Score:** **C1** (Simply controllable)
-* **Rationale:** A moving motor generates noise and vibration. A trained operator can easily perceive the discrepancy between "Dashboard says 0" and "Motor is screaming" and avoid touching it.
+* **Rationale:** Audible/vibrating motor obvious (C1 per Table B.4).
 
 ### Calculation
 **S1 + E2 + C1 = ASIL A**
-*(Based on project-specific tailoring of ISO 26262 Part 3 Table 4)*
+*(per ISO 26262 Part 3 Table 4)*
 
 ## 4. Safety Goals (SG)
-Based on H-01, we derive the following Safety Goal for the software:
-
 | SG ID | ASIL | Description |
 |:---|:---|:---|
-| **SG-01** | **A** | **Prevent False Zero Speed Reporting:** The software must detect invalid states (like timer overflows or timeouts) and calculate speed accurately, or explicitly flag an error state instead of failing silently to 0. |
+| **SG-01** | **A** | **Prevent False Zero Speed Reporting:** Detect invalid states and flag error instead of silent 0. |

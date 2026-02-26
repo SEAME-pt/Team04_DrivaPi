@@ -41,3 +41,12 @@ The machine type and target features were defined at this step:
 
 ```bash
 source meta-agl/scripts/aglsetup.sh -m raspberrypi5 agl-all-features agl-devel
+
+### B. Kernel Configuration and Real-Time Considerations
+
+The AGL build for Raspberry Pi 5 currently does not include PREEMPT_RT (Preemptible Real-Time Kernel) patches. This decision was primarily due to two main factors:
+
+*   **Kernel Version Incompatibility:** At the time of development, PREEMPT_RT patches were not readily available or stable for the specific kernel version utilized in the Raspberry Pi 5 AGL build. Integrating unsupported patches could lead to system instability and complex debugging challenges.
+*   **Lack of Yocto/meta-raspberrypi Support:** The Yocto Project's `meta-raspberrypi` layer, which provides board-specific configurations for the Raspberry Pi, did not offer official or stable support for PREEMPT_RT on the Raspberry Pi 5. Developing and maintaining custom real-time kernel configurations within the Yocto framework for an unsupported platform would introduce significant overhead and deviate from the project's scope.
+
+Therefore, to ensure system stability, maintainability, and to adhere to the existing Yocto ecosystem support for Raspberry Pi 5, PREEMPT_RT was intentionally excluded from this custom AGL image. Integration of real-time capabilities would require dedicated effort to align with kernel and Yocto support advancements for the Raspberry Pi 5. As a pragmatic alternative, threading mechanisms within the AGL application layer are being utilized to manage concurrent tasks and simulate real-time behavior where possible.

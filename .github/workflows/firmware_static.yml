@@ -6,25 +6,26 @@ on:
 
 permissions:
   contents: read
-  security-events: write
   actions: read
-  pull-requests: write
+  security-events: read
 
 concurrency:
   group: codeql-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  codeql:
-    name: CodeQL Analysis
+  codeql-analyze:
+    name: CodeQL Analysis (build + analyze)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      security-events: read
 
     steps:
-      # Checkout
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      # Toolchain
       - name: Install ARM toolchain
         run: |
           sudo apt-get update
@@ -37,7 +38,6 @@ jobs:
       - name: Show ARM toolchain version
         run: arm-none-eabi-gcc --version
 
-      # Initialize CodeQL
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
@@ -46,21 +46,15 @@ jobs:
           build-mode: manual
           config-file: ./.github/codeql-config.yml
 
-      # Build firmware
       - name: Build project for CodeQL
         run: |
           set -e
           cd firmware/Debug
-
           echo "🔨 Building firmware for CodeQL..."
-
           make -f makefile main-build
-
           test -f firmware.elf
-
           echo "✅ Build successful"
 
-      # Run CodeQL analysis (do not upload yet)
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
         with:
@@ -69,11 +63,9 @@ jobs:
           upload: false
           wait-for-processing: true
 
-      # Filter SARIF
       - name: Filter SARIF results
         uses: advanced-security/filter-sarif@v1
         with:
-          # Generated code intentionally excluded
           patterns: |
             -**/Drivers/**
             -**/Middlewares/**
@@ -81,16 +73,10 @@ jobs:
             -**/Core/Startup/**
             -**/Debug/**
             -**/Release/**
+            -**/Core/Src/system_stm32u5xx.c/**
           input: results/cpp.sarif
           output: results/cpp.sarif
 
-      # Upload FILTERED SARIF to GitHub Security
-      - name: Upload SARIF to GitHub Security
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: results/cpp.sarif
-
-      # Keep SARIF as artifact
       - name: Upload SARIF artifact
         if: always()
         uses: actions/upload-artifact@v6
@@ -99,7 +85,6 @@ jobs:
           path: results/cpp.sarif
           retention-days: 30
 
-      # Parse SARIF results
       - name: Parse CodeQL results
         id: codeql_results
         if: always()
@@ -134,27 +119,6 @@ jobs:
             echo "status=✅ PASSED" >> $GITHUB_OUTPUT
           fi
 
-      # Comment on PR with results
-      - name: Comment PR with CodeQL results
-        if: github.event_name == 'pull_request'
-        uses: peter-evans/create-or-update-comment@v5
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            ## 🔒 CodeQL Security Analysis Results
-
-            | Severity | Count |
-            |----------|-------|
-            | **High/Critical** | ${{ steps.codeql_results.outputs.errors }} |
-            | **Warnings** | ${{ steps.codeql_results.outputs.warnings }} |
-            | **Notes** | ${{ steps.codeql_results.outputs.notes }} |
-
-            **Overall Status**: ${{ steps.codeql_results.outputs.status }}
-
-            **Details**: [View full SARIF report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-      # Enforce security gate
       - name: Fail on high or critical issues
         if: always()
         run: |
@@ -166,3 +130,28 @@ jobs:
           fi
 
           echo "✅ No high/critical issues"
+
+  upload-sarif:
+    name: Upload SARIF to GitHub Security
+    needs: codeql-analyze
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+
+    if: >
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+
+    steps:
+      - name: Download CodeQL SARIF artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: codeql-sarif-filtered
+          path: sarif
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: sarif/cpp.sarif

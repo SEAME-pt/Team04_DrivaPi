@@ -1,75 +1,54 @@
 #!/bin/bash
+################################################################################
+# Speed Sensor Unit Test Automation
+#
+# Purpose: Execute speed sensor unit tests with coverage reporting
+# ASIL Level: A/QM (project policy)
+# Version: 1.3.1
+################################################################################
 
-# Stop the script immediately if any command fails (returns non-zero)
-set -e
-set -o pipefail
+set -e -u -o pipefail
 
-echo "----------------------------------------------------------------"
-echo "🚀 STARTING SPEED SENSOR TEST SUITE"
-echo "----------------------------------------------------------------"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/../../common_test_lib.sh"
 
-# 1. Clean previous builds to ensure no stale coverage data
-echo ""
-echo "🧹 Cleaning up..."
-ceedling clobber
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+BUILD_DIR="${PROJECT_ROOT}/build"
+COVERAGE_DIR="${BUILD_DIR}/artifacts/gcov"
+REPORTS_DIR="${PROJECT_ROOT}/test_reports"
+VENDOR_DIR="${PROJECT_ROOT}/vendor"
+mkdir -p "${REPORTS_DIR}"
 
-# 2. Run the tests with coverage enabled
-# If tests fail, the script stops here due to 'set -e'
-echo ""
-echo "🧪 Running Tests..."
-ceedling gcov:all
+main() {
+  log_section "ISO 26262 Speed Sensor Tests - DrivaPi"
+  echo -e "${BOLD}ASIL Level:${NC} A/QM"
+  echo -e "${BOLD}Coverage Gate (CI):${NC} >= 90% line coverage per suite"
 
-# 3. Capture the raw coverage data
-# We search the entire 'build' folder to find the hidden .gcda files
-echo ""
-echo "📸 Capturing Coverage Data..."
-lcov --capture --directory build --output-file coverage.info --rc lcov_branch_coverage=1 --quiet
+  check_prerequisites || exit 1
+  cleanup_build "${BUILD_DIR}"
+  ensure_vendor "${VENDOR_DIR}" || exit 1
 
-# 3b. Filter coverage data to include only src/ and remove system/vendor code
-echo "📋 Filtering coverage data (src/ only)..."
-lcov --extract coverage.info '*/src/*' \
-     -o coverage_src_only.info --rc lcov_branch_coverage=1 --quiet || \
-  cp coverage.info coverage_src_only.info
+  cd "${PROJECT_ROOT}"
+  run_ceedling_tests "${REPORTS_DIR}/test_output.log" || exit 1
 
-lcov -r coverage_src_only.info '/usr/*' '*vendor*' '*cmock*' '*unity*' '*c_exception*' \
-     '*build/test/*' '*test/runners*' '*test/mocks*' '/var/lib/gems/*' '*test/*' \
-     --ignore-errors unused \
-     -o coverage_filtered.info --rc lcov_branch_coverage=1 --quiet || \
-  cp coverage_src_only.info coverage_filtered.info
+  generate_lcov_coverage "${BUILD_DIR}" "${COVERAGE_DIR}"
 
-# 4. Generate the HTML Report (with error tolerance)
-echo ""
-echo "📊 Generating HTML Report with Branch Coverage..."
-if ! genhtml coverage_filtered.info --output-directory coverage_report \
-     --branch-coverage --function-coverage \
-     --rc genhtml_branch_coverage=1 --quiet 2>/dev/null; then
-  # If genhtml fails (e.g., in headless CI), try without quiet or just warn
-  mkdir -p coverage_report
-  echo "⚠️ genhtml had issues, but coverage files are saved"
-fi
+  cp -f "${COVERAGE_DIR}/coverage_filtered.info" "${PROJECT_ROOT}/coverage_filtered.info"
+  cp -f "${COVERAGE_DIR}/coverage.xml"          "${PROJECT_ROOT}/speed-sensor.xml"
 
-echo ""
-echo "----------------------------------------------------------------"
-echo "✅ SUCCESS! Report available at: $PWD/coverage_report/index.html"
-echo "----------------------------------------------------------------"
-echo ""
+  ABS_ROOT="$(cd "${PROJECT_ROOT}/../.." && pwd)"
+  PERSIST_DIR="${ABS_ROOT}/build/coverage/speed-sensor"
+  mkdir -p "${PERSIST_DIR}"
+  cp -f "${COVERAGE_DIR}/coverage_filtered.info" "${PERSIST_DIR}/coverage_filtered.info"
+  cp -f "${COVERAGE_DIR}/coverage.xml"          "${PERSIST_DIR}/speed-sensor.xml"
 
-# Note: Not opening browser automatically (headless CI environment)
+  if [[ "${CALLED_FROM_MASTER:-0}" = "1" ]]; then
+    ART_DIR="${ABS_ROOT}/artifacts/verification/coverage"
+    mkdir -p "${ART_DIR}"
+    cp -f "${COVERAGE_DIR}/coverage.xml" "${ART_DIR}/speed-sensor.xml"
+  fi
 
+  log_section "✓ SPEED SENSOR TESTS PASSED"
+}
 
-# 6. Cleanup
-if [[ "${CI:-false}" == "true" || "${CALLED_FROM_MASTER:-0}" == "1" ]]; then
-    echo ""
-    echo "ℹ️ Skipping cleanup (CI/Master mode) to preserve artifacts for aggregation"
-else
-  echo ""
-  echo "🧹 Cleaning up..."
-  echo "Removing coverage files..."
-  rm -f coverage.info coverage_src_only.info || true
-  echo "Running clobber.."
-  ceedling clobber || true
-  echo ""
-  echo "✓ Cleanup done!"
-fi
-echo ""
-echo "✓ Speed Sensor tests PASSED"
+main "$@"

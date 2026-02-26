@@ -12,12 +12,12 @@ updates:
       - "github-actions"
 
   # Rust/Cargo
-  # - package-ecosystem: "cargo"
-  #   directory: "/"
-  #   schedule:
-  #     interval: "weekly"
-  #     day: "monday"
-  #   open-pull-requests-limit: 5
-  #   labels:
-  #     - "dependencies"
-  #     - "rust"
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "rust"

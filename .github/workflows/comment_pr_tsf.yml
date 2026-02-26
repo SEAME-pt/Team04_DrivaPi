@@ -1,0 +1,130 @@
+name: Comment PR (TSF Validation Results)
+
+on:
+  workflow_run:
+    workflows: ["TSF Validation (PR)"]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get PR number and run id
+        id: pr
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const prs = context.payload.workflow_run.pull_requests || [];
+            if (!prs.length) {
+              core.setOutput("has_pr", "false");
+              return;
+            }
+            core.setOutput("has_pr", "true");
+            core.setOutput("number", String(prs[0].number));
+            core.setOutput("run_id", String(context.payload.workflow_run.id));
+
+      - name: Stop if not a PR run
+        if: steps.pr.outputs.has_pr != 'true'
+        run: echo "No PR associated; skipping."
+
+      - name: Download tsf-comment + unit-test-summary + codeql-sarif-filtered artifacts
+        if: steps.pr.outputs.has_pr == 'true'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const run_id = Number("${{ steps.pr.outputs.run_id }}");
+
+            const { data } = await github.rest.actions.listWorkflowRunArtifacts({ owner, repo, run_id });
+
+            async function downloadByName(name, outZip) {
+              const art = data.artifacts.find(a => a.name === name);
+              if (!art) return false;
+
+              const zip = await github.rest.actions.downloadArtifact({
+                owner, repo,
+                artifact_id: art.id,
+                archive_format: "zip"
+              });
+
+              fs.writeFileSync(outZip, Buffer.from(zip.data));
+              return true;
+            }
+
+            const okTsf = await downloadByName("tsf-comment", "tsf-comment.zip");
+            if (!okTsf) core.setFailed("Artifact 'tsf-comment' not found.");
+
+            const okUnit = await downloadByName("unit-test-summary", "unit-test-summary.zip");
+            const okSarif = await downloadByName("codeql-sarif-filtered", "codeql-sarif-filtered.zip");
+
+            core.setOutput("has_unit", okUnit ? "true" : "false");
+            core.setOutput("has_sarif", okSarif ? "true" : "false");
+
+      - name: Unzip artifacts
+        if: steps.pr.outputs.has_pr == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip jq
+          unzip -o tsf-comment.zip -d tsf-comment
+          if [ -f unit-test-summary.zip ]; then unzip -o unit-test-summary.zip -d unit-test-summary; fi
+          if [ -f codeql-sarif-filtered.zip ]; then unzip -o codeql-sarif-filtered.zip -d codeql-sarif-filtered; fi
+
+      - name: Combine comment markdown (TSF + CodeQL + Unit Tests)
+        if: steps.pr.outputs.has_pr == 'true'
+        run: |
+          set -e
+          OUT="combined_comment.md"
+          TSF="tsf-comment/tsf_comment.md"
+
+          # Base: TSF comment
+          if [ -f "$TSF" ]; then
+            cp "$TSF" "$OUT"
+          else
+            echo "## 🔍 TSF Validation Results" > "$OUT"
+            echo "" >> "$OUT"
+            echo "⚠️ Missing tsf_comment.md artifact." >> "$OUT"
+          fi
+
+          # Tiny CodeQL SARIF extract
+          SARIF="$(find codeql-sarif-filtered -maxdepth 2 -type f -name "*.sarif" | head -n 1 || true)"
+          if [ -n "$SARIF" ] && [ -f "$SARIF" ]; then
+            ERRORS=$(jq '[.runs[].results[]? | select(.level=="error")] | length' "$SARIF")
+            WARNINGS=$(jq '[.runs[].results[]? | select(.level=="warning")] | length' "$SARIF")
+            NOTES=$(jq '[.runs[].results[]? | select(.level=="note" or .level=="recommendation")] | length' "$SARIF")
+
+            echo "" >> "$OUT"
+            echo "---" >> "$OUT"
+            echo "## 🔒 CodeQL (filtered SARIF summary)" >> "$OUT"
+            echo "" >> "$OUT"
+            echo "| Severity | Count |" >> "$OUT"
+            echo "|---|---:|" >> "$OUT"
+            echo "| High/Critical (error) | $ERRORS |" >> "$OUT"
+            echo "| Warnings | $WARNINGS |" >> "$OUT"
+            echo "| Notes | $NOTES |" >> "$OUT"
+          fi
+
+          # Unit test summary
+          if [ -f "unit-test-summary/unit_test_summary.md" ]; then
+            echo "" >> "$OUT"
+            echo "---" >> "$OUT"
+            cat "unit-test-summary/unit_test_summary.md" >> "$OUT"
+          fi
+
+          # Link back to run
+          echo "" >> "$OUT"
+          echo "> Run: ${{ github.event.workflow_run.html_url }}" >> "$OUT"
+
+      - name: Update sticky PR comment
+        if: steps.pr.outputs.has_pr == 'true'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          number: ${{ steps.pr.outputs.number }}
+          header: tsf-validation
+          path: combined_comment.md

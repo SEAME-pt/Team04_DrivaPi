@@ -1,0 +1,56 @@
+name: Comment PR (STM32 CI Build Result)
+
+on:
+  workflow_run:
+    workflows: ["STM32 CI"]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get PR number
+        id: pr
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const prs = context.payload.workflow_run.pull_requests || [];
+            if (!prs.length) {
+              core.setOutput("has_pr", "false");
+              return;
+            }
+            core.setOutput("has_pr", "true");
+            core.setOutput("number", String(prs[0].number));
+
+      - name: Stop if not a PR run
+        if: steps.pr.outputs.has_pr != 'true'
+        run: echo "No PR associated; skipping."
+
+      - name: Write build message
+        if: steps.pr.outputs.has_pr == 'true'
+        run: |
+          CONCLUSION="${{ github.event.workflow_run.conclusion }}"
+          RUN_URL="${{ github.event.workflow_run.html_url }}"
+
+          if [ "$CONCLUSION" = "success" ]; then
+            echo "✅ STM32 CI: firmware build succeeded" > stm32_ci_comment.md
+          else
+            echo "❌ STM32 CI: firmware build failed" > stm32_ci_comment.md
+          fi
+
+          echo "" >> stm32_ci_comment.md
+          echo "- **Conclusion**: $CONCLUSION" >> stm32_ci_comment.md
+          echo "- **Run**: $RUN_URL" >> stm32_ci_comment.md
+
+      - name: Update sticky PR comment
+        if: steps.pr.outputs.has_pr == 'true'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          number: ${{ steps.pr.outputs.number }}
+          header: stm32-ci
+          path: stm32_ci_comment.md

@@ -9,6 +9,34 @@
   */
 
 #include "speed_sensor.h"
+#include <string.h>
+
+float g_current_speed = 0.0f;
+int16_t g_current_pwm = 0;
+RNDGear_t g_current_gear = GEAR_NEUTRAL;
+
+/**
+ * @brief 
+ * 
+ * @param speed 
+ * @param pwm_value 
+ * @return RNDGear_t 
+ */
+RNDGear_t DetermineRNDGear(float speed, int16_t pwm_value)
+{
+	if (speed > RND_DEADZONE_POSITIVE)
+	{
+		if (pwm_value > 0)
+		{
+			return GEAR_DRIVE;
+		}
+		else if (pwm_value < 0)
+		{
+			return GEAR_REVERSE;
+		}
+	}
+	return GEAR_NEUTRAL;
+}
 
 /**
 * @brief
@@ -22,9 +50,7 @@ float ReadSpeedSensor(void)
 	static uint8_t is_first_run = 1;
 
 	ULONG current_time_ticks = tx_time_get();
-
 	uint32_t current_count = htim1.Instance->CNT;
-
 
 	if (is_first_run)
 	{
@@ -33,66 +59,57 @@ float ReadSpeedSensor(void)
 		is_first_run = 0;
 		return 0.0f;
 	}
-
 	ULONG delta_ticks = current_time_ticks - last_time_ticks;
 	float dt = (float)delta_ticks / (float)TX_TIMER_TICKS_PER_SECOND;
-
 	if (dt <= 0.001f)
 		return 0.0f;
-
-	uint32_t pulses = 0;
-	if (current_count >= last_count)
-		pulses = current_count - last_count;
-	else
-		pulses = (TIMER_PERIOD - last_count) + current_count + 1;
-
-
+	int32_t delta = (int32_t)current_count - (int32_t)last_count;
+	if (delta > (TIMER_PERIOD / 2))
+		delta -= (TIMER_PERIOD + 1);
+	else if (delta < -(TIMER_PERIOD / 2))
+		delta += (TIMER_PERIOD + 1);
 	last_count = current_count;
 	last_time_ticks = current_time_ticks;
-
-	float rotations = (float)pulses / PULSES_PER_REV;
+	float rotations = (float)delta / (float)PULSES_PER_REV;
 	float distance_m = rotations * WHEEL_PERIMETER_M;
 	float speed_mps = distance_m / dt;
-
 	return speed_mps;
 }
 
 /**
-* @brief
-*
-* @param initial_input
-* @return VOID
-*/
+ * @brief 
+ * 
+ * @param initial_input 
+ * @return VOID 
+ */
 VOID SpeedSensor(ULONG initial_input)
 {
-	char msg[64];
-
+	static RNDGear_t last_gear = GEAR_NEUTRAL;
 	HAL_TIM_Base_Stop(&htim1);
-
 	__HAL_RCC_TIM1_CLK_ENABLE();
-
 	HAL_TIM_Base_Start(&htim1);
 
 	while (1)
 	{
-		uint32_t cr1_reg = htim1.Instance->CR1;
-		uint32_t cnt_reg = htim1.Instance->CNT;
-
-		snprintf(msg, sizeof(msg), "DEBUG: CR1=%lu | CNT=%lu\r\n", cr1_reg, cnt_reg);
-		HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), 100);
-
 		tx_thread_sleep(100);
-
 		float current_speed = ReadSpeedSensor();
-
-		snprintf(msg, sizeof(msg), "Speed: %.2f m/s\r\n", current_speed);
-		HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), 100);
-
 
 		tx_mutex_get(&g_speedDataMutex, TX_WAIT_FOREVER);
 		g_vehicleSpeed = current_speed;
+		g_current_speed = current_speed;
 		tx_mutex_put(&g_speedDataMutex);
-
+		RNDGear_t current_gear = DetermineRNDGear(current_speed, g_current_pwm);
+		g_current_gear = current_gear;
+		if (current_gear != last_gear)
+		{
+			t_can_message can_msg;
+			memset(&can_msg, 0, sizeof(can_msg));
+			can_msg.id = CAN_ID_RND_GEAR;
+			can_msg.len = 1;
+			can_msg.data[0] = (uint8_t)current_gear;
+			CanSend(&can_msg);
+			last_gear = current_gear;
+		}
 		tx_event_flags_set(&g_eventFlags, FLAG_SENSOR_UPDATE, TX_OR);
 	}
 }

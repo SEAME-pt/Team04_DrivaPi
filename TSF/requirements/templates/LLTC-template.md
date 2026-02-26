@@ -17,7 +17,7 @@ reviewers:
     email: "<REVIEWER_EMAIL>"
 reviewed: ''  # Manually fill on PR approval (YYYY-MM-DD - Approved by Name <email>)
 
-# Evidence Linking (use 'references:', NOT deprecated 'artifact:')
+# Evidence Linking
 references:
   - type: "file"
     path: <relative/path/to/artifact>  # Path from repo root

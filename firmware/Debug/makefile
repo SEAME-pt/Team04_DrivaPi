@@ -81,7 +81,7 @@ firmware.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 
 # Other Targets
 clean:
-	-$(RM) firmware.elf firmware.list firmware.map firmware.bin default.size.stdout
+	-$(RM) default.size.stdout firmware.elf firmware.list firmware.map
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)

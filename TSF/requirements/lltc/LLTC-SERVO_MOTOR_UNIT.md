@@ -2,13 +2,13 @@
 id: LLTC-SERVO_MOTOR_UNIT
 header: "Unit Tests for Steering Servo"
 text: |
-  "All unit tests for the Servo Motor module shall pass, verifying angle clamping and pulse mapping."
+  "Verifies the logic within `servo_motor.c`."
 
 # TSF Type: Evidence/Premise (A Claim, but not a Request)
 verification_method: "Automated Unit Testing"
 
 parents:
-  - id: SWD-SERVO_MOTOR
+  - id: SWD-SERVO_DRIVER
 
 reviewers:
   - name: "Miguel Cardoso"
@@ -27,11 +27,12 @@ evidence:
     min_pass_rate: 100
     references:
     - type: file
-      path: artifacts/verification/tests/junit_results.xml
+      path: artifacts/verification/tests/servo-motor.xml
 
 active: true
 derived: false
 normative: true
 level: 4.0
 ---
-Verifies the logic within `servo_motor.c`.
+All unit tests for the Servo Motor module shall pass, verifying angle clamping and pulse mapping.
+---

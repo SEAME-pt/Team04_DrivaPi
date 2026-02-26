@@ -2,13 +2,13 @@
 id: LLTC-SPEED_SENSOR_UNIT
 header: "Unit Test Verification for Speed Logic"
 text: |
-  "Speed sensor unit tests must pass (100%) covering movement, overflows, and edge cases."
+  "Verifies logic correctness via CI-generated `junit_results.xml`."
 
 # TSF Type: Evidence
 verification_method: "Automated Unit Testing (CTest/Unity)"
 
 parents:
-  - id: SWD-SPEED_SENSOR
+  - id: SWD-SPEED_CALC
 
 reviewers:
   - name: "Bernardo Esteves"
@@ -26,12 +26,13 @@ evidence:
   configuration:
     min_pass_rate: 100
     references:
-    - type: file
-      path: artifacts/verification/tests/junit_results.xml
+      - type: file
+        path: artifacts/verification/tests/speed-sensor.xml
 
 active: true
 derived: false
 normative: true
 level: 4.0
 ---
-Verifies logic correctness via CI-generated `junit_results.xml`.
+Speed sensor unit tests must pass (100%) covering movement, overflows, and edge cases.
+---

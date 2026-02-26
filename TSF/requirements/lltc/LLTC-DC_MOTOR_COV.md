@@ -2,13 +2,13 @@
 id: LLTC-DC_MOTOR_COV
 header: "Code Coverage for DC Motor"
 text: |
-  "Unit tests must achieve >90% Branch Coverage for `dc_motor.c`."
+  "Ensures critical paths in propulsion logic are tested."
 
 # TSF Type: Evidence/Premise (A Claim, but not a Request)
 verification_method: "Code Coverage (LCOV)"
 
 parents:
-  - id: SWD-DC_MOTOR
+  - id: SWD-DC_MOTOR_DRIVER
 
 reviewers:
   - name: "Miguel Cardoso"
@@ -21,11 +21,12 @@ evidence:
     min_line_rate: 90
     references:
     - type: file
-      path: artifacts/verification/coverage/coverage.xml
+      path: artifacts/verification/coverage/dc-motor.xml
 
 active: true
 derived: false
 normative: true
 level: 4.0
 ---
-Ensures critical paths in propulsion logic are tested.
+Unit tests must achieve >90% Branch Coverage for `dc_motor.c`.
+---

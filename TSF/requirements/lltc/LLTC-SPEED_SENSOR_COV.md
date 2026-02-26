@@ -2,13 +2,13 @@
 id: LLTC-SPEED_SENSOR_COV
 header: "Code Coverage for Speed Sensor"
 text: |
-  "Unit tests must achieve >90% line coverage for 'speed_sensor.c' to verify safety-critical branches."
+  "Ensures unit tests exercise the vast majority of source code using CI-generated reports."
 
 # TSF Type: Evidence
 verification_method: "Code Coverage Analysis (LCOV/GCOVR)"
 
 parents:
-  - id: SWD-SPEED_SENSOR
+  - id: SWD-SPEED_CALC
 
 reviewers:
   - name: "Bernardo Esteves"
@@ -22,11 +22,12 @@ evidence:
     min_line_rate: 90
     references:
     - type: file
-      path: artifacts/verification/coverage/coverage.xml
+      path: artifacts/verification/coverage/speed-sensor.xml
 
 active: true
 derived: false
 normative: true
 level: 4.0
 ---
-Ensures unit tests exercise the vast majority of source code using CI-generated reports.
+Unit tests must achieve >90% line coverage for 'speed_sensor.c' to verify safety-critical branches.
+---

@@ -2,13 +2,13 @@
 id: LLTC-SPEED_SENSOR_STATIC
 header: "Static Code Analysis (CodeQL)"
 text: |
-  "Source code must pass CodeQL queries with zero high-severity errors."
+  "Enforces strict compliance via `codeql_sarif_validator`."
 
 # TSF Type: Evidence
 verification_method: "Static Analysis (GitHub CodeQL)"
 
 parents:
-  - id: SWD-SPEED_SENSOR
+  - id: SWD-SPEED_CALC
 
 reviewers:
   - name: "Hugo Lopes"
@@ -29,4 +29,5 @@ derived: false
 normative: true
 level: 4.0
 ---
-Enforces strict compliance via `codeql_sarif_validator`.
+Source code must pass CodeQL queries with zero high-severity errors
+---

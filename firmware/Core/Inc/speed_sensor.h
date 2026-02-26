@@ -27,6 +27,16 @@ extern "C" {
 extern TIM_HandleTypeDef htim1;
 extern UART_HandleTypeDef huart1;
 
+/* Global variables */
+extern float g_current_speed;
+extern int16_t g_current_pwm;
+extern RNDGear_t g_current_gear;
+
+/* Function prototypes */
+float ReadSpeedSensor(void);
+RNDGear_t DetermineRNDGear(float speed, int16_t pwm_value);
+VOID SpeedSensor(ULONG initial_input);
+
 #ifdef __cplusplus
 }
 #endif

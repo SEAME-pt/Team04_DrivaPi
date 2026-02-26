@@ -2,13 +2,13 @@
 id: LLTC-DC_MOTOR_STATIC
 header: "Static Analysis for DC Motor"
 text: |
-  "DC Motor source code shall pass CodeQL with zero high-severity findings."
+  "Ensures that the DC Motor source code is free from high-severity issues as identified by CodeQL static analysis."
 
 # TSF Type: Evidence/Premise (A Claim, but not a Request)
 verification_method: "Static Analysis (CodeQL)"
 
 parents:
-  - id: SWD-DC_MOTOR
+  - id: SWD-DC_MOTOR_DRIVER
 
 reviewers:
   - name: "Miguel Cardoso"
@@ -28,4 +28,5 @@ derived: false
 normative: true
 level: 4.0
 ---
-Ensures that the DC Motor source code is free from high-severity issues as identified by CodeQL static analysis.
+DC Motor source code shall pass CodeQL with zero high-severity findings.
+---

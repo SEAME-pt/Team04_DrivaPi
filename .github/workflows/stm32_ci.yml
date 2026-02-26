@@ -4,13 +4,15 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   build-firmware:
     name: Build full STM32 firmware (compile only)
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -27,8 +29,7 @@ jobs:
         working-directory: firmware/Debug
         run: |
           set -e
-          # build the original image (no QEMU target)
-          make -f makefile main-build -j$(nproc)
+          make -f makefile main-build -j"$(nproc)"
           if [ ! -f firmware.elf ]; then
             echo "Error: firmware.elf not found, build failed!"
             exit 1
@@ -42,43 +43,4 @@ jobs:
         with:
           name: firmware-elf
           path: firmware/Debug/firmware.elf
-      
-      - name: Comment PR with build result (success)
-        if: ${{ success() && github.event_name == 'pull_request' }}
-        uses: peter-evans/create-or-update-comment@v5
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            ✅ STM32 CI: firmware.elf was built successfully.
-
-      - name: Comment PR with build result (failure)
-        if: ${{ failure() && github.event_name == 'pull_request' }}
-        uses: peter-evans/create-or-update-comment@v5
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            ❌ STM32 CI: firmware.elf build failed. Check the workflow logs for details.
-
-      - name: Comment commit with build result (success)
-        if: ${{ success() && github.event_name == 'push' }}
-        uses: actions/github-script@v8
-        with:
-          script: |
-            await github.rest.repos.createCommitComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              commit_sha: context.sha,
-              body: "✅ STM32 CI: firmware.elf was built successfully."
-            });
-
-      - name: Comment commit with build result (failure)
-        if: ${{ failure() && github.event_name == 'push' }}
-        uses: actions/github-script@v8
-        with:
-          script: |
-            await github.rest.repos.createCommitComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              commit_sha: context.sha,
-              body: "❌ STM32 CI: firmware.elf build failed. Check the workflow logs for details."
-            });
+          retention-days: 30

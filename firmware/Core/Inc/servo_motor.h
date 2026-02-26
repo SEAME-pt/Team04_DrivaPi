@@ -22,15 +22,14 @@ extern "C" {
 #define PCA9685_ADDR_SERVO 0x40u
 #define SERVO_CH 0u
 
-#define SERVO_DEFAULT_MIN_PULSE_COUNTS 200u
-#define SERVO_DEFAULT_MAX_PULSE_COUNTS 500u
-#define SERVO_DEFAULT_FREQ_HZ 50u
+#define SERVO_MIN_PULSE 205
+#define SERVO_MAX_PULSE 410
+#define SERVO_FREQ 0x79
 
-int	SetServoAngle(I2C_HandleTypeDef *hi2c, uint8_t addr7, uint8_t channel, uint16_t angle_deg, uint16_t min_pulse,
-	uint16_t max_pulse);
+int	SetServoAngle(uint8_t channel, uint16_t angle_deg);
 
-int	ServoSweep(I2C_HandleTypeDef *hi2c, uint8_t addr7, uint8_t channel, uint16_t angle_start_deg, uint16_t angle_end_deg,
-uint16_t angle_step_deg, uint32_t delay_ms, uint16_t min_pulse, uint16_t max_pulse);
+int	ServoSweep(uint8_t channel, uint16_t angleStartDeg, uint16_t angleEndDeg,
+uint16_t angleStepDeg);
 
 extern I2C_HandleTypeDef hi2c3;
 

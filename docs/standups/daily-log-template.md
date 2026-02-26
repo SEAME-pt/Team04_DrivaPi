@@ -2,7 +2,7 @@
 
 **Date:** [Weekday, Month DD, YYYY]
 
-**Team:** Bernardo, Gaspar, Hugo, Melanie, Miguel
+**Team:** Afonso, Bernardo, Gaspar, Hugo, Melanie, Miguel
 
 ---
 
@@ -13,6 +13,10 @@
 ---
 
 ## Team Progress
+
+### Afonso - GitHub Project & Agile/Scrum
+- ✅ [Done]
+- 🔄 [In progress]
 
 ### Bernardo - Hardware Integration & Testing
 - ✅ [Done]

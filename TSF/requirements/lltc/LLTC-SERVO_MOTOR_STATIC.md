@@ -2,13 +2,13 @@
 id: LLTC-SERVO_MOTOR_STATIC
 header: "Static Analysis for Servo"
 text: |
-  "Servo source code shall pass CodeQL with zero high-severity findings."
+  "Ensures that the Servo module source code is free from high-severity issues as identified by CodeQL static analysis."
 
 # TSF Type: Evidence/Premise (A Claim, but not a Request)
 verification_method: "Static Analysis (CodeQL)"
 
 parents:
-  - id: SWD-SERVO_MOTOR
+  - id: SWD-SERVO_DRIVER
 
 reviewers:
   - name: "Miguel Cardoso"
@@ -28,4 +28,5 @@ derived: false
 normative: true
 level: 4.0
 ---
-Ensures that the Servo module source code is free from high-severity issues as identified by CodeQL static analysis.
+Servo source code shall pass CodeQL with zero high-severity findings.
+---

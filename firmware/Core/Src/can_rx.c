@@ -45,23 +45,19 @@ void CanRx(ULONG initial_input)
 {
 	t_can_message msg;
 
-	const char *msg_tick = "RX\r\n";
 	while (1)
 	{
-		HAL_UART_Transmit(&huart1, (uint8_t*)msg_tick, strlen(msg_tick), 10);
 		if (CanReceive(&msg))
 		{
-			switch (msg.id)
-			{
-				case CMD_SPEED:
-					tx_queue_send(&g_queueSpeedCmd, &msg, TX_NO_WAIT);
-					tx_event_flags_set(&g_eventFlags, FLAG_CAN_SPEED_CMD, TX_OR);
-
-				case CMD_STEERING:
-					tx_queue_send(&g_queueSteerCmd, &msg, TX_NO_WAIT);
-					tx_event_flags_set(&g_eventFlags, FLAG_CAN_STEER_CMD, TX_OR);
+			if (msg.id == CMD_SPEED){
+				tx_queue_send(&g_queueSpeedCmd, &msg, TX_NO_WAIT);
+				tx_event_flags_set(&g_eventFlags, FLAG_CAN_SPEED_CMD, TX_OR);
+			}
+			if (msg.id == CMD_STEERING){
+				tx_queue_send(&g_queueSteerCmd, &msg, TX_NO_WAIT);
+				tx_event_flags_set(&g_eventFlags, FLAG_CAN_STEER_CMD, TX_OR);
 			}
 		}
-		tx_thread_sleep(100);
+		tx_thread_sleep(5);
 	}
 }

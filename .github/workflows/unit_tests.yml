@@ -6,8 +6,7 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
-  checks: write
+  actions: read
 
 concurrency:
   group: unit-tests-${{ github.workflow }}-${{ github.ref }}
@@ -33,7 +32,8 @@ jobs:
             build-essential \
             lcov \
             ruby \
-            ruby-dev
+            ruby-dev \
+            python3-pip
 
       - name: Install Ceedling and gcovr
         run: |
@@ -70,105 +70,77 @@ jobs:
           path: build/coverage/html
           retention-days: 30
 
-      - name: Post Test Results
+      - name: Generate unit test summary (markdown)
         if: always()
         uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
 
-            // Extract test results
-            let testPassed = 0;
-            let testFailed = 0;
             let dcMotorCount = 0;
             let servoMotorCount = 0;
             let speedSensorCount = 0;
-            let testSummary = '';
+            let testFailed = 0;
+
+            let testSummary = '### 🧪 Unit Test Results\n\n⚠️ `test_output.log` not found. Check workflow logs.\n';
 
             if (fs.existsSync('test_output.log')) {
               const logContent = fs.readFileSync('test_output.log', 'utf8');
 
-              // Extract test counts from [TEST_COUNT] markers
               const dcMotorCountMatch = logContent.match(/\[TEST_COUNT\] DC Motor:\s*(\d+)\s*tests/i);
               const servoMotorCountMatch = logContent.match(/\[TEST_COUNT\] Servo Motor:\s*(\d+)\s*tests/i);
               const speedSensorCountMatch = logContent.match(/\[TEST_COUNT\] Speed Sensor:\s*(\d+)\s*tests/i);
 
-              if (dcMotorCountMatch) {
-                dcMotorCount = parseInt(dcMotorCountMatch[1]);
-              }
-              if (servoMotorCountMatch) {
-                servoMotorCount = parseInt(servoMotorCountMatch[1]);
-              }
-              if (speedSensorCountMatch) {
-                speedSensorCount = parseInt(speedSensorCountMatch[1]);
-              }
+              if (dcMotorCountMatch) dcMotorCount = parseInt(dcMotorCountMatch[1], 10);
+              if (servoMotorCountMatch) servoMotorCount = parseInt(servoMotorCountMatch[1], 10);
+              if (speedSensorCountMatch) speedSensorCount = parseInt(speedSensorCountMatch[1], 10);
 
-              testPassed = dcMotorCount + servoMotorCount + speedSensorCount;
+              const total = dcMotorCount + servoMotorCount + speedSensorCount;
 
-              // Check for failure indicators in status lines
               const dcMotorFailed = logContent.match(/\[INFO\] DC Motor:\s+FAILED/i);
               const servoMotorFailed = logContent.match(/\[INFO\] Servo Motor:\s+FAILED/i);
               const speedSensorFailed = logContent.match(/\[INFO\] Speed Sensor:\s+FAILED/i);
               testFailed = (dcMotorFailed || servoMotorFailed || speedSensorFailed) ? 1 : 0;
 
-              // Extract test status (PASSED or FAILED)
               const dcMotorMatch = logContent.match(/\[INFO\] DC Motor:\s+(PASSED|FAILED)/i);
               const servoMotorMatch = logContent.match(/\[INFO\] Servo Motor:\s+(PASSED|FAILED)/i);
               const speedSensorMatch = logContent.match(/\[INFO\] Speed Sensor:\s+(PASSED|FAILED)/i);
 
-              // Test status based on output
               const dcMotorStatus = dcMotorMatch ? dcMotorMatch[1] : (testFailed === 0 ? 'PASSED' : 'FAILED');
               const servoMotorStatus = servoMotorMatch ? servoMotorMatch[1] : (testFailed === 0 ? 'PASSED' : 'FAILED');
               const speedSensorStatus = speedSensorMatch ? speedSensorMatch[1] : (testFailed === 0 ? 'PASSED' : 'FAILED');
 
-              // Check for coverage summary
               const coverageMatch = logContent.match(/lines.*?(\d+\.\d+)%.*?functions.*?(\d+\.\d+)%.*?branches.*?(\d+\.\d+)%/s);
-              const coverageInfo = coverageMatch ?
-                `\n#### 📊 Coverage\n- **Lines**: ${coverageMatch[1]}%\n- **Functions**: ${coverageMatch[2]}%\n- **Branches**: ${coverageMatch[3]}%\n` :
-                '\n#### 📊 Coverage\nCoverage report available in artifacts.\n';
+              const coverageInfo = coverageMatch
+                ? `\n#### 📊 Coverage\n- **Lines**: ${coverageMatch[1]}%\n- **Functions**: ${coverageMatch[2]}%\n- **Branches**: ${coverageMatch[3]}%\n`
+                : '\n#### 📊 Coverage\nCoverage report available in artifacts.\n';
 
               testSummary = `
             ### 🧪 Unit Test Results
 
-            **Overall Status**: ${testPassed > 0 && testFailed === 0 ? '✅ PASSED' : '❌ FAILED'}
+            **Overall Status**: ${total > 0 && testFailed === 0 ? '✅ PASSED' : '❌ FAILED'}
 
             - **DC Motor Tests**: ${dcMotorStatus} (${dcMotorCount} tests)
             - **Servo Motor Tests**: ${servoMotorStatus} (${servoMotorCount} tests)
             - **Speed Sensor Tests**: ${speedSensorStatus} (${speedSensorCount} tests)
-            - **Total**: ${testPassed} tests
+            - **Total**: ${total} tests
             ${coverageInfo}
             ---
             Full coverage reports available in workflow artifacts
-            `;
+            `.trim() + '\n';
             }
 
-            // Always add to job summary
+            fs.writeFileSync('unit_test_summary.md', testSummary);
+
             await core.summary
               .addHeading('🧪 Unit Test Results', 2)
-              .addRaw(testSummary || '🧪 Unit tests completed. Check logs for details.')
+              .addRaw(testSummary)
               .write();
 
-            // Try to post as comment (PR or commit)
-            try {
-              if (context.eventName === 'pull_request') {
-                await github.rest.issues.createComment({
-                  issue_number: context.issue.number,
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  body: testSummary || '🧪 Unit tests completed. Check logs for details.'
-                });
-                console.log('✅ Posted comment on PR');
-              } else {
-                // For push events, try to create a commit comment
-                await github.rest.repos.createCommitComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  commit_sha: context.sha,
-                  body: testSummary || '🧪 Unit tests completed. Check logs for details.'
-                });
-                console.log('✅ Posted comment on commit');
-              }
-            } catch (error) {
-              console.log('⚠️ Could not post comment (insufficient permissions), but results are in job summary');
-              console.log(error.message);
-            }
+      - name: Upload unit test summary artifact
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: unit-test-summary
+          path: unit_test_summary.md
+          retention-days: 30

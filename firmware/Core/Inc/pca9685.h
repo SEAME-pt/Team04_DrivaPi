@@ -25,12 +25,13 @@ extern "C" {
 #define PCA9685_COUNTS 4096u
 
 HAL_StatusTypeDef PCA9685_InitDevice(I2C_HandleTypeDef *hi2c, uint8_t addr7, const char* name);
-HAL_StatusTypeDef PCA9685_SetPWM(I2C_HandleTypeDef *hi2c, uint16_t addr, uint8_t channel, uint16_t on, uint16_t off);
-HAL_StatusTypeDef PCA9685_SetFrequency(I2C_HandleTypeDef *hi2c, uint8_t addr7, double freq);
-HAL_StatusTypeDef PCA9685_Sleep(I2C_HandleTypeDef *hi2c, uint16_t addr);
+HAL_StatusTypeDef PCA9685_SetPWM(uint16_t addr, uint8_t channel, uint16_t on, uint16_t off);
+HAL_StatusTypeDef PCA9685_SetFrequency(uint8_t addr7, double freq);
+HAL_StatusTypeDef PCA9685_Sleep( uint16_t addr);
 void              PCA9685_InitAllDevices(void);
 
 
+extern I2C_HandleTypeDef hi2c2;
 extern I2C_HandleTypeDef hi2c3;
 extern uint8_t g_i2cDebug;
 
