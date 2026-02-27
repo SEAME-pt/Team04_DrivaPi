@@ -201,7 +201,7 @@ ApplicationWindow {
 
             // Tap-to-reveal on cluster
             MouseArea {
-                anchors.fill: clusterScreen; z: 1; enabled: !rightPanelVisible
+                anchors.fill: clusterScreen; z: 1;
                 propagateComposedEvents: true
                 readonly property real topDeadZone: clusterScreen.height * 0.14
                 property int tapCount: 0; property double lastTapTime: 0

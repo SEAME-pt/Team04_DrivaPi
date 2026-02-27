@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import "../components"
 import "../theme"
 
@@ -199,19 +200,37 @@ Rectangle {
             height: 36 * 2.5 * root.s
             opacity: AppTheme.isDark ? 0.95 : 0.3
             z: 1
+
+			layer.enabled: true
+			layer.effect: ColorOverlay {
+				// When light mode is active, we color the asset white or light blue
+				// to contrast against the light gray surface.
+				color: AppTheme.isDark ? "transparent" : AppTheme.surfaceVariant
+
+				Behavior on color { ColorAnimation { duration: AppTheme.animation.normal } }
+			}
         }
 
         // --- Center Left Glow Layer ---
         Image {
-            source: "qrc:/assets/left-dashboard.png"
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.left: parent.left
-            anchors.horizontalCenterOffset: parent.width * 0.225
-            width: parent.width * 0.45
-            height: parent.height * 0.60
-            opacity: AppTheme.isDark ? 0.95 : 0.3
-            z: 1
-        }
+			source: "qrc:/assets/left-dashboard.png"
+			anchors.verticalCenter: parent.verticalCenter
+			anchors.left: parent.left
+			anchors.horizontalCenterOffset: parent.width * 0.225
+			width: parent.width * 0.45
+			height: parent.height * 0.60
+			opacity: AppTheme.isDark ? 0.95 : 0.5
+			z: 1
+
+			layer.enabled: true
+			layer.effect: ColorOverlay {
+				// When light mode is active, we color the asset white or light blue
+				// to contrast against the light gray surface.
+				color: AppTheme.isDark ? "transparent" : AppTheme.surfaceVariant
+
+				Behavior on color { ColorAnimation { duration: AppTheme.animation.normal } }
+			}
+		}
 
         // --- Center Right Glow Layer ---
         Image {
@@ -223,6 +242,15 @@ Rectangle {
             height: parent.height * 0.60
             opacity: AppTheme.isDark ? 0.95 : 0.3
             z: 1
+
+			layer.enabled: true
+			layer.effect: ColorOverlay {
+				// When light mode is active, we color the asset white or light blue
+				// to contrast against the light gray surface.
+				color: AppTheme.isDark ? "transparent" : AppTheme.surfaceVariant
+
+				Behavior on color { ColorAnimation { duration: AppTheme.animation.normal } }
+			}
         }
 
         // --- Bottom Glow Layer ---
@@ -235,6 +263,15 @@ Rectangle {
             height: 36 * 3.5 * root.s
             opacity: AppTheme.isDark ? 0.95 : 0.3
             z: 1
+
+			layer.enabled: true
+			layer.effect: ColorOverlay {
+				// When light mode is active, we color the asset white or light blue
+				// to contrast against the light gray surface.
+				color: AppTheme.isDark ? "transparent" : AppTheme.surfaceVariant
+
+				Behavior on color { ColorAnimation { duration: AppTheme.animation.normal } }
+			}
         }
 
         // ==========================================================
