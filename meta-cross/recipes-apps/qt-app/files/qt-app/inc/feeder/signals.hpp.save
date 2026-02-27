@@ -25,9 +25,9 @@ constexpr const char* CURRENT_GEAR =
 
 // “STM32 internal sensors” (we map onto existing VSS cabin signals to avoid custom nodes)
 constexpr const char* STM32_TEMPERATURE =
-    "Vehicle.ControlUnit.STM32.Health.Resources.Temperature";  // celsius (float)
+    "Vehicle.ControlUnit.STM32.Hea.Temperature";  // celsius (float)
 
 constexpr const char* STM32_HUMIDITY =
-    "Vehicle.ControlUnit.STM32.Health.Resources.Humidity";  // percent (float)
+    "Vehicle.Cabin.Humidity";  // percent (float)
 
 } // namespace vss

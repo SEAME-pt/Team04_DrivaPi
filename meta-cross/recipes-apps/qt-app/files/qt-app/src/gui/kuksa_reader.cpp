@@ -16,8 +16,8 @@ static constexpr const char* PATH_BATTERY_VOLT      = "Vehicle.Powertrain.Tracti
 
 static constexpr const char* PATH_CURRENT_GEAR = "Vehicle.Powertrain.Transmission.CurrentGear";
 
-static constexpr const char* PATH_STM32_TEMP   = "Vehicle.Cabin.Temperature";
-static constexpr const char* PATH_STM32_HUM    = "Vehicle.Cabin.Humidity";
+static constexpr const char* PATH_STM32_TEMP   = "Vehicle.ControlUnit.STM32.Health.Resources.Temperature";
+static constexpr const char* PATH_STM32_HUM    = "Vehicle.ControlUnit.STM32.Health.Resources.Humidity";
 
 KUKSAReader::KUKSAReader(QObject *parent)
     : QObject(parent)
