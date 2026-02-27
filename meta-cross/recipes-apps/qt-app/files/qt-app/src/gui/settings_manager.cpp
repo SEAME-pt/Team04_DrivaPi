@@ -57,12 +57,12 @@ void SettingsManager::loadSettings() {
         m_settings["volume"] = 50;
         m_settings["musicLibraryPath"] = getDefaultMusicPath();  // Auto-detect path
         m_settings["theme"] = "dark";
-        m_settings = 0.75;
-        m_settings["speedUnit"] = "km/h";
-        m_settings["temperatureUnit"] = "°C";
-        m_settings["distanceUnit"] = "km";
-        m_settings = "m/s";
-        m_settings["precipitationUnit"] = "mm";
+        m_settings["screenBrightness"] = 0.75;
+		m_settings["speedUnit"] = "km/h";
+		m_settings["temperatureUnit"] = "°C";
+		m_settings["distanceUnit"] = "km";
+		m_settings["windSpeedUnit"] = "m/s";
+		m_settings["precipitationUnit"] = "mm";
         saveSettings();
     }
 }
@@ -152,7 +152,7 @@ double SettingsManager::screenBrightness() const {
 }
 
 void SettingsManager::setScreenBrightness(double brightness) {
-    m_settings = brightness;
+    m_settings["screenBrightness"] = brightness;
     saveSettings();
     emit screenBrightnessChanged();
 }
@@ -192,7 +192,7 @@ QString SettingsManager::windSpeedUnit() const {
 }
 
 void SettingsManager::setWindSpeedUnit(const QString& unit) {
-    m_settings = unit;
+    m_settings ["windSpeedUnit"] = unit;
     saveSettings();
     emit windSpeedUnitChanged();
 }

@@ -706,7 +706,20 @@ Rectangle {
                             spacing: 6 * root.s
 
                             Text {
-                                text: root.vehicleDataAvailable ? Math.round(root.currentSpeed).toString() : "--"
+                                // Dynamically convert speed based on the selected setting
+                                text: {
+                                    if (!root.vehicleDataAvailable)
+                                        return "--";
+                                    let speedVal = root.currentSpeed; // Base is km/h
+
+                                    if (settingsManager.speedUnit === "m/s") {
+                                        speedVal = speedVal / 3.6;
+                                    } else if (settingsManager.speedUnit === "mph") {
+                                        speedVal = speedVal * 0.621371;
+                                    }
+
+                                    return Math.round(speedVal).toString();
+                                }
                                 color: root.vehicleDataAvailable ? "#ffffff" : "#666666"
                                 font.pixelSize: root.fontSizeXL * root.s
                                 font.weight: Font.ExtraBold
@@ -716,7 +729,8 @@ Rectangle {
                             }
 
                             Text {
-                                text: "km/h"
+                                // Bind directly to the settings manager instead of hardcoding "km/h"
+                                text: settingsManager.speedUnit
                                 color: "#7a8a9a"
                                 font.pixelSize: 22 * root.s
                                 font.weight: Font.DemiBold
@@ -1093,10 +1107,21 @@ Rectangle {
                         Layout.alignment: Qt.AlignRight
 
                         Text {
-                            text: "ODO " + Math.round(root.odometerDistance) + " km"
-                            color: root.showOdometerReset ? "#4fb3d9" : (root.vehicleDataAvailable ? "#a6b4c2" : "#555555")
+                            // Convert trip distance based on settings
+                            text: {
+                                if (!root.vehicleDataAvailable)
+                                    return "Trip A --";
+                                let dist = root.tripDistance; // Base is km
+
+                                if (settingsManager.distanceUnit === "mi" || settingsManager.distanceUnit === "miles") {
+                                    dist = dist * 0.621371;
+                                }
+
+                                return "Trip A " + Math.round(dist) + " " + settingsManager.distanceUnit;
+                            }
+                            color: root.vehicleDataAvailable ? "#a6b4c2" : "#555555"
                             font.pixelSize: root.fontSizeMedium * root.s
-                            font.weight: Font.Bold
+                            font.weight: Font.Medium
                         }
 
                         // Reset button
