@@ -15,7 +15,6 @@ ApplicationWindow {
     title: qsTr("DrivaPi HMI - Multi-Screen Infotainment")
     color: AppTheme.colors.surface
 
-    // Keep a sensible minimum for 1280x400 while allowing resize for testing
     minimumWidth: 1280
     minimumHeight: 400
 
@@ -29,20 +28,46 @@ ApplicationWindow {
     Shortcut {
         sequence: "Ctrl+D"
         context: Qt.ApplicationShortcut
-        onActivated: {
-            // Toggle debug/diagnostics (placeholder for future)
-            console.log("[HMI] Debug shortcut triggered");
-        }
+        onActivated: console.log("[HMI] Debug shortcut triggered")
     }
 
     // ====== STATE MANAGEMENT ======
-    property bool rightPanelVisible: false  // Toggle for right content panel - start with cluster full screen
-    property bool showSplashScreen: true   // Control splash screen visibility
+    property bool rightPanelVisible: false
+    property bool showSplashScreen: true
 
-    // Timer to hide splash screen after delay
+	// ====== DYNAMIC THEME CONTROLLER ======
+    function evaluateTheme() {
+        if (!settingsManager) return;
+
+        if (settingsManager.theme === "Light") {
+            AppTheme.isDark = false;
+        } else if (settingsManager.theme === "Dark") {
+            AppTheme.isDark = true;
+
+        } else {
+            // "Auto" Mode: Switches to Dark Mode between 18:00 (6 PM) and 07:00 (7 AM)
+            var hour = new Date().getHours();
+            AppTheme.isDark = (hour >= 18 || hour < 7);
+        }
+    }
+
+    Connections {
+        target: settingsManager
+        function onThemeChanged() { evaluateTheme(); }
+    }
+
+    Timer {
+        interval: 60000
+        running: settingsManager.theme === "Auto"
+        repeat: true
+        onTriggered: evaluateTheme()
+    }
+
+    Component.onCompleted: { evaluateTheme(); }
+
     Timer {
         id: splashTimer
-        interval: 2500  // Show splash for 2.5 seconds
+        interval: 2500
         running: true
         repeat: false
         onTriggered: showSplashScreen = false
@@ -51,7 +76,6 @@ ApplicationWindow {
     // ====== CONNECTION STATE MONITORING ======
     Connections {
         target: systemStatus
-
         function onConnectionStateChanged() {
             var state = systemStatus.connectionState;
             var mode = systemStatus.connectionMode;
@@ -73,83 +97,31 @@ ApplicationWindow {
         spacing: 0
 
         // ====== LEFT SIDE: PERSISTENT INSTRUMENT CLUSTER ======
-        // Cluster should maintain its aspect ratio (1200:480 = 2.5:1)
         Item {
             id: clusterContainer
             Layout.fillHeight: true
-            // When right panel is visible, give cluster its proper aspect ratio width
             Layout.preferredWidth: rightPanelVisible ? height * 2.5 : parent.width
-            Layout.minimumWidth: height * 2.5  // Minimum width to maintain aspect ratio
+            Layout.minimumWidth: height * 2.5
             Layout.maximumWidth: rightPanelVisible ? height * 2.5 : parent.width
             z: 100
-
-            // Clip to container bounds
             clip: true
 
             ClusterScreen {
                 id: clusterScreen
                 anchors.fill: parent
-
-                // Force the cluster to scale to fit the container while maintaining aspect ratio
-                width: parent.width
-                height: parent.height
-
-                // Smooth scale animation during transitions
-                scale: rightPanelVisible ? 1.0 : 1.0
-                Behavior on scale {
-                    NumberAnimation {
-                        duration: 400
-                        easing.type: Easing.InOutCubic
-                    }
-                }
-
-                // Subtle opacity pulse for smooth transition
+                scale: 1.0
+                Behavior on scale { NumberAnimation { duration: 400; easing.type: Easing.InOutCubic } }
                 opacity: 1.0
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: 200
-                        easing.type: Easing.InOutQuad
-                    }
-                }
-
-                // Transform for smooth width adaptation
-                Behavior on width {
-                    NumberAnimation {
-                        duration: 400
-                        easing.type: Easing.InOutCubic
-                    }
-                }
-
-                Behavior on height {
-                    NumberAnimation {
-                        duration: 400
-                        easing.type: Easing.InOutCubic
-                    }
-                }
+                Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.InOutQuad } }
+                Behavior on width { NumberAnimation { duration: 400; easing.type: Easing.InOutCubic } }
+                Behavior on height { NumberAnimation { duration: 400; easing.type: Easing.InOutCubic } }
             }
 
-            Behavior on Layout.preferredWidth {
-                NumberAnimation {
-                    duration: 400
-                    easing.type: Easing.InOutCubic
-                }
-            }
+            Behavior on Layout.preferredWidth { NumberAnimation { duration: 400; easing.type: Easing.InOutCubic } }
+            Behavior on Layout.minimumWidth { NumberAnimation { duration: 400; easing.type: Easing.InOutCubic } }
+            Behavior on Layout.maximumWidth { NumberAnimation { duration: 400; easing.type: Easing.InOutCubic } }
 
-            Behavior on Layout.minimumWidth {
-                NumberAnimation {
-                    duration: 400
-                    easing.type: Easing.InOutCubic
-                }
-            }
-
-            Behavior on Layout.maximumWidth {
-                NumberAnimation {
-                    duration: 400
-                    easing.type: Easing.InOutCubic
-                }
-            }
-
-            // Elegant minimal toggle button - small circular icon in bottom right
+            // Toggle Button
             Rectangle {
                 id: panelToggle
                 anchors.right: parent.right
@@ -161,75 +133,40 @@ ApplicationWindow {
                 radius: 24
                 z: 200
 
-                // Dark gradient matching cluster
                 gradient: Gradient {
-                    GradientStop {
-                        position: 0.0
-                        color: "#0a0f18"
-                    }
-                    GradientStop {
-                        position: 1.0
-                        color: "#05080e"
-                    }
+                    GradientStop { position: 0.0; color: AppTheme.colors.surfaceElevated }
+                    GradientStop { position: 1.0; color: AppTheme.colors.surfaceVariant }
                 }
 
-                border.color: rightPanelVisible ? "#00BFFF" : "#1a2535"
+                border.color: rightPanelVisible ? AppTheme.colors.primary : AppTheme.colors.border
                 border.width: 1
 
-                // Subtle glow effect using nested rectangles (replaces MultiEffect)
+                // Glow Ring
                 Rectangle {
                     anchors.fill: parent
                     anchors.margins: -8
                     radius: parent.radius + 4
                     color: "transparent"
-                    border.color: "#00BFFF"
+                    border.color: AppTheme.colors.primary
                     border.width: 1
                     opacity: rightPanelVisible ? 0.4 : 0
                     z: -1
-
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: 200
-                        }
-                    }
+                    Behavior on opacity { NumberAnimation { duration: 200 } }
                 }
 
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.margins: -14
-                    radius: parent.radius + 8
-                    color: "transparent"
-                    border.color: "#00BFFF"
-                    border.width: 1
-                    opacity: rightPanelVisible ? 0.2 : 0
-                    z: -2
-
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: 300
-                        }
-                    }
-                }
-
-                // Grid icon (three horizontal lines)
+                // Grid icon
                 Column {
                     anchors.centerIn: parent
                     spacing: 4
-
                     Repeater {
                         model: 3
                         Rectangle {
                             width: 20
                             height: 2
                             radius: 1
-                            color: rightPanelVisible ? "#00BFFF" : "#8FA4B8"
+                            color: rightPanelVisible ? AppTheme.colors.primary : AppTheme.colors.textSecondary
                             anchors.horizontalCenter: parent.horizontalCenter
-
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: 200
-                                }
-                            }
+                            Behavior on color { ColorAnimation { duration: 200 } }
                         }
                     }
                 }
@@ -238,368 +175,136 @@ ApplicationWindow {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-
-                    onClicked: {
-                        rightPanelVisible = !rightPanelVisible;
-                    }
-
-                    onEntered: {
-                        panelToggle.scale = 1.1;
-                    }
-
-                    onExited: {
-                        panelToggle.scale = 1.0;
-                    }
-
-                    onPressed: {
-                        panelToggle.scale = 0.95;
-                    }
-
-                    onReleased: {
-                        panelToggle.scale = containsMouse ? 1.1 : 1.0;
-                    }
+                    onClicked: rightPanelVisible = !rightPanelVisible
+                    onEntered: panelToggle.scale = 1.1
+                    onExited: panelToggle.scale = 1.0
+                    onPressed: panelToggle.scale = 0.95
+                    onReleased: panelToggle.scale = containsMouse ? 1.1 : 1.0
                 }
-
-                Behavior on scale {
-                    NumberAnimation {
-                        duration: 150
-                        easing.type: Easing.OutBack
-                    }
-                }
-
-                Behavior on border.color {
-                    ColorAnimation {
-                        duration: 200
-                    }
-                }
+                Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
+                Behavior on border.color { ColorAnimation { duration: 200 } }
             }
 
-            // Invisible edge detection area for elegant panel reveal
+            // Edge detection for auto-reveal
             MouseArea {
                 id: edgeDetector
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                width: 5
-                z: 199
-                hoverEnabled: true
-
-                property bool edgeHovered: false
-
-                onEntered: {
-                    edgeHoverTimer.start();
-                }
-
-                onExited: {
-                    edgeHoverTimer.stop();
-                    edgeHovered = false;
-                }
-
-                // Timer to delay panel reveal slightly
+                anchors.right: parent.right; anchors.top: parent.top; anchors.bottom: parent.bottom
+                width: 5; z: 199; hoverEnabled: true
+                onEntered: edgeHoverTimer.start()
+                onExited: { edgeHoverTimer.stop(); edgeHovered = false; }
                 Timer {
                     id: edgeHoverTimer
-                    interval: 300
-                    repeat: false
-                    onTriggered: {
-                        if (edgeDetector.containsMouse && !rightPanelVisible) {
-                            rightPanelVisible = true;
-                        }
-                    }
+                    interval: 300; repeat: false
+                    onTriggered: { if (edgeDetector.containsMouse && !rightPanelVisible) rightPanelVisible = true; }
                 }
             }
 
+            // Tap-to-reveal on cluster
             MouseArea {
-                anchors.fill: clusterScreen
-                z: 1
-                enabled: !rightPanelVisible
-                hoverEnabled: false
+                anchors.fill: clusterScreen; z: 1; enabled: !rightPanelVisible
                 propagateComposedEvents: true
-
-                // Tuning: top bar ~11% height, bottom bar ~13% height (adjust if needed)
                 readonly property real topDeadZone: clusterScreen.height * 0.14
-                readonly property real bottomDeadZone: clusterScreen.height * 0.14
-
-                property int tapCount: 0
-                property double lastTapTime: 0
-
-                function inDeadZone(y) {
-                    return (y <= topDeadZone) || (y >= (clusterScreen.height - bottomDeadZone));
-                }
-
-                onPressed: mouse => {
-                    // Let UI buttons receive the press
-                    if (inDeadZone(mouse.y)) {
-                        mouse.accepted = false;
-                        return;
-                    }
-                }
-
+                property int tapCount: 0; property double lastTapTime: 0
+                onPressed: mouse => { if (mouse.y <= topDeadZone || mouse.y >= (clusterScreen.height - topDeadZone)) mouse.accepted = false; }
                 onClicked: mouse => {
-                    // Let UI buttons receive the click
-                    if (inDeadZone(mouse.y)) {
-                        mouse.accepted = false;
-                        return;
-                    }
-
                     var currentTime = Date.now();
                     if (currentTime - lastTapTime < 400) {
                         tapCount++;
-                        if (tapCount >= 2) {
-                            rightPanelVisible = true;
-                            tapCount = 0;
-                        }
-                    } else {
-                        tapCount = 1;
-                    }
+                        if (tapCount >= 2) { rightPanelVisible = !rightPanelVisible; tapCount = 0; }
+                    } else tapCount = 1;
                     lastTapTime = currentTime;
                 }
             }
         }
 
-        // ====== RIGHT SIDE: SWIPEABLE CONTENT + VERTICAL TABBAR ======
+        // ====== RIGHT SIDE: SWIPEABLE CONTENT ======
         RowLayout {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.margins: 0
-            spacing: 0
-            visible: opacity > 0
-            opacity: rightPanelVisible ? 1 : 0
-
-            // Smooth fade animation
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: 300
-                    easing.type: Easing.InOutQuad
-                }
-            }
-
-            // Slide animation using transform
+            Layout.fillWidth: true; Layout.fillHeight: true; spacing: 0
+            visible: opacity > 0; opacity: rightPanelVisible ? 1 : 0
+            Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.InOutQuad } }
             transform: Translate {
                 x: rightPanelVisible ? 0 : 400
-                Behavior on x {
-                    NumberAnimation {
-                        duration: 400
-                        easing.type: Easing.InOutCubic
-                    }
-                }
+                Behavior on x { NumberAnimation { duration: 400; easing.type: Easing.InOutCubic } }
             }
 
-            // ====== SWIPEABLE CONTENT SCREENS ======
             SwipeView {
                 id: swipeView
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                currentIndex: verticalTabBar.currentIndex
-                z: 50   // Below cluster, above tab bar
-                clip: true
+                Layout.fillWidth: true; Layout.fillHeight: true
+                currentIndex: verticalTabBar.currentIndex; z: 50; clip: true
+                Behavior on currentIndex { NumberAnimation { duration: 350; easing.type: Easing.OutCubic } }
 
-                // Smooth page transition animation
-                Behavior on currentIndex {
-                    NumberAnimation {
-                        duration: 350
-                        easing.type: Easing.OutCubic
-                    }
-                }
-
-                // Navigation screens
-                NavigationScreen {
-                    id: navigationScreen
-                }
-                MediaScreen {
-                    id: mediaScreen
-                }
-                WeatherScreen {
-                    id: weatherScreen
-                }
-                SettingsScreen {
-                    id: settingsScreen
-                }
-                DiagnosticsScreen {
-                    id: diagnosticsScreen
-                }
+                NavigationScreen { id: navigationScreen }
+                MediaScreen { id: mediaScreen }
+                WeatherScreen { id: weatherScreen }
+                SettingsScreen { id: settingsScreen }
+                DiagnosticsScreen { id: diagnosticsScreen }
             }
 
-            // ====== VERTICAL TABBAR (RIGHT SIDE, ICON ONLY) ======
+            // Vertical Tab Bar
             Item {
                 id: verticalTabBar
-                Layout.preferredWidth: 72
-                Layout.fillHeight: true
-                z: 40
+                Layout.preferredWidth: 72; Layout.fillHeight: true; z: 40
+                property int currentIndex: verticalTabBar.currentIndex >= 0 ? verticalTabBar.currentIndex : 0
 
-                property int currentIndex: verticalTabBar.currentIndex >= 0 ? verticalTabBar.currentIndex : 0  // Ensure valid index
+                Rectangle { anchors.fill: parent; color: AppTheme.colors.surfaceVariant }
+                Rectangle { anchors.fill: parent; color: "transparent"; border.color: AppTheme.colors.divider; border.width: 1 }
 
-                // Nearly invisible semi-transparent background with shadow effect using nested rectangles
-                Rectangle {
-                    anchors.fill: parent
-                    color: "#05080e"
-                }
-
-                // Shadow effect simulation using nested rectangles
-                Rectangle {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.bottom: parent.bottom
-                    color: "transparent"
-                    border.color: "#00BFFF"
-                    border.width: 1
-                    opacity: 0.08
-                }
-
-                // Vertical column of icon buttons
                 Column {
-                    anchors.fill: parent
-                    anchors.margins: 8
-                    spacing: 8
-                    topPadding: 12
+                    anchors.fill: parent; anchors.margins: 8; spacing: 8; topPadding: 12
 
-                    // Navigation Tab
                     TabIconButton {
-                        width: 56
-                        height: 56
-                        anchors.horizontalCenter: parent.horizontalCenter
                         isActive: verticalTabBar.currentIndex === 0
                         iconSource: "qrc:/icons/common/nav-mode.svg"
                         onClicked: verticalTabBar.currentIndex = 0
-						layer.enabled: true
-						layer.effect: ColorOverlay {
-							color: "#FFFFFF"
-						}
                     }
-
-                    // Media Tab
                     TabIconButton {
-                        width: 56
-                        height: 56
-                        anchors.horizontalCenter: parent.horizontalCenter
                         isActive: verticalTabBar.currentIndex === 1
                         iconSource: "qrc:/icons/common/media-mode.svg"
                         onClicked: verticalTabBar.currentIndex = 1
-						layer.enabled: true
-						layer.effect: ColorOverlay {
-							color: "#FFFFFF"
-						}
                     }
-
-                    // Weather Tab
                     TabIconButton {
-                        width: 56
-                        height: 56
-                        anchors.horizontalCenter: parent.horizontalCenter
                         isActive: verticalTabBar.currentIndex === 2
                         iconSource: "qrc:/icons/weather/sun.svg"
                         onClicked: verticalTabBar.currentIndex = 2
-						layer.enabled: true
-						layer.effect: ColorOverlay {
-							color: "#FFFFFF"
-						}
                     }
-
-                    // Settings Tab
                     TabIconButton {
-                        width: 56
-                        height: 56
-                        anchors.horizontalCenter: parent.horizontalCenter
                         isActive: verticalTabBar.currentIndex === 3
                         iconSource: "qrc:/icons/settings/brightness.svg"
                         onClicked: verticalTabBar.currentIndex = 3
-						layer.enabled: true
-						layer.effect: ColorOverlay {
-							color: "#FFFFFF"
-						}
                     }
-
-                    // System State Tab (RPi + STM32)
                     TabIconButton {
-                        width: 56
-                        height: 56
-                        anchors.horizontalCenter: parent.horizontalCenter
                         isActive: verticalTabBar.currentIndex === 4
                         iconSource: "qrc:/icons/hardware/sensor.svg"
                         onClicked: verticalTabBar.currentIndex = 4
-						layer.enabled: true
-						layer.effect: ColorOverlay {
-							color: "#FFFFFF"
-						}
                     }
                 }
             }
         }
     }
 
-    // ====== NOTIFICATION TOAST CONTAINER (TOP-CENTER) ======
+    // ====== NOTIFICATIONS ======
     Rectangle {
         id: notificationContainer
-        anchors.top: parent.top
-        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top; anchors.horizontalCenter: parent.horizontalCenter
         anchors.topMargin: AppTheme.spacing.medium
-        width: 320
-        height: childrenRect.height
-        color: "transparent"
-        z: 200
+        width: 320; height: childrenRect.height; color: "transparent"; z: 200
 
         Column {
-            width: parent.width
-            spacing: AppTheme.spacing.small
-
+            width: parent.width; spacing: AppTheme.spacing.small
             Repeater {
                 model: notificationManager.notifications
-
                 Rectangle {
-                    width: notificationContainer.width
-                    height: 52
+                    width: notificationContainer.width; height: 52
                     radius: AppTheme.radius.medium
-
-                    color: {
-                        switch (modelData.level) {
-                        case 0:
-                            return AppTheme.colors.info;
-                        case 1:
-                            return AppTheme.colors.warning;
-                        case 2:
-                            return AppTheme.colors.error;
-                        default:
-                            return AppTheme.colors.info;
-                        }
-                    }
-
-                    // Entrance animation
-                    opacity: 0
-                    Component.onCompleted: {
-                        opacity = 1;
-                        transform.y = 0;
-                    }
-
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: 300
-                            easing.type: Easing.OutQuad
-                        }
-                    }
-
-                    transform: Translate {
-                        y: -20
-                    }
-
-                    Behavior on transform {
-                        NumberAnimation {
-                            duration: 400
-                            easing.type: Easing.OutBack
-                        }
-                    }
+                    color: modelData.level === 0 ? AppTheme.colors.info : (modelData.level === 1 ? AppTheme.colors.warning : AppTheme.colors.error)
+                    opacity: 0; Component.onCompleted: { opacity = 1; transform.y = 0; }
+                    Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutQuad } }
+                    transform: Translate { y: -20 }
+                    Behavior on transform { NumberAnimation { duration: 400; easing.type: Easing.OutBack } }
 
                     RowLayout {
-                        anchors.fill: parent
-                        anchors.margins: AppTheme.spacing.medium
-                        spacing: AppTheme.spacing.medium
-
-                        Text {
-                            text: modelData.message
-                            color: AppTheme.colors.text
-                            font.pixelSize: AppTheme.typography.bodyMedium
-                            Layout.fillWidth: true
-                            wrapMode: Text.Wrap
-                        }
+                        anchors.fill: parent; anchors.margins: AppTheme.spacing.medium
+                        Text { text: modelData.message; color: "#FFFFFF"; font.pixelSize: 13; Layout.fillWidth: true; wrapMode: Text.Wrap }
                     }
                 }
             }
@@ -795,97 +500,20 @@ ApplicationWindow {
             }
         }
 
-        // Brand name
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.verticalCenter
-            anchors.topMargin: 160
-            text: "DRIVAPI"
-            font.pixelSize: 24
-            font.weight: Font.Light
-            font.letterSpacing: 4
-            color: AppTheme.colors.primary
-            opacity: 0
-
-            SequentialAnimation on opacity {
-                running: showSplashScreen
-                PauseAnimation {
-                    duration: 1200
-                }
-                NumberAnimation {
-                    to: 0.9
-                    duration: 500
-                    easing.type: Easing.OutQuad
-                }
-            }
-        }
-
-        // Progress bar at bottom
-        Rectangle {
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 80
-            width: 240
-            height: 2
-            radius: 1
-            color: AppTheme.colors.primary
-            opacity: 0.2
-
-            Rectangle {
-                height: parent.height
-                radius: 1
-                color: AppTheme.colors.primary
-                width: 0
-
-                SequentialAnimation on width {
-                    running: showSplashScreen
-                    PauseAnimation {
-                        duration: 300
-                    }
-                    SequentialAnimation {
-                        loops: Animation.Infinite
-                        NumberAnimation {
-                            to: 240
-                            duration: 2000
-                            easing.type: Easing.InOutCubic
-                        }
-                        NumberAnimation {
-                            to: 0
-                            duration: 400
-                            easing.type: Easing.InQuad
-                        }
-                    }
-                }
-            }
-        }
-
-        // Subtle tagline
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 40
-            text: "Initializing..."
-            font.pixelSize: 12
-            font.weight: Font.Light
-            font.letterSpacing: 1
+            text: "SYSTEM INITIALIZING..."
             color: AppTheme.colors.textSecondary
-            opacity: 0
-
-            SequentialAnimation on opacity {
-                running: showSplashScreen
-                PauseAnimation {
-                    duration: 1500
-                }
-                NumberAnimation {
-                    to: 0.6
-                    duration: 400
-                    easing.type: Easing.OutQuad
-                }
-            }
+            font.pixelSize: 10
+            font.letterSpacing: 2
+            font.weight: Font.DemiBold
+            opacity: 0.7
         }
     }
 
-    // ====== CUSTOM TAB ICON BUTTON COMPONENT (BMW iDrive Style) ======
+    // ====== CUSTOM TAB ICON COMPONENT ======
     component TabIconButton: Rectangle {
         id: tabButton
         required property bool isActive
@@ -893,102 +521,43 @@ ApplicationWindow {
         property bool isHovered: false
         signal clicked
 
-        color: "transparent"
-        radius: 6
+        width: 56; height: 56; anchors.horizontalCenter: parent.horizontalCenter
+        color: "transparent"; radius: 12
 
-        // Elegant minimalist background - nearly invisible unless active
         Rectangle {
             anchors.fill: parent
-            radius: 6
-            color: tabButton.isActive ? "#00BFFF" : (tabButton.isHovered ? "#FFFFFF" : "transparent")
-            opacity: tabButton.isActive ? 1 : (tabButton.isHovered ? 0.3 : 0.0)
-            border.color: tabButton.isActive ? "#00BFFF" : (tabButton.isHovered ? "#8FA4B8" : "transparent")
+            radius: 12
+            color: tabButton.isActive ? AppTheme.colors.primary : (tabButton.isHovered ? AppTheme.colors.surfaceElevated : "transparent")
+            opacity: tabButton.isActive ? 1.0 : (tabButton.isHovered ? 0.5 : 0.0)
+            border.color: tabButton.isActive ? AppTheme.colors.primary : AppTheme.colors.border
             border.width: (tabButton.isActive || tabButton.isHovered) ? 1 : 0
         }
 
-        // Smooth transitions for premium feel
-        Behavior on color {
-            ColorAnimation {
-                duration: 250
-                easing.type: Easing.OutCubic
-            }
-        }
-
-        Behavior on scale {
-            NumberAnimation {
-                duration: 160
-                easing.type: Easing.OutCubic
-            }
-        }
-
-        // Icon - elegant and minimal with white color overlay using ColorOverlay alternative
         Image {
             id: iconImage
-            anchors.centerIn: parent
-            width: 24
-            height: 24
-            source: tabButton.iconSource
+            anchors.centerIn: parent; width: 26; height: 26; source: tabButton.iconSource
             fillMode: Image.PreserveAspectFit
-            opacity: isActive ? 0.85 : (tabButton.isHovered ? 0.6 : 0.35)
-            mipmap: true
-
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: 200
-                    easing.type: Easing.OutQuad
-                }
+            opacity: isActive ? 1.0 : 0.6
+            layer.enabled: true
+            layer.effect: ColorOverlay {
+                color: tabButton.isActive ? "#FFFFFF" : AppTheme.colors.text
             }
         }
 
-        // Interactive mouse area
         MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-
-            onEntered: {
-                tabButton.isHovered = true;
-                if (!tabButton.isActive) {
-                    tabButton.scale = 1.05;
-                }
-            }
-
-            onExited: {
-                tabButton.isHovered = false;
-                tabButton.scale = 1.0;
-            }
-
-            onPressed: {
-                tabButton.scale = 0.92;
-            }
-
-            onReleased: {
-                if (containsMouse) {
-                    tabButton.scale = 1.05;
-                } else {
-                    tabButton.scale = 1.0;
-                }
-                tabButton.clicked();
-            }
+            anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+            onEntered: { tabButton.isHovered = true; if (!tabButton.isActive) tabButton.scale = 1.05; }
+            onExited: { tabButton.isHovered = false; tabButton.scale = 1.0; }
+            onPressed: tabButton.scale = 0.92
+            onReleased: { tabButton.scale = containsMouse ? 1.05 : 1.0; tabButton.clicked(); }
         }
-
-        // Ensure scale resets when active state changes
-        onIsActiveChanged: {
-            scale = 1.0;
-        }
+        Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
     }
 
-	// ====== GLOBAL BRIGHTNESS OVERLAY ======
+	// ====== BRIGHTNESS OVERLAY ======
     Rectangle {
-        anchors.fill: parent
-        z: 10000 // Ensure it sits above the cluster, side panels, and popups
-        color: "black"
-
-        // Convert 0.0 - 1.0 brightness to an opacity (1.0 bright = 0.0 opacity)
-        // Math.max prevents the screen from going 100% pitch black so you don't lock yourself out
+        anchors.fill: parent; z: 10000; color: "black"
         opacity: 0.5 - Math.max(0.1, settingsManager.screenBrightness)
-
-        // Very important: ensures touch events pass right through the overlay to the buttons below
         enabled: false
     }
 }

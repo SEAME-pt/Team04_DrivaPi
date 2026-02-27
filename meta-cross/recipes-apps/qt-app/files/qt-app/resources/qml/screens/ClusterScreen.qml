@@ -41,7 +41,7 @@ Rectangle {
     property real tripDistance: vehicleDataAvailable && vehicleData.trip ? vehicleData.trip : 568
     property real powerOutput: vehicleDataAvailable && vehicleData.power ? vehicleData.power : 98
 
-    // ====== Odometer State (FIX for ReferenceError) ======
+    // ====== Odometer State ======
     property real odometerDistance: 0
     property real accumulatedDistance: 0
     property real lastTimestamp: 0
@@ -170,15 +170,15 @@ Rectangle {
     gradient: Gradient {
         GradientStop {
             position: 0.0
-            color: "#05080e"
+            color: AppTheme.colors.surfaceVariant
         }
         GradientStop {
             position: 0.5
-            color: "#030509"
+            color: AppTheme.colors.surface
         }
         GradientStop {
             position: 1.0
-            color: "#05080e"
+            color: AppTheme.colors.surfaceVariant
         }
     }
 
@@ -197,7 +197,7 @@ Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
             width: parent.width
             height: 36 * 2.5 * root.s
-            opacity: 0.95
+            opacity: AppTheme.isDark ? 0.95 : 0.3
             z: 1
         }
 
@@ -209,7 +209,7 @@ Rectangle {
             anchors.horizontalCenterOffset: parent.width * 0.225
             width: parent.width * 0.45
             height: parent.height * 0.60
-            opacity: 0.95
+            opacity: AppTheme.isDark ? 0.95 : 0.3
             z: 1
         }
 
@@ -221,7 +221,7 @@ Rectangle {
             anchors.horizontalCenterOffset: -parent.width * 0.225
             width: parent.width * 0.45
             height: parent.height * 0.60
-            opacity: 0.95
+            opacity: AppTheme.isDark ? 0.95 : 0.3
             z: 1
         }
 
@@ -233,7 +233,7 @@ Rectangle {
             fillMode: Image.PreserveAspectFit
             width: parent.width * 0.95
             height: 36 * 3.5 * root.s
-            opacity: 0.95
+            opacity: AppTheme.isDark ? 0.95 : 0.3
             z: 1
         }
 
@@ -305,19 +305,19 @@ Rectangle {
                         gradient: Gradient {
                             GradientStop {
                                 position: 0.00
-                                color: "#05080eff"
+                                color: AppTheme.alpha(AppTheme.colors.surface, 1.0)
                             }
                             GradientStop {
                                 position: 0.35
-                                color: "#05080ed0"
+                                color: AppTheme.alpha(AppTheme.colors.surface, 0.8)
                             }
                             GradientStop {
                                 position: 0.70
-                                color: "#05080e60"
+                                color: AppTheme.alpha(AppTheme.colors.surface, 0.88)
                             }
                             GradientStop {
                                 position: 1.00
-                                color: "#00000000"
+                                color: AppTheme.alpha(AppTheme.colors.surface, 0.0)
                             }
                         }
                     }
@@ -327,15 +327,15 @@ Rectangle {
                         gradient: Gradient {
                             GradientStop {
                                 position: 0.00
-                                color: "#05080eff"
+                                color: AppTheme.alpha(AppTheme.colors.surface, 1.0)
                             }
                             GradientStop {
                                 position: 0.55
-                                color: "#05080e90"
+                                color: AppTheme.alpha(AppTheme.colors.surface, 0.56)
                             }
                             GradientStop {
                                 position: 1.00
-                                color: "#00000000"
+                                color: AppTheme.alpha(AppTheme.colors.surface, 0.0)
                             }
                         }
                         opacity: 0.55
@@ -387,7 +387,7 @@ Rectangle {
                             height: laneLines.dashH(yy)
                             x: (parent.width - width) / 2
                             radius: width / 2
-                            color: "#e6f0ff"
+                            color: AppTheme.colors.primary
                             opacity: laneLines.dashOpacity(yy)
                         }
                     }
@@ -437,7 +437,7 @@ Rectangle {
                                 width: parent.w
                                 height: parent.height
                                 radius: width / 2
-                                color: "#9fe3ff"
+                                color: AppTheme.colors.primary
                                 opacity: parent.a
                             }
 
@@ -446,7 +446,7 @@ Rectangle {
                                 width: parent.w
                                 height: parent.height
                                 radius: width / 2
-                                color: "#9fe3ff"
+                                color: AppTheme.colors.primary
                                 opacity: parent.a
                             }
                         }
@@ -476,15 +476,15 @@ Rectangle {
                         gradient: Gradient {
                             GradientStop {
                                 position: 0.0
-                                color: "#00000000"
+                                color: AppTheme.alpha(AppTheme.colors.text, 0.0)
                             }
                             GradientStop {
                                 position: 0.5
-                                color: "#000000"
+                                color: AppTheme.colors.text
                             }
                             GradientStop {
                                 position: 1.0
-                                color: "#00000000"
+                                color: AppTheme.alpha(AppTheme.colors.text, 0.0)
                             }
                         }
                     }
@@ -499,15 +499,15 @@ Rectangle {
                         gradient: Gradient {
                             GradientStop {
                                 position: 0.0
-                                color: "#00000000"
+                                color: AppTheme.alpha(AppTheme.colors.text, 0.0)
                             }
                             GradientStop {
                                 position: 0.5
-                                color: "#000000"
+                                color: AppTheme.colors.text
                             }
                             GradientStop {
                                 position: 1.0
-                                color: "#00000000"
+                                color: AppTheme.alpha(AppTheme.colors.text, 0.0)
                             }
                         }
                     }
@@ -522,21 +522,21 @@ Rectangle {
                         gradient: Gradient {
                             GradientStop {
                                 position: 0.0
-                                color: "#00000000"
+                                color: AppTheme.alpha(AppTheme.colors.text, 0.0)
                             }
                             GradientStop {
                                 position: 0.5
-                                color: "#000000"
+                                color: AppTheme.colors.text
                             }
                             GradientStop {
                                 position: 1.0
-                                color: "#00000000"
+                                color: AppTheme.alpha(AppTheme.colors.text, 0.0)
                             }
                         }
                     }
                 }
 
-                // ===== FOG GRADIENT OVERLAYS (FIX: smooth full-height fade, no cutoff) =====
+                // ===== FOG GRADIENT OVERLAYS =====
                 // Fog cap: subtle horizon fade
                 Rectangle {
                     anchors.left: parent.left
@@ -547,19 +547,19 @@ Rectangle {
                     gradient: Gradient {
                         GradientStop {
                             position: 0.00
-                            color: "#05080eff"
+                            color: AppTheme.alpha(AppTheme.colors.surface, 1.0)
                         }
                         GradientStop {
                             position: 0.20
-                            color: "#05080ee0"
+                            color: AppTheme.alpha(AppTheme.colors.surface, 0.88)
                         }
                         GradientStop {
                             position: 0.50
-                            color: "#05080e40"
+                            color: AppTheme.alpha(AppTheme.colors.surface, 0.25)
                         }
                         GradientStop {
                             position: 1.00
-                            color: "#00000000"
+                            color: AppTheme.alpha(AppTheme.colors.surface, 0.0)
                         }
                     }
                     opacity: 0.65
@@ -573,7 +573,8 @@ Rectangle {
                     y: parent.height * 0.46
                     radius: 32 * root.s
                     z: 6
-                    color: "#05080e"
+					visible: false
+                    color: AppTheme.colors.surfaceVariant
                     opacity: 0.40
                 }
 
@@ -584,19 +585,19 @@ Rectangle {
                     gradient: Gradient {
                         GradientStop {
                             position: 0.00
-                            color: "#05080eff"
+                            color: AppTheme.alpha(AppTheme.colors.surface, 1.0)
                         }
                         GradientStop {
                             position: 0.30
-                            color: "#05080ec0"
+                            color: AppTheme.alpha(AppTheme.colors.surface, 0.75)
                         }
                         GradientStop {
                             position: 0.70
-                            color: "#05080e30"
+                            color: AppTheme.alpha(AppTheme.colors.surface, 0.18)
                         }
                         GradientStop {
                             position: 1.00
-                            color: "#00000000"
+                            color: AppTheme.alpha(AppTheme.colors.surface, 0.0)
                         }
                     }
                     opacity: 0.50
@@ -605,14 +606,14 @@ Rectangle {
                 Rectangle {
                     anchors.fill: parent
                     z: 8
-                    color: "#000000"
+                    color: AppTheme.colors.text
                     opacity: 0.02
                 }
 
                 Rectangle {
                     anchors.fill: parent
                     z: 9
-                    color: "#4fb3d9"
+                    color: AppTheme.colors.primary
                     opacity: 0.003
                 }
 
@@ -622,7 +623,7 @@ Rectangle {
                     anchors.right: parent.right
                     anchors.top: parent.top
                     height: roadWindow.anchors.topMargin
-                    color: "#05080e"
+                    color: AppTheme.colors.surfaceVariant
                     opacity: 1.0
                     z: 10
                 }
@@ -676,7 +677,7 @@ Rectangle {
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: 26 * root.sy
                     sourceSize.width: 1200
-                    opacity: 0.55
+                    opacity: AppTheme.isDark ? 0.55 : 0.15
                     z: 1
                 }
 
@@ -686,7 +687,7 @@ Rectangle {
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: 74 * root.sy
                     sourceSize.width: 900
-                    opacity: 0.9
+                    opacity: AppTheme.isDark ? 0.9 : 0.4
                     z: 2
                 }
 
@@ -724,18 +725,18 @@ Rectangle {
 
                                     return Math.round(speedVal).toString();
                                 }
-                                color: root.vehicleDataAvailable ? "#ffffff" : "#666666"
+                                color: root.vehicleDataAvailable ? AppTheme.colors.text : AppTheme.colors.textSecondary
                                 font.pixelSize: root.fontSizeXL * root.s
                                 font.weight: Font.ExtraBold
                                 Layout.alignment: Qt.AlignHCenter
-                                style: root.vehicleDataAvailable ? Text.Outline : Text.Normal
-                                styleColor: "#4fb3d9"
+                                style: root.vehicleDataAvailable && AppTheme.isDark ? Text.Outline : Text.Normal
+                                styleColor: AppTheme.colors.primary
                             }
 
                             Text {
                                 // Bind directly to the settings manager instead of hardcoding "km/h"
                                 text: settingsManager.speedUnit
-                                color: "#7a8a9a"
+                                color: AppTheme.colors.textSecondary
                                 font.pixelSize: 22 * root.s
                                 font.weight: Font.DemiBold
                                 Layout.alignment: Qt.AlignHCenter
@@ -750,9 +751,6 @@ Rectangle {
                         Layout.fillHeight: true
 
                         // ISO 26266 ADAS / Warnings Area (ASIL-Compliant Display)
-                        // Purpose: Display critical safety information including speed limit and ADAS status
-                        // Visibility: High-contrast display for driver awareness
-                        // Update Frequency: Real-time from vehicleData signals
                         Rectangle {
                             id: adasZone
                             width: 560 * root.s
@@ -761,9 +759,8 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.verticalCenterOffset: 74 * root.sy
                             radius: 28 * root.s
-                            color: "#2E0B1624"
-                            border.color: "#4fb3d933"
-                            border.width: 1
+                            color: "transparent"
+   							border.width: 0
 
                             RowLayout {
                                 anchors.fill: parent
@@ -771,8 +768,6 @@ Rectangle {
                                 spacing: 14 * root.s
 
                                 // Speed Limit Indicator (ISO 26262 Safety-Critical Element)
-                                // Displays current speed limit with high visibility red/white scheme
-                                // Enhanced with glow effect for improved driver awareness
                                 Item {
                                     Layout.preferredWidth: 120 * root.s
                                     Layout.preferredHeight: 120 * root.s
@@ -785,7 +780,7 @@ Rectangle {
                                         width: root.speedLimitOuterGlow * root.s
                                         height: root.speedLimitOuterGlow * root.s
                                         radius: (root.speedLimitOuterGlow * root.s) / 2
-                                        color: root.vehicleDataAvailable ? "#d81f2a" : "#555555"
+                                        color: root.vehicleDataAvailable ? "#d81f2a" : AppTheme.colors.textSecondary
                                         opacity: 0.15
                                     }
 
@@ -795,7 +790,7 @@ Rectangle {
                                         width: root.speedLimitMidGlow * root.s
                                         height: root.speedLimitMidGlow * root.s
                                         radius: (root.speedLimitMidGlow * root.s) / 2
-                                        color: root.vehicleDataAvailable ? "#d81f2a" : "#555555"
+                                        color: root.vehicleDataAvailable ? "#d81f2a" : AppTheme.colors.textSecondary
                                         opacity: 0.08
                                     }
 
@@ -805,27 +800,26 @@ Rectangle {
                                         width: root.speedLimitInnerGlow * root.s
                                         height: root.speedLimitInnerGlow * root.s
                                         radius: (root.speedLimitInnerGlow * root.s) / 2
-                                        color: root.vehicleDataAvailable ? "#d81f2a" : "#555555"
+                                        color: root.vehicleDataAvailable ? "#d81f2a" : AppTheme.colors.textSecondary
                                         opacity: 0.12
                                     }
 
-                                    // Main speed limit circle (high contrast white with red border - increased prominence)
+                                    // Main speed limit circle
                                     Rectangle {
                                         anchors.centerIn: parent
                                         width: root.speedLimitMainCircle * root.s
                                         height: root.speedLimitMainCircle * root.s
                                         radius: (root.speedLimitMainCircle * root.s) / 2
-                                        color: root.vehicleDataAvailable ? "#ffffff" : "#cccccc"
-                                        border.color: root.vehicleDataAvailable ? "#d81f2a" : "#999999"
+                                        color: root.vehicleDataAvailable ? AppTheme.colors.surfaceElevated : AppTheme.colors.surfaceVariant
+                                        border.color: root.vehicleDataAvailable ? "#d81f2a" : AppTheme.colors.border
                                         border.width: root.speedLimitBorderWidth * root.s
                                     }
 
-                                    // Speed limit value (larger, bold, dark text - ISO 26262 WCAG AA compliance)
+                                    // Speed limit value
                                     Text {
                                         anchors.centerIn: parent
-                                        // Fail-safe: Show "--" when data unavailable
                                         text: root.vehicleDataAvailable ? root.speedLimitValue.toString() : "--"
-                                        color: root.vehicleDataAvailable ? "#0b1624" : "#666666"
+                                        color: root.vehicleDataAvailable ? AppTheme.colors.text : AppTheme.colors.textSecondary
                                         font.pixelSize: root.fontSizeLarge * root.s
                                         font.weight: Font.ExtraBold
                                     }
@@ -880,7 +874,7 @@ Rectangle {
                                 interactive: true
                                 clip: true
 
-                                // --- Page 1: Media (your current UI) ---
+                                // --- Page 1: Media ---
                                 Item {
                                     width: rightSwipe.width
                                     height: rightSwipe.height
@@ -895,7 +889,7 @@ Rectangle {
                                             height: width
                                             anchors.horizontalCenter: parent.horizontalCenter
                                             radius: AppTheme.radius.medium
-                                            color: "#0b1420"
+                                            color: AppTheme.colors.surfaceElevated
                                             clip: true
 
                                             Image {
@@ -910,7 +904,7 @@ Rectangle {
 
                                             Rectangle {
                                                 anchors.fill: parent
-                                                color: "#0b1420"
+                                                color: AppTheme.colors.surface
                                                 opacity: 0.18
                                             }
 
@@ -919,15 +913,15 @@ Rectangle {
                                                 gradient: Gradient {
                                                     GradientStop {
                                                         position: 0.0
-                                                        color: "#2c3a4d"
+                                                        color: AppTheme.alpha(AppTheme.colors.surfaceElevated, 0.4)
                                                     }
                                                     GradientStop {
                                                         position: 0.5
-                                                        color: "#00000000"
+                                                        color: AppTheme.alpha(AppTheme.colors.surface, 0.0)
                                                     }
                                                     GradientStop {
                                                         position: 1.0
-                                                        color: "#101826"
+                                                        color: AppTheme.alpha(AppTheme.colors.surface, 0.5)
                                                     }
                                                 }
                                                 opacity: 0.25
@@ -960,7 +954,7 @@ Rectangle {
                                         Text {
                                             width: parent.width
                                             text: musicPlayerController.trackTitle.length > 0 ? musicPlayerController.trackTitle : "No Music"
-                                            color: "#e6f0ff"
+                                            color: AppTheme.colors.text
                                             font.pixelSize: root.fontSizeSmall * root.s
                                             font.weight: Font.Bold
                                             elide: Text.ElideRight
@@ -970,7 +964,7 @@ Rectangle {
                                         Text {
                                             width: parent.width
                                             text: musicPlayerController.artistName.length > 0 ? musicPlayerController.artistName : "Local Music"
-                                            color: "#93a6bf"
+                                            color: AppTheme.colors.textSecondary
                                             font.pixelSize: root.fontSizeXSmall * root.s
                                             elide: Text.ElideRight
                                             horizontalAlignment: Text.AlignHCenter
@@ -1009,7 +1003,7 @@ Rectangle {
 
                                         Text {
                                             text: "Next Turn"
-                                            color: "#e6f0ff"
+                                            color: AppTheme.colors.text
                                             font.pixelSize: root.fontSizeSmall * root.s
                                             font.weight: Font.Bold
                                             horizontalAlignment: Text.AlignHCenter
@@ -1017,7 +1011,7 @@ Rectangle {
 
                                         Text {
                                             text: "— m  •  —"
-                                            color: "#93a6bf"
+                                            color: AppTheme.colors.textSecondary
                                             font.pixelSize: root.fontSizeXSmall * root.s
                                             horizontalAlignment: Text.AlignHCenter
                                         }
@@ -1043,8 +1037,8 @@ Rectangle {
                 Layout.rightMargin: 40 * root.s
                 Layout.bottomMargin: 6 * root.sy
 
-                color: "#070c13cc"
-                border.color: "#232a35"
+                color: AppTheme.alpha(AppTheme.colors.surfaceVariant, 0.9)
+                border.color: AppTheme.colors.border
                 border.width: 1
                 radius: 4 * root.s
 
@@ -1057,7 +1051,7 @@ Rectangle {
                     Text {
                         // ISO 26262: Null-safe trip distance display
                         text: "Trip A " + Math.round(root.tripDistance) + "km"
-                        color: root.vehicleDataAvailable ? "#a6b4c2" : "#555555"
+                        color: root.vehicleDataAvailable ? AppTheme.colors.textSecondary : AppTheme.colors.textTertiary
                         font.pixelSize: root.fontSizeMedium * root.s
                         font.weight: Font.Medium
                     }
@@ -1074,7 +1068,7 @@ Rectangle {
                         // Unit label
                         Text {
                             text: "kw"
-                            color: root.vehicleDataAvailable ? "#7a8a9a" : "#555555"
+                            color: root.vehicleDataAvailable ? AppTheme.colors.textSecondary : AppTheme.colors.textTertiary
                             font.pixelSize: root.fontSizeMedium * root.s
                         }
 
@@ -1083,19 +1077,19 @@ Rectangle {
                             width: 110 * root.s
                             height: 5 * root.s
                             radius: 2.5 * root.s
-                            color: root.vehicleDataAvailable ? "#1a3040" : "#555555"
+                            color: root.vehicleDataAvailable ? AppTheme.colors.surface : AppTheme.colors.divider
                             Rectangle {
                                 width: root.vehicleDataAvailable ? parent.width * (root.powerOutput / 100) : parent.width * 0.5
                                 height: parent.height
                                 radius: parent.radius
-                                color: root.vehicleDataAvailable ? "#4fb3d9" : "#999999"
+                                color: root.vehicleDataAvailable ? AppTheme.colors.primary : AppTheme.colors.textTertiary
                             }
                         }
 
                         // Power value
                         Text {
                             text: root.vehicleDataAvailable ? Math.round(root.powerOutput) : "--"
-                            color: root.vehicleDataAvailable ? "#4fb3d9" : "#666666"
+                            color: root.vehicleDataAvailable ? AppTheme.colors.primary : AppTheme.colors.textTertiary
                             font.pixelSize: root.fontSizeMedium * root.s
                             font.weight: Font.Bold
                         }
@@ -1123,7 +1117,7 @@ Rectangle {
 
                                 return "Trip A " + Math.round(dist) + " " + settingsManager.distanceUnit;
                             }
-                            color: root.vehicleDataAvailable ? "#a6b4c2" : "#555555"
+                            color: root.vehicleDataAvailable ? AppTheme.colors.textSecondary : AppTheme.colors.textTertiary
                             font.pixelSize: root.fontSizeMedium * root.s
                             font.weight: Font.Medium
                         }
@@ -1133,15 +1127,15 @@ Rectangle {
                             width: 32
                             height: 32
                             radius: 4
-                            color: odometerResetMouseArea.containsMouse ? "#4fb3d9" : "transparent"
-                            border.color: "#4fb3d9"
+                            color: odometerResetMouseArea.containsMouse ? AppTheme.colors.primary : "transparent"
+                            border.color: AppTheme.colors.primary
                             border.width: 1
                             Layout.alignment: Qt.AlignVCenter
 
                             Text {
                                 anchors.centerIn: parent
                                 text: "↻"
-                                color: "#4fb3d9"
+                                color: odometerResetMouseArea.containsMouse ? AppTheme.colors.surfaceElevated : AppTheme.colors.primary
                                 font.pixelSize: 18
                                 font.weight: Font.Bold
                             }

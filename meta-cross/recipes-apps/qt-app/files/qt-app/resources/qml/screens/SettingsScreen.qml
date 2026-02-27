@@ -5,7 +5,7 @@ import "../theme"
 
 Rectangle {
     id: root
-    color: "transparent" // let the right panel background show through (cluster-like)
+    color: "transparent"
 
     // Compact models
     readonly property var themeModel: ["Dark", "Light", "Auto"]
@@ -20,10 +20,10 @@ Rectangle {
         return i < 0 ? 0 : i;
     }
 
-    // Panel background (dark glass card like Cluster bottom bar)
+    // Panel background
     Rectangle {
         anchors.fill: parent
-        color: "#05080e"
+        color: AppTheme.colors.surfaceVariant
     }
 
     ColumnLayout {
@@ -38,100 +38,20 @@ Rectangle {
             font.weight: Font.Bold
         }
 
-        // ---- helper: compact row ----
-        // (repeated explicitly to keep QML simple/robust)
-
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 28
-            spacing: 8
-
-            Text {
-                text: "Theme"
-                Layout.preferredWidth: 70
-                color: "#93a6bf"
-                font.pixelSize: 11
-                verticalAlignment: Text.AlignVCenter
-            }
-
-            ComboBox {
+        // ---- Theme Row ----
+        SettingRow {
+            label: "Theme"
+            CustomComboBox {
                 id: themeBox
-                Layout.fillWidth: true
-                Layout.preferredHeight: 28
                 model: themeModel
                 currentIndex: idx(themeModel, settingsManager.theme)
                 onActivated: settingsManager.theme = textAt(index)
-
-                font.pixelSize: 11
-                contentItem: Text {
-                    text: themeBox.displayText
-                    color: "#e6f0ff"
-                    verticalAlignment: Text.AlignVCenter
-                    elide: Text.ElideRight
-                    leftPadding: 8
-                }
-                background: Rectangle {
-                    radius: 7
-                    color: "#0b1420"
-                    border.color: "#232a35"
-                    border.width: 1
-                }
-                indicator: Rectangle {
-                    width: 10
-                    height: 10
-                    radius: 2
-                    color: "#4fb3d9"
-                    anchors.right: parent.right
-                    anchors.rightMargin: 8
-                    anchors.verticalCenter: parent.verticalCenter
-                    opacity: 0.95
-                }
-                delegate: ItemDelegate {
-                    width: themeBox.width
-                    height: 26
-                    contentItem: Text {
-                        text: modelData
-                        color: "#e6f0ff"
-                        font.pixelSize: 11
-                        verticalAlignment: Text.AlignVCenter
-                        leftPadding: 8
-                    }
-                    background: Rectangle {
-                        color: (index === themeBox.currentIndex) ? "#101e2c" : "transparent"
-                    }
-                }
-                popup: Popup {
-                    y: themeBox.height + 4
-                    width: themeBox.width
-                    padding: 4
-                    background: Rectangle {
-                        radius: 8
-                        color: "#0b1420"
-                        border.color: "#232a35"
-                        border.width: 1
-                    }
-                    contentItem: ListView {
-                        clip: true
-                        implicitHeight: Math.min(contentHeight, 6 * 26)
-                        model: themeBox.delegateModel
-                    }
-                }
             }
         }
 
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 28
-            spacing: 8
-
-            Text {
-                text: "Bright"
-                Layout.preferredWidth: 70
-                color: "#93a6bf"
-                font.pixelSize: 11
-                verticalAlignment: Text.AlignVCenter
-            }
-
+        // ---- Brightness Row ----
+        SettingRow {
+            label: "Bright"
             Slider {
                 id: brightSlider
                 Layout.fillWidth: true
@@ -147,29 +67,27 @@ Rectangle {
                     width: parent.width
                     height: 4
                     radius: 2
-                    color: "#0b1420"
-                    border.color: "#232a35"
+                    color: AppTheme.colors.surfaceElevated
+                    border.color: AppTheme.colors.border
                     border.width: 1
 
                     Rectangle {
                         width: parent.width * brightSlider.visualPosition
                         height: parent.height
                         radius: 2
-                        color: "#4fb3d9"
-                        opacity: 0.95
+                        color: AppTheme.colors.primary
                     }
                 }
 
                 handle: Rectangle {
-                    // FIX: Explicitly bind the X and Y position to the slider's visual position
                     x: brightSlider.leftPadding + brightSlider.visualPosition * (brightSlider.availableWidth - width)
                     y: brightSlider.topPadding + (brightSlider.availableHeight - height) / 2
-                    width: 12
-                    height: 12
-                    radius: 6
-                    color: brightSlider.pressed? "#ffffff" : "#4fb3d9"
-                    border.color: "#05080e"
-                    border.width: 1
+                    width: 14
+                    height: 14
+                    radius: 7
+                    color: brightSlider.pressed ? "#FFFFFF" : AppTheme.colors.primary
+                    border.color: AppTheme.colors.surface
+                    border.width: 2
                 }
             }
         }
@@ -177,392 +95,147 @@ Rectangle {
         Rectangle {
             Layout.fillWidth: true
             height: 1
-            color: "#232a35"
-            opacity: 0.8
+            color: AppTheme.colors.divider
         }
 
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 28
-            spacing: 8
-
-            Text {
-                text: "Speed"
-                Layout.preferredWidth: 70
-                color: "#93a6bf"
-                font.pixelSize: 11
-            }
-            ComboBox {
-                id: speedBox
-                Layout.fillWidth: true
-                Layout.preferredHeight: 28
+        // ---- Units Section ----
+        SettingRow {
+            label: "Speed"
+            CustomComboBox {
                 model: speedModel
                 currentIndex: idx(speedModel, settingsManager.speedUnit)
                 onActivated: settingsManager.speedUnit = textAt(index)
-
-                font.pixelSize: 11
-                contentItem: Text {
-                    text: speedBox.displayText
-                    color: "#e6f0ff"
-                    verticalAlignment: Text.AlignVCenter
-                    elide: Text.ElideRight
-                    leftPadding: 8
-                }
-                background: Rectangle {
-                    radius: 7
-                    color: "#0b1420"
-                    border.color: "#232a35"
-                    border.width: 1
-                }
-                indicator: Rectangle {
-                    width: 10
-                    height: 10
-                    radius: 2
-                    color: "#4fb3d9"
-                    anchors.right: parent.right
-                    anchors.rightMargin: 8
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-
-                delegate: ItemDelegate {
-                    width: speedBox.width
-                    height: 26
-                    contentItem: Text {
-                        text: modelData
-                        color: "#e6f0ff"
-                        font.pixelSize: 11
-                        verticalAlignment: Text.AlignVCenter
-                        leftPadding: 8
-                    }
-                    background: Rectangle {
-                        color: (index === speedBox.currentIndex) ? "#101e2c" : "transparent"
-                    }
-                }
-                popup: Popup {
-                    y: speedBox.height + 4
-                    width: speedBox.width
-                    padding: 4
-                    background: Rectangle {
-                        radius: 8
-                        color: "#0b1420"
-                        border.color: "#232a35"
-                        border.width: 1
-                    }
-                    contentItem: ListView {
-                        clip: true
-                        implicitHeight: Math.min(contentHeight, 6 * 26)
-                        model: speedBox.delegateModel
-                    }
-                }
             }
         }
 
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 28
-            spacing: 8
-
-            Text {
-                text: "Temp"
-                Layout.preferredWidth: 70
-                color: "#93a6bf"
-                font.pixelSize: 11
-            }
-            ComboBox {
-                id: tempBox
-                Layout.fillWidth: true
-                Layout.preferredHeight: 28
+        SettingRow {
+            label: "Temp"
+            CustomComboBox {
                 model: tempModel
                 currentIndex: idx(tempModel, settingsManager.temperatureUnit)
                 onActivated: settingsManager.temperatureUnit = textAt(index)
-
-                font.pixelSize: 11
-                contentItem: Text {
-                    text: tempBox.displayText
-                    color: "#e6f0ff"
-                    verticalAlignment: Text.AlignVCenter
-                    elide: Text.ElideRight
-                    leftPadding: 8
-                }
-                background: Rectangle {
-                    radius: 7
-                    color: "#0b1420"
-                    border.color: "#232a35"
-                    border.width: 1
-                }
-                indicator: Rectangle {
-                    width: 10
-                    height: 10
-                    radius: 2
-                    color: "#4fb3d9"
-                    anchors.right: parent.right
-                    anchors.rightMargin: 8
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-
-                delegate: ItemDelegate {
-                    width: tempBox.width
-                    height: 26
-                    contentItem: Text {
-                        text: modelData
-                        color: "#e6f0ff"
-                        font.pixelSize: 11
-                        verticalAlignment: Text.AlignVCenter
-                        leftPadding: 8
-                    }
-                    background: Rectangle {
-                        color: (index === tempBox.currentIndex) ? "#101e2c" : "transparent"
-                    }
-                }
-                popup: Popup {
-                    y: tempBox.height + 4
-                    width: tempBox.width
-                    padding: 4
-                    background: Rectangle {
-                        radius: 8
-                        color: "#0b1420"
-                        border.color: "#232a35"
-                        border.width: 1
-                    }
-                    contentItem: ListView {
-                        clip: true
-                        implicitHeight: Math.min(contentHeight, 6 * 26)
-                        model: tempBox.delegateModel
-                    }
-                }
             }
         }
 
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 28
-            spacing: 8
-
-            Text {
-                text: "Distance"
-                Layout.preferredWidth: 70
-                color: "#93a6bf"
-                font.pixelSize: 11
-            }
-            ComboBox {
-                id: distBox
-                Layout.fillWidth: true
-                Layout.preferredHeight: 28
+        SettingRow {
+            label: "Distance"
+            CustomComboBox {
                 model: distanceModel
                 currentIndex: idx(distanceModel, settingsManager.distanceUnit)
                 onActivated: settingsManager.distanceUnit = textAt(index)
-
-                font.pixelSize: 11
-                contentItem: Text {
-                    text: distBox.displayText
-                    color: "#e6f0ff"
-                    verticalAlignment: Text.AlignVCenter
-                    elide: Text.ElideRight
-                    leftPadding: 8
-                }
-                background: Rectangle {
-                    radius: 7
-                    color: "#0b1420"
-                    border.color: "#232a35"
-                    border.width: 1
-                }
-                indicator: Rectangle {
-                    width: 10
-                    height: 10
-                    radius: 2
-                    color: "#4fb3d9"
-                    anchors.right: parent.right
-                    anchors.rightMargin: 8
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-
-                delegate: ItemDelegate {
-                    width: distBox.width
-                    height: 26
-                    contentItem: Text {
-                        text: modelData
-                        color: "#e6f0ff"
-                        font.pixelSize: 11
-                        verticalAlignment: Text.AlignVCenter
-                        leftPadding: 8
-                    }
-                    background: Rectangle {
-                        color: (index === distBox.currentIndex) ? "#101e2c" : "transparent"
-                    }
-                }
-                popup: Popup {
-                    y: distBox.height + 4
-                    width: distBox.width
-                    padding: 4
-                    background: Rectangle {
-                        radius: 8
-                        color: "#0b1420"
-                        border.color: "#232a35"
-                        border.width: 1
-                    }
-                    contentItem: ListView {
-                        clip: true
-                        implicitHeight: Math.min(contentHeight, 6 * 26)
-                        model: distBox.delegateModel
-                    }
-                }
             }
         }
 
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 28
-            spacing: 8
-
-            Text {
-                text: "Wind"
-                Layout.preferredWidth: 70
-                color: "#93a6bf"
-                font.pixelSize: 11
-            }
-            ComboBox {
-                id: windBox
-                Layout.fillWidth: true
-                Layout.preferredHeight: 28
+        SettingRow {
+            label: "Wind"
+            CustomComboBox {
                 model: windModel
                 currentIndex: idx(windModel, settingsManager.windSpeedUnit)
                 onActivated: settingsManager.windSpeedUnit = textAt(index)
-
-                font.pixelSize: 11
-                contentItem: Text {
-                    text: windBox.displayText
-                    color: "#e6f0ff"
-                    verticalAlignment: Text.AlignVCenter
-                    elide: Text.ElideRight
-                    leftPadding: 8
-                }
-                background: Rectangle {
-                    radius: 7
-                    color: "#0b1420"
-                    border.color: "#232a35"
-                    border.width: 1
-                }
-                indicator: Rectangle {
-                    width: 10
-                    height: 10
-                    radius: 2
-                    color: "#4fb3d9"
-                    anchors.right: parent.right
-                    anchors.rightMargin: 8
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-
-                delegate: ItemDelegate {
-                    width: windBox.width
-                    height: 26
-                    contentItem: Text {
-                        text: modelData
-                        color: "#e6f0ff"
-                        font.pixelSize: 11
-                        verticalAlignment: Text.AlignVCenter
-                        leftPadding: 8
-                    }
-                    background: Rectangle {
-                        color: (index === windBox.currentIndex) ? "#101e2c" : "transparent"
-                    }
-                }
-                popup: Popup {
-                    y: windBox.height + 4
-                    width: windBox.width
-                    padding: 4
-                    background: Rectangle {
-                        radius: 8
-                        color: "#0b1420"
-                        border.color: "#232a35"
-                        border.width: 1
-                    }
-                    contentItem: ListView {
-                        clip: true
-                        implicitHeight: Math.min(contentHeight, 6 * 26)
-                        model: windBox.delegateModel
-                    }
-                }
             }
         }
 
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 28
-            spacing: 8
-
-            Text {
-                text: "Precip"
-                Layout.preferredWidth: 70
-                color: "#93a6bf"
-                font.pixelSize: 11
-            }
-            ComboBox {
-                id: precipBox
-                Layout.fillWidth: true
-                Layout.preferredHeight: 28
+        SettingRow {
+            label: "Precip"
+            CustomComboBox {
                 model: precipModel
                 currentIndex: idx(precipModel, settingsManager.precipitationUnit)
                 onActivated: settingsManager.precipitationUnit = textAt(index)
-
-                font.pixelSize: 11
-                contentItem: Text {
-                    text: precipBox.displayText
-                    color: "#e6f0ff"
-                    verticalAlignment: Text.AlignVCenter
-                    elide: Text.ElideRight
-                    leftPadding: 8
-                }
-                background: Rectangle {
-                    radius: 7
-                    color: "#0b1420"
-                    border.color: "#232a35"
-                    border.width: 1
-                }
-                indicator: Rectangle {
-                    width: 10
-                    height: 10
-                    radius: 2
-                    color: "#4fb3d9"
-                    anchors.right: parent.right
-                    anchors.rightMargin: 8
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-
-                delegate: ItemDelegate {
-                    width: precipBox.width
-                    height: 26
-                    contentItem: Text {
-                        text: modelData
-                        color: "#e6f0ff"
-                        font.pixelSize: 11
-                        verticalAlignment: Text.AlignVCenter
-                        leftPadding: 8
-                    }
-                    background: Rectangle {
-                        color: (index === precipBox.currentIndex) ? "#101e2c" : "transparent"
-                    }
-                }
-                popup: Popup {
-                    y: precipBox.height + 4
-                    width: precipBox.width
-                    padding: 4
-                    background: Rectangle {
-                        radius: 8
-                        color: "#0b1420"
-                        border.color: "#232a35"
-                        border.width: 1
-                    }
-                    contentItem: ListView {
-                        clip: true
-                        implicitHeight: Math.min(contentHeight, 6 * 26)
-                        model: precipBox.delegateModel
-                    }
-                }
             }
         }
 
-        Item {
-            Layout.fillHeight: true
-        } // pushes content up, guarantees no scroll
+        Item { Layout.fillHeight: true }
+    }
+
+    // --- Component: Standard Setting Row ---
+    component SettingRow: RowLayout {
+        property string label: ""
+        Layout.fillWidth: true
+        Layout.preferredHeight: 28
+        spacing: 8
+
+        Text {
+            text: parent.label
+            Layout.preferredWidth: 70
+            color: AppTheme.colors.textSecondary
+            font.pixelSize: 11
+            verticalAlignment: Text.AlignVCenter
+        }
+    }
+
+    // --- Component: Themed ComboBox ---
+    component CustomComboBox: ComboBox {
+        id: combo
+        Layout.fillWidth: true
+        Layout.preferredHeight: 28
+        font.pixelSize: 11
+
+        contentItem: Text {
+            text: combo.displayText
+            color: AppTheme.colors.text
+            verticalAlignment: Text.AlignVCenter
+            leftPadding: 10
+            font: combo.font
+        }
+
+        background: Rectangle {
+            radius: 8
+            color: AppTheme.colors.surfaceElevated
+            border.color: combo.activeFocus ? AppTheme.colors.primary : AppTheme.colors.border
+            border.width: 1
+        }
+
+        indicator: Canvas {
+            id: canvas
+            x: combo.width - width - 10
+            y: (combo.height - height) / 2
+            width: 8
+            height: 6
+            onPaint: {
+                var ctx = getContext("2d");
+                ctx.reset();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(width, 0);
+                ctx.lineTo(width / 2, height);
+                ctx.closePath();
+                ctx.fillStyle = AppTheme.colors.primary;
+                ctx.fill();
+            }
+        }
+
+        delegate: ItemDelegate {
+            width: combo.width
+            height: 28
+            contentItem: Text {
+                text: modelData
+                color: highlighted ? "#FFFFFF" : AppTheme.colors.text
+                font.pixelSize: 11
+                verticalAlignment: Text.AlignVCenter
+                leftPadding: 10
+            }
+            background: Rectangle {
+                color: highlighted ? AppTheme.colors.primary : "transparent"
+            }
+        }
+
+        popup: Popup {
+            y: combo.height + 4
+            width: combo.width
+            padding: 4
+            background: Rectangle {
+                radius: 8
+                color: AppTheme.colors.surfaceElevated
+                border.color: AppTheme.colors.border
+                border.width: 1
+                // Add a small shadow in light mode for depth
+                layer.enabled: !AppTheme.isDark
+                layer.effect: Qt.createQmlObject('import Qt5Compat.GraphicalEffects; DropShadow { radius: 8; color: "#20000000"; samples: 17 }', combo)
+            }
+            contentItem: ListView {
+                clip: true
+                implicitHeight: contentHeight
+                model: combo.delegateModel
+            }
+        }
     }
 }

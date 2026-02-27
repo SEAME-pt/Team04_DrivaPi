@@ -32,26 +32,26 @@ Item {
             rightMargin: 20
         }
 
-        // Dark gradient matching cluster design
+        // Dynamic gradient adapting to light/dark mode
         gradient: Gradient {
             GradientStop {
                 position: 0.0
-                color: "#0a0f18"
+                color: AppTheme.colors.surfaceElevated
             }
             GradientStop {
                 position: 0.5
-                color: "#050810"
+                color: AppTheme.colors.surface
             }
             GradientStop {
                 position: 1.0
-                color: "#020508"
+                color: AppTheme.colors.surfaceVariant
             }
         }
 
-        // Subtle border for definition
-        border.color: "#1a2535"
+        // Subtle border for definition using theme
+        border.color: AppTheme.colors.border
         border.width: 1
-        radius: 8
+        radius: AppTheme.radius.medium
 
         // Subtle glow effect using shadow rectangle
         Rectangle {
@@ -59,25 +59,25 @@ Item {
             anchors.margins: -4
             radius: parent.radius
             color: "transparent"
-            border.color: "#00BFFF"
+            border.color: AppTheme.colors.primary
             border.width: 1
-            opacity: 0.1
+            opacity: AppTheme.isDark ? 0.1 : 0.05 // Less glow in light mode
             z: -1
         }
 
         ColumnLayout {
             anchors {
                 fill: parent
-                margins: 16
+                margins: AppTheme.spacing.medium
             }
             spacing: 10
 
             // Title with cluster styling
             Text {
                 text: "BATTERY STATUS"
-                color: "#00BFFF"
+                color: AppTheme.colors.primary
                 font {
-                    pixelSize: 12
+                    pixelSize: AppTheme.typography.labelMedium
                     weight: Font.Bold
                     letterSpacing: 1.5
                 }
@@ -96,17 +96,17 @@ Item {
 
                     Text {
                         text: "STM32"
-                        color: "#8FA4B8"
-                        font.pixelSize: 11
+                        color: AppTheme.colors.textSecondary
+                        font.pixelSize: AppTheme.typography.labelSmall
                         font.letterSpacing: 0.5
                         Layout.preferredWidth: 80
                     }
 
                     Rectangle {
                         height: 16
-                        radius: 2
-                        color: "#0a0f18"
-                        border.color: stm32BatteryLevel >= 60 ? "#00BFFF" : (stm32BatteryLevel >= 30 ? "#FFA500" : "#FF3B30")
+                        radius: AppTheme.radius.small / 2
+                        color: AppTheme.colors.surfaceVariant
+                        border.color: stm32BatteryLevel >= 60 ? AppTheme.colors.primary : (stm32BatteryLevel >= 30 ? AppTheme.colors.warning : AppTheme.colors.error)
                         border.width: 1
                         Layout.fillWidth: true
                         clip: true
@@ -114,12 +114,12 @@ Item {
                         Rectangle {
                             width: parent.width * (stm32BatteryLevel / 100)
                             height: parent.height
-                            color: stm32BatteryLevel >= 60 ? "#00BFFF" : (stm32BatteryLevel >= 30 ? "#FFA500" : "#FF3B30")
-                            opacity: 0.3
+                            color: stm32BatteryLevel >= 60 ? AppTheme.colors.primary : (stm32BatteryLevel >= 30 ? AppTheme.colors.warning : AppTheme.colors.error)
+                            opacity: AppTheme.isDark ? 0.3 : 0.5 // Boost fill opacity slightly in light mode for visibility
 
                             Behavior on width {
                                 NumberAnimation {
-                                    duration: 400
+                                    duration: AppTheme.animation.normal
                                     easing.type: Easing.OutQuad
                                 }
                             }
@@ -128,7 +128,7 @@ Item {
                         Text {
                             anchors.centerIn: parent
                             text: stm32BatteryLevel + "%"
-                            color: "#E0E0E0"
+                            color: AppTheme.colors.text
                             font.pixelSize: 10
                             font.weight: Font.Bold
                         }
@@ -148,17 +148,17 @@ Item {
 
                     Text {
                         text: "RASPBERRY PI"
-                        color: "#8FA4B8"
-                        font.pixelSize: 11
+                        color: AppTheme.colors.textSecondary
+                        font.pixelSize: AppTheme.typography.labelSmall
                         font.letterSpacing: 0.5
                         Layout.preferredWidth: 80
                     }
 
                     Rectangle {
                         height: 16
-                        radius: 2
-                        color: "#0a0f18"
-                        border.color: rpiBatteryLevel >= 60 ? "#00BFFF" : (rpiBatteryLevel >= 30 ? "#FFA500" : "#FF3B30")
+                        radius: AppTheme.radius.small / 2
+                        color: AppTheme.colors.surfaceVariant
+                        border.color: rpiBatteryLevel >= 60 ? AppTheme.colors.primary : (rpiBatteryLevel >= 30 ? AppTheme.colors.warning : AppTheme.colors.error)
                         border.width: 1
                         Layout.fillWidth: true
                         clip: true
@@ -166,12 +166,12 @@ Item {
                         Rectangle {
                             width: parent.width * (rpiBatteryLevel / 100)
                             height: parent.height
-                            color: rpiBatteryLevel >= 60 ? "#00BFFF" : (rpiBatteryLevel >= 30 ? "#FFA500" : "#FF3B30")
-                            opacity: 0.3
+                            color: rpiBatteryLevel >= 60 ? AppTheme.colors.primary : (rpiBatteryLevel >= 30 ? AppTheme.colors.warning : AppTheme.colors.error)
+                            opacity: AppTheme.isDark ? 0.3 : 0.5
 
                             Behavior on width {
                                 NumberAnimation {
-                                    duration: 400
+                                    duration: AppTheme.animation.normal
                                     easing.type: Easing.OutQuad
                                 }
                             }
@@ -180,7 +180,7 @@ Item {
                         Text {
                             anchors.centerIn: parent
                             text: rpiBatteryLevel + "%"
-                            color: "#E0E0E0"
+                            color: AppTheme.colors.text
                             font.pixelSize: 10
                             font.weight: Font.Bold
                         }
@@ -191,9 +191,9 @@ Item {
             // Divider line
             Rectangle {
                 height: 1
-                color: "#1a2535"
+                color: AppTheme.colors.divider
                 Layout.fillWidth: true
-                opacity: 0.5
+                opacity: AppTheme.isDark ? 0.5 : 1.0 // Stronger divider line in light mode
             }
 
             // System Battery (Minimum)
@@ -208,8 +208,8 @@ Item {
 
                     Text {
                         text: "SYSTEM"
-                        color: "#00BFFF"
-                        font.pixelSize: 11
+                        color: AppTheme.colors.primary
+                        font.pixelSize: AppTheme.typography.labelSmall
                         font.weight: Font.Bold
                         font.letterSpacing: 0.5
                         Layout.preferredWidth: 80
@@ -217,9 +217,9 @@ Item {
 
                     Rectangle {
                         height: 16
-                        radius: 2
-                        color: "#0a0f18"
-                        border.color: "#00BFFF"
+                        radius: AppTheme.radius.small / 2
+                        color: AppTheme.colors.surfaceVariant
+                        border.color: AppTheme.colors.primary
                         border.width: 1
                         Layout.fillWidth: true
                         clip: true
@@ -227,12 +227,12 @@ Item {
                         Rectangle {
                             width: parent.width * (Math.min(stm32BatteryLevel, rpiBatteryLevel) / 100)
                             height: parent.height
-                            color: "#00BFFF"
-                            opacity: 0.3
+                            color: AppTheme.colors.primary
+                            opacity: AppTheme.isDark ? 0.3 : 0.5
 
                             Behavior on width {
                                 NumberAnimation {
-                                    duration: 400
+                                    duration: AppTheme.animation.normal
                                     easing.type: Easing.OutQuad
                                 }
                             }
@@ -241,7 +241,7 @@ Item {
                         Text {
                             anchors.centerIn: parent
                             text: Math.min(stm32BatteryLevel, rpiBatteryLevel) + "%"
-                            color: "#E0E0E0"
+                            color: AppTheme.colors.text
                             font.pixelSize: 10
                             font.weight: Font.Bold
                         }
@@ -262,7 +262,7 @@ Item {
         property: "anchors.topMargin"
         from: -popupCard.height
         to: 80
-        duration: 400
+        duration: AppTheme.animation.normal
         easing.type: Easing.OutBack
     }
 
@@ -272,7 +272,7 @@ Item {
         property: "anchors.topMargin"
         from: 80
         to: -popupCard.height
-        duration: 300
+        duration: AppTheme.animation.normal
         easing.type: Easing.InQuad
     }
 
@@ -283,7 +283,7 @@ Item {
         property: "opacity"
         from: 0
         to: 1
-        duration: 200
+        duration: AppTheme.animation.fast * 2
     }
 
     PropertyAnimation {
@@ -292,7 +292,7 @@ Item {
         property: "opacity"
         from: 1
         to: 0
-        duration: 200
+        duration: AppTheme.animation.fast * 2
     }
 
     // Functions

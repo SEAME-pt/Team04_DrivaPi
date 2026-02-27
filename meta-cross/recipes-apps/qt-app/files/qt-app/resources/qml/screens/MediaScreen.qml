@@ -1,11 +1,12 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import "../theme"
 
 Rectangle {
     id: root
-    color: "#05080e"  // Match cluster dark background
+    color: AppTheme.colors.surface // Automatically adapts to Light/Dark mode
 
     property bool compact: width < 520
     property int sideMargin: compact ? 10 : 16
@@ -38,9 +39,9 @@ Rectangle {
 
             Rectangle {
                 anchors.fill: parent
-                radius: 8
-                color: "#0a0f18"
-                border.color: "#1a2535"
+                radius: 12
+                color: AppTheme.colors.surfaceElevated
+                border.color: AppTheme.colors.border
                 border.width: 1
 
                 Image {
@@ -59,7 +60,7 @@ Rectangle {
                     anchors.fill: parent
                     anchors.margins: 8
                     visible: musicPlayerController.albumArtUrl.length === 0
-                    radius: 4
+                    radius: 8
                     gradient: Gradient {
                         GradientStop {
                             position: 0.0
@@ -67,7 +68,7 @@ Rectangle {
                         }
                         GradientStop {
                             position: 1.0
-                            color: Qt.darker(getAlbumColor(musicPlayerController.currentTrackIndex), 1.5)
+                            color: AppTheme.tint(getAlbumColor(musicPlayerController.currentTrackIndex), 0.4)
                         }
                     }
 
@@ -77,6 +78,8 @@ Rectangle {
                         width: 64
                         height: 64
                         opacity: 0.5
+                        layer.enabled: true
+                        layer.effect: ColorOverlay { color: "#FFFFFF" }
                     }
                 }
             }
@@ -95,7 +98,7 @@ Rectangle {
 
                 Text {
                     text: musicPlayerController.trackTitle.length > 0 ? musicPlayerController.trackTitle : "No Music"
-                    color: "#E0E0E0"
+                    color: AppTheme.colors.text
                     font.pixelSize: titleSize
                     font.weight: Font.Bold
                     elide: Text.ElideRight
@@ -104,15 +107,16 @@ Rectangle {
 
                 Text {
                     text: musicPlayerController.artistName.length > 0 ? musicPlayerController.artistName : "Load MP3 files"
-                    color: "#8FA4B8"
+                    color: AppTheme.colors.textSecondary
                     font.pixelSize: artistSize
                     Layout.fillWidth: true
                 }
 
                 Text {
                     text: formatTime(musicPlayerController.position) + " / " + formatTime(musicPlayerController.duration)
-                    color: "#00BFFF"
+                    color: AppTheme.colors.primary
                     font.pixelSize: timeSize
+                    font.weight: Font.Medium
                     font.letterSpacing: 0.5
                 }
             }
@@ -120,44 +124,43 @@ Rectangle {
             // ====== PROGRESS BAR ======
             Rectangle {
                 Layout.fillWidth: true
-                height: compact ? 4 : 6
-                radius: 3
-                color: "#0a0f18"
-                border.color: "#1a2535"
+                height: compact ? 4 : 8
+                radius: height / 2
+                color: AppTheme.colors.surfaceVariant
+                border.color: AppTheme.colors.divider
                 border.width: 1
 
                 Rectangle {
                     id: progressFill
                     width: musicPlayerController.duration > 0 ? parent.width * (musicPlayerController.position / musicPlayerController.duration) : 0
                     height: parent.height
-                    radius: 3
-                    color: "#00BFFF"
+                    radius: height / 2
+                    color: AppTheme.colors.primary
 
                     Behavior on width {
-                        enabled: !progressMouseArea.pressed  // Disable animation when dragging
-                        NumberAnimation {
-                            duration: 100
-                        }
+                        enabled: !progressMouseArea.pressed
+                        NumberAnimation { duration: 100 }
                     }
                 }
 
-                // Progress handle (shows when hovering/dragging)
+                // Progress handle
                 Rectangle {
                     id: progressHandle
-                    width: 16
-                    height: 16
-                    radius: 8
-                    color: progressMouseArea.pressed ? "#ffffff" : "#00BFFF"
-                    border.color: "#0a0f18"
-                    border.width: 2
+                    width: 18
+                    height: 18
+                    radius: 9
+                    color: progressMouseArea.pressed ? "#FFFFFF" : AppTheme.colors.primary
+                    border.color: AppTheme.colors.surface
+                    border.width: 3
                     x: progressFill.width - width / 2
                     anchors.verticalCenter: parent.verticalCenter
                     visible: progressMouseArea.containsMouse || progressMouseArea.pressed
 
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: 100
-                        }
+                    layer.enabled: true
+                    layer.effect: DropShadow {
+                        transparentBorder: true
+                        radius: 4
+                        color: "#40000000"
                     }
                 }
 
@@ -165,123 +168,56 @@ Rectangle {
                     id: progressMouseArea
                     anchors.fill: parent
                     hoverEnabled: true
-                    preventStealing: true  // Prevents SwipeView from stealing events
-                    propagateComposedEvents: false
+                    preventStealing: true
 
-                    onPressed: function (mouse) {
-                        updatePosition(mouse.x);
-                        mouse.accepted = true;
-                    }
-
-                    onPositionChanged: function (mouse) {
-                        if (pressed) {
-                            updatePosition(mouse.x);
-                        }
-                        mouse.accepted = true;
-                    }
-
-                    onReleased: function (mouse) {
-                        mouse.accepted = true;
-                    }
+                    onPressed: (mouse) => { updatePosition(mouse.x); mouse.accepted = true; }
+                    onPositionChanged: (mouse) => { if (pressed) updatePosition(mouse.x); }
 
                     function updatePosition(x) {
                         if (musicPlayerController.duration > 0) {
                             var ratio = Math.max(0, Math.min(1, x / width));
-                            var newPosition = Math.round(ratio * musicPlayerController.duration);
-                            console.log("Seeking to:", newPosition, "ms");
-                            musicPlayerController.setPosition(newPosition);
+                            musicPlayerController.setPosition(Math.round(ratio * musicPlayerController.duration));
                         }
                     }
                 }
             }
 
-            Item {
-                Layout.fillHeight: !compact
-                Layout.preferredHeight: compact ? 6 : 0
-            }
+            Item { Layout.fillHeight: !compact; Layout.preferredHeight: compact ? 6 : 0 }
 
             // ====== PLAYBACK CONTROLS ======
             RowLayout {
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignHCenter
-                spacing: compact ? 10 : 16
+                spacing: compact ? 10 : 20
 
                 // Previous Button
-                Rectangle {
-                    width: controlSize
-                    height: controlSize
-                    radius: controlSize / 2
-                    color: "#0a0f18"
-                    border.color: "#1a2535"
-                    border.width: 1
-
-                    Image {
-                        anchors.centerIn: parent
-                        source: "qrc:/icons/controls/previous.svg"
-                        width: iconSize
-                        height: iconSize
-                        sourceSize: Qt.size(iconSize, iconSize)
-                        smooth: true
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            var wasPlaying = musicPlayerController.isPlaying;
-                            musicPlayerController.previous();
-                            if (wasPlaying) {
-                                Qt.callLater(function () {
-                                    if (!musicPlayerController.isPlaying) {
-                                        musicPlayerController.play();
-                                    }
-                                });
-                            }
-                        }
-
-                        onEntered: parent.scale = 1.05
-                        onExited: parent.scale = 1.0
-                        onPressed: parent.scale = 0.95
-                        onReleased: parent.scale = containsMouse ? 1.05 : 1.0
-                    }
-
-                    Behavior on scale {
-                        NumberAnimation {
-                            duration: 100
-                            easing.type: Easing.OutQuad
-                        }
+                ControlCircle {
+                    size: controlSize
+                    icon: "qrc:/icons/controls/previous.svg"
+                    onClicked: {
+                        var wasPlaying = musicPlayerController.isPlaying;
+                        musicPlayerController.previous();
+                        if (wasPlaying) Qt.callLater(() => { if (!musicPlayerController.isPlaying) musicPlayerController.play(); });
                     }
                 }
 
-                // Play/Pause Button (Large) - Simplified without MultiEffect
+                // Play/Pause Button
                 Rectangle {
                     width: playSize
                     height: playSize
                     radius: playSize / 2
-                    color: "#00BFFF"
+                    color: AppTheme.colors.primary
+                    scale: playMouse.pressed ? 0.92 : (playMouse.containsMouse ? 1.05 : 1.0)
 
-                    // Subtle glow effect using nested rectangles (replaces MultiEffect)
+                    // Outer Glow / Rings
                     Rectangle {
                         anchors.fill: parent
-                        anchors.margins: -8
-                        radius: parent.radius
+                        anchors.margins: -6
+                        radius: parent.radius + 3
                         color: "transparent"
-                        border.color: "#00BFFF"
-                        border.width: 1
-                        opacity: 0.3
-                        z: -1
-                    }
-
-                    Rectangle {
-                        anchors.fill: parent
-                        anchors.margins: -14
-                        radius: parent.radius + 4
-                        color: "transparent"
-                        border.color: "#00BFFF"
-                        border.width: 1
-                        opacity: 0.15
-                        z: -2
+                        border.color: AppTheme.colors.primary
+                        border.width: 2
+                        opacity: 0.2
                     }
 
                     Image {
@@ -289,75 +225,28 @@ Rectangle {
                         source: musicPlayerController.isPlaying ? "qrc:/icons/controls/pause.svg" : "qrc:/icons/controls/play.svg"
                         width: compact ? 26 : 32
                         height: compact ? 26 : 32
-                        sourceSize: Qt.size(compact ? 26 : 32, compact ? 26 : 32)
-                        smooth: true
+                        layer.enabled: true
+                        layer.effect: ColorOverlay { color: "#FFFFFF" }
                     }
 
                     MouseArea {
+                        id: playMouse
                         anchors.fill: parent
                         hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
                         onClicked: musicPlayerController.togglePlayPause()
-
-                        onEntered: parent.scale = 1.05
-                        onExited: parent.scale = 1.0
-                        onPressed: parent.scale = 0.95
-                        onReleased: parent.scale = containsMouse ? 1.05 : 1.0
                     }
 
-                    Behavior on scale {
-                        NumberAnimation {
-                            duration: 100
-                            easing.type: Easing.OutQuad
-                        }
-                    }
+                    Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
                 }
 
                 // Next Button
-                Rectangle {
-                    width: controlSize
-                    height: controlSize
-                    radius: controlSize / 2
-                    color: "#0a0f18"
-                    border.color: "#1a2535"
-                    border.width: 1
-
-                    Image {
-                        anchors.centerIn: parent
-                        source: "qrc:/icons/controls/next.svg"
-                        width: iconSize
-                        height: iconSize
-                        sourceSize: Qt.size(iconSize, iconSize)
-                        smooth: true
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            var wasPlaying = musicPlayerController.isPlaying;
-                            musicPlayerController.next();
-                            if (wasPlaying) {
-                                Qt.callLater(function () {
-                                    if (!musicPlayerController.isPlaying) {
-                                        musicPlayerController.play();
-                                    }
-                                });
-                            }
-                        }
-
-                        onEntered: parent.scale = 1.05
-                        onExited: parent.scale = 1.0
-                        onPressed: parent.scale = 0.95
-                        onReleased: parent.scale = containsMouse ? 1.05 : 1.0
-                    }
-
-                    Behavior on scale {
-                        NumberAnimation {
-                            duration: 100
-                            easing.type: Easing.OutQuad
-                        }
+                ControlCircle {
+                    size: controlSize
+                    icon: "qrc:/icons/controls/next.svg"
+                    onClicked: {
+                        var wasPlaying = musicPlayerController.isPlaying;
+                        musicPlayerController.next();
+                        if (wasPlaying) Qt.callLater(() => { if (!musicPlayerController.isPlaying) musicPlayerController.play(); });
                     }
                 }
             }
@@ -365,33 +254,25 @@ Rectangle {
             // ====== VOLUME CONTROL ======
             RowLayout {
                 Layout.fillWidth: true
-                spacing: compact ? 8 : 12
+                spacing: 12
+                property real previousVolume: 50
 
-                property real previousVolume: 50  // Store previous volume for unmute
-
-                // Volume icon with mute toggle
-                Rectangle {
+                Item {
                     width: iconSize + 8
                     height: iconSize + 8
-                    radius: 4
-                    color: volumeIconMouseArea.containsMouse ? "#1a2535" : "transparent"
 
                     Image {
                         anchors.centerIn: parent
                         source: musicPlayerController.volume > 0 ? "qrc:/icons/controls/volume-high.svg" : "qrc:/icons/controls/volume-mute.svg"
                         width: iconSize
                         height: iconSize
-                        sourceSize: Qt.size(iconSize, iconSize)
-                        smooth: true
+                        layer.enabled: true
+                        layer.effect: ColorOverlay { color: AppTheme.colors.textSecondary }
                     }
 
                     MouseArea {
-                        id: volumeIconMouseArea
                         anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            // Toggle mute
                             if (musicPlayerController.volume > 0) {
                                 parent.parent.previousVolume = musicPlayerController.volume;
                                 musicPlayerController.volume = 0;
@@ -402,118 +283,84 @@ Rectangle {
                     }
                 }
 
-                // Volume slider container (prevents swipe interference)
                 Item {
                     Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-                    height: 40  // Larger hit area for easier interaction
+                    height: 32
 
-                    // Volume slider background
                     Rectangle {
                         id: volumeTrack
-                        anchors.centerIn: parent  // Center it vertically in the container
+                        anchors.centerIn: parent
                         width: parent.width
-                        height: compact ? 6 : 8  // Slightly taller so it's more visible
-                        radius: 4
-                        color: "#0a0f18"
-                        border.color: "#1a2535"
-                        border.width: 1
+                        height: 6
+                        radius: 3
+                        color: AppTheme.colors.surfaceVariant
 
                         Rectangle {
-                            id: volumeFill
                             width: parent.width * (musicPlayerController.volume / 100)
                             height: parent.height
-                            radius: 4
-                            color: "#00BFFF"
-
-                            Behavior on width {
-                                NumberAnimation {
-                                    duration: 100
-                                }
-                            }
+                            radius: 3
+                            color: AppTheme.colors.primary
                         }
                     }
 
-                    // Volume handle
-                    Rectangle {
-                        id: volumeHandle
-                        width: 20
-                        height: 20
-                        radius: 10
-                        color: volumeClickArea.pressed ? "#ffffff" : "#00BFFF"
-                        border.color: "#0a0f18"
-                        border.width: 2
-                        x: volumeFill.width - width / 2
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: volumeClickArea.containsMouse || volumeClickArea.pressed
-
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: 100
-                            }
-                        }
-
-                        Behavior on x {
-                            NumberAnimation {
-                                duration: 100
-                            }
-                        }
-                    }
-
-                    // MouseArea on the track itself
                     MouseArea {
-                        id: volumeClickArea
                         anchors.fill: parent
-                        anchors.margins: -15  // Expand hit area
-                        hoverEnabled: true
-                        preventStealing: true  // Prevents SwipeView from stealing events
-                        propagateComposedEvents: false
-
-                        onPressed: function (mouse) {
-                            root.volumeInteractionChanged(true);
-                            updateVolume(mouse.x);
-                            mouse.accepted = true;
-                        }
-
-                        onReleased: function (mouse) {
-                            root.volumeInteractionChanged(false);
-                            mouse.accepted = true;
-                        }
-
-                        onPositionChanged: function (mouse) {
-                            if (pressed) {
-                                updateVolume(mouse.x);
-                            }
-                            mouse.accepted = true;
-                        }
-
+                        onPressed: (mouse) => { root.volumeInteractionChanged(true); updateVolume(mouse.x); }
+                        onReleased: root.volumeInteractionChanged(false)
+                        onPositionChanged: (mouse) => { if (pressed) updateVolume(mouse.x); }
                         function updateVolume(x) {
-                            // x is relative to this MouseArea
-                            var ratio = Math.max(0, Math.min(1, x / width));
-                            var newValue = Math.round(ratio * 100);
-                            console.log("Setting volume to:", newValue);
-                            musicPlayerController.volume = newValue;
+                            musicPlayerController.volume = Math.round(Math.max(0, Math.min(1, x / width)) * 100);
                         }
                     }
                 }
-            }
 
-            // Volume percentage (MOVED INSIDE RowLayout)
-            Text {
-                text: Math.round(musicPlayerController.volume) + "%"
-                color: "#8FA4B8"
-                font.pixelSize: timeSize
-                font.weight: Font.Medium
-                Layout.preferredWidth: 35
-                horizontalAlignment: Text.AlignRight
-                Layout.alignment: Qt.AlignVCenter
+                Text {
+                    text: Math.round(musicPlayerController.volume) + "%"
+                    color: AppTheme.colors.textSecondary
+                    font.pixelSize: timeSize
+                    Layout.preferredWidth: 35
+                    horizontalAlignment: Text.AlignRight
+                }
             }
         }
     }
 
+    // Helper Component for Next/Prev Buttons
+    component ControlCircle: Rectangle {
+        id: ctrl
+        property alias icon: img.source
+        property int size: 44
+        signal clicked
+
+        width: size
+        height: size
+        radius: size / 2
+        color: AppTheme.colors.surfaceElevated
+        border.color: AppTheme.colors.divider
+        border.width: 1
+        scale: mouse.pressed ? 0.9 : (mouse.containsMouse ? 1.05 : 1.0)
+
+        Image {
+            id: img
+            anchors.centerIn: parent
+            width: iconSize
+            height: iconSize
+            layer.enabled: true
+            layer.effect: ColorOverlay { color: AppTheme.colors.text }
+        }
+
+        MouseArea {
+            id: mouse
+            anchors.fill: parent
+            hoverEnabled: true
+            onClicked: ctrl.clicked()
+        }
+
+        Behavior on scale { NumberAnimation { duration: 100 } }
+    }
+
     function formatTime(ms) {
-        if (!ms || ms === 0)
-            return "0:00";
+        if (!ms || ms === 0) return "0:00";
         var totalSeconds = Math.floor(ms / 1000);
         var minutes = Math.floor(totalSeconds / 60);
         var seconds = totalSeconds % 60;
@@ -521,7 +368,7 @@ Rectangle {
     }
 
     function getAlbumColor(index) {
-        var colors = ["#FF6B35", "#004E89", "#1AE5BE"];
+        var colors = [AppTheme.colors.primary, AppTheme.colors.info, AppTheme.colors.success];
         return colors[index % colors.length];
     }
 }

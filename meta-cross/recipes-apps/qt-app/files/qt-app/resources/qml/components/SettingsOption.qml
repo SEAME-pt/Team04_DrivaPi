@@ -1,8 +1,10 @@
 import QtQuick
 import QtQuick.Layouts
+import Qt5Compat.GraphicalEffects
 import "../theme"
 
 Rectangle {
+    id: sliderCardRoot
     property string title: ""
     property string subtitle: ""
     property string icon: ""
@@ -11,9 +13,15 @@ Rectangle {
     signal sliderChanged(real value)
 
     Layout.fillWidth: true
-    Layout.preferredHeight: hasSlider ? 100 : 80
-    color: AppTheme.colors.surfaceVariant
+    // Dynamic height based on slider presence
+    Layout.preferredHeight: hasSlider ? 110 : 80
 
+    color: AppTheme.colors.surfaceVariant
+    radius: AppTheme.radius.medium
+    border.color: AppTheme.colors.divider
+    border.width: AppTheme.isDark ? 0 : 1
+
+    // To allow extra components to be injected
     default property alias content: optionContent.data
 
     RowLayout {
@@ -21,34 +29,98 @@ Rectangle {
         anchors.margins: AppTheme.spacing.medium
         spacing: AppTheme.spacing.medium
 
-        Image { source: icon; sourceSize.width: 24; sourceSize.height: 24; visible: icon.length > 0 }
+        // Icon with theme-aware color
+        Item {
+            width: 24
+            height: 24
+            visible: icon.length > 0
+            Image {
+                source: icon
+                anchors.fill: parent
+                sourceSize.width: 24
+                sourceSize.height: 24
+                layer.enabled: true
+                layer.effect: ColorOverlay {
+                    color: AppTheme.colors.textSecondary
+                }
+            }
+        }
 
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: AppTheme.spacing.xSmall
+            spacing: AppTheme.spacing.small
 
-            Text { text: title; color: AppTheme.colors.text; font.pixelSize: AppTheme.typography.labelLarge; font.weight: Font.Bold }
-            Text { text: subtitle; color: AppTheme.colors.textSecondary; font.pixelSize: AppTheme.typography.labelSmall; visible: subtitle.length > 0 }
+            // Title & Subtitle
+            ColumnLayout {
+                spacing: 2
+                Text {
+                    text: title
+                    color: AppTheme.colors.text
+                    font.pixelSize: AppTheme.typography.bodyLarge
+                    font.weight: AppTheme.typography.weightBold
+                    font.family: AppTheme.typography.fontFamily
+                }
+                Text {
+                    text: subtitle
+                    color: AppTheme.colors.textSecondary
+                    font.pixelSize: AppTheme.typography.labelSmall
+                    font.family: AppTheme.typography.fontFamily
+                    visible: subtitle.length > 0
+                    opacity: 0.8
+                }
+            }
 
-            Item { id: optionContent; Layout.fillWidth: true; Layout.preferredHeight: hasSlider ? 40 : implicitHeight }
+            Item { id: optionContent; Layout.fillWidth: true; Layout.preferredHeight: childrenRect.height }
 
-            Rectangle {
-                id: sliderTrack
+            // ====== THEMED SLIDER ======
+            Item {
                 visible: hasSlider
                 Layout.fillWidth: true
-                Layout.preferredHeight: 8
-                radius: 4
-                color: AppTheme.colors.surface
+                Layout.preferredHeight: 32 // Increased touch target area
+                Layout.topMargin: 4
 
+                // Track Background
                 Rectangle {
-                    width: parent.width * sliderValue
-                    height: parent.height
-                    radius: 4
-                    color: AppTheme.colors.primary
+                    id: sliderTrack
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width
+                    height: 6
+                    radius: 3
+                    // In light mode, we want a slightly darker track than the card
+                    color: AppTheme.isDark ? AppTheme.colors.surface : AppTheme.tint(AppTheme.colors.surfaceVariant, 0.1)
+
+                    // Filled Part
+                    Rectangle {
+                        width: parent.width * sliderValue
+                        height: parent.height
+                        radius: 3
+                        color: AppTheme.colors.primary
+                    }
+
+                    // Interactive Handle (Knob)
+                    Rectangle {
+                        x: (parent.width * sliderValue) - (width / 2)
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 20
+                        height: 20
+                        radius: 10
+                        color: AppTheme.isDark ? "#FFFFFF" : AppTheme.colors.surfaceElevated
+                        border.color: AppTheme.colors.primary
+                        border.width: 1
+
+                        // Shadow for Light Mode depth
+                        layer.enabled: !AppTheme.isDark
+                        layer.effect: DropShadow {
+                            radius: 4
+                            color: "#40000000"
+                            samples: 8
+                        }
+                    }
                 }
 
                 MouseArea {
                     anchors.fill: parent
+                    cursorShape: Qt.SizeHorCursor
                     onPressed: updateValue(mouse.x)
                     onPositionChanged: if (pressed) updateValue(mouse.x)
 
@@ -60,4 +132,6 @@ Rectangle {
             }
         }
     }
+
+    Behavior on color { ColorAnimation { duration: AppTheme.animation.normal } }
 }

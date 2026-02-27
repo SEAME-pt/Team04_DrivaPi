@@ -6,7 +6,7 @@ import "../theme"
 
 Rectangle {
     id: root
-    color: "#05080e"
+    color: AppTheme.colors.surface
     property bool keyboardAlwaysVisible: false
     property int keyboardHeight: 140
     MouseArea {
@@ -67,7 +67,6 @@ Rectangle {
             windParam = "&wind_speed_unit=kmh";
 
         var precipParam = (settingsManager.precipitationUnit === "inch") ? "&precipitation_unit=inch" : "";
-
         var url = "https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon + "&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,uv_index,precipitation&hourly=temperature_2m,weather_code,precipitation_probability&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,sunrise,sunset&timezone=auto&forecast_days=7" + tempParam + windParam + precipParam;
 
         xhr.onreadystatechange = function () {
@@ -133,7 +132,6 @@ Rectangle {
                             });
                         }
                         weatherData.dailyData = dailyItems;
-
                         weatherData.isLoading = false;
                     } catch (e) {
                         weatherData.hasError = true;
@@ -147,7 +145,6 @@ Rectangle {
                 }
             }
         };
-
         xhr.open("GET", url);
         xhr.send();
     }
@@ -155,10 +152,8 @@ Rectangle {
     function searchLocation(query) {
         if (!query || query.length < 2)
             return;
-
         var xhr = new XMLHttpRequest();
         var url = "https://geocoding-api.open-meteo.com/v1/search?" + "name=" + encodeURIComponent(query) + "&count=1&language=en&format=json";
-
         xhr.onreadystatechange = function () {
             if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
                 try {
@@ -178,87 +173,48 @@ Rectangle {
                 }
             }
         };
-
         xhr.open("GET", url);
         xhr.send();
     }
 
     function getWeatherDescription(code) {
-        // WMO Weather interpretation codes
-        if (code === 0)
-            return "Clear sky";
-        if (code === 1 || code === 2)
-            return "Mostly clear";
-        if (code === 3)
-            return "Overcast";
-        if (code === 45 || code === 48)
-            return "Foggy";
-        if (code >= 51 && code <= 55)
-            return "Light drizzle";
-        if (code >= 56 && code <= 57)
-            return "Freezing drizzle";
-        if (code >= 61 && code <= 65)
-            return "Rain";
-        if (code >= 66 && code <= 67)
-            return "Freezing rain";
-        if (code >= 71 && code <= 75)
-            return "Snow";
-        if (code === 77)
-            return "Snow grains";
-        if (code >= 80 && code <= 82)
-            return "Rain showers";
-        if (code >= 85 && code <= 86)
-            return "Snow showers";
-        if (code === 95 || code === 96 || code === 99)
-            return "Thunderstorm";
+        if (code === 0) return "Clear sky";
+        if (code === 1 || code === 2) return "Mostly clear";
+        if (code === 3) return "Overcast";
+        if (code === 45 || code === 48) return "Foggy";
+        if (code >= 51 && code <= 55) return "Light drizzle";
+        if (code >= 56 && code <= 57) return "Freezing drizzle";
+        if (code >= 61 && code <= 65) return "Rain";
+        if (code >= 66 && code <= 67) return "Freezing rain";
+        if (code >= 71 && code <= 75) return "Snow";
+        if (code === 77) return "Snow grains";
+        if (code >= 80 && code <= 82) return "Rain showers";
+        if (code >= 85 && code <= 86) return "Snow showers";
+        if (code === 95 || code === 96 || code === 99) return "Thunderstorm";
         return "Unknown";
     }
 
     function getWeatherIcon(code) {
-        // WMO Weather interpretation codes
-        if (code === 0)
-            return "sun";
-        if (code === 1 || code === 2)
-            return "cloud";
-        if (code === 3)
-            return "cloud";
-        if (code === 45 || code === 48)
-            return "fog";
-        if (code >= 51 && code <= 57)
-            return "rain";  // Drizzle and freezing drizzle
-        if (code >= 61 && code <= 67)
-            return "rain";  // Rain and freezing rain
-        if (code >= 71 && code <= 77)
-            return "snow";  // Snow
-        if (code >= 80 && code <= 82)
-            return "rain";  // Rain showers
-        if (code >= 85 && code <= 86)
-            return "snow";  // Snow showers
-        if (code >= 95 && code <= 99)
-            return "cloud"; // Thunderstorm
+        if (code === 0) return "sun";
+        if (code === 1 || code === 2 || code === 3) return "cloud";
+        if (code === 45 || code === 48) return "fog";
+        if (code >= 51 && code <= 67) return "rain";
+        if (code >= 71 && code <= 77) return "snow";
+        if (code >= 80 && code <= 82) return "rain";
+        if (code >= 85 && code <= 86) return "snow";
+        if (code >= 95 && code <= 99) return "cloud";
         return "sun";
     }
 
     function getWeatherIconType(code) {
-        // WMO Weather interpretation codes
-        if (code === 0)
-            return "sun";
-        if (code === 1 || code === 2 || code === 3)
-            return "cloud";
-        if (code === 45 || code === 48)
-            return "fog";
-        if (code >= 51 && code <= 57)
-            return "rain";  // Drizzle (not snow!)
-        if (code >= 61 && code <= 67)
-            return "rain";  // Rain
-        if (code >= 71 && code <= 77)
-            return "snow";  // Only snow when code is 71-77
-        if (code >= 80 && code <= 82)
-            return "rain";  // Showers
-        if (code >= 85 && code <= 86)
-            return "snow";  // Snow showers
-        if (code >= 95 && code <= 99)
-            return "cloud"; // Thunderstorm
+        if (code === 0) return "sun";
+        if (code === 1 || code === 2 || code === 3) return "cloud";
+        if (code === 45 || code === 48) return "fog";
+        if (code >= 51 && code <= 67) return "rain";
+        if (code >= 71 && code <= 77) return "snow";
+        if (code >= 80 && code <= 82) return "rain";
+        if (code >= 85 && code <= 86) return "snow";
+        if (code >= 95 && code <= 99) return "cloud";
         return "sun";
     }
 
@@ -332,7 +288,7 @@ Rectangle {
 
             Text {
                 text: weatherData.location
-                color: "#FFFFFF"
+                color: AppTheme.colors.text
                 font.pixelSize: 15
                 font.weight: Font.Medium
                 Layout.fillWidth: true
@@ -347,18 +303,18 @@ Rectangle {
                 Layout.minimumWidth: 80
                 placeholderText: "Search"
                 Layout.rightMargin: 24
-                placeholderTextColor: "#4A5A6F"
+                placeholderTextColor: AppTheme.colors.textSecondary
                 font.pixelSize: 11
-                color: "#FFFFFF"
+                color: AppTheme.colors.text
                 leftPadding: 10
                 rightPadding: 10
                 Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
                 z: 20
                 background: Rectangle {
-                    color: "#0A0F18"
+                    color: AppTheme.colors.surfaceElevated
                     radius: 8
                     border.width: 1
-                    border.color: locationInput.activeFocus ? "#00BFFF" : "#1A2535"
+                    border.color: locationInput.activeFocus ? AppTheme.colors.primary : AppTheme.colors.border
                 }
                 onAccepted: {
                     searchLocation(text);
@@ -390,21 +346,21 @@ Rectangle {
                 text: weatherData.isLoading ? "--" : weatherData.temperature + settingsManager.temperatureUnit
                 font.pixelSize: 56
                 font.weight: Font.Light
-                color: "#FFFFFF"
+                color: AppTheme.colors.text
                 Layout.alignment: Qt.AlignHCenter
             }
 
             Text {
                 text: weatherData.isLoading ? "" : getWeatherDescription(weatherData.weatherCode)
                 font.pixelSize: 13
-                color: "#C5D0DD"
+                color: AppTheme.colors.textSecondary
                 Layout.alignment: Qt.AlignHCenter
             }
 
             Text {
                 text: weatherData.isLoading ? "" : weatherData.hiLo
                 font.pixelSize: 11
-                color: "#8A9AA8"
+                color: AppTheme.colors.textTertiary
                 Layout.bottomMargin: 4
             }
         }
@@ -417,22 +373,10 @@ Rectangle {
 
             Repeater {
                 model: [
-                    {
-                        label: "Wind",
-                        value: weatherData.windSpeed + " " + settingsManager.windSpeedUnit
-                    },
-                    {
-                        label: "Humidity",
-                        value: weatherData.humidity + "%"
-                    },
-                    {
-                        label: "UV",
-                        value: weatherData.uvIndex
-                    },
-                    {
-                        label: "Feels",
-                        value: weatherData.apparentTemperature + settingsManager.temperatureUnit
-                    }
+                    { label: "Wind", value: weatherData.windSpeed + " " + settingsManager.windSpeedUnit },
+                    { label: "Humidity", value: weatherData.humidity + "%" },
+                    { label: "UV", value: weatherData.uvIndex },
+                    { label: "Feels", value: weatherData.apparentTemperature + settingsManager.temperatureUnit }
                 ]
 
                 ColumnLayout {
@@ -442,7 +386,7 @@ Rectangle {
                     Text {
                         text: modelData.label
                         font.pixelSize: 10
-                        color: "#8A9AA8"
+                        color: AppTheme.colors.textTertiary
                         Layout.alignment: Qt.AlignHCenter
                     }
 
@@ -450,7 +394,7 @@ Rectangle {
                         text: weatherData.isLoading ? "--" : modelData.value
                         font.pixelSize: 14
                         font.weight: Font.Medium
-                        color: "#FFFFFF"
+                        color: AppTheme.colors.text
                         Layout.alignment: Qt.AlignHCenter
                     }
                 }
@@ -460,14 +404,14 @@ Rectangle {
         Rectangle {
             Layout.fillWidth: true
             height: 1
-            color: "#1A2535"
-            opacity: 0.6
+            color: AppTheme.colors.divider
+            opacity: 1.0
         }
 
         Text {
             text: "HOURLY FORECAST"
             font.pixelSize: 10
-            color: "#6A7A8A"
+            color: AppTheme.colors.textTertiary
             font.weight: Font.Medium
             Layout.topMargin: 6
             Layout.bottomMargin: 4
@@ -489,7 +433,7 @@ Rectangle {
                 Text {
                     text: modelData.time
                     font.pixelSize: 11
-                    color: "#8A9AA8"
+                    color: AppTheme.colors.textSecondary
                     font.weight: Font.Medium
                     Layout.alignment: Qt.AlignHCenter
                 }
@@ -502,14 +446,14 @@ Rectangle {
                     opacity: 0.95
                     layer.enabled: true
                     layer.effect: ColorOverlay {
-                        color: "#FFFFFF"
+                        color: AppTheme.colors.text
                     }
                 }
 
                 Text {
                     text: modelData.precip > 0 ? modelData.precip + "%" : ""
                     font.pixelSize: 9
-                    color: "#00BFFF"
+                    color: AppTheme.colors.primary
                     Layout.alignment: Qt.AlignHCenter
                     Layout.preferredHeight: 12
                 }
@@ -517,7 +461,7 @@ Rectangle {
                 Text {
                     text: modelData.temp + settingsManager.temperatureUnit
                     font.pixelSize: 13
-                    color: "#FFFFFF"
+                    color: AppTheme.colors.text
                     font.weight: Font.Medium
                     Layout.alignment: Qt.AlignHCenter
                 }
@@ -527,15 +471,15 @@ Rectangle {
         Rectangle {
             Layout.fillWidth: true
             height: 1
-            color: "#1A2535"
-            opacity: 0.6
+            color: AppTheme.colors.divider
+            opacity: 1.0
             Layout.topMargin: 4
         }
 
         Text {
             text: "3-DAY FORECAST"
             font.pixelSize: 10
-            color: "#6A7A8A"
+            color: AppTheme.colors.textTertiary
             font.weight: Font.Medium
             Layout.topMargin: 6
             Layout.bottomMargin: 4
@@ -556,7 +500,7 @@ Rectangle {
                     Text {
                         text: modelData.day
                         font.pixelSize: 12
-                        color: "#C5D0DD"
+                        color: AppTheme.colors.textSecondary
                         Layout.preferredWidth: 36
                     }
 
@@ -564,6 +508,10 @@ Rectangle {
                         source: "qrc:/icons/weather/" + getWeatherIcon(modelData.code) + ".svg"
                         sourceSize.width: 22
                         sourceSize.height: 22
+                        layer.enabled: true
+                        layer.effect: ColorOverlay {
+                            color: AppTheme.colors.text
+                        }
                     }
 
                     Item {
@@ -573,7 +521,7 @@ Rectangle {
                     Text {
                         text: modelData.minTemp + settingsManager.temperatureUnit
                         font.pixelSize: 12
-                        color: "#6A7A8A"
+                        color: AppTheme.colors.textTertiary
                         Layout.preferredWidth: 30
                         horizontalAlignment: Text.AlignRight
                     }
@@ -582,7 +530,7 @@ Rectangle {
                         Layout.preferredWidth: 55
                         Layout.preferredHeight: 3
                         radius: 2
-                        color: "#2A3542"
+                        color: AppTheme.colors.surfaceVariant
 
                         property real minAll: getDailyMinTemp()
                         property real maxAll: getDailyMaxTemp()
@@ -599,11 +547,11 @@ Rectangle {
                             gradient: Gradient {
                                 GradientStop {
                                     position: 0.0
-                                    color: "#00BFFF"
+                                    color: AppTheme.colors.primary
                                 }
                                 GradientStop {
                                     position: 1.0
-                                    color: "#00DDFF"
+                                    color: AppTheme.tint(AppTheme.colors.primary, 0.2)
                                 }
                             }
                         }
@@ -612,7 +560,7 @@ Rectangle {
                     Text {
                         text: modelData.maxTemp + settingsManager.temperatureUnit
                         font.pixelSize: 12
-                        color: "#FFFFFF"
+                        color: AppTheme.colors.text
                         Layout.preferredWidth: 30
                     }
                 }
@@ -627,9 +575,9 @@ Rectangle {
         anchors.bottom: parent.bottom
         height: root.keyboardHeight
         radius: 0
-        color: "#0A0F18"
+        color: AppTheme.colors.surfaceVariant
         border.width: 1
-        border.color: "#1A2535"
+        border.color: AppTheme.colors.border
         opacity: 0.98
         visible: locationInput.activeFocus
 
@@ -647,15 +595,15 @@ Rectangle {
                         Layout.fillWidth: true
                         height: 24
                         radius: 6
-                        color: keyMouse.pressed ? "#00BFFF" : "#131B26"
+                        color: keyMouse.pressed ? AppTheme.colors.primary : AppTheme.colors.surfaceElevated
+                        border.color: AppTheme.colors.border
                         border.width: 1
-                        border.color: "#1A2535"
                         Text {
                             anchors.centerIn: parent
                             text: modelData
                             font.pixelSize: 11
                             font.weight: Font.Medium
-                            color: "#FFFFFF"
+                            color: keyMouse.pressed ? AppTheme.colors.surfaceElevated : AppTheme.colors.text
                         }
                         MouseArea {
                             id: keyMouse
@@ -675,15 +623,15 @@ Rectangle {
                         Layout.fillWidth: true
                         height: 24
                         radius: 6
-                        color: keyMouse2.pressed ? "#00BFFF" : "#131B26"
+                        color: keyMouse2.pressed ? AppTheme.colors.primary : AppTheme.colors.surfaceElevated
                         border.width: 1
-                        border.color: "#1A2535"
+                        border.color: AppTheme.colors.border
                         Text {
                             anchors.centerIn: parent
                             text: modelData
                             font.pixelSize: 11
                             font.weight: Font.Medium
-                            color: "#FFFFFF"
+                            color: keyMouse2.pressed ? AppTheme.colors.surfaceElevated : AppTheme.colors.text
                         }
                         MouseArea {
                             id: keyMouse2
@@ -703,15 +651,15 @@ Rectangle {
                         Layout.fillWidth: true
                         height: 24
                         radius: 6
-                        color: keyMouse3.pressed ? "#00BFFF" : "#131B26"
+                        color: keyMouse3.pressed ? AppTheme.colors.primary : AppTheme.colors.surfaceElevated
                         border.width: 1
-                        border.color: "#1A2535"
+                        border.color: AppTheme.colors.border
                         Text {
                             anchors.centerIn: parent
                             text: modelData
                             font.pixelSize: 11
                             font.weight: Font.Medium
-                            color: "#FFFFFF"
+                            color: keyMouse3.pressed ? AppTheme.colors.surfaceElevated : AppTheme.colors.text
                         }
                         MouseArea {
                             id: keyMouse3
@@ -730,14 +678,14 @@ Rectangle {
                     Layout.preferredWidth: 60
                     height: 24
                     radius: 6
-                    color: backMouse.pressed ? "#FF5A5F" : "#131B26"
+                    color: backMouse.pressed ? AppTheme.colors.error : AppTheme.colors.surfaceElevated
                     border.width: 1
-                    border.color: "#1A2535"
+                    border.color: AppTheme.colors.border
                     Text {
                         anchors.centerIn: parent
                         text: "⌫"
                         font.pixelSize: 14
-                        color: "#FFFFFF"
+                        color: backMouse.pressed ? AppTheme.colors.surfaceElevated : AppTheme.colors.text
                     }
                     MouseArea {
                         id: backMouse
@@ -750,14 +698,14 @@ Rectangle {
                     Layout.fillWidth: true
                     height: 24
                     radius: 6
-                    color: spaceMouse.pressed ? "#00BFFF" : "#1A2535"
+                    color: spaceMouse.pressed ? AppTheme.colors.primary : AppTheme.colors.surfaceElevated
                     border.width: 1
-                    border.color: "#243142"
+                    border.color: AppTheme.colors.border
                     Text {
                         anchors.centerIn: parent
                         text: "SPACE"
                         font.pixelSize: 10
-                        color: "#FFFFFF"
+                        color: spaceMouse.pressed ? AppTheme.colors.surfaceElevated : AppTheme.colors.text
                     }
                     MouseArea {
                         id: spaceMouse
@@ -770,14 +718,14 @@ Rectangle {
                     Layout.preferredWidth: 60
                     height: 24
                     radius: 6
-                    color: enterMouse.pressed ? "#00BFFF" : "#00405C"
+                    color: enterMouse.pressed ? AppTheme.colors.primary : AppTheme.colors.surfaceElevated
                     border.width: 1
-                    border.color: "#00BFFF"
+                    border.color: AppTheme.colors.border
                     Text {
                         anchors.centerIn: parent
                         text: "⏎"
                         font.pixelSize: 14
-                        color: "#FFFFFF"
+                        color: enterMouse.pressed ? AppTheme.colors.surfaceElevated : AppTheme.colors.text
                     }
                     MouseArea {
                         id: enterMouse
@@ -794,10 +742,10 @@ Rectangle {
 
     Rectangle {
         anchors.fill: parent
-        color: "#05080E"
+        color: AppTheme.colors.surfaceVariant
         radius: 12
         border.width: 1
-        border.color: "#1A2535"
+        border.color: AppTheme.colors.border
         visible: weatherData.isLoading || weatherData.hasError
 
         ColumnLayout {
@@ -890,13 +838,16 @@ Rectangle {
             anchors.centerIn: parent
             visible: type === "cloud" || type === "rain" || type === "fog"
 
+            // Adjust cloud color to contrast against light theme surfaces
+            property color baseCloudColor: AppTheme.isDark ? "#E9EFF6" : AppTheme.colors.textTertiary
+
             Rectangle {
                 x: 10
                 y: 30
                 width: 42
                 height: 16
                 radius: 8
-                color: "#E9EFF6"
+                color: parent.baseCloudColor
                 opacity: 0.98
             }
             Rectangle {
@@ -905,7 +856,7 @@ Rectangle {
                 width: 22
                 height: 14
                 radius: 7
-                color: "#E9EFF6"
+                color: parent.baseCloudColor
                 opacity: 0.98
             }
             Rectangle {
@@ -914,7 +865,7 @@ Rectangle {
                 width: 24
                 height: 14
                 radius: 7
-                color: "#E9EFF6"
+                color: parent.baseCloudColor
                 opacity: 0.98
             }
             Rectangle {
@@ -923,7 +874,7 @@ Rectangle {
                 width: 22
                 height: 14
                 radius: 7
-                color: "#F4F7FB"
+                color: AppTheme.isDark ? "#F4F7FB" : AppTheme.colors.textSecondary
                 opacity: 0.85
             }
 
@@ -950,7 +901,7 @@ Rectangle {
                 width: 3
                 height: 10
                 radius: 2
-                color: "#5CC8FF"
+                color: AppTheme.colors.info
                 x: 14 + index * 10
                 y: 50
                 opacity: 0.85
@@ -993,7 +944,7 @@ Rectangle {
                 width: 42 - index * 6
                 height: 2
                 radius: 1
-                color: "#C7D6E3"
+                color: AppTheme.isDark ? "#C7D6E3" : AppTheme.colors.textTertiary
                 x: 6 + index * 3
                 y: 48 + index * 6
                 opacity: 0.6
@@ -1031,12 +982,16 @@ Rectangle {
             sourceSize.height: 18
             opacity: 0.5
             Layout.alignment: Qt.AlignHCenter
+            layer.enabled: true
+            layer.effect: ColorOverlay {
+                color: AppTheme.colors.text
+            }
         }
 
         Text {
             text: label
             font.pixelSize: 10
-            color: "#5A6A78"
+            color: AppTheme.colors.textSecondary
             Layout.alignment: Qt.AlignHCenter
         }
 
@@ -1044,7 +999,7 @@ Rectangle {
             text: value
             font.pixelSize: 13
             font.weight: Font.DemiBold
-            color: "#FFFFFF"
+            color: AppTheme.colors.text
             Layout.alignment: Qt.AlignHCenter
         }
     }

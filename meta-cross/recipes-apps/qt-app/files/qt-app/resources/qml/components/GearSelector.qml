@@ -1,4 +1,5 @@
 import QtQuick
+import "../theme"
 
 Item {
     id: root
@@ -8,48 +9,72 @@ Item {
     signal gearDown
 
     height: 44
+    width: 160
 
     Row {
         anchors.centerIn: parent
 
-        // PRND pill background and highlight
+        // Main PRND container pill
         Rectangle {
-            color: "#181f2b"
+            id: gearPill
+            color: AppTheme.colors.surfaceVariant
             radius: 18
-            border.color: "#4fb3d9"
-            border.width: 1.2
+            border.color: AppTheme.colors.divider
+            border.width: 1
             height: 36
             width: 160
             anchors.verticalCenter: parent.verticalCenter
 
+            // Move the behavior here! gearPill is a Rectangle, so 'color' exists.
+            Behavior on color { ColorAnimation { duration: AppTheme.animation.normal } }
+
+            // Subtle inner shadow for Light Mode depth
+            Rectangle {
+                anchors.fill: parent
+                radius: parent.radius
+                color: "transparent"
+                border.color: AppTheme.alpha(AppTheme.colors.text, 0.05)
+                border.width: 1
+                visible: !AppTheme.isDark
+            }
+
             Row {
                 anchors.fill: parent
-                anchors.margins: 10
-                spacing: 14
+                anchors.margins: 4
+                spacing: 10
+                anchors.horizontalCenter: parent.horizontalCenter
+                leftPadding: 6
+
                 Repeater {
                     model: ["P", "R", "N", "D"]
-                    delegate: Rectangle {
+                    delegate: Item {
                         width: 28
                         height: 28
-                        radius: 14
-                        color: root.currentGear === modelData ? "#6fd3ff" : "transparent"
-                        border.color: root.currentGear === modelData ? "#6fd3ff" : "transparent"
-                        border.width: root.currentGear === modelData ? 1.2 : 0
                         anchors.verticalCenter: parent.verticalCenter
                         z: root.currentGear === modelData ? 2 : 1
+
+                        Rectangle {
+                            id: gearHighlight
+                            anchors.fill: parent
+                            radius: 14
+                            color: root.currentGear === modelData ? AppTheme.colors.primary : "transparent"
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                        }
+
                         Text {
                             text: modelData
                             anchors.centerIn: parent
-                            font.pixelSize: 18
-                            font.family: "SF Pro Display"
+                            font.pixelSize: AppTheme.typography.labelLarge
+                            font.family: AppTheme.typography.fontFamily
                             font.weight: Font.Bold
-                            color: root.currentGear === modelData ? "#181f2b" : "#E6E6E6"
-                            opacity: root.currentGear === modelData ? 1.0 : 0.5
-                            Behavior on opacity {
-                                NumberAnimation {
-                                    duration: 200
-                                }
-                            }
+                            color: root.currentGear === modelData ?
+                                (AppTheme.isDark ? AppTheme.colors.surface : "#FFFFFF") :
+                                AppTheme.colors.text
+
+                            opacity: root.currentGear === modelData ? 1.0 : 0.4
+
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on opacity { NumberAnimation { duration: 200 } }
                         }
                     }
                 }

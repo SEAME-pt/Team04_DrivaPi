@@ -1,49 +1,37 @@
 pragma Singleton
 import QtQuick
 
-/**
- * @file AppTheme.qml
- * @brief Global theme and styling system for HMI
- *
- * Provides centralized color palette, typography, and spacing definitions.
- * Import as: import "theme"
- * Usage: AppTheme.colors.primary, AppTheme.spacing.medium, etc.
- */
-
 QtObject {
     id: theme
 
+    // Master switch for the UI. We will toggle this from main.qml
+    property bool isDark: true
+
     // ====== COLOR PALETTE ======
     readonly property QtObject colors: QtObject {
-        // Primary branding
-        readonly property color primary: "#0084FF"        // Cyan/Blue
-        readonly property color primaryDark: "#0056B3"
+        // Primary branding (Deepen the blue in light mode for better contrast)
+        readonly property color primary: theme.isDark? "#00BFFF" : "#0066CC"
+        readonly property color primaryDark: theme.isDark? "#0056B3" : "#004C99"
 
-        // Surfaces and backgrounds
-        readonly property color surface: "#1a1a1a"        // Very dark gray
-        readonly property color surfaceVariant: "#2a2a2a"
-        readonly property color surfaceElevated: "#3a3a3a"
+        // Surfaces (Dark: Deep space black | Light: Soft cool gray to reduce glare)
+        readonly property color surface: theme.isDark? "#05080e" : "#E8ECEF"
+        readonly property color surfaceVariant: theme.isDark? "#0a0f18" : "#D9E1E8"
+        readonly property color surfaceElevated: theme.isDark? "#131b26" : "#FFFFFF"
 
-        // Text
-        readonly property color text: "#FFFFFF"           // White
-        readonly property color textSecondary: "#B0B0B0"
-        readonly property color textTertiary: "#808080"
+        // Text (High contrast without harsh pure black)
+        readonly property color text: theme.isDark? "#FFFFFF" : "#1A222B"
+        readonly property color textSecondary: theme.isDark? "#8FA4B8" : "#5C6A79"
+        readonly property color textTertiary: theme.isDark? "#6A7A8A" : "#8A9BAE"
 
         // Semantic colors
-        readonly property color success: "#4ACA5C"        // Green
-        readonly property color warning: "#FFA500"        // Amber/Orange
-        readonly property color error: "#FF3B30"          // Red
-        readonly property color info: "#2196F3"           // Light Blue
-
-        // Status colors
-        readonly property color online: "#4ACA5C"
-        readonly property color offline: "#FF3B30"
-        readonly property color connecting: "#FFA500"
+        readonly property color success: "#4ACA5C"
+        readonly property color warning: "#FFA500"
+        readonly property color error: "#FF3B30"
+        readonly property color info: "#2196F3"
 
         // UI elements
-        readonly property color accentAccent: "#FF6B35"   // Orange accent
-        readonly property color divider: "#404040"
-        readonly property color border: "#505050"
+        readonly property color divider: theme.isDark? "#1A2535" : "#C4D0DB"
+        readonly property color border: theme.isDark? "#232a35" : "#B3C2D1"
     }
 
     // ====== TYPOGRAPHY ======

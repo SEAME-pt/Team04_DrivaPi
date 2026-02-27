@@ -1,16 +1,17 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Qt5Compat.GraphicalEffects
 import "../theme"
 
 Item {
     id: root
     clip: true
 
-    //darken background to match cluster style
+    // Darken background to match cluster style - now theme-aware
     Rectangle {
         anchors.fill: parent
-        color: "#05080e"
+        color: AppTheme.isDark ? AppTheme.colors.surfaceVariant : AppTheme.colors.surface
     }
 
     // ---------- helpers ----------
@@ -29,7 +30,7 @@ Item {
             return "--";
         return Math.round(n) + (unit || "");
     }
-	function getTemp(c) {
+    function getTemp(c) {
         var val = safeNum(c);
         if (isNaN(val)) return NaN;
 
@@ -41,7 +42,7 @@ Item {
         return val; // Base is °C
     }
 
-    // Online heuristics (replace with proper flags if you add them)
+    // Online heuristics
     property bool rpiOnline: !!piHealthReader && piHealthReader.isOnline
     property bool stmOnline: !!vehicleData && (vehicleData.stm32BatteryVoltage > 0 || vehicleData.stm32Battery > 0 || vehicleData.stm32Temperature !== 0 || vehicleData.stm32Humidity !== 0)
 
@@ -49,7 +50,7 @@ Item {
 
     property bool stmWarn: stmOnline && (vehicleData.stm32Battery < 20 || vehicleData.stm32BatteryVoltage < 11.0 || vehicleData.stm32BatteryVoltage > 13.0 || vehicleData.stm32Temperature > 60 || vehicleData.stm32Humidity > 85)
 
-    // ===== Layout (no scrolling) =====
+    // ===== Layout =====
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 16
@@ -66,7 +67,6 @@ Item {
                 height: 22
                 radius: 2
                 color: AppTheme.colors.primary
-                opacity: 0.9
             }
 
             Text {
@@ -75,30 +75,34 @@ Item {
                 font.weight: Font.Bold
                 font.letterSpacing: 1
                 color: AppTheme.colors.text
-                opacity: 0.95
             }
 
             Item {
                 Layout.fillWidth: true
             }
 
-            // compact overall indicator
+            // Status LED
             Rectangle {
-                width: 8
-                height: 8
-                radius: 4
-                color: (rpiOnline && stmOnline) ? "#00ff88" : (rpiOnline || stmOnline) ? "#ffb020" : "#ff4444"
-                opacity: 0.9
+                width: 10
+                height: 10
+                radius: 5
+                color: (rpiOnline && stmOnline) ? AppTheme.colors.success : (rpiOnline || stmOnline) ? AppTheme.colors.warning : AppTheme.colors.error
+
+                // Subtle glow in dark mode
+                layer.enabled: AppTheme.isDark
+                layer.effect: ShaderEffect {
+                    // This creates a simple glow if needed, or use a Rectangle with opacity
+                }
             }
         }
 
-        // ===== Cards container: must fit page =====
+        // ===== Cards container =====
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: 12
 
-            // ===== RPi Card (2 rows x 3 columns = 6 metrics) =====
+            // ===== RPi Card =====
             StatusCardCompact {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -116,10 +120,10 @@ Item {
                     columnSpacing: 10
 
                     MetricTileMini {
-                    label: "CPU"
-                    value: rpiOnline? fmt(getTemp(piHealthReader.cpuTemp), 0, settingsManager.temperatureUnit) : "--"
-                    warn: rpiOnline && piHealthReader.cpuTemp > 70
-                	}
+                        label: "CPU"
+                        value: rpiOnline ? fmt(getTemp(piHealthReader.cpuTemp), 0, settingsManager.temperatureUnit) : "--"
+                        warn: rpiOnline && piHealthReader.cpuTemp > 70
+                    }
                     MetricTileMini {
                         label: "MEM"
                         value: rpiOnline ? fmtInt(piHealthReader.memoryPercent, "%") : "--"
@@ -134,24 +138,21 @@ Item {
                     MetricTileMini {
                         label: "FREQ"
                         value: rpiOnline ? fmtInt(piHealthReader.cpuFreq, "MHz") : "--"
-                        warn: false
                     }
                     MetricTileMini {
                         label: "BAT"
-                        // expects PiHealthReader Q_PROPERTY batteryPercent
                         value: rpiOnline ? fmtInt(piHealthReader.batteryPercent, "%") : "--"
                         warn: rpiOnline && safeNum(piHealthReader.batteryPercent) < 20
                     }
                     MetricTileMini {
                         label: "VOLT"
-                        // expects PiHealthReader Q_PROPERTY batteryVoltage
                         value: rpiOnline ? fmt(piHealthReader.batteryVoltage, 2, "V") : "--"
                         warn: rpiOnline && (safeNum(piHealthReader.batteryVoltage) < 11.0 || safeNum(piHealthReader.batteryVoltage) > 13.0)
                     }
                 }
             }
 
-            // ===== STM32 Card (2x2 = 4 metrics) =====
+            // ===== STM32 Card =====
             StatusCardCompact {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -179,10 +180,10 @@ Item {
                         warn: stmOnline && (vehicleData.stm32BatteryVoltage < 11.0 || vehicleData.stm32BatteryVoltage > 13.0)
                     }
                     MetricTileMini {
-                    label: "TEMP"
-                    value: stmOnline? fmt(getTemp(vehicleData.stm32Temperature), 1, settingsManager.temperatureUnit) : "--"
-                    warn: stmOnline && vehicleData.stm32Temperature > 60
-                	}
+                        label: "TEMP"
+                        value: stmOnline ? fmt(getTemp(vehicleData.stm32Temperature), 1, settingsManager.temperatureUnit) : "--"
+                        warn: stmOnline && vehicleData.stm32Temperature > 60
+                    }
                     MetricTileMini {
                         label: "HUMIDITY"
                         value: stmOnline ? fmt(vehicleData.stm32Humidity, 0, "%") : "--"
@@ -193,8 +194,9 @@ Item {
         }
     }
 
-    // ===== Card shell (compact; content fills remaining) =====
+    // ===== Card shell =====
     component StatusCardCompact: Rectangle {
+        id: cardShell
         required property string title
         required property string icon
         required property bool online
@@ -202,57 +204,36 @@ Item {
         default property alias content: contentArea.data
 
         radius: 10
-        color: "#13171f"
+        color: AppTheme.colors.surfaceElevated
         border.width: 1
-        border.color: online ? "#1a4d5c" : "#242a33"
-        opacity: online ? 1.0 : 0.72
-
-        // Shadow effect using nested rectangles (replaces MultiEffect)
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: -8
-            radius: parent.radius
-            color: "transparent"
-            border.color: "#00000033"
-            border.width: 1
-            z: -1
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: -12
-            radius: parent.radius + 4
-            color: "transparent"
-            border.color: "#00000018"
-            border.width: 1
-            z: -2
-        }
+        border.color: AppTheme.colors.border
+        opacity: online ? 1.0 : 0.6
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 0
             spacing: 0
 
-            // header strip
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 32
                 radius: 10
-                color: "#0d1117"
+                // Top corners rounded only
+                color: AppTheme.colors.surfaceVariant
                 border.width: 1
-                border.color: "#1a2533"
+                border.color: AppTheme.colors.divider
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 10
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 12
                     spacing: 8
 
                     Image {
                         source: icon
-                        sourceSize.width: 16
-                        sourceSize.height: 16
-                        opacity: 0.8
+                        sourceSize: Qt.size(16, 16)
+                        // Invert/Tint icon for light mode
+                        layer.enabled: true
+                        layer.effect: ColorOverlay { color: AppTheme.colors.textSecondary }
                     }
 
                     Text {
@@ -260,41 +241,37 @@ Item {
                         font.pixelSize: 11
                         font.weight: Font.Bold
                         font.letterSpacing: 0.8
-                        color: "#e6f0ff"
+                        color: AppTheme.colors.text
                     }
 
-                    Item {
-                        Layout.fillWidth: true
-                    }
+                    Item { Layout.fillWidth: true }
 
                     Rectangle {
-                        width: 8
-                        height: 8
-                        radius: 4
-                        color: online ? "#00ff88" : "#666666"
+                        width: 8; height: 8; radius: 4
+                        color: online ? AppTheme.colors.success : AppTheme.colors.textTertiary
                     }
 
                     Rectangle {
                         visible: warn
-                        radius: 999
+                        radius: 4
                         height: 18
-                        implicitWidth: warnText.implicitWidth + 14
-                        color: "#2a1f10"
+                        implicitWidth: warnText.implicitWidth + 12
+                        color: AppTheme.alpha(AppTheme.colors.warning, 0.2)
                         border.width: 1
-                        border.color: "#7a4d1a"
+                        border.color: AppTheme.colors.warning
+
                         Text {
                             id: warnText
                             anchors.centerIn: parent
                             text: "WARN"
                             font.pixelSize: 9
                             font.weight: Font.Bold
-                            color: "#ffb36a"
+                            color: AppTheme.colors.warning
                         }
                     }
                 }
             }
 
-            // content area
             Item {
                 id: contentArea
                 Layout.fillWidth: true
@@ -303,48 +280,46 @@ Item {
         }
     }
 
+    // ===== Metric Tile =====
     component MetricTileMini: Rectangle {
         property string label: ""
         property string value: ""
         property bool warn: false
 
         radius: 8
-        color: warn ? "#2d1a1a" : "#0d1117"
+        // Logic: if warning, use a faint error red background; else use surface variant
+        color: warn ? AppTheme.alpha(AppTheme.colors.error, 0.1) : AppTheme.colors.surfaceVariant
         border.width: 1
-        border.color: warn ? "#5a2424" : "#1a2533"
+        border.color: warn ? AppTheme.colors.error : AppTheme.colors.divider
 
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.minimumHeight: 50
 
-        Column {
+        ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 5
+            anchors.margins: 6
             spacing: 2
 
             Text {
-                width: parent.width
+                Layout.fillWidth: true
                 text: label
                 horizontalAlignment: Text.AlignHCenter
                 font.pixelSize: 9
-                font.letterSpacing: 0.6
-                color: "#6A7A8A"
-            }
-
-            Item {
-                width: parent.width
-                height: parent.height - labelText.height - valueText.height - 7
+                font.weight: Font.Medium
+                color: AppTheme.colors.textTertiary
             }
 
             Text {
-                id: valueText
-                width: parent.width
+                id: valTxt
+                Layout.fillWidth: true
                 text: value
                 horizontalAlignment: Text.AlignHCenter
                 font.pixelSize: 16
                 font.weight: Font.Bold
-                color: warn ? "#ff6644" : "#00BFFF"
-                opacity: (value === "--") ? 0.55 : 1.0
+                // Use error color for value if warning, else primary brand color
+                color: warn ? AppTheme.colors.error : AppTheme.colors.primary
+                opacity: (value === "--") ? 0.4 : 1.0
             }
         }
     }

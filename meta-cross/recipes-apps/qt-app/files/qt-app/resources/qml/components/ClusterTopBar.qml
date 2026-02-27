@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Qt5Compat.GraphicalEffects
 import "../components"
 import "../theme"
 
@@ -12,24 +13,18 @@ Item {
     // Public API
     property alias currentGear: gearSelector.currentGear
 
-    // Use normal properties (avoid alias+binding loops)
     property int batteryLevel: 85
     property string timeTextValue: Qt.formatDateTime(new Date(), "hh:mm")
 
-    // Battery color based on level - matching cluster cyan theme
+    // Battery color logic - tied to AppTheme semantic colors
     property color batteryColor: {
-        if (batteryLevel >= 60)
-            return "#00BFFF";  // Cyan
-        if (batteryLevel >= 30)
-            return "#FFA500";  // Orange
-        return "#FF3B30";  // Red
+        if (batteryLevel >= 60) return AppTheme.colors.primary;
+        if (batteryLevel >= 30) return AppTheme.colors.warning;
+        return AppTheme.colors.error;
     }
 
     property alias leftArrowVisible: leftArrow.visible
     property alias rightArrowVisible: rightArrow.visible
-
-    property string navArrowSource: "qrc:/icons/navigation/turn-left.svg"
-    property real navArrowOpacity: 0.15
 
     // Responsive height
     height: Math.max(70, parent ? parent.height * 0.11 : 85)
@@ -39,52 +34,53 @@ Item {
         anchors.fill: parent
         spacing: 0
 
-        // Time
+        // ====== TIME DISPLAY ======
         Item {
-            Layout.preferredWidth: 80
+            Layout.preferredWidth: 100
             Layout.fillHeight: true
 
             Text {
                 id: timeText
                 anchors.centerIn: parent
                 text: clusterTopBar.timeTextValue
-                font.pixelSize: 16
-                font.family: "SF Pro Display"
-                font.weight: Font.Light
-                color: "#E0E0E0"
+                font.pixelSize: AppTheme.typography.headlineSmall
+                font.family: AppTheme.typography.fontFamily
+                font.weight: AppTheme.typography.weightMedium
+                color: AppTheme.colors.text
+
+                Behavior on color { ColorAnimation { duration: AppTheme.animation.normal } }
             }
 
             Timer {
-                interval: 1000
-                running: true
-                repeat: true
+                interval: 1000; running: true; repeat: true
                 onTriggered: clusterTopBar.timeTextValue = Qt.formatDateTime(new Date(), "hh:mm")
             }
         }
 
-        // Spacer
-        Item {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-        }
+        // Left Spacer
+        Item { Layout.fillWidth: true; Layout.fillHeight: true }
 
-        // Left navigation arrow
+        // ====== LEFT NAVIGATION ARROW ======
         Item {
             id: leftArrow
-            Layout.preferredWidth: 300
+            Layout.preferredWidth: 150
             Layout.fillHeight: true
-            visible: true
 
             Image {
+                id: leftArrowImg
                 anchors.centerIn: parent
                 source: "qrc:/icons/cluster/left-arrow.svg"
-                width: 32
-                height: 32
-                opacity: 0.6
+                width: 32; height: 32
+                opacity: AppTheme.isDark ? 0.4 : 0.7
+
+                layer.enabled: true
+                layer.effect: ColorOverlay {
+                    color: AppTheme.colors.text
+                }
             }
         }
 
-        // Gear selector (center)
+        // ====== CENTER GEAR SELECTOR ======
         Item {
             Layout.preferredWidth: 200
             Layout.fillHeight: true
@@ -95,109 +91,88 @@ Item {
             }
         }
 
-        // Right navigation arrow
+        // ====== RIGHT NAVIGATION ARROW ======
         Item {
             id: rightArrow
-            Layout.preferredWidth: 300
+            Layout.preferredWidth: 150
             Layout.fillHeight: true
-            visible: true
 
             Image {
+                id: rightArrowImg
                 anchors.centerIn: parent
                 source: "qrc:/icons/cluster/right-arrow.svg"
-                width: 32
-                height: 32
-                opacity: 0.6
+                width: 32; height: 32
+                opacity: AppTheme.isDark ? 0.4 : 0.7
+
+                layer.enabled: true
+                layer.effect: ColorOverlay {
+                    color: AppTheme.colors.text
+                }
             }
         }
 
-        // Spacer
-        Item {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-        }
+        // Right Spacer
+        Item { Layout.fillWidth: true; Layout.fillHeight: true }
 
-        // Battery indicator (BMW-style)
+        // ====== BATTERY INDICATOR (BMW-STYLE) ======
         Item {
-            Layout.preferredWidth: 60
+            Layout.preferredWidth: 80
             Layout.fillHeight: true
 
-            Item {
+            Column {
                 anchors.centerIn: parent
-                width: 45
-                height: 24
+                spacing: 2
 
-                // Battery outer border
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.rightMargin: 3
-                    width: 40
-                    height: 24
-                    radius: 2
-                    color: "transparent"
-                    border.color: clusterTopBar.batteryColor
-                    border.width: 1.5
+                Item {
+                    width: 45; height: 22
 
-                    // Battery fill
+                    // Battery Shell
                     Rectangle {
-                        anchors.left: parent.left
-                        anchors.top: parent.top
-                        anchors.bottom: parent.bottom
-                        anchors.margins: 2
-                        width: Math.max(2, parent.width - 4) * (clusterTopBar.batteryLevel / 100)
-                        radius: 1
+                        anchors.fill: parent
+                        anchors.rightMargin: 4
+                        radius: 4
+                        color: "transparent"
+                        border.color: AppTheme.alpha(clusterTopBar.batteryColor, AppTheme.isDark ? 0.8 : 1.0)
+                        border.width: AppTheme.isDark ? 1.5 : 2.0 // Thicker in light mode for contrast
+
+                        // Liquid Fill
+                        Rectangle {
+                            anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom
+                            anchors.margins: 2.5
+                            width: Math.max(2, (parent.width - 5) * (clusterTopBar.batteryLevel / 100))
+                            radius: 2
+
+                            gradient: Gradient {
+                                GradientStop { position: 0.0; color: AppTheme.shade(clusterTopBar.batteryColor, 0.1) }
+                                GradientStop { position: 1.0; color: clusterTopBar.batteryColor }
+                            }
+
+                            Behavior on width { NumberAnimation { duration: 500; easing.type: Easing.OutQuint } }
+                        }
+                    }
+
+                    // Battery Terminal (The "Nub")
+                    Rectangle {
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 3; height: 8; radius: 1
                         color: clusterTopBar.batteryColor
-
-                        Behavior on width {
-                            NumberAnimation {
-                                duration: 400
-                                easing.type: Easing.OutQuad
-                            }
-                        }
-
-                        // Subtle gradient
-                        gradient: Gradient {
-                            GradientStop {
-                                position: 0
-                                color: Qt.lighter(clusterTopBar.batteryColor, 1.1)
-                            }
-                            GradientStop {
-                                position: 1
-                                color: clusterTopBar.batteryColor
-                            }
-                        }
                     }
                 }
 
-                // Battery terminal (nub on right side)
-                Rectangle {
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.topMargin: 6
-                    width: 3
-                    height: 12
-                    radius: 1
-                    color: clusterTopBar.batteryColor
-                    opacity: 0.8
-                }
-
-                // Battery percentage label (below icon)
+                // Percentage Text
                 Text {
-                    anchors.top: parent.bottom
-                    anchors.topMargin: 3
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: clusterTopBar.batteryLevel + "%"
-                    font.pixelSize: 11
-                    font.weight: Font.Bold
-                    color: clusterTopBar.batteryColor
+                    font.pixelSize: AppTheme.typography.labelSmall
+                    font.weight: AppTheme.typography.weightBold
+                    font.family: AppTheme.typography.fontFamily
+                    color: AppTheme.isDark ? clusterTopBar.batteryColor : AppTheme.colors.text
                 }
             }
 
-            // Mouse area to make battery clickable
             MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
+                anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                 onClicked: clusterTopBar.batteryClicked()
             }
         }
