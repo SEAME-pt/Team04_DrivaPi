@@ -201,10 +201,20 @@ int AppController::run(QGuiApplication& app)
 
     engine.load(url);
 
-    if (!engine.rootObjects().isEmpty()) {
-        QWindow* window = qobject_cast<QWindow*>(engine.rootObjects().first());
+    // 1. Verify the engine actually loaded something
+    if (engine.rootObjects().isEmpty()) {
+        qCritical() << "Critical: QML Engine failed to load any root objects. Check your QML syntax/paths.";
+        return -1; // Exit gracefully
+    }
+
+    // 2. Safe access to the window
+    QObject* rootObj = engine.rootObjects().first();
+    if (rootObj) {
+        QWindow* window = qobject_cast<QWindow*>(rootObj);
         if (window) {
             window->showFullScreen();
+        } else {
+            qWarning() << "Root object is not a QWindow type.";
         }
     }
 
