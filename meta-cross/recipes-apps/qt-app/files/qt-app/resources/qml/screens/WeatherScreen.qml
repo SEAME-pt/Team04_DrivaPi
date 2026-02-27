@@ -56,7 +56,19 @@ Rectangle {
         weatherData.longitude = lon;
 
         var xhr = new XMLHttpRequest();
-        var url = "https://api.open-meteo.com/v1/forecast?" + "latitude=" + lat + "&longitude=" + lon + "&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,uv_index,precipitation" + "&hourly=temperature_2m,weather_code,precipitation_probability" + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,sunrise,sunset" + "&timezone=auto&forecast_days=7";
+        var tempParam = (settingsManager.temperatureUnit === "°F") ? "&temperature_unit=fahrenheit" : "";
+
+        var windParam = "";
+        if (settingsManager.windSpeedUnit === "m/s")
+            windParam = "&wind_speed_unit=ms";
+        else if (settingsManager.windSpeedUnit === "mph")
+            windParam = "&wind_speed_unit=mph";
+        else if (settingsManager.windSpeedUnit === "km/h")
+            windParam = "&wind_speed_unit=kmh";
+
+        var precipParam = (settingsManager.precipitationUnit === "inch") ? "&precipitation_unit=inch" : "";
+
+        var url = "https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon + "&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,uv_index,precipitation&hourly=temperature_2m,weather_code,precipitation_probability&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,sunrise,sunset&timezone=auto&forecast_days=7" + tempParam + windParam + precipParam;
 
         xhr.onreadystatechange = function () {
             if (xhr.readyState === XMLHttpRequest.DONE) {
@@ -290,6 +302,19 @@ Rectangle {
         onTriggered: fetchWeatherData(weatherData.latitude, weatherData.longitude, weatherData.location)
     }
 
+    Connections {
+        target: settingsManager
+        function onTemperatureUnitChanged() {
+            fetchWeatherData(weatherData.latitude, weatherData.longitude, weatherData.location);
+        }
+        function onWindSpeedUnitChanged() {
+            fetchWeatherData(weatherData.latitude, weatherData.longitude, weatherData.location);
+        }
+        function onPrecipitationUnitChanged() {
+            fetchWeatherData(weatherData.latitude, weatherData.longitude, weatherData.location);
+        }
+    }
+
     ColumnLayout {
         id: contentColumn
         anchors.fill: parent
@@ -394,7 +419,7 @@ Rectangle {
                 model: [
                     {
                         label: "Wind",
-                        value: weatherData.windSpeed + " m/s"
+                        value: weatherData.windSpeed + " " + settingsManager.windSpeedUnit
                     },
                     {
                         label: "Humidity",
