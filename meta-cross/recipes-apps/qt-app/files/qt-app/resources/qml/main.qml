@@ -956,4 +956,18 @@ ApplicationWindow {
             scale = 1.0;
         }
     }
+
+	// ====== GLOBAL BRIGHTNESS OVERLAY ======
+    Rectangle {
+        anchors.fill: parent
+        z: 10000 // Ensure it sits above the cluster, side panels, and popups
+        color: "black"
+
+        // Convert 0.0 - 1.0 brightness to an opacity (1.0 bright = 0.0 opacity)
+        // Math.max prevents the screen from going 100% pitch black so you don't lock yourself out
+        opacity: 0.5 - Math.max(0.1, settingsManager.screenBrightness)
+
+        // Very important: ensures touch events pass right through the overlay to the buttons below
+        enabled: false
+    }
 }

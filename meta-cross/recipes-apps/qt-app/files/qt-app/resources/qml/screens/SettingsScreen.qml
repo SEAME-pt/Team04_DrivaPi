@@ -161,10 +161,13 @@ Rectangle {
                 }
 
                 handle: Rectangle {
+                    // FIX: Explicitly bind the X and Y position to the slider's visual position
+                    x: brightSlider.leftPadding + brightSlider.visualPosition * (brightSlider.availableWidth - width)
+                    y: brightSlider.topPadding + (brightSlider.availableHeight - height) / 2
                     width: 12
                     height: 12
                     radius: 6
-                    color: "#4fb3d9"
+                    color: brightSlider.pressed? "#ffffff" : "#4fb3d9"
                     border.color: "#05080e"
                     border.width: 1
                 }
@@ -196,7 +199,7 @@ Rectangle {
                 model: speedModel
                 currentIndex: idx(speedModel, settingsManager.speedUnit)
                 onActivated: settingsManager.speedUnit = textAt(index)
-                
+
                 font.pixelSize: 11
                 contentItem: Text {
                     text: speedBox.displayText
