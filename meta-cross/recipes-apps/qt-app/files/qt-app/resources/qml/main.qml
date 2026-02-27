@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Window
 import QtQuick.Controls
 import QtQuick.Layouts
+import Qt5Compat.GraphicalEffects
 import "screens"
 import "components"
 import "theme"
@@ -460,6 +461,10 @@ ApplicationWindow {
                         isActive: verticalTabBar.currentIndex === 0
                         iconSource: "qrc:/icons/common/nav-mode.svg"
                         onClicked: verticalTabBar.currentIndex = 0
+						layer.enabled: true
+						layer.effect: ColorOverlay {
+							color: "#FFFFFF"
+						}
                     }
 
                     // Media Tab
@@ -470,6 +475,10 @@ ApplicationWindow {
                         isActive: verticalTabBar.currentIndex === 1
                         iconSource: "qrc:/icons/common/media-mode.svg"
                         onClicked: verticalTabBar.currentIndex = 1
+						layer.enabled: true
+						layer.effect: ColorOverlay {
+							color: "#FFFFFF"
+						}
                     }
 
                     // Weather Tab
@@ -480,6 +489,10 @@ ApplicationWindow {
                         isActive: verticalTabBar.currentIndex === 2
                         iconSource: "qrc:/icons/weather/sun.svg"
                         onClicked: verticalTabBar.currentIndex = 2
+						layer.enabled: true
+						layer.effect: ColorOverlay {
+							color: "#FFFFFF"
+						}
                     }
 
                     // Settings Tab
@@ -490,6 +503,10 @@ ApplicationWindow {
                         isActive: verticalTabBar.currentIndex === 3
                         iconSource: "qrc:/icons/settings/brightness.svg"
                         onClicked: verticalTabBar.currentIndex = 3
+						layer.enabled: true
+						layer.effect: ColorOverlay {
+							color: "#FFFFFF"
+						}
                     }
 
                     // System State Tab (RPi + STM32)
@@ -500,6 +517,10 @@ ApplicationWindow {
                         isActive: verticalTabBar.currentIndex === 4
                         iconSource: "qrc:/icons/hardware/sensor.svg"
                         onClicked: verticalTabBar.currentIndex = 4
+						layer.enabled: true
+						layer.effect: ColorOverlay {
+							color: "#FFFFFF"
+						}
                     }
                 }
             }
