@@ -29,6 +29,17 @@ Item {
             return "--";
         return Math.round(n) + (unit || "");
     }
+	function getTemp(c) {
+        var val = safeNum(c);
+        if (isNaN(val)) return NaN;
+
+        if (settingsManager.temperatureUnit === "°F") {
+            return (val * 9/5) + 32;
+        } else if (settingsManager.temperatureUnit === "K") {
+            return val + 273.15;
+        }
+        return val; // Base is °C
+    }
 
     // Online heuristics (replace with proper flags if you add them)
     property bool rpiOnline: !!piHealthReader && piHealthReader.isOnline
@@ -105,10 +116,10 @@ Item {
                     columnSpacing: 10
 
                     MetricTileMini {
-                        label: "CPU"
-                        value: rpiOnline ? fmt(piHealthReader.cpuTemp, 0, "°") : "--"
-                        warn: rpiOnline && piHealthReader.cpuTemp > 70
-                    }
+                    label: "CPU"
+                    value: rpiOnline? fmt(getTemp(piHealthReader.cpuTemp), 0, settingsManager.temperatureUnit) : "--"
+                    warn: rpiOnline && piHealthReader.cpuTemp > 70
+                	}
                     MetricTileMini {
                         label: "MEM"
                         value: rpiOnline ? fmtInt(piHealthReader.memoryPercent, "%") : "--"
@@ -168,10 +179,10 @@ Item {
                         warn: stmOnline && (vehicleData.stm32BatteryVoltage < 11.0 || vehicleData.stm32BatteryVoltage > 13.0)
                     }
                     MetricTileMini {
-                        label: "TEMP"
-                        value: stmOnline ? fmt(vehicleData.stm32Temperature, 1, "°C") : "--"
-                        warn: stmOnline && vehicleData.stm32Temperature > 60
-                    }
+                    label: "TEMP"
+                    value: stmOnline? fmt(getTemp(vehicleData.stm32Temperature), 1, settingsManager.temperatureUnit) : "--"
+                    warn: stmOnline && vehicleData.stm32Temperature > 60
+                	}
                     MetricTileMini {
                         label: "HUMIDITY"
                         value: stmOnline ? fmt(vehicleData.stm32Humidity, 0, "%") : "--"

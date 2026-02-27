@@ -88,7 +88,7 @@ Rectangle {
                         weatherData.uvIndex = Math.round(current.uv_index);
                         weatherData.precipitation = Math.round(current.precipitation * 10) / 10;
                         weatherData.dayOfWeek = new Date().toLocaleDateString(Qt.locale(), "dddd");
-                        weatherData.hiLo = "H:" + Math.round(daily.temperature_2m_max[0]) + "°  L:" + Math.round(daily.temperature_2m_min[0]) + "°";
+                        weatherData.hiLo = "H:" + Math.round(daily.temperature_2m_max[0]) + settingsManager.temperatureUnit + "  L:" + Math.round(daily.temperature_2m_min[0]) + settingsManager.temperatureUnit;
                         weatherData.lastUpdated = new Date().toLocaleTimeString(Qt.locale(), "HH:mm");
 
                         var now = new Date();
@@ -387,7 +387,7 @@ Rectangle {
             }
 
             Text {
-                text: weatherData.isLoading ? "--" : weatherData.temperature + "°"
+                text: weatherData.isLoading ? "--" : weatherData.temperature + settingsManager.temperatureUnit
                 font.pixelSize: 56
                 font.weight: Font.Light
                 color: "#FFFFFF"
@@ -431,7 +431,7 @@ Rectangle {
                     },
                     {
                         label: "Feels",
-                        value: weatherData.apparentTemperature + "°"
+                        value: weatherData.apparentTemperature + settingsManager.temperatureUnit
                     }
                 ]
 
@@ -515,7 +515,7 @@ Rectangle {
                 }
 
                 Text {
-                    text: modelData.temp + "°"
+                    text: modelData.temp + settingsManager.temperatureUnit
                     font.pixelSize: 13
                     color: "#FFFFFF"
                     font.weight: Font.Medium
@@ -571,7 +571,7 @@ Rectangle {
                     }
 
                     Text {
-                        text: modelData.minTemp + "°"
+                        text: modelData.minTemp + settingsManager.temperatureUnit
                         font.pixelSize: 12
                         color: "#6A7A8A"
                         Layout.preferredWidth: 30
@@ -610,7 +610,7 @@ Rectangle {
                     }
 
                     Text {
-                        text: modelData.maxTemp + "°"
+                        text: modelData.maxTemp + settingsManager.temperatureUnit
                         font.pixelSize: 12
                         color: "#FFFFFF"
                         Layout.preferredWidth: 30
