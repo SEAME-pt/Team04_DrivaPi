@@ -57,6 +57,12 @@ void SettingsManager::loadSettings() {
         m_settings["volume"] = 50;
         m_settings["musicLibraryPath"] = getDefaultMusicPath();  // Auto-detect path
         m_settings["theme"] = "dark";
+        m_settings = 0.75;
+        m_settings["speedUnit"] = "km/h";
+        m_settings["temperatureUnit"] = "°C";
+        m_settings["distanceUnit"] = "km";
+        m_settings = "m/s";
+        m_settings["precipitationUnit"] = "mm";
         saveSettings();
     }
 }
@@ -139,4 +145,64 @@ void SettingsManager::setTheme(const QString& thm) {
     m_settings["theme"] = thm;
     saveSettings();
     emit themeChanged();
+}
+
+double SettingsManager::screenBrightness() const {
+    return m_settings.contains("screenBrightness")? m_settings.value("screenBrightness").toDouble() : 0.75;
+}
+
+void SettingsManager::setScreenBrightness(double brightness) {
+    m_settings = brightness;
+    saveSettings();
+    emit screenBrightnessChanged();
+}
+
+QString SettingsManager::speedUnit() const {
+    return m_settings.contains("speedUnit")? m_settings.value("speedUnit").toString() : "km/h";
+}
+
+void SettingsManager::setSpeedUnit(const QString& unit) {
+    m_settings["speedUnit"] = unit;
+    saveSettings();
+    emit speedUnitChanged();
+}
+
+QString SettingsManager::temperatureUnit() const {
+    return m_settings.contains("temperatureUnit")? m_settings.value("temperatureUnit").toString() : "°C";
+}
+
+void SettingsManager::setTemperatureUnit(const QString& unit) {
+    m_settings["temperatureUnit"] = unit;
+    saveSettings();
+    emit temperatureUnitChanged();
+}
+
+QString SettingsManager::distanceUnit() const {
+    return m_settings.contains("distanceUnit")? m_settings.value("distanceUnit").toString() : "km";
+}
+
+void SettingsManager::setDistanceUnit(const QString& unit) {
+    m_settings["distanceUnit"] = unit;
+    saveSettings();
+    emit distanceUnitChanged();
+}
+
+QString SettingsManager::windSpeedUnit() const {
+    return m_settings.contains("windSpeedUnit")? m_settings.value("windSpeedUnit").toString() : "m/s";
+}
+
+void SettingsManager::setWindSpeedUnit(const QString& unit) {
+    m_settings = unit;
+    saveSettings();
+    emit windSpeedUnitChanged();
+}
+
+QString SettingsManager::precipitationUnit() const {
+    return m_settings.contains("precipitationUnit")? m_settings.value("precipitationUnit").toString() : "mm";
+}
+
+void SettingsManager::setPrecipitationUnit(const QString& unit) {
+    m_settings["precipitationUnit"] = unit;
+    saveSettings();
+    emit precipitationUnitChanged();
 }

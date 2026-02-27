@@ -21,6 +21,13 @@ public:
     Q_PROPERTY(QString musicLibraryPath READ musicLibraryPath WRITE setMusicLibraryPath NOTIFY musicLibraryPathChanged)
     Q_PROPERTY(QString theme READ theme WRITE setTheme NOTIFY themeChanged)
 
+    Q_PROPERTY(double screenBrightness READ screenBrightness WRITE setScreenBrightness NOTIFY screenBrightnessChanged)
+    Q_PROPERTY(QString speedUnit READ speedUnit WRITE setSpeedUnit NOTIFY speedUnitChanged)
+    Q_PROPERTY(QString temperatureUnit READ temperatureUnit WRITE setTemperatureUnit NOTIFY temperatureUnitChanged)
+    Q_PROPERTY(QString distanceUnit READ distanceUnit WRITE setDistanceUnit NOTIFY distanceUnitChanged)
+    Q_PROPERTY(QString windSpeedUnit READ windSpeedUnit WRITE setWindSpeedUnit NOTIFY windSpeedUnitChanged)
+    Q_PROPERTY(QString precipitationUnit READ precipitationUnit WRITE setPrecipitationUnit NOTIFY precipitationUnitChanged)
+
     QString lastPlayedTrack() const;
     void setLastPlayedTrack(const QString& track);
 
@@ -33,6 +40,24 @@ public:
     QString theme() const;
     void setTheme(const QString& thm);
 
+    double screenBrightness() const;
+    void setScreenBrightness(double brightness);
+
+    QString speedUnit() const;
+    void setSpeedUnit(const QString& unit);
+
+    QString temperatureUnit() const;
+    void setTemperatureUnit(const QString& unit);
+
+    QString distanceUnit() const;
+    void setDistanceUnit(const QString& unit);
+
+    QString windSpeedUnit() const;
+    void setWindSpeedUnit(const QString& unit);
+
+    QString precipitationUnit() const;
+    void setPrecipitationUnit(const QString& unit);
+
 	QString getDefaultMusicPath() const;
 
 signals:
@@ -41,7 +66,13 @@ signals:
     void musicLibraryPathChanged();
     void themeChanged();
     void settingChanged(const QString& key);
-
+    void screenBrightnessChanged();
+    void speedUnitChanged();
+    void temperatureUnitChanged();
+    void distanceUnitChanged();
+    void windSpeedUnitChanged();
+    void precipitationUnitChanged();
+    
 private:
     void loadSettings();
     void saveSettings();

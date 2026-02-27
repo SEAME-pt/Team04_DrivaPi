@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import "../theme"
-import "../store"
 
 Rectangle {
     id: root
@@ -60,8 +59,8 @@ Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 28
                 model: themeModel
-                currentIndex: idx(themeModel, SettingsStore.themeMode)
-                onActivated: SettingsStore.themeMode = textAt(index)
+                currentIndex: idx(themeModel, settingsManager.theme)
+                onActivated: settingsManager.theme = textAt(index)
 
                 font.pixelSize: 11
                 contentItem: Text {
@@ -139,8 +138,8 @@ Rectangle {
                 Layout.preferredHeight: 28
                 from: 0
                 to: 1
-                value: SettingsStore.screenBrightness
-                onValueChanged: SettingsStore.screenBrightness = value
+                value: settingsManager.screenBrightness
+                onValueChanged: settingsManager.screenBrightness = value
 
                 background: Rectangle {
                     x: 0
@@ -195,9 +194,9 @@ Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 28
                 model: speedModel
-                currentIndex: idx(speedModel, SettingsStore.speedUnit)
-                onActivated: SettingsStore.speedUnit = textAt(index)
-
+                currentIndex: idx(speedModel, settingsManager.speedUnit)
+                onActivated: settingsManager.speedUnit = textAt(index)
+                
                 font.pixelSize: 11
                 contentItem: Text {
                     text: speedBox.displayText
@@ -271,8 +270,8 @@ Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 28
                 model: tempModel
-                currentIndex: idx(tempModel, SettingsStore.temperatureUnit)
-                onActivated: SettingsStore.temperatureUnit = textAt(index)
+                currentIndex: idx(tempModel, settingsManager.temperatureUnit)
+                onActivated: settingsManager.temperatureUnit = textAt(index)
 
                 font.pixelSize: 11
                 contentItem: Text {
@@ -347,8 +346,8 @@ Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 28
                 model: distanceModel
-                currentIndex: idx(distanceModel, SettingsStore.distanceUnit)
-                onActivated: SettingsStore.distanceUnit = textAt(index)
+                currentIndex: idx(distanceModel, settingsManager.distanceUnit)
+                onActivated: settingsManager.distanceUnit = textAt(index)
 
                 font.pixelSize: 11
                 contentItem: Text {
@@ -423,8 +422,8 @@ Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 28
                 model: windModel
-                currentIndex: idx(windModel, SettingsStore.windSpeedUnit)
-                onActivated: SettingsStore.windSpeedUnit = textAt(index)
+                currentIndex: idx(windModel, settingsManager.windSpeedUnit)
+                onActivated: settingsManager.windSpeedUnit = textAt(index)
 
                 font.pixelSize: 11
                 contentItem: Text {
@@ -499,8 +498,8 @@ Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 28
                 model: precipModel
-                currentIndex: idx(precipModel, SettingsStore.precipitationUnit)
-                onActivated: SettingsStore.precipitationUnit = textAt(index)
+                currentIndex: idx(precipModel, settingsManager.precipitationUnit)
+                onActivated: settingsManager.precipitationUnit = textAt(index)
 
                 font.pixelSize: 11
                 contentItem: Text {
