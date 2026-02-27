@@ -12,7 +12,11 @@ Rectangle {
     // Speed used by motion simulation (supports reverse if negative)
     readonly property real motionSpeedKmh: currentSpeed
     readonly property real motionSpeedAbs: Math.abs(motionSpeedKmh)
-    readonly property real motionDir: (motionSpeedKmh >= 0) ? 1 : -1
+    readonly property real motionDir: {
+        // Reverse animation if gear is "R"
+        if (currentGear === "R") return -1;
+        return 1;
+    }
 
     // REAL-WORLD CALIBRATION: 4 m/s = 14.4 km/h = full intensity
     readonly property real realMaxSpeedKmh: 14.4
@@ -660,7 +664,7 @@ Rectangle {
                             return;
 
                         var normalizedSpeed = root.clamp(root.motionSpeedAbs / root.realMaxSpeedKmh, 0, 1);
-                        var step = (interval / 1000.0) * normalizedSpeed * 0.75;
+                        var step = (interval / 1000.0) * normalizedSpeed * 2.0;
                         root.motionPhase = root.wrap01(root.motionPhase + root.motionDir * step);
                     }
                 }
