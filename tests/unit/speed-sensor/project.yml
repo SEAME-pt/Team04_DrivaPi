@@ -42,14 +42,20 @@
 :paths:
   :test:
     - +:test/**
-    - -:test/support
-  :source:
-    - src/**
+  :source: []
   :include:
-    - src/**
+    - ../common/support
+    - ../../../firmware/Core/Inc/**
   :support:
-    - test/support
+    - ../common/support
   :libraries: []
+
+:flags:
+  :gcov:
+    :compile:
+      - --coverage
+    :link:
+      - --coverage
 
 :files:
   :test: []

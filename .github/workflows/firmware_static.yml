@@ -32,8 +32,7 @@ jobs:
           sudo apt-get install -y \
             gcc-arm-none-eabi \
             binutils-arm-none-eabi \
-            make \
-            jq
+            make
 
       - name: Show ARM toolchain version
         run: arm-none-eabi-gcc --version
@@ -77,6 +76,11 @@ jobs:
           input: results/cpp.sarif
           output: results/cpp.sarif
 
+      - name: Validate static analysis (SARIF gate)
+        run: |
+          python3 scripts/ci/validate_static_analysis.py \
+            --sarif-candidates results/cpp.sarif
+
       - name: Upload SARIF artifact
         if: always()
         uses: actions/upload-artifact@v6
@@ -84,52 +88,6 @@ jobs:
           name: codeql-sarif-filtered
           path: results/cpp.sarif
           retention-days: 30
-
-      - name: Parse CodeQL results
-        id: codeql_results
-        if: always()
-        run: |
-          SARIF="results/cpp.sarif"
-
-          if [ ! -f "$SARIF" ]; then
-            echo "⚠️ SARIF not found"
-            echo "errors=0" >> $GITHUB_OUTPUT
-            echo "warnings=0" >> $GITHUB_OUTPUT
-            echo "notes=0" >> $GITHUB_OUTPUT
-            echo "status=❌ No results" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          ERRORS=$(jq '[.runs[].results[] | select(.level=="error")] | length' "$SARIF")
-          WARNINGS=$(jq '[.runs[].results[] | select(.level=="warning")] | length' "$SARIF")
-          NOTES=$(jq '[.runs[].results[] | select(.level=="note" or .level=="recommendation")] | length' "$SARIF")
-
-          echo "errors=$ERRORS" >> $GITHUB_OUTPUT
-          echo "warnings=$WARNINGS" >> $GITHUB_OUTPUT
-          echo "notes=$NOTES" >> $GITHUB_OUTPUT
-
-          echo "📊 CodeQL results"
-          echo "   High/Critical: $ERRORS"
-          echo "   Warnings:      $WARNINGS"
-          echo "   Notes:         $NOTES"
-
-          if [ "$ERRORS" -gt 0 ]; then
-            echo "status=❌ FAILED" >> $GITHUB_OUTPUT
-          else
-            echo "status=✅ PASSED" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Fail on high or critical issues
-        if: always()
-        run: |
-          ERRORS="${{ steps.codeql_results.outputs.errors }}"
-
-          if [ "$ERRORS" -gt 0 ]; then
-            echo "❌ Build failed due to $ERRORS high/critical issues"
-            exit 1
-          fi
-
-          echo "✅ No high/critical issues"
 
   upload-sarif:
     name: Upload SARIF to GitHub Security

@@ -8,7 +8,8 @@ parents:
   - id: URD-STEERING_CONTROL
 children:
   - id: SWD-SERVO_DRIVER
-  - id: HLTC-STEERING-ACCURACY
+  - id: HLTC-STEERING_ACCURACY
+  - id: HLTC-INT-STEERING_I2C_ACK
 reviewers:
   - name: "Melanie Reis"
     email: "melanie.reis@seame.pt"

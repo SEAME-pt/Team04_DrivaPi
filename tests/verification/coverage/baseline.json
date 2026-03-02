@@ -4,11 +4,11 @@
 	"suites": {
 		"dc-motor": {
 			"line_rate": 1.0000,
-			"branch_rate": 0.9750
+			"branch_rate": 1.0000
 		},
 		"servo-motor": {
 			"line_rate": 1.0000,
-			"branch_rate": 0.9670
+			"branch_rate": 1.0000
 		},
 		"speed-sensor": {
 			"line_rate": 1.0000,

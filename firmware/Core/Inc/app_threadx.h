@@ -41,6 +41,8 @@ extern "C" {
 #include "dc_motor_test.h"
 #include "motor_utils.h"
 #include "sensors.h"
+#include "speed_sensor.h"
+
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -91,17 +93,6 @@ typedef struct can_message_s
 #define CAN_ID_BATTERY_DATA        0x200  /* Battery percentage + voltage (512) */
 #define CAN_ID_HTS221_DATA         0x400  /* HTS221 Temperature + Humidity (1024) */
 #define CAN_ID_RND_GEAR            0x300  /* RND gear state (768) */
-
-/* RND Gear States */
-typedef enum {
-    GEAR_NEUTRAL = 0,   /* 'N' - Neutral */
-    GEAR_REVERSE = 1,   /* 'R' - Reverse */
-    GEAR_DRIVE = 2      /* 'D' - Drive */
-} RNDGear_t;
-
-/* RND Detection Thresholds */
-#define RND_DEADZONE_POSITIVE  0.2f
-#define RND_DEADZONE_NEGATIVE  -0.2f
 
 /* Main thread defines -------------------------------------------------------*/
 /* USER CODE BEGIN MTD */

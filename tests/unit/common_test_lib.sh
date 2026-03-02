@@ -171,7 +171,7 @@ generate_lcov_coverage() {
         lcov --capture \
             --directory "$build_dir" \
             --output-file "$coverage_dir/coverage.info" \
-            --rc branch_coverage=1 \
+            --rc lcov_branch_coverage=1 \
             --ignore-errors source,gcov 2>&1 | grep -v "WARNING" || true
 
     # Filter
@@ -179,7 +179,7 @@ generate_lcov_coverage() {
             '/usr/*' '*/test/*' '*/mock_*' '*/unity/*' '*/cmock/*' '*vendor*' \
             '*c_exception*' '*build/test/*' '*test/runners*' '*test/mocks*' '/var/lib/gems/*' '*/common/*' \
             --output-file "$coverage_dir/coverage_filtered.info" \
-            --rc branch_coverage=1 \
+            --rc lcov_branch_coverage=1 \
             --ignore-errors unused >/dev/null 2>&1 || true
 
     # Generate HTML
@@ -231,14 +231,14 @@ aggregate_coverage() {
 
         lcov "${lcov_args[@]}" \
             -o "$output_dir/coverage_combined.info" \
-            --rc branch_coverage=1 || return 1
+            --rc lcov_branch_coverage=1 || return 1
 
     # Filter
         lcov -r "$output_dir/coverage_combined.info" \
             '/usr/*' '*vendor*' '*cmock*' '*unity*' '*c_exception*' \
             '*build/test/*' '*test/runners*' '*test/mocks*' '/var/lib/gems/*' '*/common/*' \
             -o "$output_dir/coverage_filtered.info" \
-            --rc branch_coverage=1 \
+            --rc lcov_branch_coverage=1 \
             --ignore-errors unused >/dev/null 2>&1 || true
 
     # Generate HTML
@@ -256,7 +256,7 @@ aggregate_coverage() {
 
     echo ""
     log_info "Coverage Summary:"
-    lcov --summary "$output_dir/coverage_filtered.info" --rc branch_coverage=1 || true
+    lcov --summary "$output_dir/coverage_filtered.info" --rc lcov_branch_coverage=1 || true
 }
 
 # ============================================================================
@@ -280,7 +280,7 @@ generate_coverage_xml() {
     local branch_rate=0.0
 
     # Get coverage metrics using lcov with branch coverage enabled
-    local lcov_output=$(lcov --summary "$coverage_info" --rc branch_coverage=1 2>/dev/null || true)
+    local lcov_output=$(lcov --summary "$coverage_info" --rc lcov_branch_coverage=1 2>/dev/null || true)
 
     # Extract line coverage percentage (e.g., "lines.......: 100.0% (210 of 210 lines)")
     if [[ $lcov_output =~ lines[^:]*:[[:space:]]*([0-9.]+)% ]]; then
@@ -367,9 +367,36 @@ generate_test_report() {
     local report_file="$2"
 
     # Extract test counts
-    local passed=$(grep -oP 'Tests \d+, \d+ failures' "$output_file" | grep -oP '\d+(?=, \d+ failures)' | head -1 || echo 0)
-    local failures=$(grep -oP 'Tests \d+, \d+ failures' "$output_file" | grep -oP '\d+(?= failures)' | head -1 || echo 0)
-    local total=$(grep -oP '^\d+(?= Tests)' "$output_file" | awk '{s+=$1} END {print s}' || echo 0)
+    local summary_line
+    summary_line=$(grep -E '^[[:space:]]*[0-9]+[[:space:]]+Tests' "$output_file" | tail -1 || true)
+
+    local total=0
+    local failures=0
+    if [[ -n "$summary_line" ]]; then
+        read -r total failures < <(echo "$summary_line" | awk '
+            {
+                t=0; f=0;
+                for (i=1; i<=NF; i++) {
+                    token=$i;
+                    prev=(i>1)?$(i-1):"";
+                    clean_token=token;
+                    clean_prev=prev;
+                    gsub(/[^A-Za-z0-9]/, "", clean_token);
+                    gsub(/[^0-9]/, "", clean_prev);
+
+                    if (clean_token == "Tests" && clean_prev != "") t = clean_prev + 0;
+                    if (tolower(clean_token) == "failures" && clean_prev != "") f = clean_prev + 0;
+                }
+                print t+0, f+0;
+            }
+        ')
+    fi
+
+    if [[ "$total" -eq 0 ]]; then
+        total=$(grep -oP '^\d+(?= Tests)' "$output_file" | tail -1 || echo 0)
+    fi
+
+    local passed=$((total - failures))
 
     if [[ -z "$passed" ]] || [[ "$passed" == "0" ]]; then
         passed=$((total - failures))
@@ -390,20 +417,81 @@ EOF
 generate_junit_xml() {
     local output_file="$1"
     local xml_file="$2"
+    local suite_name
+    suite_name="$(basename $(dirname $(dirname "$output_file")))"
+
+    xml_escape() {
+        echo "$1" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' -e "s/'/\&apos;/g" -e 's/"/\&quot;/g'
+    }
 
     # Extract test info
-    local passed=$(grep -oP 'Tests \d+, \d+ failures' "$output_file" | grep -oP '\d+(?=, \d+ failures)' | head -1 || echo 0)
-    local failures=$(grep -oP 'Tests \d+, \d+ failures' "$output_file" | grep -oP '\d+(?= failures)' | head -1 || echo 0)
-    local total=$(grep -oP '^\d+(?= Tests)' "$output_file" | awk '{s+=$1} END {print s}' || echo 0)
+    local summary_line
+    summary_line=$(grep -E '^[[:space:]]*[0-9]+[[:space:]]+Tests' "$output_file" | tail -1 || true)
 
-    if [[ -z "$passed" ]] || [[ "$passed" == "0" ]]; then
-        passed=$((total - failures))
+    local total=0
+    local failures=0
+    if [[ -n "$summary_line" ]]; then
+        read -r total failures < <(echo "$summary_line" | awk '
+            {
+                t=0; f=0;
+                for (i=1; i<=NF; i++) {
+                    token=$i;
+                    prev=(i>1)?$(i-1):"";
+                    clean_token=token;
+                    clean_prev=prev;
+                    gsub(/[^A-Za-z0-9]/, "", clean_token);
+                    gsub(/[^0-9]/, "", clean_prev);
+
+                    if (clean_token == "Tests" && clean_prev != "") t = clean_prev + 0;
+                    if (tolower(clean_token) == "failures" && clean_prev != "") f = clean_prev + 0;
+                }
+                print t+0, f+0;
+            }
+        ')
+    fi
+
+    if [[ "$total" -eq 0 ]]; then
+        total=$(grep -oP '^\d+(?= Tests)' "$output_file" | tail -1 || echo 0)
     fi
 
     cat > "$xml_file" << EOF
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="$(basename $(dirname $(dirname "$output_file")))" tests="$total" failures="$failures" timestamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)">
+<testsuite name="$suite_name" tests="$total" failures="$failures" timestamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)">
+EOF
+
+    local fail_lines
+    fail_lines=$(grep -E '^[^:]+:[0-9]+:[^:]+:FAIL:' "$output_file" || true)
+
+    if [[ -n "$fail_lines" ]]; then
+        while IFS= read -r line; do
+            [[ -z "$line" ]] && continue
+
+            local file_name line_no rest test_name msg
+            file_name="${line%%:*}"
+            rest="${line#*:}"
+            line_no="${rest%%:*}"
+            rest="${rest#*:}"
+            test_name="${rest%%:*}"
+            msg="${line#*FAIL: }"
+
+            local esc_class esc_test esc_msg
+            esc_class=$(xml_escape "$file_name")
+            esc_test=$(xml_escape "$test_name")
+            esc_msg=$(xml_escape "$msg")
+
+            cat >> "$xml_file" << EOF
+  <testcase classname="$esc_class" name="$esc_test" time="0">
+    <failure message="line $line_no">$esc_msg</failure>
+  </testcase>
+EOF
+        done <<< "$fail_lines"
+    else
+        cat >> "$xml_file" << EOF
   <testcase classname="Unit Tests" name="Test Run" time="0"/>
+EOF
+    fi
+
+    cat >> "$xml_file" << EOF
 </testsuite>
 EOF
 }
@@ -420,7 +508,7 @@ EOF
 
     for xml_file in "${xml_files[@]}"; do
         if [[ -f "$xml_file" ]]; then
-            grep -v '<?xml' "$xml_file" >> "$output_file"
+            sed '/^<?xml version="1.0" encoding="UTF-8"?>$/d' "$xml_file" >> "$output_file"
         fi
     done
 

@@ -6,7 +6,8 @@ text: |
 verification_method: "Integration Testing"
 children:
   - id: SRD-COMM-PROTOCOL
-  - id: HLTC-COMM-NOMINAL
+  - id: HLTC-INT-PS3_DECODE_VALIDATE
+  - id: HLTC-COMM_NOMINAL
   - id: HLTC-VAL-HMI_LINK
 reviewers:
   - name: "Melanie Reis"

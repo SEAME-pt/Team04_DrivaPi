@@ -8,7 +8,8 @@ parents:
   - id: URD-PROPULSION_CONTROL
 children:
   - id: SWD-DC_MOTOR_DRIVER
-  - id: HLTC-PROPULSION-NOMINAL
+  - id: HLTC-PROPULSION_NOMINAL
+  - id: HLTC-INT-THROTTLE_I2C_ACK
 reviewers:
   - name: "Melanie Reis"
     email: "melanie.reis@seame.pt"

@@ -7,6 +7,7 @@ verification_method: "System Testing"
 children:
   - id: SRD-ACT-MOTOR_DRIVE
   - id: HLTC-PROPULSION_NOMINAL
+  - id: HLTC-INT-THROTTLE_I2C_ACK
 reviewers:
   - name: "Melanie Reis"
     email: "melanie.reis@seame.pt"

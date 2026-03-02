@@ -54,6 +54,14 @@ jobs:
           chmod +x tests/unit/run_all_tests.sh
           bash tests/unit/run_all_tests.sh 2>&1 | tee test_output.log
 
+      - name: Validate LLTC coverage (baseline gate)
+        run: |
+          python3 scripts/ci/validate_lltc_coverage.py \
+            --base-dir artifacts/verification/coverage \
+            --suites dc-motor servo-motor speed-sensor \
+            --baseline tests/verification/coverage/baseline.json \
+            --min-line-rate 90.0
+
       - name: Upload Verification Artifacts (TSF)
         uses: actions/upload-artifact@v6
         if: always()
@@ -72,70 +80,14 @@ jobs:
 
       - name: Generate unit test summary (markdown)
         if: always()
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const fs = require('fs');
-
-            let dcMotorCount = 0;
-            let servoMotorCount = 0;
-            let speedSensorCount = 0;
-            let testFailed = 0;
-
-            let testSummary = '### 🧪 Unit Test Results\n\n⚠️ `test_output.log` not found. Check workflow logs.\n';
-
-            if (fs.existsSync('test_output.log')) {
-              const logContent = fs.readFileSync('test_output.log', 'utf8');
-
-              const dcMotorCountMatch = logContent.match(/\[TEST_COUNT\] DC Motor:\s*(\d+)\s*tests/i);
-              const servoMotorCountMatch = logContent.match(/\[TEST_COUNT\] Servo Motor:\s*(\d+)\s*tests/i);
-              const speedSensorCountMatch = logContent.match(/\[TEST_COUNT\] Speed Sensor:\s*(\d+)\s*tests/i);
-
-              if (dcMotorCountMatch) dcMotorCount = parseInt(dcMotorCountMatch[1], 10);
-              if (servoMotorCountMatch) servoMotorCount = parseInt(servoMotorCountMatch[1], 10);
-              if (speedSensorCountMatch) speedSensorCount = parseInt(speedSensorCountMatch[1], 10);
-
-              const total = dcMotorCount + servoMotorCount + speedSensorCount;
-
-              const dcMotorFailed = logContent.match(/\[INFO\] DC Motor:\s+FAILED/i);
-              const servoMotorFailed = logContent.match(/\[INFO\] Servo Motor:\s+FAILED/i);
-              const speedSensorFailed = logContent.match(/\[INFO\] Speed Sensor:\s+FAILED/i);
-              testFailed = (dcMotorFailed || servoMotorFailed || speedSensorFailed) ? 1 : 0;
-
-              const dcMotorMatch = logContent.match(/\[INFO\] DC Motor:\s+(PASSED|FAILED)/i);
-              const servoMotorMatch = logContent.match(/\[INFO\] Servo Motor:\s+(PASSED|FAILED)/i);
-              const speedSensorMatch = logContent.match(/\[INFO\] Speed Sensor:\s+(PASSED|FAILED)/i);
-
-              const dcMotorStatus = dcMotorMatch ? dcMotorMatch[1] : (testFailed === 0 ? 'PASSED' : 'FAILED');
-              const servoMotorStatus = servoMotorMatch ? servoMotorMatch[1] : (testFailed === 0 ? 'PASSED' : 'FAILED');
-              const speedSensorStatus = speedSensorMatch ? speedSensorMatch[1] : (testFailed === 0 ? 'PASSED' : 'FAILED');
-
-              const coverageMatch = logContent.match(/lines.*?(\d+\.\d+)%.*?functions.*?(\d+\.\d+)%.*?branches.*?(\d+\.\d+)%/s);
-              const coverageInfo = coverageMatch
-                ? `\n#### 📊 Coverage\n- **Lines**: ${coverageMatch[1]}%\n- **Functions**: ${coverageMatch[2]}%\n- **Branches**: ${coverageMatch[3]}%\n`
-                : '\n#### 📊 Coverage\nCoverage report available in artifacts.\n';
-
-              testSummary = `
-            ### 🧪 Unit Test Results
-
-            **Overall Status**: ${total > 0 && testFailed === 0 ? '✅ PASSED' : '❌ FAILED'}
-
-            - **DC Motor Tests**: ${dcMotorStatus} (${dcMotorCount} tests)
-            - **Servo Motor Tests**: ${servoMotorStatus} (${servoMotorCount} tests)
-            - **Speed Sensor Tests**: ${speedSensorStatus} (${speedSensorCount} tests)
-            - **Total**: ${total} tests
-            ${coverageInfo}
-            ---
-            Full coverage reports available in workflow artifacts
-            `.trim() + '\n';
-            }
-
-            fs.writeFileSync('unit_test_summary.md', testSummary);
-
-            await core.summary
-              .addHeading('🧪 Unit Test Results', 2)
-              .addRaw(testSummary)
-              .write();
+        run: |
+          chmod +x scripts/ci/summarize_test_results.sh
+          if ! scripts/ci/summarize_test_results.sh test_output.log "LLTC Coverage Validation Summary.txt" > unit_test_summary.md; then
+            echo "### 🧪 Unit Test Results" > unit_test_summary.md
+            echo "" >> unit_test_summary.md
+            echo "⚠️ Failed to generate unit test summary from logs." >> unit_test_summary.md
+          fi
+          cat unit_test_summary.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload unit test summary artifact
         if: always()

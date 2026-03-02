@@ -8,7 +8,8 @@ parents:
   - id: URD-HMI_COMMUNICATION
 children:
   - id: SWD-COMM_PROTOCOL
-  - id: HLTC-COMM-NOMINAL
+  - id: HLTC-INT-PS3_DECODE_VALIDATE
+  - id: HLTC-COMM_NOMINAL
 reviewers:
   - name: "Melanie Reis"
     email: "melanie.reis@seame.pt"

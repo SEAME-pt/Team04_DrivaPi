@@ -29,26 +29,44 @@ main() {
   ensure_vendor "${VENDOR_DIR}" || exit 1
 
   cd "${PROJECT_ROOT}"
-  run_ceedling_tests "${REPORTS_DIR}/test_output.log" || exit 1
+  local test_rc=0
+  run_ceedling_tests "${REPORTS_DIR}/test_output.log" || test_rc=$?
 
   generate_lcov_coverage "${BUILD_DIR}" "${COVERAGE_DIR}"
 
-  cp -f "${COVERAGE_DIR}/coverage_filtered.info" "${PROJECT_ROOT}/coverage_filtered.info"
-  cp -f "${COVERAGE_DIR}/coverage.xml"          "${PROJECT_ROOT}/speed-sensor.xml"
-
-  ABS_ROOT="$(cd "${PROJECT_ROOT}/../.." && pwd)"
+  ABS_ROOT="$(cd "${PROJECT_ROOT}/../../.." && pwd)"
   PERSIST_DIR="${ABS_ROOT}/build/coverage/speed-sensor"
   mkdir -p "${PERSIST_DIR}"
-  cp -f "${COVERAGE_DIR}/coverage_filtered.info" "${PERSIST_DIR}/coverage_filtered.info"
-  cp -f "${COVERAGE_DIR}/coverage.xml"          "${PERSIST_DIR}/speed-sensor.xml"
+  local artifacts_rc=0
+  if [[ -f "${COVERAGE_DIR}/coverage_filtered.info" ]]; then
+    cp -f "${COVERAGE_DIR}/coverage_filtered.info" "${PERSIST_DIR}/coverage_filtered.info"
+  else
+    log_warn "Coverage file not found: ${COVERAGE_DIR}/coverage_filtered.info"
+    artifacts_rc=1
+  fi
+
+  if [[ -f "${COVERAGE_DIR}/coverage.xml" ]]; then
+    cp -f "${COVERAGE_DIR}/coverage.xml" "${PERSIST_DIR}/speed-sensor.xml"
+  else
+    log_warn "Coverage XML not found: ${COVERAGE_DIR}/coverage.xml"
+    artifacts_rc=1
+  fi
 
   if [[ "${CALLED_FROM_MASTER:-0}" = "1" ]]; then
     ART_DIR="${ABS_ROOT}/artifacts/verification/coverage"
     mkdir -p "${ART_DIR}"
-    cp -f "${COVERAGE_DIR}/coverage.xml" "${ART_DIR}/speed-sensor.xml"
+    if [[ -f "${COVERAGE_DIR}/coverage.xml" ]]; then
+      cp -f "${COVERAGE_DIR}/coverage.xml" "${ART_DIR}/speed-sensor.xml"
+    fi
   fi
 
-  log_section "✓ SPEED SENSOR TESTS PASSED"
+  if [[ $test_rc -eq 0 && $artifacts_rc -eq 0 ]]; then
+    log_section "✓ SPEED SENSOR TESTS PASSED"
+    return 0
+  fi
+
+  log_section "✗ SPEED SENSOR TESTS FAILED"
+  return 1
 }
 
 main "$@"

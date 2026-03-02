@@ -17,9 +17,7 @@ reviewed: '2026-01-14 - Approved by Miguel Cardoso <miguel.cardoso@seame.pt>'
 
 references:
   - type: "file"
-    path: "tests/unit/servo-motor/test/test_servo_functions.c"
-  - type: "file"
-    path: "tests/unit/servo-motor/test/test_threadx_servo_motor_with_mocks.c"
+    path: "tests/unit/servo-motor/test/test_servo_motor.c"
 
 evidence:
   type: junit_pass_rate_validator

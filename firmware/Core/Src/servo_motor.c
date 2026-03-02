@@ -11,15 +11,11 @@
 #include "servo_motor.h"
 
 /**
- * @brief
- *
- * @param hi2c
- * @param addr7
- * @param channel
- * @param angle_deg
- * @param min_pulse
- * @param max_pulse
- * @return int
+ * @brief Set the Servo Angle object
+ * 
+ * @param channel 
+ * @param angle_deg 
+ * @return int 
  */
 int SetServoAngle(uint8_t channel, uint16_t angle_deg)
 {
@@ -28,60 +24,19 @@ int SetServoAngle(uint8_t channel, uint16_t angle_deg)
 
 	uint16_t range = SERVO_MAX_PULSE - SERVO_MIN_PULSE;
 	uint16_t pulse = SERVO_MIN_PULSE + (range * angle_deg) / 180u;
-	PCA9685_SetPWM(PCA9685_ADDR_SERVO, channel, 0, pulse);
-	return 1;
-}
-
-/**
- * @brief
- *
- * @param hi2c
- * @param addr7
- * @param channel
- * @param start_angle
- * @param end_angle
- * @param step_angle
- * @param delay_ms
- * @param min_pulse
- * @param max_pulse
- * @return int
- */
-int ServoSweep(uint8_t channel, uint16_t start_angle, uint16_t end_angle,
-uint16_t step_angle)
-{
-	if (step_angle == 0)
-		step_angle = 1;
-
-	if (start_angle <= end_angle)
+	if (PCA9685_SetPWM(PCA9685_ADDR_SERVO, channel, 0, pulse) == HAL_OK)
 	{
-		for (uint16_t angle = start_angle; angle <= end_angle; angle += step_angle)
-		{
-			SetServoAngle(channel, angle);
-			tx_thread_sleep(50);
-			if (angle > UINT16_MAX - step_angle)
-				break;
-		}
+		return 1;
 	}
-	else
-	{
-		for (int angle = (int)start_angle; angle >= (int)end_angle; angle -= (int)step_angle)
-		{
-			SetServoAngle(channel, (uint16_t)angle);
-			tx_thread_sleep(10);
-			if (angle - (int)step_angle > angle)
-				break;
-		}
-	}
-	const char *msg = "Servo_Sweep: complete\r\n";
-	HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
 	return 0;
 }
 
+
 /**
- * @brief
- *
+ * @brief Servo motor control thread that processes steering commands from CAN queue
+ * 
  * @param initial_input
- * @return void
+ * @return VOID
  */
 void ServoMotor(ULONG initial_input)
 {

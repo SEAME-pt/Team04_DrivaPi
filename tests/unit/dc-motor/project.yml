@@ -14,16 +14,20 @@
 :paths:
   :test:
     - +:test/**
-  :source:
-    - src
-    - ../common/src
+  :source: []
   :include:
     - ../common/support
-    - ../common/src
-    - src
+    - ../../../firmware/Core/Inc/**
   :support:
     - ../common/support
   :libraries: []
+
+:flags:
+  :gcov:
+    :compile:
+      - --coverage
+    :link:
+      - --coverage
 
 :defines:
   :common: &common_defines

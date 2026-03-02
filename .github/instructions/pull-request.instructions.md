@@ -4,8 +4,8 @@ When asked to create a pull request:
 
 ## 1. Branch Validation
 - **ALWAYS check current branch first**: Run `git branch --show-current`
-- **DO NOT create PR from `main` or `master`**: If on main/master, stop and ask the user to switch to a feature branch
-- Valid branch: Any branch except `main` or `master`
+- **DO NOT create PR from `master`**: If on master, stop and ask the user to switch to a feature branch
+- Valid branch: Any branch except `master`
 
 ## 2. Identify Requesting User
 - Get the GitHub username of the requester from context
@@ -105,7 +105,7 @@ Before creating the PR:
 1. Check current branch: `git branch --show-current`
 2. Check for uncommitted changes: `git status`
 3. Verify branch is pushed to remote: `git push -u origin $(git branch --show-current)`
-4. Get diff summary: `git diff main...HEAD --stat` or `git diff master...HEAD --stat`
+4. Get diff summary: `git diff master...HEAD --stat`
 
 ## 7. PR Creation Command
 Use GitHub CLI (`gh`) to create the PR:
@@ -116,7 +116,7 @@ gh pr create \
   --body "$(cat pr_body.txt)" \
   --assignee username \
   --reviewer reviewer1,reviewer2 \
-  --base main
+  --base master
 ```
 
 ## 8. Critical Rules
@@ -125,7 +125,7 @@ gh pr create \
 - ✅ **DO**: Use 1 reviewer for daily log PRs (next in rotation)
 - ✅ **DO**: Follow the PR template structure
 - ✅ **DO**: Select random reviewers from team members (excluding requester)
-- ❌ **NEVER**: Create PR from `main` or `master` branch
+- ❌ **NEVER**: Create PR from `master` branch
 - ❌ **NEVER**: Assign Copilot/AI as a reviewer
 - ❌ **NEVER**: Assign the requester as their own reviewer
 - ❌ **NEVER**: Skip the PR template format
@@ -148,6 +148,6 @@ gh pr create \
 - Assignee: `@melaniereis`
 - Reviewer: `@berestv` (Bernardo - next in rotation after Wednesday)
 
-### Example 4: User on main branch
-- Current branch: `main`
-- Action: **STOP** and respond: "Cannot create PR from main/master branch. Please switch to a feature branch first using `git checkout -b feature-branch-name`"
+### Example 4: User on master branch
+- Current branch: `master`
+- Action: **STOP** and respond: "Cannot create PR from master branch. Please switch to a feature branch first using `git checkout -b feature-branch-name`"

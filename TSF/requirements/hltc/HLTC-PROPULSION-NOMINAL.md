@@ -13,7 +13,6 @@ reviewers:
   - name: "Melanie Reis"
     email: "melanie.reis@seame.pt"
 reviewed: ''
-
 active: true
 derived: false
 normative: true

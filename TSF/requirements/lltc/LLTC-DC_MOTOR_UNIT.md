@@ -17,11 +17,7 @@ reviewed: '2026-01-14 - Approved by Miguel Cardoso <miguel.cardoso@seame.pt>'
 
 references:
   - type: "file"
-    path: "tests/unit/dc-motor/test/test_dc_motor_functions.c"
-  - type: "file"
-    path: "tests/unit/dc-motor/test/test_threadx_dc_motor_with_mocks.c"
-  - type: "file"
-    path: "tests/unit/dc-motor/test/test_dc_motor_LLTC_UNIT.c"
+    path: "tests/unit/dc-motor/test/test_dc_motor.c"
 
 evidence:
   type: junit_pass_rate_validator
