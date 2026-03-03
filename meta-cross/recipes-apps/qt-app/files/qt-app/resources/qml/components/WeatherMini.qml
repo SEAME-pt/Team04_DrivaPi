@@ -174,12 +174,12 @@ Item {
                 visible: !AppTheme.isDark
             }
 
-            Rectangle { x: 8; y: 24; width: 34; height: 13; radius: 6; color: cloudColor }
-            Rectangle { x: 2; y: 27; width: 18; height: 11; radius: 6; color: cloudColor }
-            Rectangle { x: 24; y: 27; width: 20; height: 11; radius: 6; color: cloudColor }
+            Rectangle { x: 8; y: 24; width: 34; height: 13; radius: 6; color: parent.cloudColor }
+            Rectangle { x: 2; y: 27; width: 18; height: 11; radius: 6; color: parent.cloudColor }
+            Rectangle { x: 24; y: 27; width: 20; height: 11; radius: 6; color: parent.cloudColor }
             Rectangle {
                 x: 14; y: 19; width: 18; height: 11; radius: 6;
-                color: AppTheme.isDark ? "#F4F7FB" : AppTheme.tint(cloudColor, 0.05)
+                color: AppTheme.isDark ? "#F4F7FB" : AppTheme.tint(parent.cloudColor, 0.05)
             }
 
             SequentialAnimation on y {

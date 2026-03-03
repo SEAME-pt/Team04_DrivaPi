@@ -1,8 +1,8 @@
 <!DOCTYPE RCC>
 <RCC>
     <qresource prefix="/">
-        <file>qml/main.qml</file>
         <file>qml/theme/AppTheme.qml</file>
+        <file>qml/main.qml</file>
         <file>qml/theme/qmldir</file>
 
         <file>qml/screens/ClusterScreen.qml</file>

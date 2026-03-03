@@ -539,9 +539,9 @@ Rectangle {
                         property real spanRatio: (modelData.maxTemp - modelData.minTemp) / range
 
                         Rectangle {
-                            x: parent.width * startRatio
+                            x: parent.width * parent.startRatio
                             anchors.verticalCenter: parent.verticalCenter
-                            width: Math.max(6, parent.width * spanRatio)
+                            width: Math.max(6, parent.width * parent.spanRatio)
                             height: parent.height
                             radius: 2
                             gradient: Gradient {

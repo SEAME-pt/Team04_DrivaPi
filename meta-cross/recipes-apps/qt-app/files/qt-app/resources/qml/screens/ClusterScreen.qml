@@ -205,7 +205,7 @@ Rectangle {
 			layer.effect: ColorOverlay {
 				// When light mode is active, we color the asset white or light blue
 				// to contrast against the light gray surface.
-				color: AppTheme.isDark ? "transparent" : AppTheme.surfaceVariant
+				color: AppTheme.isDark ? "transparent" : AppTheme.colors.surfaceVariant
 
 				Behavior on color { ColorAnimation { duration: AppTheme.animation.normal } }
 			}
@@ -226,7 +226,7 @@ Rectangle {
 			layer.effect: ColorOverlay {
 				// When light mode is active, we color the asset white or light blue
 				// to contrast against the light gray surface.
-				color: AppTheme.isDark ? "transparent" : AppTheme.surfaceVariant
+				color: AppTheme.isDark ? "transparent" : AppTheme.colors.surfaceVariant
 
 				Behavior on color { ColorAnimation { duration: AppTheme.animation.normal } }
 			}
@@ -247,7 +247,7 @@ Rectangle {
 			layer.effect: ColorOverlay {
 				// When light mode is active, we color the asset white or light blue
 				// to contrast against the light gray surface.
-				color: AppTheme.isDark ? "transparent" : AppTheme.surfaceVariant
+				color: AppTheme.isDark ? "transparent" : AppTheme.colors.surfaceVariant
 
 				Behavior on color { ColorAnimation { duration: AppTheme.animation.normal } }
 			}
@@ -268,7 +268,7 @@ Rectangle {
 			layer.effect: ColorOverlay {
 				// When light mode is active, we color the asset white or light blue
 				// to contrast against the light gray surface.
-				color: AppTheme.isDark ? "transparent" : AppTheme.surfaceVariant
+				color: AppTheme.isDark ? "transparent" : AppTheme.colors.surfaceVariant
 
 				Behavior on color { ColorAnimation { duration: AppTheme.animation.normal } }
 			}
