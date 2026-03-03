@@ -1032,7 +1032,7 @@ Rectangle {
                                         spacing: 6 * root.s
 
                                         Image {
-                                            source: "qrc:/icons/common/arrow-right.svg"
+                                            source: "qrc:/icons/common/arrow-forward.svg"
                                             width: 42 * root.s
                                             height: 42 * root.s
                                             anchors.horizontalCenter: parent.horizontalCenter
