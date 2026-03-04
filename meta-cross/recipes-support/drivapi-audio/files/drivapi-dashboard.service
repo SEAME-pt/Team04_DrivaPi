@@ -1,8 +1,9 @@
 [Unit]
 Description=DrivaPi Dashboard (Qt)
 # Wait for the audio stack AND the display manager (Weston/AGL)
-After=pipewire-pulse-system.service weston.service
+After=pipewire-pulse-system.service wireplumber-system.service graphical.target
 Requires=pipewire-pulse-system.service
+Wants=wireplumber-system.service graphical.target
 
 [Service]
 Type=simple

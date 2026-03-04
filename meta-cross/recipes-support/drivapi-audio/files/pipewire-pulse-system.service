@@ -1,7 +1,8 @@
 [Unit]
 Description=pipewire-pulse (system-mode) pour DrivaPi
-After=pipewire-system.service
+After=pipewire-system.service wireplumber-system.service
 Requires=pipewire-system.service
+Wants=wireplumber-system.service
 
 [Service]
 Type=simple

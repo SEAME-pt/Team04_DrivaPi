@@ -13,6 +13,10 @@ inherit systemd
 
 S = "${WORKDIR}"
 
+RDEPENDS:${PN} += "pipewire wireplumber pipewire-pulse"
+
+FILES:${PN} += "${systemd_system_unitdir}/*.service"
+
 do_install() {
     install -d ${D}${systemd_system_unitdir}
     install -m 0644 ${WORKDIR}/pipewire-system.service ${D}${systemd_system_unitdir}/
