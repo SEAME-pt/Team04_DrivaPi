@@ -1,7 +1,6 @@
 SUMMARY = "Packagegroup DrivaPi Dashboard (Qt6+ multimedia + maps)"
 LICENSE = "MIT"
 
-# Completely bypass the stubborn Yocto 'packagegroup' and 'allarch' classes
 ALLOW_EMPTY:${PN} = "1"
 
 RDEPENDS:${PN} = "\

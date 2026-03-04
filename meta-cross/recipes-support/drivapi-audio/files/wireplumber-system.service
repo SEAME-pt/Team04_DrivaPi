@@ -1,5 +1,5 @@
 [Unit]
-Description=WirePlumber (system-mode) pour DrivaPi
+Description=WirePlumber (system-mode) for DrivaPi
 After=pipewire-system.service
 Requires=pipewire-system.service
 

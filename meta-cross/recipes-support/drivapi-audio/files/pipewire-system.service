@@ -1,5 +1,5 @@
 [Unit]
-Description=PipeWire (system-mode) pour DrivaPi
+Description=PipeWire (system-mode) for DrivaPi
 After=multi-user.target
 Wants=network.target
 
