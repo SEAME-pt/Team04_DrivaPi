@@ -58,7 +58,7 @@ Rectangle {
                 Layout.preferredHeight: 28
                 from: 0
                 to: 1
-                value: settingsManager.screenBrightness
+                Component.onCompleted: brightSlider.value = settingsManager.screenBrightness
                 onValueChanged: settingsManager.screenBrightness = value
 
                 background: Rectangle {
