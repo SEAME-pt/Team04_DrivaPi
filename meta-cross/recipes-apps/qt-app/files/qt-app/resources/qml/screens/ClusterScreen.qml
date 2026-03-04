@@ -15,7 +15,8 @@ Rectangle {
     readonly property real motionSpeedAbs: Math.abs(motionSpeedKmh)
     readonly property real motionDir: {
         // Reverse animation if gear is "R"
-        if (currentGear === "R") return -1;
+        if (currentGear === "R")
+            return -1;
         return 1;
     }
 
@@ -201,36 +202,44 @@ Rectangle {
             opacity: AppTheme.isDark ? 0.95 : 0.3
             z: 1
 
-			layer.enabled: true
-			layer.effect: ColorOverlay {
-				// When light mode is active, we color the asset white or light blue
-				// to contrast against the light gray surface.
-				color: AppTheme.isDark ? "transparent" : AppTheme.colors.surfaceVariant
+            layer.enabled: true
+            layer.effect: ColorOverlay {
+                // When light mode is active, we color the asset white or light blue
+                // to contrast against the light gray surface.
+                color: AppTheme.isDark ? "transparent" : AppTheme.colors.surfaceVariant
 
-				Behavior on color { ColorAnimation { duration: AppTheme.animation.normal } }
-			}
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppTheme.animation.normal
+                    }
+                }
+            }
         }
 
         // --- Center Left Glow Layer ---
         Image {
-			source: "qrc:/assets/left-dashboard.png"
-			anchors.verticalCenter: parent.verticalCenter
-			anchors.left: parent.left
-			anchors.horizontalCenterOffset: parent.width * 0.225
-			width: parent.width * 0.45
-			height: parent.height * 0.60
-			opacity: AppTheme.isDark ? 0.95 : 0.5
-			z: 1
+            source: "qrc:/assets/left-dashboard.png"
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
+            anchors.horizontalCenterOffset: parent.width * 0.225
+            width: parent.width * 0.45
+            height: parent.height * 0.60
+            opacity: AppTheme.isDark ? 0.95 : 0.5
+            z: 1
 
-			layer.enabled: true
-			layer.effect: ColorOverlay {
-				// When light mode is active, we color the asset white or light blue
-				// to contrast against the light gray surface.
-				color: AppTheme.isDark ? "transparent" : AppTheme.colors.surfaceVariant
+            layer.enabled: true
+            layer.effect: ColorOverlay {
+                // When light mode is active, we color the asset white or light blue
+                // to contrast against the light gray surface.
+                color: AppTheme.isDark ? "transparent" : AppTheme.colors.surfaceVariant
 
-				Behavior on color { ColorAnimation { duration: AppTheme.animation.normal } }
-			}
-		}
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppTheme.animation.normal
+                    }
+                }
+            }
+        }
 
         // --- Center Right Glow Layer ---
         Image {
@@ -243,14 +252,18 @@ Rectangle {
             opacity: AppTheme.isDark ? 0.95 : 0.3
             z: 1
 
-			layer.enabled: true
-			layer.effect: ColorOverlay {
-				// When light mode is active, we color the asset white or light blue
-				// to contrast against the light gray surface.
-				color: AppTheme.isDark ? "transparent" : AppTheme.colors.surfaceVariant
+            layer.enabled: true
+            layer.effect: ColorOverlay {
+                // When light mode is active, we color the asset white or light blue
+                // to contrast against the light gray surface.
+                color: AppTheme.isDark ? "transparent" : AppTheme.colors.surfaceVariant
 
-				Behavior on color { ColorAnimation { duration: AppTheme.animation.normal } }
-			}
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppTheme.animation.normal
+                    }
+                }
+            }
         }
 
         // --- Bottom Glow Layer ---
@@ -264,14 +277,18 @@ Rectangle {
             opacity: AppTheme.isDark ? 0.95 : 0.3
             z: 1
 
-			layer.enabled: true
-			layer.effect: ColorOverlay {
-				// When light mode is active, we color the asset white or light blue
-				// to contrast against the light gray surface.
-				color: AppTheme.isDark ? "transparent" : AppTheme.colors.surfaceVariant
+            layer.enabled: true
+            layer.effect: ColorOverlay {
+                // When light mode is active, we color the asset white or light blue
+                // to contrast against the light gray surface.
+                color: AppTheme.isDark ? "transparent" : AppTheme.colors.surfaceVariant
 
-				Behavior on color { ColorAnimation { duration: AppTheme.animation.normal } }
-			}
+                Behavior on color {
+                    ColorAnimation {
+                        duration: AppTheme.animation.normal
+                    }
+                }
+            }
         }
 
         // ==========================================================
@@ -610,7 +627,7 @@ Rectangle {
                     y: parent.height * 0.46
                     radius: 32 * root.s
                     z: 6
-					visible: false
+                    visible: false
                     color: AppTheme.colors.surfaceVariant
                     opacity: 0.40
                 }
@@ -797,7 +814,7 @@ Rectangle {
                             anchors.verticalCenterOffset: 74 * root.sy
                             radius: 28 * root.s
                             color: "transparent"
-   							border.width: 0
+                            border.width: 0
 
                             RowLayout {
                                 anchors.fill: parent
@@ -1086,8 +1103,22 @@ Rectangle {
 
                     // Trip distance (left)
                     Text {
-                        // ISO 26262: Null-safe trip distance display
-                        text: "Trip A " + Math.round(root.tripDistance) + "km"
+                        // Convert trip distance based on settings
+                        text: {
+                            if (!root.vehicleDataAvailable)
+                                return "Trip A --";
+                            let dist = root.tripDistance; // Base is km
+
+                            if (settingsManager.distanceUnit === "mi" || settingsManager.distanceUnit === "miles") {
+                                dist = dist * 0.621371;
+                            }
+
+                            if (settingsManager.distanceUnit === "m") {
+                                dist = dist * 1000;
+                            }
+
+                            return "Trip A " + Math.round(dist) + " " + settingsManager.distanceUnit;
+                        }
                         color: root.vehicleDataAvailable ? AppTheme.colors.textSecondary : AppTheme.colors.textTertiary
                         font.pixelSize: root.fontSizeMedium * root.s
                         font.weight: Font.Medium
@@ -1144,15 +1175,15 @@ Rectangle {
                         Text {
                             // Convert trip distance based on settings
                             text: {
-                                if (!root.vehicleDataAvailable)
-                                    return "Trip A --";
-                                let dist = root.tripDistance; // Base is km
-
+                                let dist = Math.round(root.odometerDistance); // Base is km
                                 if (settingsManager.distanceUnit === "mi" || settingsManager.distanceUnit === "miles") {
                                     dist = dist * 0.621371;
                                 }
 
-                                return "Trip A " + Math.round(dist) + " " + settingsManager.distanceUnit;
+                                if (settingsManager.distanceUnit === "m") {
+                                    dist = dist * 1000;
+                                }
+                                return "ODO " + dist + settingsManager.distanceUnit;
                             }
                             color: root.vehicleDataAvailable ? AppTheme.colors.textSecondary : AppTheme.colors.textTertiary
                             font.pixelSize: root.fontSizeMedium * root.s
