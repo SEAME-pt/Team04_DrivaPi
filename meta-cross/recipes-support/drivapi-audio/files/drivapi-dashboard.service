@@ -1,0 +1,21 @@
+[Unit]
+Description=DrivaPi Dashboard (Qt)
+# Wait for the audio stack AND the display manager (Weston/AGL)
+After=pipewire-pulse-system.service weston.service
+Requires=pipewire-pulse-system.service
+
+[Service]
+Type=simple
+# Point to the AGL compositor runtime and the PulseAudio socket
+Environment=XDG_RUNTIME_DIR=/run/platform/display
+Environment=WAYLAND_DISPLAY=wayland-0
+Environment=PULSE_SERVER=unix:/run/pipewire/pulse/native
+Environment=QT_QPA_PLATFORM=wayland-egl
+
+# Ensure this path is correct for your binary
+ExecStart=/usr/bin/myqtapp
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
