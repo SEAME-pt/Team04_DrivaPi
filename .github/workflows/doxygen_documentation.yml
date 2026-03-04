@@ -24,7 +24,7 @@ jobs:
           doxygen Doxyfile
 
       - name: Upload documentation as artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: doxygen-html-documentation
           path: firmware/html/
@@ -38,7 +38,7 @@ jobs:
 
       - name: Upload release artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: doxygen-docs-archive
           path: doxygen-docs.tar.gz

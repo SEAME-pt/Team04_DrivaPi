@@ -63,7 +63,7 @@ jobs:
             --min-line-rate 90.0
 
       - name: Upload Verification Artifacts (TSF)
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: verification-artifacts
@@ -72,7 +72,7 @@ jobs:
 
       - name: Upload Coverage HTML
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-html
           path: build/coverage/html
@@ -91,7 +91,7 @@ jobs:
 
       - name: Upload unit test summary artifact
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: unit-test-summary
           path: unit_test_summary.md

@@ -39,7 +39,7 @@ jobs:
           hexdump -C firmware.elf | sed -n '1,4p' || true
 
       - name: Upload firmware.elf as artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: firmware-elf
           path: firmware/Debug/firmware.elf
