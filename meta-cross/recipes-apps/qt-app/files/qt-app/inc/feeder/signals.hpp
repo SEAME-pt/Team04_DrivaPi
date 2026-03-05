@@ -30,4 +30,11 @@ constexpr const char* STM32_TEMPERATURE =
 constexpr const char* STM32_HUMIDITY =
     "Vehicle.ControlUnit.STM32.Health.Resources.Humidity";  // percent (float)
 
+// RPi UPS battery (custom VSS nodes under Central control unit)
+constexpr const char* RPI_BATTERY_SOC =
+    "Vehicle.ControlUnit.Central.Health.Resources.BatteryLevel";  // percent (float)
+
+constexpr const char* RPI_BATTERY_VOLTAGE =
+    "Vehicle.ControlUnit.Central.Health.Resources.BatteryVoltage";  // volts (float)
+
 } // namespace vss

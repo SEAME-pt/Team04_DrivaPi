@@ -19,6 +19,9 @@ static constexpr const char* PATH_CURRENT_GEAR = "Vehicle.Powertrain.Transmissio
 static constexpr const char* PATH_STM32_TEMP   = "Vehicle.ControlUnit.STM32.Health.Resources.Temperature";
 static constexpr const char* PATH_STM32_HUM    = "Vehicle.ControlUnit.STM32.Health.Resources.Humidity";
 
+static constexpr const char* PATH_RPI_BATTERY_PERCENT = "Vehicle.ControlUnit.Central.Health.Resources.BatteryLevel";
+static constexpr const char* PATH_RPI_BATTERY_VOLTAGE = "Vehicle.ControlUnit.Central.Health.Resources.BatteryVoltage";
+
 KUKSAReader::KUKSAReader(QObject *parent)
     : QObject(parent)
 {}
@@ -117,6 +120,9 @@ void KUKSAReader::start()
     request.add_signal_paths(PATH_STM32_TEMP);
     request.add_signal_paths(PATH_STM32_HUM);
 
+    request.add_signal_paths(PATH_RPI_BATTERY_PERCENT);
+    request.add_signal_paths(PATH_RPI_BATTERY_VOLTAGE);
+
     auto reader = m_stub_->Subscribe(m_context_.get(), request);
     SubscribeResponse response;
 
@@ -145,6 +151,13 @@ void KUKSAReader::start()
 
         if (auto it = entries.find(PATH_STM32_HUM); it != entries.end()) {
             emit stm32HumidityReceived(readFloat(it->second, 0.0f));
+        }
+
+        if (auto it = entries.find(PATH_RPI_BATTERY_PERCENT); it != entries.end()) {
+            emit rpiBatteryPercentReceived(readInt(it->second, 0));
+        }
+        if (auto it = entries.find(PATH_RPI_BATTERY_VOLTAGE); it != entries.end()) {
+            emit rpiBatteryVoltageReceived(static_cast<double>(readFloat(it->second, 0.0f)));
         }
     }
 

@@ -22,12 +22,12 @@ VehicleData::VehicleData(QObject *parent)
     : QObject(parent)
     , m_speed(0.0f)
     , m_energy(0.0)
-    , m_battery(0)
     , m_stm32Battery(0)
     , m_stm32BatteryVoltage(0.0)
     , m_stm32Temperature(0.0)
     , m_stm32Humidity(0.0)
     , m_rpiBattery(0)
+    , m_rpiBatteryVoltage(0.0)
     , m_distance(0)
     , m_odometer(0)
     , m_gear("N")
@@ -55,6 +55,7 @@ double VehicleData::getStm32Temperature() const { return m_stm32Temperature; }
 double VehicleData::getStm32Humidity() const { return m_stm32Humidity; }
 
 int VehicleData::getRpiBattery() const { return m_rpiBattery; }
+double VehicleData::getRpiBatteryVoltage() const { return m_rpiBatteryVoltage; }
 int VehicleData::getDistance() const { return m_distance; }
 int VehicleData::getOdometer() const { return m_odometer; }
 int VehicleData::getTemperature() const { return m_temperature; }
@@ -125,6 +126,15 @@ void VehicleData::setRpiBattery(int battery)
         emit rpiBatteryChanged();
     }
     updateTimestamp("rpiBattery");
+}
+
+void VehicleData::setRpiBatteryVoltage(double volts)
+{
+    if (!qFuzzyCompare(m_rpiBatteryVoltage, volts)) {
+        m_rpiBatteryVoltage = volts;
+        emit rpiBatteryVoltageChanged();
+    }
+    updateTimestamp("rpiBatteryVoltage");
 }
 
 void VehicleData::setDistance(int distance)

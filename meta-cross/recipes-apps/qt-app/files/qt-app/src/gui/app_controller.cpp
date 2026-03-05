@@ -128,6 +128,13 @@ int AppController::run(QGuiApplication& app)
                          vehicleData.data(), &VehicleData::handleStm32HumidityUpdate,
                          Qt::QueuedConnection);
 
+        QObject::connect(kuksaReader, &kuksa::KUKSAReader::rpiBatteryPercentReceived,
+                         vehicleData.data(), &VehicleData::setRpiBattery,
+                         Qt::QueuedConnection);
+        QObject::connect(kuksaReader, &kuksa::KUKSAReader::rpiBatteryVoltageReceived,
+                         vehicleData.data(), &VehicleData::setRpiBatteryVoltage,
+                         Qt::QueuedConnection);
+
         // NEW: CurrentGear only (no SelectedGear)
         QObject::connect(kuksaReader, &kuksa::KUKSAReader::currentGearReceived,
                          vehicleData.data(), &VehicleData::handleCurrentGearUpdate,

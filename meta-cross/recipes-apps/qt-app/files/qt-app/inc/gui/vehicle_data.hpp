@@ -37,6 +37,7 @@ class VehicleData : public QObject
     Q_PROPERTY(double stm32Humidity READ getStm32Humidity WRITE setStm32Humidity NOTIFY stm32HumidityChanged)
 
     Q_PROPERTY(int rpiBattery READ getRpiBattery WRITE setRpiBattery NOTIFY rpiBatteryChanged)
+    Q_PROPERTY(double rpiBatteryVoltage READ getRpiBatteryVoltage WRITE setRpiBatteryVoltage NOTIFY rpiBatteryVoltageChanged)
     Q_PROPERTY(int distance READ getDistance WRITE setDistance NOTIFY distanceChanged)
     Q_PROPERTY(int odo READ getOdometer WRITE setOdometer NOTIFY odometerChanged)
     Q_PROPERTY(bool autonomousMode READ getAutonomousMode WRITE setAutonomousMode NOTIFY autonomousModeChanged)
@@ -57,6 +58,7 @@ public:
     double  getStm32Humidity() const;
 
     int     getRpiBattery() const;
+    double  getRpiBatteryVoltage() const;
     int     getDistance() const;
     int     getOdometer() const;
     int     getTemperature() const;
@@ -71,8 +73,8 @@ public:
     void    setStm32BatteryVoltage(double volts);
     void    setStm32Temperature(double tempC);
     void    setStm32Humidity(double humidityPct);
-
     void    setRpiBattery(int battery);
+    void    setRpiBatteryVoltage(double volts);
     void    setDistance(int distance);
     void    setOdometer(int odo);
     void    setGear(const QString &gear);
@@ -88,6 +90,8 @@ public:
     void handleSpeedUpdate(float speed);
 
     // New hooks used in KUKSA mode
+    void handleRpiBatteryUpdate(int percent);
+    void handleRpiBatteryVoltageUpdate(double volts);
     void handleStm32BatteryUpdate(int percent);
     void handleStm32BatteryVoltageUpdate(float volts);
     void handleStm32TemperatureUpdate(float tempC);
@@ -101,7 +105,6 @@ public slots:
 signals:
     void speedChanged();
     void energyChanged();
-    void batteryChanged();
 
     void stm32BatteryChanged();
     void stm32BatteryVoltageChanged();
@@ -109,6 +112,7 @@ signals:
     void stm32HumidityChanged();
 
     void rpiBatteryChanged();
+    void rpiBatteryVoltageChanged();
     void distanceChanged();
     void odometerChanged();
     void temperatureChanged();
@@ -123,7 +127,6 @@ private:
     // ===== Member Variables =====
     float   m_speed;
     double  m_energy;
-    int     m_battery;
 
     int     m_stm32Battery;
     double  m_stm32BatteryVoltage;
@@ -131,6 +134,7 @@ private:
     double  m_stm32Humidity;
 
     int     m_rpiBattery;
+    double  m_rpiBatteryVoltage;
     int     m_distance;
     int     m_odometer;
     QString m_gear;

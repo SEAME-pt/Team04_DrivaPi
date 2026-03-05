@@ -6539,6 +6539,20 @@
 												},
 												"description": "Resources utilization branch",
 												"type": "branch"
+											},
+											"BatteryLevel": {
+												"datatype": "float",
+												"description": "RPi UPS battery state of charge.",
+												"max": 100,
+												"min": 0,
+												"type": "sensor",
+												"unit": "percent"
+											},
+											"BatteryVoltage": {
+												"datatype": "float",
+												"description": "RPi UPS battery voltage.",
+												"type": "sensor",
+												"unit": "V"
 											}
 										},
 										"description": "Resources attributes and signals",

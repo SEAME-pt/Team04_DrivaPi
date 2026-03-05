@@ -52,6 +52,27 @@ namespace handlers {
 				<< " = " << voltage_v << " V\n";
 	}
 
+	void HandleRpiBattery(const can_frame& frame, kuksa::Publisher& publisher)
+	{
+		// Payload: [0]=u8 percent, [1..4]=float voltage LE
+		if (frame.can_dlc < 5) {
+			std::cerr << "[Handler] RPi battery frame too short: "
+					<< static_cast<int>(frame.can_dlc) << " bytes\n";
+			return;
+		}
+
+		const uint8_t percent_u8 = can_decode::U8(frame.data);
+		const float voltage_v = can_decode::FloatLe(frame.data + 1);
+
+		publisher.PublishFloat(vss::RPI_BATTERY_SOC, static_cast<float>(percent_u8));
+		publisher.PublishFloat(vss::RPI_BATTERY_VOLTAGE, voltage_v);
+
+		std::cout << "[Handler] Published " << vss::RPI_BATTERY_SOC
+				<< " = " << static_cast<int>(percent_u8) << " %\n";
+		std::cout << "[Handler] Published " << vss::RPI_BATTERY_VOLTAGE
+				<< " = " << voltage_v << " V\n";
+	}
+
 	void HandleGear(const can_frame& frame, kuksa::Publisher& publisher)
 	{
 		// Payload: [0]=u8 gear 0=N, 1=R, 2=D

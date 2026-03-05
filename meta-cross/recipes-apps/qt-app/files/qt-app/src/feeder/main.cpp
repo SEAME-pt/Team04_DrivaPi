@@ -55,6 +55,10 @@ int main(int argc, char** argv)
                 handlers::HandleStm32Battery(frame, publisher);
                 break;
 
+            case can::ID_RPI_BATTERY:
+                handlers::HandleRpiBattery(frame, publisher);
+                break;
+
             case can::ID_GEAR:
                 handlers::HandleGear(frame, publisher);
                 break;

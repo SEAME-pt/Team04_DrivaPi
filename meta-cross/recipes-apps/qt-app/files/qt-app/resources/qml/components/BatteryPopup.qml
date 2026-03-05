@@ -9,6 +9,7 @@ Item {
     // Properties
     property int stm32BatteryLevel: 100
     property int rpiBatteryLevel: 100
+    property double rpiBatteryVoltage: 0
 
     visible: false
     anchors.fill: parent
@@ -187,6 +188,14 @@ Item {
                     }
                 }
             }
+
+            // RPi voltage sub-label
+            Text {
+                visible: rpiBatteryVoltage > 0
+                text: rpiBatteryVoltage.toFixed(2) + " V"
+                color: (rpiBatteryVoltage < 11.0 || rpiBatteryVoltage > 13.0) ? AppTheme.colors.warning : AppTheme.colors.textSecondary
+                font.pixelSize: AppTheme.typography.labelSmall - 1
+                Layout.alignment: Qt.AlignRight
 
             // Divider line
             Rectangle {

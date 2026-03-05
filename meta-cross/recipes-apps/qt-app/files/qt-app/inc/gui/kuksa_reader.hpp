@@ -39,6 +39,10 @@ signals:
     void lvBatteryPercentReceived(int percent);
     void lvBatteryVoltageReceived(float volts);
 
+	// 12V battery from RPi (percent + voltage)
+    void rpiBatteryPercentReceived(int percent);
+    void rpiBatteryVoltageReceived(double volts);
+
     // STM32 internal sensors
     void stm32TemperatureReceived(float tempC);
     void stm32HumidityReceived(float humidityPct);
