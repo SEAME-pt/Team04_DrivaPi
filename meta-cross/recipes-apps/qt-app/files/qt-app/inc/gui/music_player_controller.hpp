@@ -22,6 +22,7 @@ class MusicPlayerController : public QObject {
 
 public:
     explicit MusicPlayerController(SettingsManager* settings, QObject* parent = nullptr);
+    ~MusicPlayerController();
 
     Q_INVOKABLE void play();
     Q_INVOKABLE void pause();

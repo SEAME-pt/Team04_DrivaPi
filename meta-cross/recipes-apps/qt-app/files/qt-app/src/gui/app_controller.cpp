@@ -59,7 +59,9 @@ int AppController::run(QGuiApplication& app)
     //  so QML bindings can't fire on dangling pointers during teardown.)
     QScopedPointer<VehicleData> vehicleData(new VehicleData());
     QScopedPointer<SystemStatus> systemStatus(new SystemStatus());
-    QScopedPointer<NotificationManager> notificationManager(NotificationManager::instance());
+    // NotificationManager is a static unique_ptr singleton — do NOT wrap in QScopedPointer
+    // (that would double-free: QScopedPointer deletes it, then the static unique_ptr does too)
+    NotificationManager* notificationManager = NotificationManager::instance();
     QScopedPointer<CANLogger> canLogger(new CANLogger());
 
     // --- Settings Manager (must be created first) ---
@@ -70,7 +72,7 @@ int AppController::run(QGuiApplication& app)
         new MusicPlayerController(settingsManager.data())
     );
 
-    QThread* workerThread = new QThread(&app);
+    QThread* workerThread = new QThread(); // no parent — we manage lifetime in aboutToQuit
     kuksa::KUKSAReader* kuksaReader = nullptr;
 
 #ifdef ENABLE_CAN_MODE
@@ -190,7 +192,7 @@ int AppController::run(QGuiApplication& app)
 
         engine.rootContext()->setContextProperty("vehicleData", vehicleData.data());
         engine.rootContext()->setContextProperty("systemStatus", systemStatus.data());
-        engine.rootContext()->setContextProperty("notificationManager", notificationManager.data());
+        engine.rootContext()->setContextProperty("notificationManager", notificationManager);
         engine.rootContext()->setContextProperty("canLogger", canLogger.data());
         engine.rootContext()->setContextProperty("settingsManager", settingsManager.data());
         engine.rootContext()->setContextProperty("musicPlayerController", musicPlayerController.data());

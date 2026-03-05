@@ -35,6 +35,15 @@ MusicPlayerController::MusicPlayerController(SettingsManager* settings, QObject*
     loadMusicLibrary(musicPath);
 }
 
+MusicPlayerController::~MusicPlayerController() {
+    // Disconnect all signals before stopping to prevent slots firing on a
+    // partially-destroyed object (AVFoundation backend can crash otherwise).
+    m_mediaPlayer.disconnect();
+    m_mediaPlayer.stop();
+    m_mediaPlayer.setSource(QUrl());
+    m_mediaPlayer.setAudioOutput(nullptr);
+}
+
 void MusicPlayerController::loadMusicLibrary(const QString& path) {
     qDebug() << "Loading music library from:" << path;
     m_trackList.clear();
