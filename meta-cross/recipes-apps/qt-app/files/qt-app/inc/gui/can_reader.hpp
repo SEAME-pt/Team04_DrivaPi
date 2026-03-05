@@ -21,16 +21,16 @@ class QSocketNotifier;
 namespace drivaui {
 
 /**
- * @class CANReader
+ * @class CanReader
  * @brief Asynchronous CAN frame reader (run in worker thread, connect with Qt::QueuedConnection).
  */
-class CANReader : public QObject
+class CanReader : public QObject
 {
     Q_OBJECT
 public:
-    /// @brief Construct CANReader for a CAN interface.
-    explicit CANReader(const QString &ifname = QStringLiteral("can0"), QObject *parent = nullptr);
-    ~CANReader() override;
+    /// @brief Construct CanReader for a CAN interface.
+    explicit CanReader(const QString &ifname = QStringLiteral("can0"), QObject *parent = nullptr);
+    ~CanReader() override;
 
 public slots:
     /// @brief Open device and start frame reception. Must be called from reader's thread.

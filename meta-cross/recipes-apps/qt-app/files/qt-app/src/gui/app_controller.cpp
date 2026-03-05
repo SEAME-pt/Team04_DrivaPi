@@ -68,10 +68,10 @@ int AppController::run(QGuiApplication& app)
     );
 
     QThread* workerThread = new QThread(); // no parent — we manage lifetime in aboutToQuit
-    kuksa::KUKSAReader* kuksaReader = nullptr;
+    kuksa::KuksaReader* kuksaReader = nullptr;
 
 #ifdef ENABLE_CAN_MODE
-    CANReader* canReader = nullptr;
+    CanReader* canReader = nullptr;
 #endif
 
     // Create and configure Pi Health Reader
@@ -94,57 +94,57 @@ int AppController::run(QGuiApplication& app)
     if (config_.useKuksa) {
         qInfo() << "Starting in KUKSA mode (default)";
         kuksa::KuksaOptions ko = config_.kuksa;
-        kuksaReader = new kuksa::KUKSAReader(ko);
+        kuksaReader = new kuksa::KuksaReader(ko);
         kuksaReader->moveToThread(workerThread);
 
-        QObject::connect(workerThread, &QThread::started, kuksaReader, &kuksa::KUKSAReader::start);
-        QObject::connect(workerThread, &QThread::finished, kuksaReader, &kuksa::KUKSAReader::deleteLater);
+        QObject::connect(workerThread, &QThread::started, kuksaReader, &kuksa::KuksaReader::start);
+        QObject::connect(workerThread, &QThread::finished, kuksaReader, &kuksa::KuksaReader::deleteLater);
 
         // Existing
-        QObject::connect(kuksaReader, &kuksa::KUKSAReader::speedReceived,
+        QObject::connect(kuksaReader, &kuksa::KuksaReader::speedReceived,
                          vehicleData.data(), &VehicleData::handleSpeedUpdate,
                          Qt::QueuedConnection);
 
         // NEW: 12V battery percent + voltage
-        QObject::connect(kuksaReader, &kuksa::KUKSAReader::lvBatteryPercentReceived,
+        QObject::connect(kuksaReader, &kuksa::KuksaReader::lvBatteryPercentReceived,
                          vehicleData.data(), &VehicleData::handleStm32BatteryUpdate,
                          Qt::QueuedConnection);
 
-        QObject::connect(kuksaReader, &kuksa::KUKSAReader::lvBatteryVoltageReceived,
+        QObject::connect(kuksaReader, &kuksa::KuksaReader::lvBatteryVoltageReceived,
                          vehicleData.data(), &VehicleData::handleStm32BatteryVoltageUpdate,
                          Qt::QueuedConnection);
 
         // NEW: STM32 internal temp/humidity
-        QObject::connect(kuksaReader, &kuksa::KUKSAReader::stm32TemperatureReceived,
+        QObject::connect(kuksaReader, &kuksa::KuksaReader::stm32TemperatureReceived,
                          vehicleData.data(), &VehicleData::handleStm32TemperatureUpdate,
                          Qt::QueuedConnection);
 
-        QObject::connect(kuksaReader, &kuksa::KUKSAReader::stm32HumidityReceived,
+        QObject::connect(kuksaReader, &kuksa::KuksaReader::stm32HumidityReceived,
                          vehicleData.data(), &VehicleData::handleStm32HumidityUpdate,
                          Qt::QueuedConnection);
 
-        QObject::connect(kuksaReader, &kuksa::KUKSAReader::rpiBatteryPercentReceived,
+        QObject::connect(kuksaReader, &kuksa::KuksaReader::rpiBatteryPercentReceived,
                          vehicleData.data(), &VehicleData::setRpiBattery,
                          Qt::QueuedConnection);
-        QObject::connect(kuksaReader, &kuksa::KUKSAReader::rpiBatteryVoltageReceived,
+        QObject::connect(kuksaReader, &kuksa::KuksaReader::rpiBatteryVoltageReceived,
                          vehicleData.data(), &VehicleData::setRpiBatteryVoltage,
                          Qt::QueuedConnection);
 
         // NEW: CurrentGear only (no SelectedGear)
-        QObject::connect(kuksaReader, &kuksa::KUKSAReader::currentGearReceived,
+        QObject::connect(kuksaReader, &kuksa::KuksaReader::currentGearReceived,
                          vehicleData.data(), &VehicleData::handleCurrentGearUpdate,
                          Qt::QueuedConnection);
     }
 #ifdef ENABLE_CAN_MODE
     else {
         qInfo() << "Starting in CAN mode on" << config_.canInterface << "(--can)";
-        canReader = new CANReader(config_.canInterface);
+        canReader = new CanReader(config_.canInterface);
         canReader->moveToThread(workerThread);
 
-        QObject::connect(workerThread, &QThread::started, canReader, &CANReader::start);
-        QObject::connect(workerThread, &QThread::finished, canReader, &CANReader::deleteLater);
+        QObject::connect(workerThread, &QThread::started, canReader, &CanReader::start);
+        QObject::connect(workerThread, &QThread::finished, canReader, &CanReader::deleteLater);
 
-        QObject::connect(canReader, &CANReader::canMessageReceived,
+        QObject::connect(canReader, &CanReader::canMessageReceived,
                          vehicleData.data(), &VehicleData::handleCanMessage,
                          Qt::QueuedConnection);
     }

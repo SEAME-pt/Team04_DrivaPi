@@ -27,13 +27,13 @@ struct KuksaOptions {
     QString token{};
 };
 
-class KUKSAReader : public QObject
+class KuksaReader : public QObject
 {
     Q_OBJECT
 public:
-    explicit KUKSAReader(QObject *parent = nullptr);
-    explicit KUKSAReader(const KuksaOptions& opts, QObject *parent = nullptr);
-    ~KUKSAReader() override;
+    explicit KuksaReader(QObject *parent = nullptr);
+    explicit KuksaReader(const KuksaOptions& opts, QObject *parent = nullptr);
+    ~KuksaReader() override;
 
 public slots:
     void start();

@@ -9,29 +9,29 @@
 
 namespace drivaui {
 
-CANReader::CANReader(const QString &ifname, QObject *parent)
+CanReader::CanReader(const QString &ifname, QObject *parent)
     : QObject(parent)
     , m_ifname(ifname)
     , m_device(nullptr)
 {
 }
 
-CANReader::~CANReader()
+CanReader::~CanReader()
 {
     stop();
 }
 
-bool CANReader::start()
+bool CanReader::start()
 {
     return openDevice();
 }
 
-void CANReader::stop()
+void CanReader::stop()
 {
     closeDevice();
 }
 
-bool CANReader::openDevice()
+bool CanReader::openDevice()
 {
     if (m_device) return true; // already open
 
@@ -50,8 +50,8 @@ bool CANReader::openDevice()
     // The device must be configured externally (via 'ip link') before running the app.
     // Qt will simply attempt to connect to the existing, configured socket.
 
-    connect(m_device, &QCanBusDevice::framesReceived, this, &CANReader::handleFramesReceived);
-    connect(m_device, &QCanBusDevice::errorOccurred, this, &CANReader::handleErrorOccurred);
+    connect(m_device, &QCanBusDevice::framesReceived, this, &CanReader::handleFramesReceived);
+    connect(m_device, &QCanBusDevice::errorOccurred, this, &CanReader::handleErrorOccurred);
 
     // 2. Connect the device
     if (!m_device->connectDevice())
@@ -66,7 +66,7 @@ bool CANReader::openDevice()
     return true;
 }
 
-void CANReader::closeDevice()
+void CanReader::closeDevice()
 {
     if (!m_device) return;
 
@@ -79,7 +79,7 @@ void CANReader::closeDevice()
     qInfo() << "CAN device closed";
 }
 
-void CANReader::handleFramesReceived()
+void CanReader::handleFramesReceived()
 {
     if (!m_device) return;
 
@@ -93,7 +93,7 @@ void CANReader::handleFramesReceived()
     }
 }
 
-void CANReader::handleErrorOccurred(QCanBusDevice::CanBusError error)
+void CanReader::handleErrorOccurred(QCanBusDevice::CanBusError error)
 {
     Q_UNUSED(error);
     if (!m_device) return;

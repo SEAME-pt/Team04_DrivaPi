@@ -28,15 +28,15 @@ static constexpr const char* PATH_STM32_HUM    = "Vehicle.ControlUnit.STM32.Heal
 static constexpr const char* PATH_RPI_BATTERY_PERCENT = "Vehicle.ControlUnit.Central.Health.Resources.BatteryLevel";
 static constexpr const char* PATH_RPI_BATTERY_VOLTAGE = "Vehicle.ControlUnit.Central.Health.Resources.BatteryVoltage";
 
-KUKSAReader::KUKSAReader(QObject *parent)
+KuksaReader::KuksaReader(QObject *parent)
     : QObject(parent)
 {}
 
-KUKSAReader::KUKSAReader(const KuksaOptions& opts, QObject *parent)
+KuksaReader::KuksaReader(const KuksaOptions& opts, QObject *parent)
     : QObject(parent), m_opts(opts)
 {}
 
-KUKSAReader::~KUKSAReader()
+KuksaReader::~KuksaReader()
 {
     stop();
 }
@@ -74,7 +74,7 @@ static int readInt(const Datapoint& dp, int fallback = 0)
     return fallback;
 }
 
-void KUKSAReader::start()
+void KuksaReader::start()
 {
     m_stopRequested.store(false);
 
@@ -173,20 +173,20 @@ void KUKSAReader::start()
     }
 }
 
-void KUKSAReader::stop()
+void KuksaReader::stop()
 {
     m_stopRequested.store(true);
     if (m_context) m_context->TryCancel();
 }
 
-void KUKSAReader::attachAuth(grpc::ClientContext& ctx)
+void KuksaReader::attachAuth(grpc::ClientContext& ctx)
 {
     if (!m_opts.token.isEmpty()) {
         ctx.AddMetadata("authorization", encodeBearerToken(m_opts.token));
     }
 }
 
-std::string KUKSAReader::loadFile(const QString& path, bool /*warnOnMissing*/)
+std::string KuksaReader::loadFile(const QString& path, bool /*warnOnMissing*/)
 {
     if (path.isEmpty()) return {};
     std::ifstream ifs(path.toStdString(), std::ios::in | std::ios::binary);
@@ -194,7 +194,7 @@ std::string KUKSAReader::loadFile(const QString& path, bool /*warnOnMissing*/)
     return std::string((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 }
 
-std::string KUKSAReader::encodeBearerToken(const QString& token)
+std::string KuksaReader::encodeBearerToken(const QString& token)
 {
     QString t = token.trimmed();
     t.replace('\n', "").replace('\r', "");
