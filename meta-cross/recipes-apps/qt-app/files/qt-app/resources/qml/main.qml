@@ -60,7 +60,7 @@ ApplicationWindow {
 
     Timer {
         interval: 60000
-        running: settingsManager.theme === "Auto"
+        running: settingsManager !== null && settingsManager.theme === "Auto"
         repeat: true
         onTriggered: evaluateTheme()
     }
@@ -294,7 +294,7 @@ ApplicationWindow {
         Column {
             width: parent.width; spacing: AppTheme.spacing.small
             Repeater {
-                model: notificationManager.notifications
+                model: notificationManager ? notificationManager.notifications : []
                 Rectangle {
                     width: notificationContainer.width; height: 52
                     radius: AppTheme.radius.medium
@@ -559,7 +559,7 @@ ApplicationWindow {
 	// ====== BRIGHTNESS OVERLAY ======
     Rectangle {
         anchors.fill: parent; z: 10000; color: "black"
-        opacity: 0.5 - Math.max(0.1, settingsManager.screenBrightness)
+        opacity: settingsManager ? 0.5 - Math.max(0.1, settingsManager.screenBrightness) : 0
         enabled: false
     }
 }

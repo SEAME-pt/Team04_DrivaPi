@@ -24,6 +24,7 @@ namespace handlers {
  */
 void HandleSpeed(const can_frame& frame, kuksa::Publisher& publisher);
 void HandleStm32Battery(const can_frame& frame, kuksa::Publisher& publisher);
+void HandleRpiBattery(const can_frame& frame, kuksa::Publisher& publisher);
 void HandleGear(const can_frame& frame, kuksa::Publisher& publisher);
 void HandleEnv(const can_frame& frame, kuksa::Publisher& publisher);
 

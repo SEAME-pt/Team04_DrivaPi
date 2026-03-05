@@ -322,7 +322,7 @@ Rectangle {
                 }
                 MouseArea {
                     anchors.fill: parent
-                    onPressed: {
+                    onPressed: function(mouse) {
                         locationInput.forceActiveFocus();
                         mouse.accepted = false;
                     }

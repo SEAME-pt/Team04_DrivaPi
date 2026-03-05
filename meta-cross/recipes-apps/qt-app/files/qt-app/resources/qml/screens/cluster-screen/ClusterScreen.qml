@@ -121,7 +121,7 @@ Rectangle {
         accumulatedDistance = 0;
         // Update backend too
         if (vehicleDataAvailable) {
-            vehicleData.setOdometer(0);
+            vehicleData.odo = 0;
         }
         showOdometerReset = true;
         resetOdometerTimer.start();

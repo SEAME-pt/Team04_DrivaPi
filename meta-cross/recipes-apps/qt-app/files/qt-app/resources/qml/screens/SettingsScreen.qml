@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import "../theme"
 
 Rectangle {
@@ -45,7 +46,7 @@ Rectangle {
                 id: themeBox
                 model: themeModel
                 currentIndex: idx(themeModel, settingsManager.theme)
-                onActivated: settingsManager.theme = textAt(index)
+                onActivated: function(index) { settingsManager.theme = textAt(index) }
             }
         }
 
@@ -59,7 +60,7 @@ Rectangle {
                 from: 0
                 to: 1
                 Component.onCompleted: brightSlider.value = settingsManager.screenBrightness
-                onValueChanged: settingsManager.screenBrightness = value
+                onMoved: settingsManager.screenBrightness = value
 
                 background: Rectangle {
                     x: 0
@@ -229,7 +230,7 @@ Rectangle {
                 border.width: 1
                 // Add a small shadow in light mode for depth
                 layer.enabled: !AppTheme.isDark
-                layer.effect: Qt.createQmlObject('import Qt5Compat.GraphicalEffects; DropShadow { radius: 8; color: "#20000000"; samples: 17 }', combo)
+                layer.effect: DropShadow { radius: 8; color: "#20000000"; samples: 17 }
             }
             contentItem: ListView {
                 clip: true
