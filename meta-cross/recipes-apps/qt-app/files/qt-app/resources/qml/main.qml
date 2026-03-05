@@ -4,6 +4,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
 import "screens"
+import "screens/cluster-screen"
 import "components"
 import "theme"
 

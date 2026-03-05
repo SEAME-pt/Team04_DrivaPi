@@ -5,7 +5,14 @@
         <file>qml/main.qml</file>
         <file>qml/theme/qmldir</file>
 
-        <file>qml/screens/ClusterScreen.qml</file>
+        <file>qml/screens/cluster-screen/ClusterScreen.qml</file>
+        <file>qml/screens/cluster-screen/background/Background.qml</file>
+        <file>qml/screens/cluster-screen/background/GlowLayers.qml</file>
+        <file>qml/screens/cluster-screen/background/road-layer/RoadLayer.qml</file>
+        <file>qml/screens/cluster-screen/background/road-layer/FogLayer.qml</file>
+
+
+
         <file>qml/screens/NavigationScreen.qml</file>
         <file>qml/screens/MediaScreen.qml</file>
         <file>qml/screens/DiagnosticsScreen.qml</file>
@@ -25,14 +32,14 @@
         <file>qml/components/SpeedDisplay.qml</file>
         <file>qml/components/WeatherMini.qml</file>
 
-        <file>assets/oie_OeB7IAtTvDtn.png</file>
-        <file>assets/oie_kUl6AfLcsUwE.png</file>
         <file>assets/oie_transparent (2).png</file>
         <file>assets/Model 3.png</file>
         <file>assets/car.png</file>
         <file>assets/road.png</file>
-        <file>assets/left-dashboard.png</file>
-        <file>assets/right-dashboard.png</file>
+        <file>assets/top_dashboard.png</file>
+        <file>assets/left_dashboard.png</file>
+        <file>assets/bottom_dashboard.png</file>
+        <file>assets/right_dashboard.png</file>
         <file>assets/backgrounds/cluster-base.svg</file>
         <file>assets/backgrounds/default.svg</file>
         <file>assets/backgrounds/vector-1.svg</file>
