@@ -33,7 +33,7 @@ KUKSAReader::KUKSAReader(QObject *parent)
 {}
 
 KUKSAReader::KUKSAReader(const KuksaOptions& opts, QObject *parent)
-    : QObject(parent), m_opts_(opts)
+    : QObject(parent), m_opts(opts)
 {}
 
 KUKSAReader::~KUKSAReader()
@@ -76,19 +76,19 @@ static int readInt(const Datapoint& dp, int fallback = 0)
 
 void KUKSAReader::start()
 {
-    m_stop_requested_.store(false);
+    m_stopRequested.store(false);
 
     try {
         std::shared_ptr<grpc::ChannelCredentials> creds;
-        if (!m_opts_.use_ssl) {
+        if (!m_opts.use_ssl) {
             creds = grpc::InsecureChannelCredentials();
         } else {
             grpc::SslCredentialsOptions ssl_opts;
-            const std::string root = loadFile(m_opts_.root_ca_path, true);
+            const std::string root = loadFile(m_opts.root_ca_path, true);
             if (!root.empty()) ssl_opts.pem_root_certs = root;
 
-            const std::string cert = loadFile(m_opts_.client_cert_path, true);
-            const std::string key  = loadFile(m_opts_.client_key_path, true);
+            const std::string cert = loadFile(m_opts.client_cert_path, true);
+            const std::string key  = loadFile(m_opts.client_key_path, true);
             if (!cert.empty() && !key.empty()) {
                 ssl_opts.pem_cert_chain = cert;
                 ssl_opts.pem_private_key = key;
@@ -96,13 +96,13 @@ void KUKSAReader::start()
             creds = grpc::SslCredentials(ssl_opts);
         }
 
-        const std::string addr = m_opts_.address.isEmpty()
+        const std::string addr = m_opts.address.isEmpty()
             ? std::string("localhost:55555")
-            : m_opts_.address.toStdString();
+            : m_opts.address.toStdString();
 
         auto channel = grpc::CreateChannel(addr, creds);
-        m_stub_ = VAL::NewStub(channel);
-        if (!m_stub_) throw std::runtime_error("Failed to create gRPC stub");
+        m_stub = VAL::NewStub(channel);
+        if (!m_stub) throw std::runtime_error("Failed to create gRPC stub");
 
         channel->WaitForConnected(std::chrono::system_clock::now() + std::chrono::seconds(2));
     } catch (const std::exception& e) {
@@ -110,8 +110,8 @@ void KUKSAReader::start()
         return;
     }
 
-    m_context_ = std::make_unique<grpc::ClientContext>();
-    attachAuth(*m_context_);
+    m_context = std::make_unique<grpc::ClientContext>();
+    attachAuth(*m_context);
 
     SubscribeRequest request;
 
@@ -129,10 +129,10 @@ void KUKSAReader::start()
     request.add_signal_paths(PATH_RPI_BATTERY_PERCENT);
     request.add_signal_paths(PATH_RPI_BATTERY_VOLTAGE);
 
-    auto reader = m_stub_->Subscribe(m_context_.get(), request);
+    auto reader = m_stub->Subscribe(m_context.get(), request);
     SubscribeResponse response;
 
-    while (!m_stop_requested_.load() && reader->Read(&response)) {
+    while (!m_stopRequested.load() && reader->Read(&response)) {
         const auto& entries = response.entries();
 
         if (auto it = entries.find(PATH_SPEED); it != entries.end()) {
@@ -168,21 +168,21 @@ void KUKSAReader::start()
     }
 
     grpc::Status status = reader->Finish();
-    if (!m_stop_requested_.load() && !status.ok()) {
+    if (!m_stopRequested.load() && !status.ok()) {
         emit errorOccurred(QString::fromStdString(status.error_message()));
     }
 }
 
 void KUKSAReader::stop()
 {
-    m_stop_requested_.store(true);
-    if (m_context_) m_context_->TryCancel();
+    m_stopRequested.store(true);
+    if (m_context) m_context->TryCancel();
 }
 
 void KUKSAReader::attachAuth(grpc::ClientContext& ctx)
 {
-    if (!m_opts_.token.isEmpty()) {
-        ctx.AddMetadata("authorization", encodeBearerToken(m_opts_.token));
+    if (!m_opts.token.isEmpty()) {
+        ctx.AddMetadata("authorization", encodeBearerToken(m_opts.token));
     }
 }
 

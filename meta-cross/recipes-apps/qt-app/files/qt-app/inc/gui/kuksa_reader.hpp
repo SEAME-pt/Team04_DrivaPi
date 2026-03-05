@@ -64,11 +64,11 @@ private:
     static std::string loadFile(const QString& path, bool warnOnMissing = false);
     static std::string encodeBearerToken(const QString& token);
 
-    KuksaOptions m_opts_;
+    KuksaOptions m_opts;
     using VAL = kuksa::val::v2::VAL;
-    std::unique_ptr<VAL::Stub> m_stub_;
-    std::atomic<bool> m_stop_requested_{false};
-    std::unique_ptr<grpc::ClientContext> m_context_;
+    std::unique_ptr<VAL::Stub> m_stub;
+    std::atomic<bool> m_stopRequested{false};
+    std::unique_ptr<grpc::ClientContext> m_context;
 };
 
 }  // namespace kuksa
