@@ -25,7 +25,7 @@ Item {
         width: roadWindow.roadW
         height: roadWindow.roadH
         y: roadWindow.baseY
-        source: "qrc:/assets/road.png"
+        source: "qrc:/assets/cluster/road.png"
         fillMode: Image.PreserveAspectCrop
         smooth: true
         opacity: 0.95
@@ -34,7 +34,7 @@ Item {
     Image {
         id: roadImg2
         visible: false
-        source: "qrc:/assets/road.png"
+        source: "qrc:/assets/cluster/road.png"
     }
 
     // ===== Horizon integration: blur + fade (top only) =====

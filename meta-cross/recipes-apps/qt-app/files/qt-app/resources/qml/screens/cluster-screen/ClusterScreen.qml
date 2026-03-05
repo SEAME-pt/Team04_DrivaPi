@@ -234,7 +234,7 @@ Rectangle {
 
                 // Background grid and glow
                 Image {
-                    source: "qrc:/assets/cluster_floor_grid.svg"
+                    source: "qrc:/assets/cluster/floor-grid.svg"
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: 26 * root.sy
@@ -244,7 +244,7 @@ Rectangle {
                 }
 
                 Image {
-                    source: "qrc:/assets/cluster_car_glow.svg"
+                    source: "qrc:/assets/cluster/car-glow.svg"
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: 74 * root.sy
@@ -396,7 +396,7 @@ Rectangle {
 
                         Image {
                             id: carImg
-                            source: "qrc:/assets/car.png"
+                            source: "qrc:/assets/cluster/car.png"
                             sourceSize.width: 150 * root.s
                             sourceSize.height: 150 * root.s
                             anchors.horizontalCenter: parent.horizontalCenter

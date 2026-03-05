@@ -10,7 +10,7 @@ Item {
 
     // --- Top Glow Layer ---
     Image {
-        source: "qrc:/assets/top_dashboard.png"
+        source: "qrc:/assets/cluster/top-dashboard.png"
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         width: parent.width
@@ -29,7 +29,7 @@ Item {
 
     // --- Center Left Glow Layer ---
     Image {
-        source: "qrc:/assets/left_dashboard.png"
+        source: "qrc:/assets/cluster/left-dashboard.png"
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
         width: parent.width * 0.45
@@ -48,7 +48,7 @@ Item {
 
     // --- Center Right Glow Layer ---
     Image {
-        source: "qrc:/assets/right_dashboard.png"
+        source: "qrc:/assets/cluster/right-dashboard.png"
         anchors.verticalCenter: parent.verticalCenter
         anchors.right: parent.right
         width: parent.width * 0.45
@@ -67,7 +67,7 @@ Item {
 
     // --- Bottom Glow Layer ---
     Image {
-        source: "qrc:/assets/bottom_dashboard.png"
+        source: "qrc:/assets/cluster/bottom-dashboard.png"
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
         fillMode: Image.PreserveAspectFit

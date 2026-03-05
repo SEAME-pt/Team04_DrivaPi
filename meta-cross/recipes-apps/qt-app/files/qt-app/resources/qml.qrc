@@ -30,14 +30,14 @@
         <file>qml/components/SpeedDisplay.qml</file>
         <file>qml/components/WeatherMini.qml</file>
 
-        <file>assets/car.png</file>
-        <file>assets/road.png</file>
-        <file>assets/top_dashboard.png</file>
-        <file>assets/left_dashboard.png</file>
-        <file>assets/bottom_dashboard.png</file>
-        <file>assets/right_dashboard.png</file>
-        <file>assets/cluster_floor_grid.svg</file>
-        <file>assets/cluster_car_glow.svg</file>
+        <file>assets/cluster/car.png</file>
+        <file>assets/cluster/road.png</file>
+        <file>assets/cluster/top-dashboard.png</file>
+        <file>assets/cluster/left-dashboard.png</file>
+        <file>assets/cluster/bottom-dashboard.png</file>
+        <file>assets/cluster/right-dashboard.png</file>
+        <file>assets/cluster/floor-grid.svg</file>
+        <file>assets/cluster/car-glow.svg</file>
 
         <file>icons/cluster/left-arrow.svg</file>
         <file>icons/cluster/right-arrow.svg</file>
