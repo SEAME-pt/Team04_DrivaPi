@@ -105,7 +105,7 @@ Rectangle {
             CustomComboBox {
                 model: speedModel
                 currentIndex: idx(speedModel, settingsManager.speedUnit)
-                onActivated: settingsManager.speedUnit = textAt(index)
+                onActivated: function(index) { settingsManager.speedUnit = textAt(index) }
             }
         }
 
@@ -114,7 +114,7 @@ Rectangle {
             CustomComboBox {
                 model: tempModel
                 currentIndex: idx(tempModel, settingsManager.temperatureUnit)
-                onActivated: settingsManager.temperatureUnit = textAt(index)
+                onActivated: function(index) { settingsManager.temperatureUnit = textAt(index) }
             }
         }
 
@@ -123,7 +123,7 @@ Rectangle {
             CustomComboBox {
                 model: distanceModel
                 currentIndex: idx(distanceModel, settingsManager.distanceUnit)
-                onActivated: settingsManager.distanceUnit = textAt(index)
+                onActivated: function(index) { settingsManager.distanceUnit = textAt(index) }
             }
         }
 
@@ -132,7 +132,7 @@ Rectangle {
             CustomComboBox {
                 model: windModel
                 currentIndex: idx(windModel, settingsManager.windSpeedUnit)
-                onActivated: settingsManager.windSpeedUnit = textAt(index)
+                onActivated: function(index) { settingsManager.windSpeedUnit = textAt(index) }
             }
         }
 
@@ -141,7 +141,7 @@ Rectangle {
             CustomComboBox {
                 model: precipModel
                 currentIndex: idx(precipModel, settingsManager.precipitationUnit)
-                onActivated: settingsManager.precipitationUnit = textAt(index)
+                onActivated: function(index) { settingsManager.precipitationUnit = textAt(index) }
             }
         }
 

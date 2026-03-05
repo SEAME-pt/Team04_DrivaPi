@@ -263,10 +263,7 @@ void MusicPlayerController::setVolume(int vol) {
 void MusicPlayerController::onMediaStatusChanged(QMediaPlayer::MediaStatus status) {
     qDebug() << "Media status changed:" << status;
     if (status == QMediaPlayer::EndOfMedia) {
-        // Auto-advance to next track when current one ends
-        bool wasPlaying = true; // Already playing, so continue
-        next();
-        // Note: next() will handle resuming playback
+        next(); // Auto-advance; next() resumes playback if already playing
     }
 }
 

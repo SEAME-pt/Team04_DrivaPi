@@ -29,9 +29,9 @@ VehicleData::VehicleData(QObject *parent)
     , m_speed(0.0f)
     , m_energy(0.0)
     , m_stm32Battery(0)
-    , m_stm32BatteryVoltage(0.0)
-    , m_stm32Temperature(0.0)
-    , m_stm32Humidity(0.0)
+    , m_stm32BatteryVoltage(0.0f)
+    , m_stm32Temperature(0.0f)
+    , m_stm32Humidity(0.0f)
     , m_rpiBattery(0)
     , m_rpiBatteryVoltage(0.0)
     , m_distance(0)
@@ -56,9 +56,9 @@ float VehicleData::getSpeed() const { return m_speed; }
 double VehicleData::getEnergy() const { return m_energy; }
 
 int VehicleData::getStm32Battery() const { return m_stm32Battery; }
-double VehicleData::getStm32BatteryVoltage() const { return m_stm32BatteryVoltage; }
-double VehicleData::getStm32Temperature() const { return m_stm32Temperature; }
-double VehicleData::getStm32Humidity() const { return m_stm32Humidity; }
+float VehicleData::getStm32BatteryVoltage() const { return m_stm32BatteryVoltage; }
+float VehicleData::getStm32Temperature() const { return m_stm32Temperature; }
+float VehicleData::getStm32Humidity() const { return m_stm32Humidity; }
 
 int VehicleData::getRpiBattery() const { return m_rpiBattery; }
 double VehicleData::getRpiBatteryVoltage() const { return m_rpiBatteryVoltage; }
@@ -97,7 +97,7 @@ void VehicleData::setStm32Battery(int battery)
     updateTimestamp("stm32Battery");
 }
 
-void VehicleData::setStm32BatteryVoltage(double volts)
+void VehicleData::setStm32BatteryVoltage(float volts)
 {
     if (!qFuzzyCompare(m_stm32BatteryVoltage, volts)) {
         m_stm32BatteryVoltage = volts;
@@ -106,7 +106,7 @@ void VehicleData::setStm32BatteryVoltage(double volts)
     updateTimestamp("stm32BatteryVoltage");
 }
 
-void VehicleData::setStm32Temperature(double tempC)
+void VehicleData::setStm32Temperature(float tempC)
 {
     if (!qFuzzyCompare(m_stm32Temperature, tempC)) {
         m_stm32Temperature = tempC;
@@ -115,7 +115,7 @@ void VehicleData::setStm32Temperature(double tempC)
     updateTimestamp("stm32Temperature");
 }
 
-void VehicleData::setStm32Humidity(double humidityPct)
+void VehicleData::setStm32Humidity(float humidityPct)
 {
     if (!qFuzzyCompare(m_stm32Humidity, humidityPct)) {
         m_stm32Humidity = humidityPct;
@@ -201,9 +201,9 @@ void VehicleData::resetValues()
     setEnergy(0.0);
 
     setStm32Battery(0);
-    setStm32BatteryVoltage(0.0);
-    setStm32Temperature(0.0);
-    setStm32Humidity(0.0);
+    setStm32BatteryVoltage(0.0f);
+    setStm32Temperature(0.0f);
+    setStm32Humidity(0.0f);
 
     setGear("N");
 }
@@ -211,32 +211,6 @@ void VehicleData::resetValues()
 void VehicleData::resetTrip()
 {
     setDistance(0);
-}
-
-// ===== KUKSA hooks =====
-void VehicleData::handleSpeedUpdate(float speed)
-{
-    setSpeed(speed);
-}
-
-void VehicleData::handleStm32BatteryUpdate(int percent)
-{
-    setStm32Battery(percent);
-}
-
-void VehicleData::handleStm32BatteryVoltageUpdate(float volts)
-{
-    setStm32BatteryVoltage(static_cast<double>(volts));
-}
-
-void VehicleData::handleStm32TemperatureUpdate(float tempC)
-{
-    setStm32Temperature(static_cast<double>(tempC));
-}
-
-void VehicleData::handleStm32HumidityUpdate(float humidityPct)
-{
-    setStm32Humidity(static_cast<double>(humidityPct));
 }
 
 void VehicleData::handleCurrentGearUpdate(int currentGear)
@@ -266,7 +240,7 @@ void VehicleData::handleCanMessage(const QByteArray &payload, uint32_t canId)
         const int pct = static_cast<int>(data[0]);
         const float volts = readFloatLe(&data[1]);
         setStm32Battery(pct);
-        setStm32BatteryVoltage(static_cast<double>(volts));
+        setStm32BatteryVoltage(volts);
         return;
     }
 
@@ -283,8 +257,8 @@ void VehicleData::handleCanMessage(const QByteArray &payload, uint32_t canId)
         if (dlc < 8) return;
         const float tempC = readFloatLe(&data[0]);
         const float humPct = readFloatLe(&data[4]);
-        setStm32Temperature(static_cast<double>(tempC));
-        setStm32Humidity(static_cast<double>(humPct));
+        setStm32Temperature(tempC);
+        setStm32Humidity(humPct);
         return;
     }
 }

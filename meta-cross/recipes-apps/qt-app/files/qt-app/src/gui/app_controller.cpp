@@ -100,27 +100,24 @@ int AppController::run(QGuiApplication& app)
         QObject::connect(workerThread, &QThread::started, kuksaReader, &kuksa::KuksaReader::start);
         QObject::connect(workerThread, &QThread::finished, kuksaReader, &kuksa::KuksaReader::deleteLater);
 
-        // Existing
         QObject::connect(kuksaReader, &kuksa::KuksaReader::speedReceived,
-                         vehicleData.data(), &VehicleData::handleSpeedUpdate,
+                         vehicleData.data(), &VehicleData::setSpeed,
                          Qt::QueuedConnection);
 
-        // NEW: 12V battery percent + voltage
         QObject::connect(kuksaReader, &kuksa::KuksaReader::lvBatteryPercentReceived,
-                         vehicleData.data(), &VehicleData::handleStm32BatteryUpdate,
+                         vehicleData.data(), &VehicleData::setStm32Battery,
                          Qt::QueuedConnection);
 
         QObject::connect(kuksaReader, &kuksa::KuksaReader::lvBatteryVoltageReceived,
-                         vehicleData.data(), &VehicleData::handleStm32BatteryVoltageUpdate,
+                         vehicleData.data(), &VehicleData::setStm32BatteryVoltage,
                          Qt::QueuedConnection);
 
-        // NEW: STM32 internal temp/humidity
         QObject::connect(kuksaReader, &kuksa::KuksaReader::stm32TemperatureReceived,
-                         vehicleData.data(), &VehicleData::handleStm32TemperatureUpdate,
+                         vehicleData.data(), &VehicleData::setStm32Temperature,
                          Qt::QueuedConnection);
 
         QObject::connect(kuksaReader, &kuksa::KuksaReader::stm32HumidityReceived,
-                         vehicleData.data(), &VehicleData::handleStm32HumidityUpdate,
+                         vehicleData.data(), &VehicleData::setStm32Humidity,
                          Qt::QueuedConnection);
 
         QObject::connect(kuksaReader, &kuksa::KuksaReader::rpiBatteryPercentReceived,

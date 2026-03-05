@@ -33,15 +33,16 @@ class VehicleData : public QObject
     Q_PROPERTY(double energy READ getEnergy WRITE setEnergy NOTIFY energyChanged)
 
     Q_PROPERTY(int stm32Battery READ getStm32Battery WRITE setStm32Battery NOTIFY stm32BatteryChanged)
-    Q_PROPERTY(double stm32BatteryVoltage READ getStm32BatteryVoltage WRITE setStm32BatteryVoltage NOTIFY stm32BatteryVoltageChanged)
-    Q_PROPERTY(double stm32Temperature READ getStm32Temperature WRITE setStm32Temperature NOTIFY stm32TemperatureChanged)
-    Q_PROPERTY(double stm32Humidity READ getStm32Humidity WRITE setStm32Humidity NOTIFY stm32HumidityChanged)
+    Q_PROPERTY(float stm32BatteryVoltage READ getStm32BatteryVoltage WRITE setStm32BatteryVoltage NOTIFY stm32BatteryVoltageChanged)
+    Q_PROPERTY(float stm32Temperature READ getStm32Temperature WRITE setStm32Temperature NOTIFY stm32TemperatureChanged)
+    Q_PROPERTY(float stm32Humidity READ getStm32Humidity WRITE setStm32Humidity NOTIFY stm32HumidityChanged)
 
     Q_PROPERTY(int rpiBattery READ getRpiBattery WRITE setRpiBattery NOTIFY rpiBatteryChanged)
     Q_PROPERTY(double rpiBatteryVoltage READ getRpiBatteryVoltage WRITE setRpiBatteryVoltage NOTIFY rpiBatteryVoltageChanged)
     Q_PROPERTY(int distance READ getDistance WRITE setDistance NOTIFY distanceChanged)
     Q_PROPERTY(int odo READ getOdometer WRITE setOdometer NOTIFY odometerChanged)
     Q_PROPERTY(bool autonomousMode READ getAutonomousMode WRITE setAutonomousMode NOTIFY autonomousModeChanged)
+    Q_PROPERTY(int temperature READ getTemperature WRITE setTemperature NOTIFY temperatureChanged)
 
 public:
     /// @brief Construct VehicleData.
@@ -54,9 +55,9 @@ public:
     double  getEnergy() const;
 
     int     getStm32Battery() const;
-    double  getStm32BatteryVoltage() const;
-    double  getStm32Temperature() const;
-    double  getStm32Humidity() const;
+    float   getStm32BatteryVoltage() const;
+    float   getStm32Temperature() const;
+    float   getStm32Humidity() const;
 
     int     getRpiBattery() const;
     double  getRpiBatteryVoltage() const;
@@ -71,9 +72,9 @@ public:
     void    setEnergy(double energy);
 
     void    setStm32Battery(int battery);
-    void    setStm32BatteryVoltage(double volts);
-    void    setStm32Temperature(double tempC);
-    void    setStm32Humidity(double humidityPct);
+    void    setStm32BatteryVoltage(float volts);
+    void    setStm32Temperature(float tempC);
+    void    setStm32Humidity(float humidityPct);
     void    setRpiBattery(int battery);
     void    setRpiBatteryVoltage(double volts);
     void    setDistance(int distance);
@@ -87,17 +88,7 @@ public:
     Q_INVOKABLE void resetValues();
     Q_INVOKABLE void resetTrip();
 
-    // Existing hook used in KUKSA mode
-    void handleSpeedUpdate(float speed);
-
-    // New hooks used in KUKSA mode
-    void handleRpiBatteryUpdate(int percent);
-    void handleRpiBatteryVoltageUpdate(double volts);
-    void handleStm32BatteryUpdate(int percent);
-    void handleStm32BatteryVoltageUpdate(float volts);
-    void handleStm32TemperatureUpdate(float tempC);
-    void handleStm32HumidityUpdate(float humidityPct);
-    void handleCurrentGearUpdate(int currentGear); // VSS: 0=N, negative=R, positive=D/forward
+    void handleCurrentGearUpdate(int currentGear); ///< Maps VSS int (0=N, neg=R, pos=D) to gear string.
 
 public slots:
     /// @brief Process CAN frame and update vehicle data.
@@ -130,9 +121,9 @@ private:
     double  m_energy;
 
     int     m_stm32Battery;
-    double  m_stm32BatteryVoltage;
-    double  m_stm32Temperature;
-    double  m_stm32Humidity;
+    float   m_stm32BatteryVoltage;
+    float   m_stm32Temperature;
+    float   m_stm32Humidity;
 
     int     m_rpiBattery;
     double  m_rpiBatteryVoltage;
