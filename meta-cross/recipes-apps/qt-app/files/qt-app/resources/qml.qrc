@@ -11,8 +11,6 @@
         <file>qml/screens/cluster-screen/background/road-layer/RoadLayer.qml</file>
         <file>qml/screens/cluster-screen/background/road-layer/FogLayer.qml</file>
 
-
-
         <file>qml/screens/NavigationScreen.qml</file>
         <file>qml/screens/MediaScreen.qml</file>
         <file>qml/screens/DiagnosticsScreen.qml</file>
@@ -32,94 +30,35 @@
         <file>qml/components/SpeedDisplay.qml</file>
         <file>qml/components/WeatherMini.qml</file>
 
-        <file>assets/oie_transparent (2).png</file>
-        <file>assets/Model 3.png</file>
         <file>assets/car.png</file>
         <file>assets/road.png</file>
         <file>assets/top_dashboard.png</file>
         <file>assets/left_dashboard.png</file>
         <file>assets/bottom_dashboard.png</file>
         <file>assets/right_dashboard.png</file>
-        <file>assets/cluster_left_panel.svg</file>
-        <file>assets/cluster_right_panel.svg</file>
         <file>assets/cluster_floor_grid.svg</file>
         <file>assets/cluster_car_glow.svg</file>
 
-
-        <file>icons/cluster/speedometer.svg</file>
-        <file>icons/cluster/car.svg</file>
-        <file>icons/cluster/car-alt.svg</file>
-        <file>icons/cluster/model3.svg</file>
         <file>icons/cluster/left-arrow.svg</file>
         <file>icons/cluster/right-arrow.svg</file>
 
         <file>icons/common/nav-mode.svg</file>
-        <file>icons/common/nav-mode-active.svg</file>
-        <file>icons/common/steering-mode.svg</file>
-        <file>icons/common/steering-mode-active.svg</file>
         <file>icons/common/media-mode.svg</file>
-        <file>icons/common/media-mode-active.svg</file>
-        <file>icons/common/close.svg</file>
-        <file>icons/common/menu.svg</file>
-        <file>icons/common/home.svg</file>
-        <file>icons/common/back.svg</file>
-        <file>icons/common/search.svg</file>
-        <file>icons/common/chevron-up.svg</file>
-        <file>icons/common/chevron-down.svg</file>
         <file>icons/common/arrow-forward.svg</file>
-        <file>icons/common/plus.svg</file>
-        <file>icons/common/minus.svg</file>
-        <file>icons/common/edit.svg</file>
-        <file>icons/common/save.svg</file>
-        <file>icons/common/trash.svg</file>
         <file>icons/common/music-note.svg</file>
 
         <file>icons/controls/play.svg</file>
         <file>icons/controls/pause.svg</file>
         <file>icons/controls/next.svg</file>
         <file>icons/controls/previous.svg</file>
-        <file>icons/controls/shuffle.svg</file>
-        <file>icons/controls/repeat.svg</file>
         <file>icons/controls/volume-high.svg</file>
-        <file>icons/controls/volume-low.svg</file>
         <file>icons/controls/volume-mute.svg</file>
 
         <file>icons/hardware/cpu.svg</file>
-        <file>icons/hardware/storage.svg</file>
-        <file>icons/hardware/temperature.svg</file>
         <file>icons/hardware/sensor.svg</file>
-        <file>icons/hardware/battery.svg</file>
-        <file>icons/hardware/ram.svg</file>
-        <file>icons/hardware/sd-card.svg</file>
         <file>icons/hardware/mcu.svg</file>
-        <file>icons/hardware/servo.svg</file>
-        <file>icons/hardware/imu.svg</file>
-        <file>icons/hardware/gps.svg</file>
-        <file>icons/hardware/camera.svg</file>
-        <file>icons/hardware/ultrasonic.svg</file>
-        <file>icons/hardware/battery-monitor.svg</file>
-        <file>icons/hardware/network.svg</file>
-        <file>icons/hardware/fan.svg</file>
-        <file>icons/hardware/voltage.svg</file>
-        <file>icons/hardware/power-plug.svg</file>
-        <file>icons/hardware/ethernet.svg</file>
 
-        <file>icons/settings/wifi.svg</file>
         <file>icons/settings/brightness.svg</file>
-        <file>icons/settings/bluetooth.svg</file>
-        <file>icons/settings/theme-dark.svg</file>
-        <file>icons/settings/theme-light.svg</file>
-        <file>icons/settings/toggle-on.svg</file>
-        <file>icons/settings/toggle-off.svg</file>
-        <file>icons/settings/language.svg</file>
-        <file>icons/settings/keyboard.svg</file>
-        <file>icons/settings/display.svg</file>
-        <file>icons/settings/usb.svg</file>
-        <file>icons/settings/aux.svg</file>
-        <file>icons/settings/brightness-low.svg</file>
-        <file>icons/settings/brightness-high.svg</file>
-        <file>icons/settings/bluetooth-off.svg</file>
-        <file>icons/settings/theme-auto.svg</file>
 
         <file>icons/weather/sun.svg</file>
         <file>icons/weather/cloud.svg</file>
