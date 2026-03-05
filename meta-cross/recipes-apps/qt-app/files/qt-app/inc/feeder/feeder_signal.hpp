@@ -16,7 +16,7 @@ namespace feeder {
  * @brief Global stop flag set by signal handlers
  * @note Thread-safe atomic; read-checked in main loop
  */
-extern std::atomic<bool> g_stop_requested;
+extern std::atomic<bool> g_stopRequested;
 
 /**
  * @brief Install signal handlers for graceful shutdown (SIGINT, SIGTERM, SIGCHLD)

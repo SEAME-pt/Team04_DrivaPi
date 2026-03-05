@@ -29,7 +29,7 @@ void CloseCanSocket(int sock);
  * @param sock Socket file descriptor
  * @param frame Output parameter for received frame
  * @return true if frame successfully read, false on error (including signal interrupt with stop flag set)
- * @note Handles EINTR internally; checks g_stop_requested for graceful shutdown
+ * @note Handles EINTR internally; checks g_stopRequested for graceful shutdown
  */
 bool ReadCanFrame(int sock, can_frame& frame);
 

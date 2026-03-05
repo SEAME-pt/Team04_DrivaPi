@@ -18,17 +18,17 @@
 namespace feeder {
 
 // Global stop flag for main loop
-std::atomic<bool> g_stop_requested(false);
+std::atomic<bool> g_stopRequested(false);
 
 // Registry of child PIDs (not modified in signal handlers to avoid async-unsafe issues)
-static std::vector<pid_t> g_child_pids;
-static std::mutex g_child_pids_mutex;
+static std::vector<pid_t> g_childPids;
+static std::mutex g_childPidsMutex;
 
 /**
  * @brief SIGINT/SIGTERM handler - sets stop flag to break main loop
  */
 static void HandleTermination(int /*signum*/) {
-    g_stop_requested.store(true);
+    g_stopRequested.store(true);
 }
 
 /**
@@ -75,22 +75,22 @@ void RegisterChildPid(pid_t pid)
 {
     if (pid <= 0) return;
 
-    std::lock_guard<std::mutex> lock(g_child_pids_mutex);
-    if (std::find(g_child_pids.begin(), g_child_pids.end(), pid) == g_child_pids.end()) {
-        g_child_pids.push_back(pid);
+    std::lock_guard<std::mutex> lock(g_childPidsMutex);
+    if (std::find(g_childPids.begin(), g_childPids.end(), pid) == g_childPids.end()) {
+        g_childPids.push_back(pid);
     }
 }
 
 void KillRegisteredChildren()
 {
-    std::lock_guard<std::mutex> lock(g_child_pids_mutex);
+    std::lock_guard<std::mutex> lock(g_childPidsMutex);
 
-    if (g_child_pids.empty()) return;
+    if (g_childPids.empty()) return;
 
-    std::cout << "[Signal] Terminating " << g_child_pids.size() << " child process(es)..." << std::endl;
+    std::cout << "[Signal] Terminating " << g_childPids.size() << " child process(es)..." << std::endl;
 
     // Step 1: Send SIGTERM to all children
-    for (pid_t pid : g_child_pids) {
+    for (pid_t pid : g_childPids) {
         if (pid > 0) {
             kill(pid, SIGTERM);
         }
@@ -104,7 +104,7 @@ void KillRegisteredChildren()
     nanosleep(&sleep_duration, nullptr);
 
     // Step 3: Force kill any stragglers
-    for (pid_t pid : g_child_pids) {
+    for (pid_t pid : g_childPids) {
         if (pid > 0) {
             // Check if still alive before killing
             if (kill(pid, 0) == 0) {  // 0 signal just checks if process exists
@@ -113,7 +113,7 @@ void KillRegisteredChildren()
         }
     }
 
-    g_child_pids.clear();
+    g_childPids.clear();
 }
 
 } // namespace feeder

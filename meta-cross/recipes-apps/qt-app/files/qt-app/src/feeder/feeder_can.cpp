@@ -75,7 +75,7 @@ bool ReadCanFrame(int sock, can_frame& frame)
         // Read interrupted by signal
         if (errno == EINTR) {
             // Check if we were asked to stop
-            if (g_stop_requested.load()) {
+            if (g_stopRequested.load()) {
                 std::cout << "[CAN] Read interrupted by shutdown signal" << std::endl;
                 return false;
             }
