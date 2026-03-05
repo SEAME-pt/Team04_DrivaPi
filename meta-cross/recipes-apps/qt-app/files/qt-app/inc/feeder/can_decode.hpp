@@ -1,5 +1,6 @@
 /**
  * @file can_decode.hpp
+ * @author DrivaPi Team
  * @brief Helper functions for decoding CAN payloads
  * 
  * Provides little-endian decoding utilities for CAN frame data

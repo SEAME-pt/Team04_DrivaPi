@@ -1,3 +1,9 @@
+/**
+ * @file pi_health_reader.hpp
+ * @author DrivaPi Team
+ * @brief Polls Raspberry Pi system health metrics via a local or remote shell script.
+ */
+
 #pragma once
 
 #include <QObject>

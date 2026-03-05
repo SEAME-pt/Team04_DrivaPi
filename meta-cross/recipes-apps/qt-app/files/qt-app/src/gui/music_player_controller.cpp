@@ -1,3 +1,9 @@
+/**
+ * @file music_player_controller.cpp
+ * @author DrivaPi Team
+ * @brief Qt media player controller implementation with TagLib metadata extraction.
+ */
+
 #include "music_player_controller.hpp"
 #include "settings_manager.hpp"
 #include <QDir>

@@ -1,5 +1,6 @@
 /**
  * @file publisher.hpp
+ * @author DrivaPi Team
  * @brief KUKSA VAL v2 publisher client wrapper
  * 
  * Provides typed publish methods for sending VSS signals to KUKSA databroker

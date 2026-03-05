@@ -1,3 +1,9 @@
+/**
+ * @file feeder_cli.hpp
+ * @author DrivaPi Team
+ * @brief Command-line argument parsing for the CAN feeder.
+ */
+
 #pragma once
 
 #include "publisher.hpp"

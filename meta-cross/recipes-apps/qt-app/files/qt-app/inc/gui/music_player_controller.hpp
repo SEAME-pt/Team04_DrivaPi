@@ -1,3 +1,9 @@
+/**
+ * @file music_player_controller.hpp
+ * @author DrivaPi Team
+ * @brief Qt media player controller exposing playback state and controls to QML.
+ */
+
 #pragma once
 #include <QObject>
 #include <QMediaPlayer>

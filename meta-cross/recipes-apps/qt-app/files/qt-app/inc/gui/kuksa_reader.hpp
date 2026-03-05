@@ -1,3 +1,10 @@
+/**
+ * @file kuksa_reader.hpp
+ * @author DrivaPi Team
+ * @brief KUKSA VAL v2 gRPC subscriber — emits Qt signals with vehicle telemetry.
+ * @note Runs in a worker QThread; connect signals with Qt::QueuedConnection.
+ */
+
 #ifndef KUKSAREADER_HPP
 #define KUKSAREADER_HPP
 

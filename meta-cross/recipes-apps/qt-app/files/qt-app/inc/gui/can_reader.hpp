@@ -1,5 +1,6 @@
 /**
  * @file can_reader.hpp
+ * @author DrivaPi Team
  * @brief CAN bus reader using QCanBus (SocketCAN).
  */
 

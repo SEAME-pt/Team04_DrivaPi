@@ -1,3 +1,9 @@
+/**
+ * @file feeder_signal.hpp
+ * @author DrivaPi Team
+ * @brief POSIX signal handling and child process management for the CAN feeder.
+ */
+
 #pragma once
 
 #include <atomic>

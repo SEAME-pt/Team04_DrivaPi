@@ -1,5 +1,6 @@
 /**
  * @file can_ids.hpp
+ * @author DrivaPi Team
  * @brief CAN ID definitions matching STM32 ThreadX implementation
  *
  * These must stay in sync with the STM32 firmware definitions

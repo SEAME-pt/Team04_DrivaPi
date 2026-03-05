@@ -1,3 +1,9 @@
+/**
+ * @file kuksa_reader.cpp
+ * @author DrivaPi Team
+ * @brief KUKSA VAL v2 gRPC subscriber implementation.
+ */
+
 #include "kuksa_reader.hpp"
 #include <fstream>
 #include <chrono>

@@ -1,3 +1,9 @@
+/**
+ * @file app_controller.cpp
+ * @author DrivaPi Team
+ * @brief Application controller implementation — lifecycle, data sources, QML engine setup.
+ */
+
 #include "app_controller.hpp"
 #include "settings_manager.hpp"
 #include "music_player_controller.hpp"

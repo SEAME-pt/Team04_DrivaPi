@@ -1,5 +1,6 @@
 /**
  * @file signals.hpp
+ * @author DrivaPi Team
  * @brief VSS signal path definitions for KUKSA publishing
  *
  * Centralized VSS paths to ensure consistency between feeder and subscribers

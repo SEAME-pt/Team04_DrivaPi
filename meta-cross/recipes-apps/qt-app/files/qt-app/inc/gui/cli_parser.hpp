@@ -1,5 +1,6 @@
 /**
  * @file cli_parser.hpp
+ * @author DrivaPi Team
  * @brief Command-line argument parsing and validation.
  */
 

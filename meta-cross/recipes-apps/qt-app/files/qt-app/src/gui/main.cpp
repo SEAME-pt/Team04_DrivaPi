@@ -1,3 +1,9 @@
+/**
+ * @file main.cpp
+ * @author DrivaPi Team
+ * @brief Qt dashboard application entry point — parses CLI args, runs AppController.
+ */
+
 #include <QGuiApplication>
 #include <QDir>
 #include <QStandardPaths>

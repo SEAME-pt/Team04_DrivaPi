@@ -1,5 +1,6 @@
 /**
  * @file app_controller.hpp
+ * @author DrivaPi Team
  * @brief Application controller for dashboard lifecycle and data sources.
  */
 

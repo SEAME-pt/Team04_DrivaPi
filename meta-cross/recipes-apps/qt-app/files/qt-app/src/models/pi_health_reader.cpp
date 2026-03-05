@@ -1,3 +1,9 @@
+/**
+ * @file pi_health_reader.cpp
+ * @author DrivaPi Team
+ * @brief Raspberry Pi system health polling implementation.
+ */
+
 #include "pi_health_reader.hpp"
 #include <QJsonDocument>
 #include <QDebug>

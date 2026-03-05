@@ -1,3 +1,9 @@
+/**
+ * @file cli_parser.cpp
+ * @author DrivaPi Team
+ * @brief Command-line argument parsing implementation for the Qt dashboard app.
+ */
+
 #include "cli_parser.hpp"
 #include <QDebug>
 

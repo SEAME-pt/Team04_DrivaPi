@@ -1,5 +1,6 @@
 /**
  * @file vehicle_data.hpp
+ * @author DrivaPi Team
  * @brief Vehicle telemetry data model exposed to QML (speed, battery, gear, etc.).
  * @note Thread-safe property setters for main thread; use queued connections from workers.
  */

@@ -1,5 +1,6 @@
 /**
  * @file handlers.hpp
+ * @author DrivaPi Team
  * @brief CAN frame handlers for converting CAN data to VSS signals
  */
 

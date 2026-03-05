@@ -1,3 +1,9 @@
+/**
+ * @file can_reader.cpp
+ * @author DrivaPi Team
+ * @brief Asynchronous CAN frame reader implementation using QCanBus.
+ */
+
 #include "can_reader.hpp"
 #include <cstring>
 

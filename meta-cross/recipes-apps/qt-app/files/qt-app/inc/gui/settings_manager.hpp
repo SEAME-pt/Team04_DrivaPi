@@ -1,3 +1,9 @@
+/**
+ * @file settings_manager.hpp
+ * @author DrivaPi Team
+ * @brief Persistent application settings manager backed by JSON on disk.
+ */
+
 #pragma once
 #include <QObject>
 #include <QString>

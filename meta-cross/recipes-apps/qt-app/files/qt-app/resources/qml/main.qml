@@ -37,15 +37,15 @@ ApplicationWindow {
     property bool showSplashScreen: true
     property bool edgeHovered: false
 
-	// ====== DYNAMIC THEME CONTROLLER ======
+    // ====== DYNAMIC THEME CONTROLLER ======
     function evaluateTheme() {
-        if (!settingsManager) return;
+        if (!settingsManager)
+            return;
 
         if (settingsManager.theme === "Light") {
             AppTheme.isDark = false;
         } else if (settingsManager.theme === "Dark") {
             AppTheme.isDark = true;
-
         } else {
             // "Auto" Mode: Switches to Dark Mode between 18:00 (6 PM) and 07:00 (7 AM)
             var hour = new Date().getHours();
@@ -55,7 +55,9 @@ ApplicationWindow {
 
     Connections {
         target: settingsManager
-        function onThemeChanged() { evaluateTheme(); }
+        function onThemeChanged() {
+            evaluateTheme();
+        }
     }
 
     Timer {
@@ -65,7 +67,9 @@ ApplicationWindow {
         onTriggered: evaluateTheme()
     }
 
-    Component.onCompleted: { evaluateTheme(); }
+    Component.onCompleted: {
+        evaluateTheme();
+    }
 
     Timer {
         id: splashTimer
@@ -95,16 +99,51 @@ ApplicationWindow {
                 id: clusterScreen
                 anchors.fill: parent
                 scale: 1.0
-                Behavior on scale { NumberAnimation { duration: 400; easing.type: Easing.InOutCubic } }
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: 400
+                        easing.type: Easing.InOutCubic
+                    }
+                }
                 opacity: 1.0
-                Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.InOutQuad } }
-                Behavior on width { NumberAnimation { duration: 400; easing.type: Easing.InOutCubic } }
-                Behavior on height { NumberAnimation { duration: 400; easing.type: Easing.InOutCubic } }
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 200
+                        easing.type: Easing.InOutQuad
+                    }
+                }
+                Behavior on width {
+                    NumberAnimation {
+                        duration: 400
+                        easing.type: Easing.InOutCubic
+                    }
+                }
+                Behavior on height {
+                    NumberAnimation {
+                        duration: 400
+                        easing.type: Easing.InOutCubic
+                    }
+                }
             }
 
-            Behavior on Layout.preferredWidth { NumberAnimation { duration: 400; easing.type: Easing.InOutCubic } }
-            Behavior on Layout.minimumWidth { NumberAnimation { duration: 400; easing.type: Easing.InOutCubic } }
-            Behavior on Layout.maximumWidth { NumberAnimation { duration: 400; easing.type: Easing.InOutCubic } }
+            Behavior on Layout.preferredWidth {
+                NumberAnimation {
+                    duration: 400
+                    easing.type: Easing.InOutCubic
+                }
+            }
+            Behavior on Layout.minimumWidth {
+                NumberAnimation {
+                    duration: 400
+                    easing.type: Easing.InOutCubic
+                }
+            }
+            Behavior on Layout.maximumWidth {
+                NumberAnimation {
+                    duration: 400
+                    easing.type: Easing.InOutCubic
+                }
+            }
 
             // Toggle Button
             Rectangle {
@@ -119,8 +158,14 @@ ApplicationWindow {
                 z: 200
 
                 gradient: Gradient {
-                    GradientStop { position: 0.0; color: AppTheme.colors.surfaceElevated }
-                    GradientStop { position: 1.0; color: AppTheme.colors.surfaceVariant }
+                    GradientStop {
+                        position: 0.0
+                        color: AppTheme.colors.surfaceElevated
+                    }
+                    GradientStop {
+                        position: 1.0
+                        color: AppTheme.colors.surfaceVariant
+                    }
                 }
 
                 border.color: rightPanelVisible ? AppTheme.colors.primary : AppTheme.colors.border
@@ -136,7 +181,11 @@ ApplicationWindow {
                     border.width: 1
                     opacity: rightPanelVisible ? 0.4 : 0
                     z: -1
-                    Behavior on opacity { NumberAnimation { duration: 200 } }
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 200
+                        }
+                    }
                 }
 
                 // Grid icon
@@ -151,7 +200,11 @@ ApplicationWindow {
                             radius: 1
                             color: rightPanelVisible ? AppTheme.colors.primary : AppTheme.colors.textSecondary
                             anchors.horizontalCenter: parent.horizontalCenter
-                            Behavior on color { ColorAnimation { duration: 200 } }
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: 200
+                                }
+                            }
                         }
                     }
                 }
@@ -166,37 +219,66 @@ ApplicationWindow {
                     onPressed: panelToggle.scale = 0.95
                     onReleased: panelToggle.scale = containsMouse ? 1.1 : 1.0
                 }
-                Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
-                Behavior on border.color { ColorAnimation { duration: 200 } }
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: 150
+                        easing.type: Easing.OutBack
+                    }
+                }
+                Behavior on border.color {
+                    ColorAnimation {
+                        duration: 200
+                    }
+                }
             }
 
             // Edge detection for auto-reveal
             MouseArea {
                 id: edgeDetector
-                anchors.right: parent.right; anchors.top: parent.top; anchors.bottom: parent.bottom
-                width: 5; z: 199; hoverEnabled: true
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: 5
+                z: 199
+                hoverEnabled: true
                 onEntered: edgeHoverTimer.start()
-                onExited: { edgeHoverTimer.stop(); edgeHovered = false; }
+                onExited: {
+                    edgeHoverTimer.stop();
+                    edgeHovered = false;
+                }
                 Timer {
                     id: edgeHoverTimer
-                    interval: 300; repeat: false
-                    onTriggered: { if (edgeDetector.containsMouse && !rightPanelVisible) rightPanelVisible = true; }
+                    interval: 300
+                    repeat: false
+                    onTriggered: {
+                        if (edgeDetector.containsMouse && !rightPanelVisible)
+                            rightPanelVisible = true;
+                    }
                 }
             }
 
             // Tap-to-reveal on cluster
             MouseArea {
-                anchors.fill: clusterScreen; z: 1;
+                anchors.fill: clusterScreen
+                z: 1
                 propagateComposedEvents: true
                 readonly property real topDeadZone: clusterScreen.height * 0.14
-                property int tapCount: 0; property double lastTapTime: 0
-                onPressed: mouse => { if (mouse.y <= topDeadZone || mouse.y >= (clusterScreen.height - topDeadZone)) mouse.accepted = false; }
+                property int tapCount: 0
+                property double lastTapTime: 0
+                onPressed: mouse => {
+                    if (mouse.y <= topDeadZone || mouse.y >= (clusterScreen.height - topDeadZone))
+                        mouse.accepted = false;
+                }
                 onClicked: mouse => {
                     var currentTime = Date.now();
                     if (currentTime - lastTapTime < 400) {
                         tapCount++;
-                        if (tapCount >= 2) { rightPanelVisible = !rightPanelVisible; tapCount = 0; }
-                    } else tapCount = 1;
+                        if (tapCount >= 2) {
+                            rightPanelVisible = !rightPanelVisible;
+                            tapCount = 0;
+                        }
+                    } else
+                        tapCount = 1;
                     lastTapTime = currentTime;
                 }
             }
@@ -204,38 +286,82 @@ ApplicationWindow {
 
         // ====== RIGHT SIDE: SWIPEABLE CONTENT ======
         RowLayout {
-            Layout.fillWidth: true; Layout.fillHeight: true; spacing: 0
-            visible: opacity > 0; opacity: rightPanelVisible ? 1 : 0
-            Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.InOutQuad } }
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            spacing: 0
+            visible: opacity > 0
+            opacity: rightPanelVisible ? 1 : 0
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 300
+                    easing.type: Easing.InOutQuad
+                }
+            }
             transform: Translate {
                 x: rightPanelVisible ? 0 : 400
-                Behavior on x { NumberAnimation { duration: 400; easing.type: Easing.InOutCubic } }
+                Behavior on x {
+                    NumberAnimation {
+                        duration: 400
+                        easing.type: Easing.InOutCubic
+                    }
+                }
             }
 
             SwipeView {
                 id: swipeView
-                Layout.fillWidth: true; Layout.fillHeight: true
-                currentIndex: verticalTabBar.currentIndex; z: 50; clip: true
-                Behavior on currentIndex { NumberAnimation { duration: 350; easing.type: Easing.OutCubic } }
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                currentIndex: verticalTabBar.currentIndex
+                z: 50
+                clip: true
+                Behavior on currentIndex {
+                    NumberAnimation {
+                        duration: 350
+                        easing.type: Easing.OutCubic
+                    }
+                }
 
-                NavigationScreen { id: navigationScreen }
-                MediaScreen { id: mediaScreen }
-                WeatherScreen { id: weatherScreen }
-                SettingsScreen { id: settingsScreen }
-                DiagnosticsScreen { id: diagnosticsScreen }
+                NavigationScreen {
+                    id: navigationScreen
+                }
+                MediaScreen {
+                    id: mediaScreen
+                }
+                WeatherScreen {
+                    id: weatherScreen
+                }
+                SettingsScreen {
+                    id: settingsScreen
+                }
+                DiagnosticsScreen {
+                    id: diagnosticsScreen
+                }
             }
 
             // Vertical Tab Bar
             Item {
                 id: verticalTabBar
-                Layout.preferredWidth: 72; Layout.fillHeight: true; z: 40
+                Layout.preferredWidth: 72
+                Layout.fillHeight: true
+                z: 40
                 property int currentIndex: verticalTabBar.currentIndex >= 0 ? verticalTabBar.currentIndex : 0
 
-                Rectangle { anchors.fill: parent; color: AppTheme.colors.surfaceVariant }
-                Rectangle { anchors.fill: parent; color: "transparent"; border.color: AppTheme.colors.divider; border.width: 1 }
+                Rectangle {
+                    anchors.fill: parent
+                    color: AppTheme.colors.surfaceVariant
+                }
+                Rectangle {
+                    anchors.fill: parent
+                    color: "transparent"
+                    border.color: AppTheme.colors.divider
+                    border.width: 1
+                }
 
                 Column {
-                    anchors.fill: parent; anchors.margins: 8; spacing: 8; topPadding: 12
+                    anchors.fill: parent
+                    anchors.margins: 8
+                    spacing: 8
+                    topPadding: 12
 
                     TabIconButton {
                         isActive: verticalTabBar.currentIndex === 0
@@ -261,35 +387,6 @@ ApplicationWindow {
                         isActive: verticalTabBar.currentIndex === 4
                         iconSource: "qrc:/icons/hardware/sensor.svg"
                         onClicked: verticalTabBar.currentIndex = 4
-                    }
-                }
-            }
-        }
-    }
-
-    // ====== NOTIFICATIONS ======
-    Rectangle {
-        id: notificationContainer
-        anchors.top: parent.top; anchors.horizontalCenter: parent.horizontalCenter
-        anchors.topMargin: AppTheme.spacing.medium
-        width: 320; height: childrenRect.height; color: "transparent"; z: 200
-
-        Column {
-            width: parent.width; spacing: AppTheme.spacing.small
-            Repeater {
-                model: notificationManager ? notificationManager.notifications : []
-                Rectangle {
-                    width: notificationContainer.width; height: 52
-                    radius: AppTheme.radius.medium
-                    color: modelData.level === 0 ? AppTheme.colors.info : (modelData.level === 1 ? AppTheme.colors.warning : AppTheme.colors.error)
-                    opacity: 0; Component.onCompleted: { opacity = 1; transform.y = 0; }
-                    Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutQuad } }
-                    transform: Translate { y: -20 }
-                    Behavior on transform { NumberAnimation { duration: 400; easing.type: Easing.OutBack } }
-
-                    RowLayout {
-                        anchors.fill: parent; anchors.margins: AppTheme.spacing.medium
-                        Text { text: modelData.message; color: "#FFFFFF"; font.pixelSize: 13; Layout.fillWidth: true; wrapMode: Text.Wrap }
                     }
                 }
             }
@@ -506,8 +603,11 @@ ApplicationWindow {
         property bool isHovered: false
         signal clicked
 
-        width: 56; height: 56; anchors.horizontalCenter: parent.horizontalCenter
-        color: "transparent"; radius: 12
+        width: 56
+        height: 56
+        anchors.horizontalCenter: parent.horizontalCenter
+        color: "transparent"
+        radius: 12
 
         Rectangle {
             anchors.fill: parent
@@ -520,7 +620,10 @@ ApplicationWindow {
 
         Image {
             id: iconImage
-            anchors.centerIn: parent; width: 26; height: 26; source: tabButton.iconSource
+            anchors.centerIn: parent
+            width: 26
+            height: 26
+            source: tabButton.iconSource
             fillMode: Image.PreserveAspectFit
             opacity: isActive ? 1.0 : 0.6
             layer.enabled: true
@@ -530,18 +633,37 @@ ApplicationWindow {
         }
 
         MouseArea {
-            anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-            onEntered: { tabButton.isHovered = true; if (!tabButton.isActive) tabButton.scale = 1.05; }
-            onExited: { tabButton.isHovered = false; tabButton.scale = 1.0; }
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onEntered: {
+                tabButton.isHovered = true;
+                if (!tabButton.isActive)
+                    tabButton.scale = 1.05;
+            }
+            onExited: {
+                tabButton.isHovered = false;
+                tabButton.scale = 1.0;
+            }
             onPressed: tabButton.scale = 0.92
-            onReleased: { tabButton.scale = containsMouse ? 1.05 : 1.0; tabButton.clicked(); }
+            onReleased: {
+                tabButton.scale = containsMouse ? 1.05 : 1.0;
+                tabButton.clicked();
+            }
         }
-        Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+        Behavior on scale {
+            NumberAnimation {
+                duration: 160
+                easing.type: Easing.OutCubic
+            }
+        }
     }
 
-	// ====== BRIGHTNESS OVERLAY ======
+    // ====== BRIGHTNESS OVERLAY ======
     Rectangle {
-        anchors.fill: parent; z: 10000; color: "black"
+        anchors.fill: parent
+        z: 10000
+        color: "black"
         opacity: settingsManager ? 0.5 - Math.max(0.1, settingsManager.screenBrightness) : 0
         enabled: false
     }

@@ -1,3 +1,9 @@
+/**
+ * @file feeder_signal.cpp
+ * @author DrivaPi Team
+ * @brief POSIX signal handler installation and child process cleanup.
+ */
+
 #include "feeder_signal.hpp"
 #include <cstring>
 #include <signal.h>

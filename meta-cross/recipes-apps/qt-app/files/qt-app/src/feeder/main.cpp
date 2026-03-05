@@ -1,5 +1,6 @@
 /**
  * @file main.cpp
+ * @author DrivaPi Team
  * @brief KUKSA CAN Feeder - Main entry point
  *
  * Orchestrates initialization and runs the CAN-to-KUKSA feed loop.

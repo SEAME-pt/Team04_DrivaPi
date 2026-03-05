@@ -1,3 +1,9 @@
+/**
+ * @file vehicle_data.cpp
+ * @author DrivaPi Team
+ * @brief Vehicle telemetry model implementation — getters, setters, staleness watchdog.
+ */
+
 #include "vehicle_data.hpp"
 
 #include <cstring>

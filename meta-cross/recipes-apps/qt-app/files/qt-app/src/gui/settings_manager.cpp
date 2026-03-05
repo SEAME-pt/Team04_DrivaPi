@@ -1,3 +1,9 @@
+/**
+ * @file settings_manager.cpp
+ * @author DrivaPi Team
+ * @brief Persistent application settings implementation — JSON load/save.
+ */
+
 #include "settings_manager.hpp"
 #include <QStandardPaths>
 #include <QFile>

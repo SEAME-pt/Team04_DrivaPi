@@ -1,3 +1,9 @@
+/**
+ * @file feeder_cli.cpp
+ * @author DrivaPi Team
+ * @brief Command-line argument parsing implementation for the CAN feeder.
+ */
+
 #include "feeder_cli.hpp"
 #include <iostream>
 #include <cstring>
