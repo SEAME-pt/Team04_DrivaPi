@@ -5,6 +5,7 @@
 int main(int argc, char *argv[])
 {
     qputenv("QML_DISABLE_DISK_CACHE", "1");
+    qputenv("QT_QUICK_CONTROLS_STYLE", "Fusion");
 
     QGuiApplication app(argc, argv);
     app.setApplicationName("DrivaPi Dashboard");

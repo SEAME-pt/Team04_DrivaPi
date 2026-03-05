@@ -37,8 +37,8 @@ QtObject {
     // ====== TYPOGRAPHY ======
     readonly property QtObject typography: QtObject {
         // Font families
-        readonly property string fontFamily: "Roboto, sans-serif"
-        readonly property string fontMonospace: "Courier New, monospace"
+        readonly property string fontFamily: "Roboto"
+        readonly property string fontMonospace: "Courier New"
 
         // Sizes (in points)
         readonly property int displayLarge: 32

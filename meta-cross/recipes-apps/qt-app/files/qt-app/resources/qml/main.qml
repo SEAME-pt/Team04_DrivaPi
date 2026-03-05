@@ -35,6 +35,7 @@ ApplicationWindow {
     // ====== STATE MANAGEMENT ======
     property bool rightPanelVisible: false
     property bool showSplashScreen: true
+    property bool edgeHovered: false
 
 	// ====== DYNAMIC THEME CONTROLLER ======
     function evaluateTheme() {
