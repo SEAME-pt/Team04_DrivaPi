@@ -40,16 +40,11 @@
         <file>assets/left_dashboard.png</file>
         <file>assets/bottom_dashboard.png</file>
         <file>assets/right_dashboard.png</file>
-        <file>assets/backgrounds/cluster-base.svg</file>
-        <file>assets/backgrounds/default.svg</file>
-        <file>assets/backgrounds/vector-1.svg</file>
-        <file>assets/backgrounds/vector-2.svg</file>
         <file>assets/cluster_left_panel.svg</file>
         <file>assets/cluster_right_panel.svg</file>
         <file>assets/cluster_floor_grid.svg</file>
         <file>assets/cluster_car_glow.svg</file>
 
-        <file>shaders/roadwarp.frag.qsb</file>
 
         <file>icons/cluster/speedometer.svg</file>
         <file>icons/cluster/car.svg</file>
@@ -89,38 +84,6 @@
         <file>icons/controls/volume-low.svg</file>
         <file>icons/controls/volume-mute.svg</file>
 
-        <file>icons/navigation/arrow-right.svg</file>
-        <file>icons/navigation/arrow-left.svg</file>
-        <file>icons/navigation/arrow-up.svg</file>
-        <file>icons/navigation/map-pin.svg</file>
-        <file>icons/navigation/turn-left.svg</file>
-        <file>icons/navigation/turn-right.svg</file>
-        <file>icons/navigation/straight.svg</file>
-        <file>icons/navigation/u-turn-left.svg</file>
-        <file>icons/navigation/u-turn-right.svg</file>
-        <file>icons/navigation/merge-left.svg</file>
-        <file>icons/navigation/merge-right.svg</file>
-        <file>icons/navigation/exit-left.svg</file>
-        <file>icons/navigation/exit-right.svg</file>
-        <file>icons/navigation/roundabout.svg</file>
-        <file>icons/navigation/speed-limit-30.svg</file>
-        <file>icons/navigation/speed-limit-50.svg</file>
-        <file>icons/navigation/speed-limit-80.svg</file>
-        <file>icons/navigation/traffic-green.svg</file>
-        <file>icons/navigation/traffic-yellow.svg</file>
-        <file>icons/navigation/traffic-red.svg</file>
-        <file>icons/navigation/compass.svg</file>
-        <file>icons/navigation/turn-slight-left.svg</file>
-        <file>icons/navigation/turn-slight-right.svg</file>
-        <file>icons/navigation/keep-left.svg</file>
-        <file>icons/navigation/keep-right.svg</file>
-        <file>icons/navigation/highway.svg</file>
-        <file>icons/navigation/parking.svg</file>
-        <file>icons/navigation/destination.svg</file>
-        <file>icons/navigation/route.svg</file>
-        <file>icons/navigation/speed-limit-100.svg</file>
-        <file>icons/navigation/speed-limit-120.svg</file>
-
         <file>icons/hardware/cpu.svg</file>
         <file>icons/hardware/storage.svg</file>
         <file>icons/hardware/temperature.svg</file>
@@ -157,34 +120,6 @@
         <file>icons/settings/brightness-high.svg</file>
         <file>icons/settings/bluetooth-off.svg</file>
         <file>icons/settings/theme-auto.svg</file>
-
-        <file>icons/status/low-beam-headlights.svg</file>
-        <file>icons/status/low-beam-headlights-white.svg</file>
-        <file>icons/status/lights.svg</file>
-        <file>icons/status/lights-white.svg</file>
-        <file>icons/status/parking-lights.svg</file>
-        <file>icons/status/parking-lights-white.svg</file>
-        <file>icons/status/rear-fog-lights.svg</file>
-        <file>icons/status/rear-fog-lights-red.svg</file>
-        <file>icons/status/indicator-1.svg</file>
-        <file>icons/status/indicator-1-grey.svg</file>
-        <file>icons/status/indicator-2.svg</file>
-        <file>icons/status/indicator-2-red.svg</file>
-        <file>icons/status/indicator-3.svg</file>
-        <file>icons/status/indicator-3-red.svg</file>
-        <file>icons/status/warning-icon.svg</file>
-        <file>icons/status/warning-icon-red.svg</file>
-        <file>icons/status/info.svg</file>
-        <file>icons/status/check.svg</file>
-        <file>icons/status/error.svg</file>
-        <file>icons/status/warning.svg</file>
-        <file>icons/status/bell.svg</file>
-        <file>icons/status/spinner.svg</file>
-        <file>icons/status/online-dot.svg</file>
-        <file>icons/status/offline-dot.svg</file>
-        <file>icons/status/success-circle.svg</file>
-        <file>icons/status/download.svg</file>
-        <file>icons/status/upload.svg</file>
 
         <file>icons/weather/sun.svg</file>
         <file>icons/weather/cloud.svg</file>
