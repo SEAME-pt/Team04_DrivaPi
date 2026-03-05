@@ -1,6 +1,6 @@
 # Sprint 6 Review — Team04 DrivaPi
 
-**Date:** January 22, 2026
+**Date:** January 5-16, 2026
 
 **Sprint goal:** _Achieve production-grade test coverage, implement full TSF/ASIL compliance framework, and establish code quality standards for automotive-grade firmware._
 
@@ -109,4 +109,4 @@ However, facilitator feedback identified opportunities to strengthen test valida
 
 **Foundation for future:** Team now has robust testing, documentation, and standards infrastructure to support feature velocity while maintaining ISO 26262 ASIL compliance requirements.
 
-**Next review:** Sprint 7 Review (February 5, 2026)
+**Next review:** Sprint 7 Review
