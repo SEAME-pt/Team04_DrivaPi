@@ -24,7 +24,7 @@ Rectangle {
         // Label
         Text {
             text: label
-            color: AppTheme.textColor
+            color: AppTheme.colors.text
             font.pixelSize: 13
             Layout.preferredWidth: 140
         }
@@ -33,7 +33,7 @@ Rectangle {
         Rectangle {
             height: 20
             radius: 4
-            color: AppTheme.backgroundColor
+            color: AppTheme.colors.surfaceVariant
             border.color: getBatteryColor()
             border.width: 1
             Layout.fillWidth: true
@@ -52,7 +52,7 @@ Rectangle {
             Text {
                 anchors.centerIn: parent
                 text: percentage + "%"
-                color: AppTheme.textColor
+                color: AppTheme.colors.text
                 font {
                     pixelSize: 11
                     weight: Font.Bold
@@ -64,17 +64,15 @@ Rectangle {
 
     function getBatteryColor() {
         if (isSystem) {
-            // For system battery, use accent color
-            return AppTheme.accentColor;
+            return AppTheme.colors.primary;
         }
 
-        // Color coding for individual batteries
         if (percentage >= 60) {
-            return "#4CAF50";  // Green
+            return AppTheme.colors.success;
         } else if (percentage >= 30) {
-            return "#FF9800";  // Orange
+            return AppTheme.colors.warning;
         } else {
-            return "#F44336";  // Red
+            return AppTheme.colors.error;
         }
     }
 }

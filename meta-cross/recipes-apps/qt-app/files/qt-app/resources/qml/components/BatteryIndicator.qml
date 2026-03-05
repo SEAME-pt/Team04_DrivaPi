@@ -1,9 +1,12 @@
-import QtQuick 2.15
+import QtQuick
+import "../theme"
 
 Row {
     id: root
 
     property int batteryLevel: 100
+
+    readonly property color batteryColor: root.batteryLevel > 20 ? AppTheme.colors.success : AppTheme.colors.error
 
     spacing: 15
 
@@ -11,7 +14,7 @@ Row {
         width: 35
         height: 20
         color: "transparent"
-        border.color: root.batteryLevel > 20 ? "#00D66C" : "#FF3B3B"
+        border.color: root.batteryColor
         border.width: 2.5
         radius: 3
         anchors.verticalCenter: parent.verticalCenter
@@ -19,14 +22,14 @@ Row {
         Rectangle {
             anchors.fill: parent
             anchors.margins: 3.5
-            color: root.batteryLevel > 20 ? "#00D66C" : "#FF3B3B"
+            color: root.batteryColor
             radius: 1
         }
 
         Rectangle {
             width: 5
             height: 12
-            color: root.batteryLevel > 20 ? "#00D66C" : "#FF3B3B"
+            color: root.batteryColor
             anchors.left: parent.right
             anchors.leftMargin: -1
             anchors.verticalCenter: parent.verticalCenter
@@ -37,8 +40,8 @@ Row {
     Text {
         text: Math.round(root.batteryLevel) + "%"
         font.pixelSize: 16
-        font.family: "SF Pro Display"
-        color: "#FFFFFF"
+        font.family: AppTheme.typography.fontFamily
+        color: AppTheme.colors.text
         anchors.verticalCenter: parent.verticalCenter
     }
 }
