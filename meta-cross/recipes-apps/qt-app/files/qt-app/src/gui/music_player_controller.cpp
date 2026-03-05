@@ -19,6 +19,8 @@
 #include <taglib/id3v2tag.h>
 #include <taglib/attachedpictureframe.h>
 
+namespace drivaui {
+
 MusicPlayerController::MusicPlayerController(SettingsManager* settings, QObject* parent)
     : QObject(parent), m_settings(settings) {
 
@@ -286,3 +288,5 @@ void MusicPlayerController::onError(QMediaPlayer::Error error, const QString& er
     qWarning() << "Media player error:" << errorString;
     emit this->error(errorString);
 }
+
+} // namespace drivaui

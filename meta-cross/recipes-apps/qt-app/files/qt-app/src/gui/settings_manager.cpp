@@ -11,6 +11,8 @@
 #include <QDebug>
 #include <QCoreApplication>
 
+namespace drivaui {
+
 SettingsManager::SettingsManager(QObject* parent) : QObject(parent) {
     m_configPath = getConfigPath();
     loadSettings();
@@ -212,3 +214,5 @@ void SettingsManager::setPrecipitationUnit(const QString& unit) {
     saveSettings();
     emit precipitationUnitChanged();
 }
+
+} // namespace drivaui

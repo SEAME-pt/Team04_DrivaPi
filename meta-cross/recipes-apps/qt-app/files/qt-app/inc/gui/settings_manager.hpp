@@ -11,6 +11,8 @@
 #include <QJsonDocument>
 #include <QVariant>
 
+namespace drivaui {
+
 class SettingsManager : public QObject {
     Q_OBJECT
 
@@ -64,7 +66,7 @@ public:
     QString precipitationUnit() const;
     void setPrecipitationUnit(const QString& unit);
 
-	QString getDefaultMusicPath() const;
+    QString getDefaultMusicPath() const;
 
 signals:
     void lastPlayedTrackChanged();
@@ -87,3 +89,5 @@ private:
     QJsonObject m_settings;
     QString m_configPath;
 };
+
+} // namespace drivaui

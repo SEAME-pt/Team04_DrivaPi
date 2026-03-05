@@ -11,7 +11,9 @@
 #include <QString>
 #include <QStringList>
 
-class SettingsManager;
+namespace drivaui { class SettingsManager; }
+
+namespace drivaui {
 
 class MusicPlayerController : public QObject {
     Q_OBJECT
@@ -83,3 +85,5 @@ private:
     qint64 m_duration = 0;
     qint64 m_position = 0;
 };
+
+} // namespace drivaui
