@@ -1,6 +1,7 @@
 #include "pi_health_reader.hpp"
 #include <QJsonDocument>
 #include <QDebug>
+#include <QSysInfo>
 
 namespace drivaui {
 
@@ -55,6 +56,10 @@ void PiHealthReader::poll() {
     if (!m_process || m_process->state() != QProcess::NotRunning) {
         return;  // Already running
     }
+
+#ifndef Q_OS_LINUX
+    return;  // Process-based health reading only supported on Linux (AGL target)
+#endif
 
     if (m_mode == Local) {
         m_process->start(m_localScript, QStringList());
