@@ -50,10 +50,10 @@ RunConfig buildRunConfig(const QCommandLineParser& parser, const CliOptions& opt
     config.kuksa.address = addr.isEmpty()
         ? QStringLiteral("localhost:55555")
         : addr;
-    config.kuksa.use_ssl = parser.isSet(opts.kuksaTlsOption) && !parser.isSet(opts.kuksaInsecureOption);
-    config.kuksa.root_ca_path = parser.value(opts.kuksaCaOption);
-    config.kuksa.client_cert_path = parser.value(opts.kuksaCertOption);
-    config.kuksa.client_key_path = parser.value(opts.kuksaKeyOption);
+    config.kuksa.useSsl = parser.isSet(opts.kuksaTlsOption) && !parser.isSet(opts.kuksaInsecureOption);
+    config.kuksa.rootCaPath = parser.value(opts.kuksaCaOption);
+    config.kuksa.clientCertPath = parser.value(opts.kuksaCertOption);
+    config.kuksa.clientKeyPath = parser.value(opts.kuksaKeyOption);
     config.kuksa.token = parser.value(opts.kuksaTokenOption);
     return config;
 }
@@ -77,7 +77,7 @@ bool validateOptions(const QCommandLineParser& parser, const CliOptions& opts,
         qCritical() << "Cannot combine --kuksa-tls with --kuksa-insecure.";
         ok = false;
     }
-    if (parser.isSet(opts.kuksaTlsOption) && config.kuksa.root_ca_path.isEmpty()) {
+    if (parser.isSet(opts.kuksaTlsOption) && config.kuksa.rootCaPath.isEmpty()) {
         qCritical() << "--kuksa-tls requires --kuksa-ca to specify a root CA.";
         ok = false;
     }

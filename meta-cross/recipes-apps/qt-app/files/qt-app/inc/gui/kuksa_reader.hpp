@@ -20,10 +20,10 @@ namespace kuksa {
 
 struct KuksaOptions {
     QString address{"localhost:55555"};
-    bool use_ssl{false};
-    QString root_ca_path{};
-    QString client_cert_path{};
-    QString client_key_path{};
+    bool useSsl{false};
+    QString rootCaPath{};
+    QString clientCertPath{};
+    QString clientKeyPath{};
     QString token{};
 };
 

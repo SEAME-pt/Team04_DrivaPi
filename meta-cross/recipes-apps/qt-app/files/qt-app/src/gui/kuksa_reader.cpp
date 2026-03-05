@@ -80,15 +80,15 @@ void KUKSAReader::start()
 
     try {
         std::shared_ptr<grpc::ChannelCredentials> creds;
-        if (!m_opts.use_ssl) {
+        if (!m_opts.useSsl) {
             creds = grpc::InsecureChannelCredentials();
         } else {
             grpc::SslCredentialsOptions ssl_opts;
-            const std::string root = loadFile(m_opts.root_ca_path, true);
+            const std::string root = loadFile(m_opts.rootCaPath, true);
             if (!root.empty()) ssl_opts.pem_root_certs = root;
 
-            const std::string cert = loadFile(m_opts.client_cert_path, true);
-            const std::string key  = loadFile(m_opts.client_key_path, true);
+            const std::string cert = loadFile(m_opts.clientCertPath, true);
+            const std::string key  = loadFile(m_opts.clientKeyPath, true);
             if (!cert.empty() && !key.empty()) {
                 ssl_opts.pem_cert_chain = cert;
                 ssl_opts.pem_private_key = key;
