@@ -54,8 +54,9 @@ static QUrl pickQmlEntryPoint(QQmlApplicationEngine &engine)
 
 int AppController::run(QGuiApplication& app)
 {
-    QQmlApplicationEngine engine;
-
+    // Context properties declared BEFORE the engine so they are destroyed AFTER it.
+    // (Stack variables are destroyed in reverse declaration order — engine must die first
+    //  so QML bindings can't fire on dangling pointers during teardown.)
     QScopedPointer<VehicleData> vehicleData(new VehicleData());
     QScopedPointer<SystemStatus> systemStatus(new SystemStatus());
     QScopedPointer<NotificationManager> notificationManager(NotificationManager::instance());
@@ -68,13 +69,6 @@ int AppController::run(QGuiApplication& app)
     QScopedPointer<MusicPlayerController> musicPlayerController(
         new MusicPlayerController(settingsManager.data())
     );
-
-    engine.rootContext()->setContextProperty("vehicleData", vehicleData.data());
-    engine.rootContext()->setContextProperty("systemStatus", systemStatus.data());
-    engine.rootContext()->setContextProperty("notificationManager", notificationManager.data());
-    engine.rootContext()->setContextProperty("canLogger", canLogger.data());
-    engine.rootContext()->setContextProperty("settingsManager", settingsManager.data());
-    engine.rootContext()->setContextProperty("musicPlayerController", musicPlayerController.data());
 
     QThread* workerThread = new QThread(&app);
     kuksa::KUKSAReader* kuksaReader = nullptr;
@@ -94,14 +88,11 @@ int AppController::run(QGuiApplication& app)
 
     piHealth->setIntervalMs(2000);  // Poll every 2 seconds
 
-    // Expose to QML
-    engine.rootContext()->setContextProperty("piHealthReader", piHealth.data());
-
     // Start polling
     piHealth->start();
 
     // Keep it alive (don't delete)
-    piHealth.take();
+    drivaui::PiHealthReader* piHealthRaw = piHealth.take();
 
     if (config_.useKuksa) {
         qInfo() << "Starting in KUKSA mode (default)";
@@ -190,35 +181,53 @@ int AppController::run(QGuiApplication& app)
         }
     });
 
-    const QUrl url = pickQmlEntryPoint(engine);
+    // Engine is in a nested scope so it is destroyed BEFORE the context property objects
+    // above (which are on the outer scope). This prevents QML bindings from firing on
+    // dangling pointers during teardown.
+    int result;
+    {
+        QQmlApplicationEngine engine;
 
-    QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
-                     &app, [url](QObject* obj, const QUrl& objUrl) {
-                         if (!obj && url == objUrl)
-                             QCoreApplication::exit(-1);
-                     },
-                     Qt::QueuedConnection);
+        engine.rootContext()->setContextProperty("vehicleData", vehicleData.data());
+        engine.rootContext()->setContextProperty("systemStatus", systemStatus.data());
+        engine.rootContext()->setContextProperty("notificationManager", notificationManager.data());
+        engine.rootContext()->setContextProperty("canLogger", canLogger.data());
+        engine.rootContext()->setContextProperty("settingsManager", settingsManager.data());
+        engine.rootContext()->setContextProperty("musicPlayerController", musicPlayerController.data());
+        engine.rootContext()->setContextProperty("piHealthReader", piHealthRaw);
 
-    engine.load(url);
+        const QUrl url = pickQmlEntryPoint(engine);
 
-    // 1. Verify the engine actually loaded something
-    if (engine.rootObjects().isEmpty()) {
-        qCritical() << "Critical: QML Engine failed to load any root objects. Check your QML syntax/paths.";
-        return -1; // Exit gracefully
-    }
+        QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
+                         &app, [url](QObject* obj, const QUrl& objUrl) {
+                             if (!obj && url == objUrl)
+                                 QCoreApplication::exit(-1);
+                         },
+                         Qt::QueuedConnection);
 
-    // 2. Safe access to the window
-    QObject* rootObj = engine.rootObjects().first();
-    if (rootObj) {
-        QWindow* window = qobject_cast<QWindow*>(rootObj);
-        if (window) {
-            window->showFullScreen();
-        } else {
-            qWarning() << "Root object is not a QWindow type.";
+        engine.load(url);
+
+        // 1. Verify the engine actually loaded something
+        if (engine.rootObjects().isEmpty()) {
+            qCritical() << "Critical: QML Engine failed to load any root objects. Check your QML syntax/paths.";
+            return -1; // Exit gracefully
         }
-    }
 
-    return app.exec();
+        // 2. Safe access to the window
+        QObject* rootObj = engine.rootObjects().first();
+        if (rootObj) {
+            QWindow* window = qobject_cast<QWindow*>(rootObj);
+            if (window) {
+                window->showFullScreen();
+            } else {
+                qWarning() << "Root object is not a QWindow type.";
+            }
+        }
+
+        result = app.exec();
+    } // engine destroyed here — QML is fully shut down before context properties below
+
+    return result;
 }
 
 }  // namespace drivaui
