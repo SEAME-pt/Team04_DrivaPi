@@ -37,10 +37,8 @@ Rectangle {
     // ISO 26262 ASIL requirement: Valid fallback for critical safety display
     property int speedLimitValue: vehicleDataAvailable && vehicleData.speedLimit ? Math.round(vehicleData.speedLimit) : 120
     property real currentSpeed: vehicleDataAvailable && vehicleData.speed ? vehicleData.speed : 0
-    property int currentBattery: vehicleDataAvailable && vehicleData.battery !== undefined ? vehicleData.battery : 0
     property int stm32Battery: vehicleDataAvailable && vehicleData.stm32Battery !== undefined ? vehicleData.stm32Battery : 0
     property int rpiBattery: vehicleDataAvailable && vehicleData.rpiBattery !== undefined ? vehicleData.rpiBattery : 0
-    property double rpiBatteryVoltage: vehicleDataAvailable && vehicleData.rpiBatteryVoltage !== undefined ? vehicleData.rpiBatteryVoltage : 0
     property string currentGear: vehicleDataAvailable && vehicleData.gear ? vehicleData.gear : "P"
     property real tripDistance: vehicleDataAvailable && vehicleData.trip ? vehicleData.trip : 568
     property real powerOutput: vehicleDataAvailable && vehicleData.power ? vehicleData.power : 98
@@ -209,7 +207,7 @@ Rectangle {
                 Layout.fillWidth: true
                 z: 20
                 currentGear: root.currentGear
-                batteryLevel: root.currentBattery
+                batteryLevel: vehicleData.rpiBattery < vehicleData.stm32Battery ? vehicleData.rpiBattery : vehicleData.stm32Battery
                 onBatteryClicked: batteryPopup.open()
             }
 
@@ -736,7 +734,6 @@ Rectangle {
         anchors.fill: parent
         stm32BatteryLevel: root.stm32Battery
         rpiBatteryLevel: root.rpiBattery
-        rpiBatteryVoltage: root.rpiBatteryVoltage
         z: 1000
     }
 

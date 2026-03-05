@@ -189,9 +189,6 @@ if(ENABLE_CAN_MODE)
 endif()
 
 set(MODEL_SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/models/system_status.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/models/notification_manager.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/models/can_logger.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/models/pi_health_reader.cpp"
 )
 
@@ -245,9 +242,6 @@ target_sources(myqtapp PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/inc/gui/kuksa_reader.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/inc/gui/settings_manager.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/inc/gui/music_player_controller.hpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/inc/models/system_status.hpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/inc/models/notification_manager.hpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/inc/models/can_logger.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/inc/models/pi_health_reader.hpp"
 )
 

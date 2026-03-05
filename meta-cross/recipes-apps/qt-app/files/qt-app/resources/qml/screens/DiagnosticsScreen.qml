@@ -32,10 +32,11 @@ Item {
     }
     function getTemp(c) {
         var val = safeNum(c);
-        if (isNaN(val)) return NaN;
+        if (isNaN(val))
+            return NaN;
 
         if (settingsManager.temperatureUnit === "°F") {
-            return (val * 9/5) + 32;
+            return (val * 9 / 5) + 32;
         } else if (settingsManager.temperatureUnit === "K") {
             return val + 273.15;
         }
@@ -46,7 +47,7 @@ Item {
     property bool rpiOnline: !!piHealthReader && piHealthReader.isOnline
     property bool stmOnline: !!vehicleData && (vehicleData.stm32BatteryVoltage > 0 || vehicleData.stm32Battery > 0 || vehicleData.stm32Temperature !== 0 || vehicleData.stm32Humidity !== 0)
 
-    property bool rpiWarn: rpiOnline && (piHealthReader.cpuTemp > 70 || piHealthReader.memoryPercent > 85 || piHealthReader.diskPercent > 90 || (safeNum(piHealthReader.batteryVoltage) < 11.0 || safeNum(piHealthReader.batteryVoltage) > 13.0) || safeNum(piHealthReader.batteryPercent) < 20)
+    property bool rpiWarn: rpiOnline && (piHealthReader.cpuTemp > 70 || vehicleData.rpiBatteryVoltage < 11.0 || vehicleData.rpiBatteryVoltage > 13.0) || vehicleData.rpiBattery < 20
 
     property bool stmWarn: stmOnline && (vehicleData.stm32Battery < 20 || vehicleData.stm32BatteryVoltage < 11.0 || vehicleData.stm32BatteryVoltage > 13.0 || vehicleData.stm32Temperature > 60 || vehicleData.stm32Humidity > 85)
 
@@ -141,13 +142,13 @@ Item {
                     }
                     MetricTileMini {
                         label: "BAT"
-                        value: rpiOnline ? fmtInt(piHealthReader.batteryPercent, "%") : "--"
-                        warn: rpiOnline && safeNum(piHealthReader.batteryPercent) < 20
+                        value: rpiOnline ? fmtInt(vehicleData.rpiBattery, "%") : "--"
+                        warn: rpiOnline && vehicleData.rpiBattery < 20
                     }
                     MetricTileMini {
                         label: "VOLT"
-                        value: rpiOnline ? fmt(piHealthReader.batteryVoltage, 2, "V") : "--"
-                        warn: rpiOnline && (safeNum(piHealthReader.batteryVoltage) < 11.0 || safeNum(piHealthReader.batteryVoltage) > 13.0)
+                        value: rpiOnline ? fmt(vehicleData.rpiBatteryVoltage, 2, "V") : "--"
+                        warn: rpiOnline && (vehicleData.rpiBatteryVoltage < 11.0 || vehicleData.rpiBatteryVoltage > 13.0)
                     }
                 }
             }
@@ -233,7 +234,9 @@ Item {
                         sourceSize: Qt.size(16, 16)
                         // Invert/Tint icon for light mode
                         layer.enabled: true
-                        layer.effect: ColorOverlay { color: AppTheme.colors.textSecondary }
+                        layer.effect: ColorOverlay {
+                            color: AppTheme.colors.textSecondary
+                        }
                     }
 
                     Text {
@@ -244,10 +247,14 @@ Item {
                         color: AppTheme.colors.text
                     }
 
-                    Item { Layout.fillWidth: true }
+                    Item {
+                        Layout.fillWidth: true
+                    }
 
                     Rectangle {
-                        width: 8; height: 8; radius: 4
+                        width: 8
+                        height: 8
+                        radius: 4
                         color: online ? AppTheme.colors.success : AppTheme.colors.textTertiary
                     }
 

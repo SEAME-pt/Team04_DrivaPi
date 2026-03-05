@@ -3,16 +3,11 @@
 #include "music_player_controller.hpp"
 #include "vehicle_data.hpp"
 #include "kuksa_reader.hpp"
+#include "pi_health_reader.hpp"
 
 #ifdef ENABLE_CAN_MODE
 #include "can_reader.hpp"
 #endif
-
-// Keep models includes as-is since inc/models is also in the include path:
-#include "system_status.hpp"
-#include "notification_manager.hpp"
-#include "can_logger.hpp"
-#include "pi_health_reader.hpp"
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
@@ -58,12 +53,6 @@ int AppController::run(QGuiApplication& app)
     // (Stack variables are destroyed in reverse declaration order — engine must die first
     //  so QML bindings can't fire on dangling pointers during teardown.)
     QScopedPointer<VehicleData> vehicleData(new VehicleData());
-    QScopedPointer<SystemStatus> systemStatus(new SystemStatus());
-    // NotificationManager is a static unique_ptr singleton — do NOT wrap in QScopedPointer
-    // (that would double-free: QScopedPointer deletes it, then the static unique_ptr does too)
-    NotificationManager* notificationManager = NotificationManager::instance();
-    QScopedPointer<CANLogger> canLogger(new CANLogger());
-
     // --- Settings Manager (must be created first) ---
     QScopedPointer<SettingsManager> settingsManager(new SettingsManager());
 
@@ -80,7 +69,7 @@ int AppController::run(QGuiApplication& app)
 #endif
 
     // Create and configure Pi Health Reader
-    QScopedPointer<drivaui::PiHealthReader> piHealth(new drivaui::PiHealthReader());
+    std::unique_ptr<drivaui::PiHealthReader> piHealth(new drivaui::PiHealthReader());
 
     // Option A: If Qt app runs ON the Raspberry Pi (local)
     piHealth->setLocalScript("/usr/bin/pi_health.sh");
@@ -94,7 +83,7 @@ int AppController::run(QGuiApplication& app)
     piHealth->start();
 
     // Keep it alive (don't delete)
-    drivaui::PiHealthReader* piHealthRaw = piHealth.take();
+    drivaui::PiHealthReader* piHealthRaw = piHealth.release();
 
     if (config_.useKuksa) {
         qInfo() << "Starting in KUKSA mode (default)";
@@ -152,15 +141,6 @@ int AppController::run(QGuiApplication& app)
         QObject::connect(canReader, &CANReader::canMessageReceived,
                          vehicleData.data(), &VehicleData::handleCanMessage,
                          Qt::QueuedConnection);
-
-        // Feed raw CAN frames to CANLogger for recording
-        QObject::connect(canReader, &CANReader::canMessageReceived,
-                         &app, [canLogger = canLogger.data()](const QByteArray &payload, uint32_t canId){
-                             if (!canLogger->isRecording()) return;
-                             const int dlc = qMin(payload.size(), 8);
-                             const uint8_t *data = reinterpret_cast<const uint8_t*>(payload.constData());
-                             canLogger->recordFrame(canId, static_cast<uint8_t>(dlc), data);
-                         }, Qt::QueuedConnection);
     }
 #endif
 
@@ -198,9 +178,6 @@ int AppController::run(QGuiApplication& app)
         QQmlApplicationEngine engine;
 
         engine.rootContext()->setContextProperty("vehicleData", vehicleData.data());
-        engine.rootContext()->setContextProperty("systemStatus", systemStatus.data());
-        engine.rootContext()->setContextProperty("notificationManager", notificationManager);
-        engine.rootContext()->setContextProperty("canLogger", canLogger.data());
         engine.rootContext()->setContextProperty("settingsManager", settingsManager.data());
         engine.rootContext()->setContextProperty("musicPlayerController", musicPlayerController.data());
         engine.rootContext()->setContextProperty("piHealthReader", piHealthRaw);

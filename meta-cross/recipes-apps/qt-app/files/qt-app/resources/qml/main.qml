@@ -75,23 +75,6 @@ ApplicationWindow {
         onTriggered: showSplashScreen = false
     }
 
-    // ====== CONNECTION STATE MONITORING ======
-    Connections {
-        target: systemStatus
-        function onConnectionStateChanged() {
-            var state = systemStatus.connectionState;
-            var mode = systemStatus.connectionMode;
-
-            if (state === "connected") {
-                notificationManager.showNotification("✓ " + mode + " Connected", 0, 2000);
-            } else if (state === "disconnected") {
-                notificationManager.showNotification("✗ " + mode + " Disconnected", 2, 3000);
-            } else if (state === "connecting") {
-                notificationManager.showNotification("○ Connecting to " + mode + "...", 0, 2000);
-            }
-        }
-    }
-
     // ====== MAIN LAYOUT ======
     RowLayout {
         anchors.fill: parent
