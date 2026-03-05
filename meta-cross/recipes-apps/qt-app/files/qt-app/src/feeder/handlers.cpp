@@ -83,20 +83,20 @@ namespace handlers {
 			return;
 		}
 
-		const uint8_t g = can_decode::U8(frame.data);
+		const uint8_t gear_raw = can_decode::U8(frame.data);
 
 		// Map to VSS CurrentGear semantics:
 		// Neutral = 0, Reverse = -1, Drive/Forward = 1
-		int32_t currentGear = 0;
-		if (g == 0) currentGear = 0;
-		else if (g == 1) currentGear = -1;
-		else if (g == 2) currentGear = 1;
-		else currentGear = 0;
+		int32_t current_gear = 0;
+		if (gear_raw == 0) current_gear = 0;
+		else if (gear_raw == 1) current_gear = -1;
+		else if (gear_raw == 2) current_gear = 1;
+		else current_gear = 0;
 
-		publisher.PublishInt32(vss::CURRENT_GEAR, currentGear);
+		publisher.PublishInt32(vss::CURRENT_GEAR, current_gear);
 
 		std::cout << "[Handler] Published " << vss::CURRENT_GEAR
-				<< " = " << currentGear << " (raw=" << static_cast<int>(g) << ")\n";
+				<< " = " << current_gear << " (raw=" << static_cast<int>(gear_raw) << ")\n";
 	}
 
 	void HandleEnv(const can_frame& frame, kuksa::Publisher& publisher)

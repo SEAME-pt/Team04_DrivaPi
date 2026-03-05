@@ -51,13 +51,13 @@ FeederConfig ParseArgs(int argc, char** argv)
         }
         else if (arg[0] != '-') {
             // Treat as positional: first non-flag is interface, second is address
-            static int positionalCount = 0;
-            if (positionalCount == 0) {
+            static int positional_count = 0;
+            if (positional_count == 0) {
                 config.can_interface = arg;
-                positionalCount++;
-            } else if (positionalCount == 1) {
+                positional_count++;
+            } else if (positional_count == 1) {
                 config.publisher_options.address = arg;
-                positionalCount++;
+                positional_count++;
             }
         }
         else {
