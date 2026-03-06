@@ -87,7 +87,7 @@ void SettingsManager::saveSettings() {
     }
 }
 
-QVariant SettingsManager::get(const QString& key, const QVariant& defaultValue) {
+QVariant SettingsManager::get(const QString& key, const QVariant& defaultValue) const {
     if (m_settings.contains(key)) {
         return m_settings.value(key).toVariant();
     }
@@ -101,7 +101,7 @@ void SettingsManager::set(const QString& key, const QVariant& value) {
 }
 
 QString SettingsManager::lastPlayedTrack() const {
-    return m_settings.contains("lastPlayedTrack") ? m_settings.value("lastPlayedTrack").toString() : "";
+    return get("lastPlayedTrack", "").toString();
 }
 
 void SettingsManager::setLastPlayedTrack(const QString& track) {
@@ -111,7 +111,7 @@ void SettingsManager::setLastPlayedTrack(const QString& track) {
 }
 
 int SettingsManager::volume() const {
-    return m_settings.contains("volume") ? m_settings.value("volume").toInt() : 50;
+    return get("volume", 50).toInt();
 }
 
 void SettingsManager::setVolume(int vol) {
@@ -146,7 +146,7 @@ void SettingsManager::setMusicLibraryPath(const QString& path) {
 }
 
 QString SettingsManager::theme() const {
-    return m_settings.contains("theme") ? m_settings.value("theme").toString() : "dark";
+    return get("theme", "dark").toString();
 }
 
 void SettingsManager::setTheme(const QString& thm) {
@@ -156,7 +156,7 @@ void SettingsManager::setTheme(const QString& thm) {
 }
 
 double SettingsManager::screenBrightness() const {
-    return m_settings.contains("screenBrightness")? m_settings.value("screenBrightness").toDouble() : 0.75;
+    return get("screenBrightness", 0.75).toDouble();
 }
 
 void SettingsManager::setScreenBrightness(double brightness) {
@@ -166,7 +166,7 @@ void SettingsManager::setScreenBrightness(double brightness) {
 }
 
 QString SettingsManager::speedUnit() const {
-    return m_settings.contains("speedUnit")? m_settings.value("speedUnit").toString() : "km/h";
+    return get("speedUnit", "km/h").toString();
 }
 
 void SettingsManager::setSpeedUnit(const QString& unit) {
@@ -176,7 +176,7 @@ void SettingsManager::setSpeedUnit(const QString& unit) {
 }
 
 QString SettingsManager::temperatureUnit() const {
-    return m_settings.contains("temperatureUnit")? m_settings.value("temperatureUnit").toString() : "°C";
+    return get("temperatureUnit", "°C").toString();
 }
 
 void SettingsManager::setTemperatureUnit(const QString& unit) {
@@ -186,7 +186,7 @@ void SettingsManager::setTemperatureUnit(const QString& unit) {
 }
 
 QString SettingsManager::distanceUnit() const {
-    return m_settings.contains("distanceUnit")? m_settings.value("distanceUnit").toString() : "km";
+    return get("distanceUnit", "km").toString();
 }
 
 void SettingsManager::setDistanceUnit(const QString& unit) {
@@ -196,7 +196,7 @@ void SettingsManager::setDistanceUnit(const QString& unit) {
 }
 
 QString SettingsManager::windSpeedUnit() const {
-    return m_settings.contains("windSpeedUnit")? m_settings.value("windSpeedUnit").toString() : "m/s";
+    return get("windSpeedUnit", "m/s").toString();
 }
 
 void SettingsManager::setWindSpeedUnit(const QString& unit) {
@@ -206,7 +206,7 @@ void SettingsManager::setWindSpeedUnit(const QString& unit) {
 }
 
 QString SettingsManager::precipitationUnit() const {
-    return m_settings.contains("precipitationUnit")? m_settings.value("precipitationUnit").toString() : "mm";
+    return get("precipitationUnit", "mm").toString();
 }
 
 void SettingsManager::setPrecipitationUnit(const QString& unit) {

@@ -20,7 +20,7 @@ public:
     explicit SettingsManager(QObject* parent = nullptr);
 
     // Generic get/set for any setting
-    Q_INVOKABLE QVariant get(const QString& key, const QVariant& defaultValue = QVariant());
+    Q_INVOKABLE QVariant get(const QString& key, const QVariant& defaultValue = QVariant()) const;
     Q_INVOKABLE void set(const QString& key, const QVariant& value);
 
     // Specific properties for quick access

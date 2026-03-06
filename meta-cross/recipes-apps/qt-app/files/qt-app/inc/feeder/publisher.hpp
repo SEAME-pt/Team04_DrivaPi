@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <grpcpp/grpcpp.h>
@@ -86,6 +87,10 @@ public:
 private:
     // Attach authorization metadata if token present
     void AttachAuth(grpc::ClientContext& client_context);
+
+    // Helper: prepare context+request, call PublishValue, log on failure
+    bool publishUnary(const std::string& path,
+                      const std::function<void(val::v2::PublishValueRequest&)>& fill);
 
     // Load file contents into string (returns empty if path empty or read fails)
     static std::string LoadFile(const std::string& path);
