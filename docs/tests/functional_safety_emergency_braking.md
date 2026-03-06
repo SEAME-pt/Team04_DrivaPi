@@ -1,15 +1,21 @@
 # TSF Validation Report: Emergency Braking System (AEB)
 
+
 **Document Status:** DRAFT / UNDER REVIEW
+
 **Date of Execution:** 2026-03-06
+
 **Testing Engineer:** Bernardo - bernardo.esteves@seame.pt
 
+
 ## 1. Traceability
+
 * **Target Epic / Safety Requirement ID:** `Functional Safety Testing & TSF Evidence
 #386`
 * **Validation Goal:** Generate physical and software evidence of AEB latency and track stopping distance for TSF compliance.
 
 ## 2. System Under Test (SUT) Specification
+
 * **Chassis Platform:** PiRacer
 * **Microcontroller:** STM32 (System Core Clock: 84 MHz)
 * **High-Level Compute:** Raspberry Pi 5 
@@ -18,6 +24,7 @@
 * **Measurement Strategy:** ARM Cortex-M Data Watchpoint and Trace (DWT) Hardware Cycle Counter
 
 ## 3. Phase 1: Dynamic Software Latency Validation (Bench & CAN Trace)
+
 **Objective:** Measure the internal MCU processing delay between obstacle detection and PWM termination, isolating RTOS overhead from physical momentum.
 **Methodology:** DWT cycle counts captured at `t_detect`, `t_kill`, and `t_stop`. Deltas transmitted over CAN ID `0x102`.
 
@@ -78,6 +85,7 @@ root@raspberrypi5:~# candump can1
 ```
 
 ## 4. Phase 2: Physical Track Validation (Efficacy)
+
 **Objective:** Validate the total physical stopping distance against a standardized obstacle.
 
 * **Track Length:** 2.0 meters
@@ -86,7 +94,8 @@ root@raspberrypi5:~# candump can1
 * **Target Velocity (v_0):** `1.5 m/s`
 
 **Theoretical Braking Baseline:**
-d_total = (v_0 * t_latency) + (v_0^2 / (2 * mu * g))
+
+$$d_{total} = (v_0 \cdot t_{latency}) + \frac{v_0^2}{2 \mu g}$$
 
 * Variables: v_0 = 1.5 m/s, t_latency = 0.0105 s, mu (estimated) = 0.62, g = 9.81 m/s^2
 * Software Latency Distance Travelled: 1.58 cm
@@ -97,7 +106,9 @@ d_total = (v_0 * t_latency) + (v_0^2 / (2 * mu * g))
 **Track Test Results:**
 * **Attempt 1:** `80 cm` stopping distance from obstacle face
 * **Average Stopping Margin:** `~ 9cm`
-* **Recorded Video Evidence:** 
+* **Recorded Video Evidence:** ![ezgif-75d16cd13ba78c19](https://github.com/user-attachments/assets/476a4a3a-ec80-4d88-8cb9-4e7937d5029e)
+
 
 ## 5. Final Conclusion
+
 **[PASS/FAIL]** - The Emergency Braking System demonstrates a software latency of ~10.5ms and successfully halts the vehicle within the acceptable stopping margin outlined by the Epic's Acceptance Criteria.
