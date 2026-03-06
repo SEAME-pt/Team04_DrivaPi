@@ -1,24 +1,20 @@
 [Unit]
 Description=DrivaPi Dashboard (Qt)
-After=pipewire-system.service pipewire-pulse-system.service wireplumber-system.service graphical.target
-Requires=pipewire-system.service pipewire-pulse-system.service
-Wants=wireplumber-system.service graphical.target
+After=graphical.target pipewire-system.service
+Wants=graphical.target pipewire-system.service pipewire-pulse-system.service wireplumber-system.service
 
 [Service]
 Type=simple
-
-# Runtime first (important)
-Environment=XDG_RUNTIME_DIR=/run/pipewire
 Environment=WAYLAND_DISPLAY=wayland-0
 Environment=QT_QPA_PLATFORM=wayland-egl
 Environment=PULSE_SERVER=unix:/run/pipewire/pulse/native
 
-# Optional: provide the "classic" pulseaudio socket path too (helps some clients)
-ExecStartPre=/bin/sh -c 'mkdir -p /run/user/0/pulse && ln -sf /run/pipewire/pulse/native /run/user/0/pulse/native || true'
+# Wait up to ~10s for pulse socket to exist (prevents "connection refused" on boot)
+ExecStartPre=/bin/sh -c 'for i in $(seq 1 50); do [ -S /run/pipewire/pulse/native ] && exit 0; sleep 0.2; done; echo "Pulse socket missing"; exit 1'
 
 ExecStart=/usr/bin/myqtapp
 Restart=on-failure
-RestartSec=5
+RestartSec=2
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=graphical.target
