@@ -380,7 +380,7 @@ ApplicationWindow {
                     }
                     TabIconButton {
                         isActive: verticalTabBar.currentIndex === 3
-                        iconSource: "qrc:/icons/settings/brightness.svg"
+                        iconSource: "qrc:/icons/settings/gear.svg"
                         onClicked: verticalTabBar.currentIndex = 3
                     }
                     TabIconButton {
