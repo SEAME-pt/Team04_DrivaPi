@@ -9,8 +9,8 @@ Environment=WAYLAND_DISPLAY=wayland-0
 Environment=QT_QPA_PLATFORM=wayland-egl
 Environment=PULSE_SERVER=unix:/run/pipewire/pulse/native
 
-# Wait up to ~10s for pulse socket to exist (prevents "connection refused" on boot)
-ExecStartPre=/bin/sh -c 'for i in $(seq 1 50); do [ -S /run/pipewire/pulse/native ] && exit 0; sleep 0.2; done; echo "Pulse socket missing"; exit 1'
+# Avoid boot race: only start if pulse socket exists (fast retry via Restart=)
+ExecStartPre=/bin/sh -c 'test -S /run/pipewire/pulse/native'
 
 ExecStart=/usr/bin/myqtapp
 Restart=on-failure
