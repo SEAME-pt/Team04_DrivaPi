@@ -9,6 +9,8 @@
 #include <linux/can.h>
 #include <string>
 
+namespace feeder {
+
 /**
  * @brief Opens and binds a SocketCAN socket to the specified interface
  * @param ifname Interface name (e.g., "can0", "can1")
