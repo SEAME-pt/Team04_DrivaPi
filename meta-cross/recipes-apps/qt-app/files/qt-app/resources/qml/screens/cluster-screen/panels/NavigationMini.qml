@@ -14,7 +14,12 @@ Item {
     property int  fontSizeSmall:  18
     property int  fontSizeXSmall: 13
 
+    implicitWidth:  column.width
+    implicitHeight: column.height
+
     Column {
+        id: column
+        width: 120 * root.s
         anchors.centerIn: parent
         spacing: 6 * root.s
 

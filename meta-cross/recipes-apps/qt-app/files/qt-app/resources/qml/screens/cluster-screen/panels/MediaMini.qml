@@ -16,7 +16,11 @@ Item {
     property int  fontSizeXSmall: 13
     property color albumColor: "#1e90ff"
 
+    implicitWidth:  column.width
+    implicitHeight: column.height
+
     Column {
+        id: column
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: AppTheme.spacing.small
 
