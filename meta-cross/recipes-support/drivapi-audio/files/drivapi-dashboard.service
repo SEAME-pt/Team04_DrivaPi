@@ -8,10 +8,10 @@ Wants=wireplumber-system.service graphical.target
 [Service]
 Type=simple
 # Point to the AGL compositor runtime and the PulseAudio socket
-Environment=XDG_RUNTIME_DIR=/run/platform/display
 Environment=WAYLAND_DISPLAY=wayland-0
 Environment=PULSE_SERVER=unix:/run/pipewire/pulse/native
 Environment=QT_QPA_PLATFORM=wayland-egl
+Environment="XDG_RUNTIME_DIR=/run/pipewire"
 
 # Ensure this path is correct for your binary
 ExecStart=/usr/bin/myqtapp
