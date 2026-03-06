@@ -14,7 +14,6 @@
         <file>qml/screens/cluster-screen/background/Background.qml</file>
         <file>qml/screens/cluster-screen/background/GlowLayers.qml</file>
         <file>qml/screens/cluster-screen/background/road-layer/RoadLayer.qml</file>
-        <file>qml/screens/cluster-screen/background/road-layer/FogLayer.qml</file>
 
         <file>qml/screens/navigation-screen/NavigationScreen.qml</file>
         <file>qml/screens/media-screen/MediaScreen.qml</file>
