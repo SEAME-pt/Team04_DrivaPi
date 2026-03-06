@@ -15,12 +15,12 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         width: parent.width
         height: 36 * 2.5 * glowRoot.s
-        opacity: AppTheme.isDark ? 0.95 : 0.3
+        opacity: AppTheme.isDark ? 0.95 : 0.25
         z: 1
 
         layer.enabled: true
         layer.effect: ColorOverlay {
-            color: AppTheme.isDark ? "transparent" : AppTheme.colors.surfaceVariant
+            color: AppTheme.isDark ? "transparent" : Qt.lighter(AppTheme.colors.primary, 1.6)
             Behavior on color {
                 ColorAnimation { duration: AppTheme.animation.normal }
             }
@@ -34,12 +34,12 @@ Item {
         anchors.left: parent.left
         width: parent.width * 0.45
         height: parent.height * 0.60
-        opacity: AppTheme.isDark ? 0.95 : 0.5
+        opacity: AppTheme.isDark ? 0.95 : 0.25
         z: 1
 
         layer.enabled: true
         layer.effect: ColorOverlay {
-            color: AppTheme.isDark ? "transparent" : AppTheme.colors.surfaceVariant
+            color: AppTheme.isDark ? "transparent" : Qt.lighter(AppTheme.colors.primary, 1.6)
             Behavior on color {
                 ColorAnimation { duration: AppTheme.animation.normal }
             }
@@ -53,12 +53,12 @@ Item {
         anchors.right: parent.right
         width: parent.width * 0.45
         height: parent.height * 0.60
-        opacity: AppTheme.isDark ? 0.95 : 0.3
+        opacity: AppTheme.isDark ? 0.95 : 0.25
         z: 1
 
         layer.enabled: true
         layer.effect: ColorOverlay {
-            color: AppTheme.isDark ? "transparent" : AppTheme.colors.surfaceVariant
+            color: AppTheme.isDark ? "transparent" : Qt.lighter(AppTheme.colors.primary, 1.6)
             Behavior on color {
                 ColorAnimation { duration: AppTheme.animation.normal }
             }
@@ -73,12 +73,12 @@ Item {
         fillMode: Image.PreserveAspectFit
         width: parent.width * 0.95
         height: 36 * 3.5 * glowRoot.s
-        opacity: AppTheme.isDark ? 0.95 : 0.3
+        opacity: AppTheme.isDark ? 0.95 : 0.25
         z: 1
 
         layer.enabled: true
         layer.effect: ColorOverlay {
-            color: AppTheme.isDark ? "transparent" : AppTheme.colors.surfaceVariant
+            color: AppTheme.isDark ? "transparent" : Qt.lighter(AppTheme.colors.primary, 1.6)
             Behavior on color {
                 ColorAnimation { duration: AppTheme.animation.normal }
             }
