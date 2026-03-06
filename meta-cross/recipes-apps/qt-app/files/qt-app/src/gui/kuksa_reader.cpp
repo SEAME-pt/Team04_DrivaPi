@@ -5,6 +5,7 @@
  */
 
 #include "kuksa_reader.hpp"
+#include <QThread>
 #include <fstream>
 #include <chrono>
 
@@ -110,24 +111,39 @@ void KuksaReader::start()
         return;
     }
 
+    // Required paths (guaranteed by kuksa_feeder — must exist in the databroker VSS).
+    const std::vector<std::string> requiredPaths = {
+        PATH_SPEED, PATH_BATTERY_PERCENT, PATH_BATTERY_VOLT, PATH_CURRENT_GEAR
+    };
+    // Optional paths (custom VSS extensions — may not be registered in every deployment).
+    const std::vector<std::string> allPaths = {
+        PATH_SPEED, PATH_BATTERY_PERCENT, PATH_BATTERY_VOLT, PATH_CURRENT_GEAR,
+        PATH_STM32_TEMP, PATH_STM32_HUM, PATH_RPI_BATTERY_PERCENT, PATH_RPI_BATTERY_VOLTAGE
+    };
+
+    while (!m_stopRequested.load()) {
+        bool ok = subscribeLoop(allPaths);
+        if (!ok && !m_stopRequested.load()) {
+            // Optional paths likely not registered in the databroker's VSS; fall back to
+            // required paths so speed/gear/battery still reach the dashboard.
+            qWarning("[KUKSA] Full subscription failed — retrying with required paths only");
+            ok = subscribeLoop(requiredPaths);
+        }
+        if (m_stopRequested.load()) break;
+        // Brief pause before reconnect attempt to avoid busy-looping on persistent errors.
+        for (int i = 0; i < 20 && !m_stopRequested.load(); ++i)
+            QThread::msleep(100);
+    }
+}
+
+bool KuksaReader::subscribeLoop(const std::vector<std::string>& paths)
+{
     m_context = std::make_unique<grpc::ClientContext>();
     attachAuth(*m_context);
 
     SubscribeRequest request;
-
-    // Subscribe to the required signals (plus speed if used elsewhere)
-    request.add_signal_paths(PATH_SPEED);
-
-    request.add_signal_paths(PATH_BATTERY_PERCENT);
-    request.add_signal_paths(PATH_BATTERY_VOLT);
-
-    request.add_signal_paths(PATH_CURRENT_GEAR);
-
-    request.add_signal_paths(PATH_STM32_TEMP);
-    request.add_signal_paths(PATH_STM32_HUM);
-
-    request.add_signal_paths(PATH_RPI_BATTERY_PERCENT);
-    request.add_signal_paths(PATH_RPI_BATTERY_VOLTAGE);
+    for (const auto& p : paths)
+        request.add_signal_paths(p);
 
     auto reader = m_stub->Subscribe(m_context.get(), request);
     SubscribeResponse response;
@@ -169,8 +185,12 @@ void KuksaReader::start()
 
     grpc::Status status = reader->Finish();
     if (!m_stopRequested.load() && !status.ok()) {
-        emit errorOccurred(QString::fromStdString(status.error_message()));
+        emit errorOccurred(QString("[KUKSA] gRPC error %1: %2")
+            .arg(status.error_code())
+            .arg(QString::fromStdString(status.error_message())));
+        return false;
     }
+    return true;
 }
 
 void KuksaReader::stop()

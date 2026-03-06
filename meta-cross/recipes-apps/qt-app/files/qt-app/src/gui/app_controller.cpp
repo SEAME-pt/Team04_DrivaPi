@@ -131,6 +131,9 @@ int AppController::run(QGuiApplication& app)
         QObject::connect(kuksaReader, &kuksa::KuksaReader::currentGearReceived,
                          vehicleData.get(), &VehicleData::handleCurrentGearUpdate,
                          Qt::QueuedConnection);
+
+        QObject::connect(kuksaReader, &kuksa::KuksaReader::errorOccurred,
+                         [](const QString& err) { qCritical() << "[KUKSA]" << err; });
     }
 #ifdef ENABLE_CAN_MODE
     else {

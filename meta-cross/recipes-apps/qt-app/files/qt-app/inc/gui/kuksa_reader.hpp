@@ -60,6 +60,10 @@ signals:
     void errorOccurred(const QString& message);
 
 private:
+    /// @brief Run one subscribe-read loop for the given VSS paths.
+    /// @return true if stopped cleanly, false if the subscription failed with an error.
+    bool subscribeLoop(const std::vector<std::string>& paths);
+
     void attachAuth(grpc::ClientContext& ctx);
     static std::string loadFile(const QString& path, bool warnOnMissing = false);
     static std::string encodeBearerToken(const QString& token);
