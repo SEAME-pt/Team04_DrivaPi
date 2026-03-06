@@ -5,6 +5,7 @@ import Qt5Compat.GraphicalEffects
 import "../../components"
 import "../../theme"
 import "background"
+import "adas"
 
 Rectangle {
     id: root
@@ -145,14 +146,7 @@ Rectangle {
     property int fontSizeSmall: 18       // Secondary information
     property int fontSizeXSmall: 13      // Tertiary information
 
-    // Speed limit indicator glow sizes (pixels)
-    property int speedLimitOuterGlow: 128
-    property int speedLimitMidGlow: 116
-    property int speedLimitInnerGlow: 110
-    property int speedLimitMainCircle: 102
-    property int speedLimitBorderWidth: 9
-
-    // Road rendering parameters
+        // Road rendering parameters
     property real roadWidthFactor: 0.85
     property real roadHeightFactor: 3.5
     property real roadBaseOffset: -0.8
@@ -329,61 +323,14 @@ Rectangle {
                                 spacing: 14 * root.s
 
                                 // Speed Limit Indicator (ISO 26262 Safety-Critical Element)
-                                Item {
+                                SpeedLimitIndicator {
                                     Layout.preferredWidth: 120 * root.s
                                     Layout.preferredHeight: 120 * root.s
                                     Layout.alignment: Qt.AlignVCenter
-                                    z: 1  // Bring forward for maximum visibility
-
-                                    // Outer glow layer (enhanced visibility - ISO 26262 ASIL-B)
-                                    Rectangle {
-                                        anchors.centerIn: parent
-                                        width: root.speedLimitOuterGlow * root.s
-                                        height: root.speedLimitOuterGlow * root.s
-                                        radius: (root.speedLimitOuterGlow * root.s) / 2
-                                        color: root.vehicleDataAvailable ? "#d81f2a" : AppTheme.colors.textSecondary
-                                        opacity: 0.15
-                                    }
-
-                                    // Mid-tone glow (depth effect)
-                                    Rectangle {
-                                        anchors.centerIn: parent
-                                        width: root.speedLimitMidGlow * root.s
-                                        height: root.speedLimitMidGlow * root.s
-                                        radius: (root.speedLimitMidGlow * root.s) / 2
-                                        color: root.vehicleDataAvailable ? "#d81f2a" : AppTheme.colors.textSecondary
-                                        opacity: 0.08
-                                    }
-
-                                    // Background glow (low opacity - fail-safe indicator)
-                                    Rectangle {
-                                        anchors.centerIn: parent
-                                        width: root.speedLimitInnerGlow * root.s
-                                        height: root.speedLimitInnerGlow * root.s
-                                        radius: (root.speedLimitInnerGlow * root.s) / 2
-                                        color: root.vehicleDataAvailable ? "#d81f2a" : AppTheme.colors.textSecondary
-                                        opacity: 0.12
-                                    }
-
-                                    // Main speed limit circle
-                                    Rectangle {
-                                        anchors.centerIn: parent
-                                        width: root.speedLimitMainCircle * root.s
-                                        height: root.speedLimitMainCircle * root.s
-                                        radius: (root.speedLimitMainCircle * root.s) / 2
-                                        color: root.vehicleDataAvailable ? AppTheme.colors.surfaceElevated : AppTheme.colors.surfaceVariant
-                                        border.color: root.vehicleDataAvailable ? "#d81f2a" : AppTheme.colors.border
-                                        border.width: root.speedLimitBorderWidth * root.s
-                                    }
-
-                                    // Speed limit value
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: root.vehicleDataAvailable ? root.speedLimitValue.toString() : "--"
-                                        color: root.vehicleDataAvailable ? AppTheme.colors.text : AppTheme.colors.textSecondary
-                                        font.pixelSize: root.fontSizeLarge * root.s
-                                        font.weight: Font.ExtraBold
-                                    }
+                                    z: 1
+                                    vehicleDataAvailable: root.vehicleDataAvailable
+                                    speedLimitValue: root.speedLimitValue
+                                    s: root.s
                                 }
 
                                 // Flexible spacer for centered layout
