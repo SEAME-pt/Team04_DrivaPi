@@ -303,6 +303,7 @@ Item {
         anchors.right: parent.right
         anchors.top: parent.top
         height: roadWindow.anchors.topMargin + 180 * root.sy
+        topProtectionHeight: roadWindow.anchors.topMargin
         z: 5
     }
 }

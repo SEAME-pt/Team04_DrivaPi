@@ -3,6 +3,7 @@ import "../../../../theme"
 
 
 Item {
+    property real topProtectionHeight: 0
 
         Rectangle {
             anchors.left: parent.left
@@ -64,7 +65,7 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            height: roadWindow.anchors.topMargin
+            height: topProtectionHeight
             color: AppTheme.colors.surfaceVariant
             opacity: 1.0
             z: 10
