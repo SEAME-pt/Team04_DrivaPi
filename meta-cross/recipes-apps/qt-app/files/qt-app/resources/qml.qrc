@@ -7,6 +7,9 @@
 
         <file>qml/screens/cluster-screen/ClusterScreen.qml</file>
         <file>qml/screens/cluster-screen/adas/SpeedLimitIndicator.qml</file>
+        <file>qml/screens/cluster-screen/panels/MediaMini.qml</file>
+        <file>qml/screens/cluster-screen/panels/NavigationMini.qml</file>
+        <file>qml/screens/cluster-screen/panels/RightInfoPanel.qml</file>
         <file>qml/screens/cluster-screen/background/Background.qml</file>
         <file>qml/screens/cluster-screen/background/GlowLayers.qml</file>
         <file>qml/screens/cluster-screen/background/road-layer/RoadLayer.qml</file>
