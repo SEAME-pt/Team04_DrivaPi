@@ -1,5 +1,5 @@
 import QtQuick
-import "../theme"
+import "../../theme"
 
 Row {
     id: root

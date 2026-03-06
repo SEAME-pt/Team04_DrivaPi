@@ -9,7 +9,6 @@ import "screens/weather-screen"
 import "screens/navigation-screen"
 import "screens/diagnostics-screen"
 import "screens/settings-screen"
-import "components"
 import "theme"
 
 ApplicationWindow {

@@ -1,8 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
-import "../components"
-import "../theme"
+import "../../theme"
 
 Item {
     id: clusterTopBar

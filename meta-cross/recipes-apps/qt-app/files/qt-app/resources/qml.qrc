@@ -27,18 +27,18 @@
         <file>qml/screens/weather-screen/WeatherScreen.qml</file>
         <file>qml/screens/weather-screen/WeatherKeyboard.qml</file>
 
-        <file>qml/components/BatteryIndicator.qml</file>
-        <file>qml/components/BatteryPopup.qml</file>
-        <file>qml/components/BatteryStatusRow.qml</file>
-        <file>qml/components/ClusterTopBar.qml</file>
-        <file>qml/components/EnergyDisplay.qml</file>
-        <file>qml/components/GearSelector.qml</file>
-        <file>qml/components/SettingsButton.qml</file>
-        <file>qml/components/SettingsOption.qml</file>
-        <file>qml/components/SettingsSectionHeader.qml</file>
-        <file>qml/components/SettingsToggle.qml</file>
-        <file>qml/components/SpeedDisplay.qml</file>
-        <file>qml/components/WeatherMini.qml</file>
+        <file>qml/components/battery/BatteryIndicator.qml</file>
+        <file>qml/components/battery/BatteryPopup.qml</file>
+        <file>qml/components/battery/BatteryStatusRow.qml</file>
+        <file>qml/components/cluster/ClusterTopBar.qml</file>
+        <file>qml/components/cluster/EnergyDisplay.qml</file>
+        <file>qml/components/cluster/GearSelector.qml</file>
+        <file>qml/components/cluster/SpeedDisplay.qml</file>
+        <file>qml/components/settings/SettingsButton.qml</file>
+        <file>qml/components/settings/SettingsOption.qml</file>
+        <file>qml/components/settings/SettingsSectionHeader.qml</file>
+        <file>qml/components/settings/SettingsToggle.qml</file>
+        <file>qml/components/weather/WeatherMini.qml</file>
 
         <file>assets/cluster/car.png</file>
         <file>assets/cluster/road.png</file>

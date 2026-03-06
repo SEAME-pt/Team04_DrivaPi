@@ -6,7 +6,7 @@
 
 import QtQuick
 import QtQuick.Controls
-import "../../../components"
+import "../../../components/weather"
 import "../../../theme"
 
 Item {

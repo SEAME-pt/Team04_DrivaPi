@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
-import "../theme"
+import "../../theme"
 
 Rectangle {
     id: headerRoot

@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
-import "../theme"
+import "../../theme"
 
 // Battery Status Popup - Shows both STM32 and RPi battery levels
 Item {

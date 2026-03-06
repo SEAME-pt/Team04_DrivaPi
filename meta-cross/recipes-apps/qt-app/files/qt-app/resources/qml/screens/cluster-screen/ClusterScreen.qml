@@ -2,7 +2,8 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import Qt5Compat.GraphicalEffects
-import "../../components"
+import "../../components/cluster"
+import "../../components/battery"
 import "../../theme"
 import "background"
 import "adas"
