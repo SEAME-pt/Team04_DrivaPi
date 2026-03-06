@@ -66,11 +66,11 @@ void SettingsManager::loadSettings() {
         m_settings["musicLibraryPath"] = getDefaultMusicPath();  // Auto-detect path
         m_settings["theme"] = "dark";
         m_settings["screenBrightness"] = 0.75;
-		m_settings["speedUnit"] = "km/h";
-		m_settings["temperatureUnit"] = "°C";
-		m_settings["distanceUnit"] = "km";
-		m_settings["windSpeedUnit"] = "m/s";
-		m_settings["precipitationUnit"] = "mm";
+        m_settings["speedUnit"] = "km/h";
+        m_settings["temperatureUnit"] = "°C";
+        m_settings["distanceUnit"] = "km";
+        m_settings["windSpeedUnit"] = "m/s";
+        m_settings["precipitationUnit"] = "mm";
         saveSettings();
     }
 }

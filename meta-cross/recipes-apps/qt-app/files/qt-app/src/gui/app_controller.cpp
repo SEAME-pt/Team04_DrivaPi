@@ -18,7 +18,7 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
-#include <QScopedPointer>
+#include <memory>
 #include <QThread>
 #include <QWindow>
 #include <QCoreApplication>
@@ -58,13 +58,13 @@ int AppController::run(QGuiApplication& app)
     // Context properties declared BEFORE the engine so they are destroyed AFTER it.
     // (Stack variables are destroyed in reverse declaration order — engine must die first
     //  so QML bindings can't fire on dangling pointers during teardown.)
-    QScopedPointer<VehicleData> vehicleData(new VehicleData());
+    std::unique_ptr<VehicleData> vehicleData(new VehicleData());
     // --- Settings Manager (must be created first) ---
-    QScopedPointer<SettingsManager> settingsManager(new SettingsManager());
+    std::unique_ptr<SettingsManager> settingsManager(new SettingsManager());
 
     // --- Music Player Controller ---
-    QScopedPointer<MusicPlayerController> musicPlayerController(
-        new MusicPlayerController(settingsManager.data())
+    std::unique_ptr<MusicPlayerController> musicPlayerController(
+        new MusicPlayerController(settingsManager.get())
     );
 
     QThread* workerThread = new QThread(); // no parent — we manage lifetime in aboutToQuit
@@ -101,35 +101,35 @@ int AppController::run(QGuiApplication& app)
         QObject::connect(workerThread, &QThread::finished, kuksaReader, &kuksa::KuksaReader::deleteLater);
 
         QObject::connect(kuksaReader, &kuksa::KuksaReader::speedReceived,
-                         vehicleData.data(), &VehicleData::setSpeed,
+                         vehicleData.get(), &VehicleData::setSpeed,
                          Qt::QueuedConnection);
 
         QObject::connect(kuksaReader, &kuksa::KuksaReader::lvBatteryPercentReceived,
-                         vehicleData.data(), &VehicleData::setStm32Battery,
+                         vehicleData.get(), &VehicleData::setStm32Battery,
                          Qt::QueuedConnection);
 
         QObject::connect(kuksaReader, &kuksa::KuksaReader::lvBatteryVoltageReceived,
-                         vehicleData.data(), &VehicleData::setStm32BatteryVoltage,
+                         vehicleData.get(), &VehicleData::setStm32BatteryVoltage,
                          Qt::QueuedConnection);
 
         QObject::connect(kuksaReader, &kuksa::KuksaReader::stm32TemperatureReceived,
-                         vehicleData.data(), &VehicleData::setStm32Temperature,
+                         vehicleData.get(), &VehicleData::setStm32Temperature,
                          Qt::QueuedConnection);
 
         QObject::connect(kuksaReader, &kuksa::KuksaReader::stm32HumidityReceived,
-                         vehicleData.data(), &VehicleData::setStm32Humidity,
+                         vehicleData.get(), &VehicleData::setStm32Humidity,
                          Qt::QueuedConnection);
 
         QObject::connect(kuksaReader, &kuksa::KuksaReader::rpiBatteryPercentReceived,
-                         vehicleData.data(), &VehicleData::setRpiBattery,
+                         vehicleData.get(), &VehicleData::setRpiBattery,
                          Qt::QueuedConnection);
         QObject::connect(kuksaReader, &kuksa::KuksaReader::rpiBatteryVoltageReceived,
-                         vehicleData.data(), &VehicleData::setRpiBatteryVoltage,
+                         vehicleData.get(), &VehicleData::setRpiBatteryVoltage,
                          Qt::QueuedConnection);
 
-        // NEW: CurrentGear only (no SelectedGear)
+        // CurrentGear only (no SelectedGear in VSS v4 for this use case)
         QObject::connect(kuksaReader, &kuksa::KuksaReader::currentGearReceived,
-                         vehicleData.data(), &VehicleData::handleCurrentGearUpdate,
+                         vehicleData.get(), &VehicleData::handleCurrentGearUpdate,
                          Qt::QueuedConnection);
     }
 #ifdef ENABLE_CAN_MODE
@@ -142,7 +142,7 @@ int AppController::run(QGuiApplication& app)
         QObject::connect(workerThread, &QThread::finished, canReader, &CanReader::deleteLater);
 
         QObject::connect(canReader, &CanReader::canMessageReceived,
-                         vehicleData.data(), &VehicleData::handleCanMessage,
+                         vehicleData.get(), &VehicleData::handleCanMessage,
                          Qt::QueuedConnection);
     }
 #endif
@@ -180,9 +180,9 @@ int AppController::run(QGuiApplication& app)
     {
         QQmlApplicationEngine engine;
 
-        engine.rootContext()->setContextProperty("vehicleData", vehicleData.data());
-        engine.rootContext()->setContextProperty("settingsManager", settingsManager.data());
-        engine.rootContext()->setContextProperty("musicPlayerController", musicPlayerController.data());
+        engine.rootContext()->setContextProperty("vehicleData", vehicleData.get());
+        engine.rootContext()->setContextProperty("settingsManager", settingsManager.get());
+        engine.rootContext()->setContextProperty("musicPlayerController", musicPlayerController.get());
         engine.rootContext()->setContextProperty("piHealthReader", piHealthRaw);
 
         const QUrl url = pickQmlEntryPoint(engine);
