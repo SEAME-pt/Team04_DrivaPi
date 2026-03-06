@@ -314,9 +314,10 @@ ApplicationWindow {
                 id: swipeView
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                currentIndex: verticalTabBar.currentIndex
+                currentIndex: 0
                 z: 50
                 clip: true
+                onCurrentIndexChanged: verticalTabBar.currentIndex = currentIndex
                 Behavior on currentIndex {
                     NumberAnimation {
                         duration: 350
@@ -347,7 +348,8 @@ ApplicationWindow {
                 Layout.preferredWidth: 72
                 Layout.fillHeight: true
                 z: 40
-                property int currentIndex: verticalTabBar.currentIndex >= 0 ? verticalTabBar.currentIndex : 0
+                property int currentIndex: 0
+                onCurrentIndexChanged: swipeView.currentIndex = currentIndex
 
                 Rectangle {
                     anchors.fill: parent
