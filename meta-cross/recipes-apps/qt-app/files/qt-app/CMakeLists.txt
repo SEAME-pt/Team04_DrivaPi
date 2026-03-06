@@ -256,7 +256,9 @@ endif()
 # Important for the Qt6Gui -> zlib:
 # - Make sure zlib is explicitly linked
 # - And avoid --as-needed discarding it due to order
-target_link_options(myqtapp PRIVATE "-Wl,--no-as-needed")
+if(UNIX AND NOT APPLE)
+    target_link_options(myqtapp PRIVATE "-Wl,--no-as-needed")
+endif()
 
 target_link_libraries(myqtapp PRIVATE
     Qt6::Core Qt6::Gui Qt6::Quick Qt6::Qml Qt6::QuickControls2

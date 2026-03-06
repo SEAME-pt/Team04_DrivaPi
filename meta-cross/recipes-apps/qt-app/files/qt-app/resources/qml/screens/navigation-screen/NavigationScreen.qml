@@ -4,7 +4,7 @@ import QtQuick.Controls
 import QtPositioning
 import QtLocation
 import QtCore
-import "../theme"
+import "../../theme"
 
 Rectangle {
     id: root

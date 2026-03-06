@@ -11,11 +11,11 @@
         <file>qml/screens/cluster-screen/background/road-layer/RoadLayer.qml</file>
         <file>qml/screens/cluster-screen/background/road-layer/FogLayer.qml</file>
 
-        <file>qml/screens/NavigationScreen.qml</file>
-        <file>qml/screens/MediaScreen.qml</file>
-        <file>qml/screens/DiagnosticsScreen.qml</file>
-        <file>qml/screens/SettingsScreen.qml</file>
-        <file>qml/screens/WeatherScreen.qml</file>
+        <file>qml/screens/navigation-screen/NavigationScreen.qml</file>
+        <file>qml/screens/media-screen/MediaScreen.qml</file>
+        <file>qml/screens/diagnostics-screen/DiagnosticsScreen.qml</file>
+        <file>qml/screens/settings-screen/SettingsScreen.qml</file>
+        <file>qml/screens/weather-screen/WeatherScreen.qml</file>
 
         <file>qml/components/BatteryIndicator.qml</file>
         <file>qml/components/BatteryPopup.qml</file>
