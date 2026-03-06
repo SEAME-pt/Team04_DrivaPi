@@ -150,91 +150,76 @@ void MusicPlayerController::setCurrentTrackIndex(int index) {
 }
 
 void MusicPlayerController::extractMetadata() {
-    qDebug() << "=== Extracting metadata with TagLib ===";
-
-    // Get current track path
-    QString currentTrackPath;
-    if (m_currentTrackIndex >= 0 && m_currentTrackIndex < m_trackList.size()) {
-        currentTrackPath = m_trackList.at(m_currentTrackIndex);
-    }
-
-    if (currentTrackPath.isEmpty()) {
+    const QString path = (m_currentTrackIndex >= 0 && m_currentTrackIndex < m_trackList.size())
+                         ? m_trackList.at(m_currentTrackIndex) : QString();
+    if (path.isEmpty()) {
         qDebug() << "No current track to extract metadata from";
         return;
     }
+    qDebug() << "Extracting metadata from:" << path;
+    extractTagLibMetadata(path);
+    extractAlbumArt(path);
+    applyMetadataFallbacks();
+    emit playbackInfoChanged();
+}
 
-    qDebug() << "Extracting metadata from:" << currentTrackPath;
-
-    // Use TagLib for proper ID3 tag reading
-    TagLib::FileRef fileRef(currentTrackPath.toUtf8().constData());
-
+void MusicPlayerController::extractTagLibMetadata(const QString& path) {
+    TagLib::FileRef fileRef(path.toUtf8().constData());
     if (!fileRef.isNull() && fileRef.tag()) {
         TagLib::Tag *tag = fileRef.tag();
-
-        // Extract basic metadata
         m_trackTitle = QString::fromStdString(tag->title().to8Bit(true));
         m_artistName = QString::fromStdString(tag->artist().to8Bit(true));
-
         qDebug() << "TagLib extracted - Title:" << m_trackTitle << "Artist:" << m_artistName;
     }
+}
 
-    // Extract album art from MP3 ID3v2 tags
+void MusicPlayerController::extractAlbumArt(const QString& path) {
     m_albumArtUrl.clear();
-    TagLib::MPEG::File mpegFile(currentTrackPath.toUtf8().constData());
-
-    if (mpegFile.isValid() && mpegFile.ID3v2Tag()) {
-        TagLib::ID3v2::Tag *id3v2 = mpegFile.ID3v2Tag();
-        TagLib::ID3v2::FrameList frameList = id3v2->frameList("APIC");
-
-        if (!frameList.isEmpty()) {
-            TagLib::ID3v2::AttachedPictureFrame *frame =
-                static_cast<TagLib::ID3v2::AttachedPictureFrame*>(frameList.front());
-
-            if (frame) {
-                TagLib::ByteVector imageData = frame->picture();
-                qDebug() << "Found album art:" << imageData.size() << "bytes";
-
-                // Convert to QImage
-                QImage image;
-                if (image.loadFromData(reinterpret_cast<const uchar*>(imageData.data()), imageData.size())) {
-                    qDebug() << "QImage loaded - size:" << image.size();
-
-                    // Save to temporary file
-                    QString tempPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation) +
-                                     "/album_art_" + QString::number(m_currentTrackIndex) + ".jpg";
-
-                    if (image.save(tempPath, "JPG", 95)) {
-                        m_albumArtUrl = "file://" + tempPath;
-                        qDebug() << "Album art saved and URL set:" << m_albumArtUrl;
-                    } else {
-                        qDebug() << "Failed to save album art to:" << tempPath;
-                    }
-                } else {
-                    qDebug() << "Failed to load image data into QImage";
-                }
-            }
-        } else {
-            qDebug() << "No APIC frames found in ID3v2 tag";
-        }
-    } else {
+    TagLib::MPEG::File mpegFile(path.toUtf8().constData());
+    if (!mpegFile.isValid() || !mpegFile.ID3v2Tag()) {
         qDebug() << "Not a valid MP3 file or no ID3v2 tag";
+        return;
     }
 
-    // Fallback to filename if metadata not available
+    TagLib::ID3v2::FrameList frameList = mpegFile.ID3v2Tag()->frameList("APIC");
+    if (frameList.isEmpty()) {
+        qDebug() << "No APIC frames found in ID3v2 tag";
+        return;
+    }
+
+    auto *frame = static_cast<TagLib::ID3v2::AttachedPictureFrame*>(frameList.front());
+    if (!frame) return;
+
+    TagLib::ByteVector imageData = frame->picture();
+    qDebug() << "Found album art:" << imageData.size() << "bytes";
+
+    QImage image;
+    if (!image.loadFromData(reinterpret_cast<const uchar*>(imageData.data()), imageData.size())) {
+        qDebug() << "Failed to load image data into QImage";
+        return;
+    }
+    qDebug() << "QImage loaded - size:" << image.size();
+
+    QString tempPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation) +
+                       "/album_art_" + QString::number(m_currentTrackIndex) + ".jpg";
+    if (image.save(tempPath, "JPG", 95)) {
+        m_albumArtUrl = "file://" + tempPath;
+        qDebug() << "Album art saved and URL set:" << m_albumArtUrl;
+    } else {
+        qDebug() << "Failed to save album art to:" << tempPath;
+    }
+}
+
+void MusicPlayerController::applyMetadataFallbacks() {
     if (m_trackTitle.isEmpty() && m_currentTrackIndex >= 0 && m_currentTrackIndex < m_trackList.size()) {
-        QFileInfo fileInfo(m_trackList.at(m_currentTrackIndex));
-        m_trackTitle = fileInfo.baseName();
+        m_trackTitle = QFileInfo(m_trackList.at(m_currentTrackIndex)).baseName();
     }
-
     if (m_artistName.isEmpty()) {
         m_artistName = "Local Music";
     }
-
     if (m_albumArtUrl.isEmpty()) {
         qDebug() << "Using fallback color gradient (no album art available from Qt backend)";
     }
-
-    emit playbackInfoChanged();
 }
 
 bool MusicPlayerController::isPlaying() const {

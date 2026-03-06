@@ -142,7 +142,6 @@ private:
     void    updateTimestamp(const QString &propName);
     qint64  lastUpdate(const QString &propName) const;
     void    markPropertyStale(const QString &propName);
-    int     getGearIndex() const;
 
     QHash<QString, qint64> m_lastUpdateMs;  ///< Property → last update time (ms).
     QTimer *m_watchdogTimer;                 ///< Stale detection timer.

@@ -297,14 +297,6 @@ void VehicleData::markPropertyStale(const QString &propName)
     Q_UNUSED(propName);
 }
 
-int VehicleData::getGearIndex() const
-{
-    if (m_gear == "N") return 0;
-    if (m_gear == "R") return 1;
-    if (m_gear == "D") return 2;
-    return 0;
-}
-
 void VehicleData::checkStaleProperties()
 {
     const qint64 now = QDateTime::currentMSecsSinceEpoch();

@@ -72,6 +72,9 @@ private slots:
 private:
     void scanMusicFolder(const QString& path);
     void extractMetadata();
+    void extractTagLibMetadata(const QString& path);
+    void extractAlbumArt(const QString& path);
+    void applyMetadataFallbacks();
 
     QMediaPlayer m_mediaPlayer;
     QAudioOutput m_audioOutput;
