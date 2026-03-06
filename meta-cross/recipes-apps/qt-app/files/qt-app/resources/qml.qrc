@@ -21,6 +21,7 @@
         <file>qml/screens/diagnostics-screen/DiagnosticsScreen.qml</file>
         <file>qml/screens/settings-screen/SettingsScreen.qml</file>
         <file>qml/screens/weather-screen/WeatherScreen.qml</file>
+        <file>qml/screens/weather-screen/WeatherKeyboard.qml</file>
 
         <file>qml/components/BatteryIndicator.qml</file>
         <file>qml/components/BatteryPopup.qml</file>
