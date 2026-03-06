@@ -19,64 +19,54 @@ Item {
     property color albumColor: "#1e90ff"
     property var   weatherData: null
 
-    Column {
+    SwipeView {
+        id: rightSwipe
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: pageIndicator.top
+        anchors.bottomMargin: 4 * root.sy
+        interactive: true
+        clip: true
+
+        // --- Page 1: Media ---
+        Item {
+            MediaMini {
+                anchors.centerIn: parent
+                s: root.s
+                fontSizeSmall:  root.fontSizeSmall
+                fontSizeXSmall: root.fontSizeXSmall
+                albumColor: root.albumColor
+            }
+        }
+
+        // --- Page 2: Weather ---
+        Item {
+            WeatherMini {
+                anchors.centerIn: parent
+                width: 280 * root.s
+                height: 170 * root.s
+                weatherData: root.weatherData
+            }
+        }
+
+        // --- Page 3: Navigation ---
+        Item {
+            NavigationMini {
+                anchors.centerIn: parent
+                s: root.s
+                fontSizeSmall:  root.fontSizeSmall
+                fontSizeXSmall: root.fontSizeXSmall
+            }
+        }
+    }
+
+    PageIndicator {
+        id: pageIndicator
+        count: rightSwipe.count
+        currentIndex: rightSwipe.currentIndex
+        anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.verticalCenterOffset: -10 * root.sy
-        spacing: 6 * root.s
-
-        SwipeView {
-            id: rightSwipe
-            width: 280 * root.s
-            height: 170 * root.s
-            interactive: true
-            clip: true
-
-            // --- Page 1: Media ---
-            Item {
-                width: rightSwipe.width
-                height: rightSwipe.height
-
-                MediaMini {
-                    anchors.fill: parent
-                    s: root.s
-                    fontSizeSmall:  root.fontSizeSmall
-                    fontSizeXSmall: root.fontSizeXSmall
-                    albumColor: root.albumColor
-                }
-            }
-
-            // --- Page 2: Weather ---
-            Item {
-                width: rightSwipe.width
-                height: rightSwipe.height
-
-                WeatherMini {
-                    anchors.centerIn: parent
-                    width: rightSwipe.width
-                    height: rightSwipe.height
-                    weatherData: root.weatherData
-                }
-            }
-
-            // --- Page 3: Navigation ---
-            Item {
-                width: rightSwipe.width
-                height: rightSwipe.height
-
-                NavigationMini {
-                    anchors.fill: parent
-                    s: root.s
-                    fontSizeSmall:  root.fontSizeSmall
-                    fontSizeXSmall: root.fontSizeXSmall
-                }
-            }
-        }
-
-        PageIndicator {
-            count: rightSwipe.count
-            currentIndex: rightSwipe.currentIndex
-            anchors.horizontalCenter: parent.horizontalCenter
-        }
+        anchors.bottomMargin: 4 * root.sy
     }
 }
