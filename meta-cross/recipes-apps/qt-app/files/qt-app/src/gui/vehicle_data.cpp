@@ -6,6 +6,8 @@
 
 #include "vehicle_data.hpp"
 
+#include <QDebug>
+#include <QSettings>
 #include <cstring>
 #include <algorithm>
 

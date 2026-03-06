@@ -11,7 +11,6 @@
 #include <QVariant>
 #include <QByteArray>
 #include <QString>
-#include <QDebug>
 #include <QCanBus>
 #include <QCanBusDevice>
 #include <QCanBusFrame>

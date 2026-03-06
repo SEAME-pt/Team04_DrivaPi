@@ -13,10 +13,10 @@
 #include <QByteArray>
 #include <QHash>
 #include <QTimer>
-#include <QDebug>
 #include <QDateTime>
-#include <QSettings>
 #include <QtMath>
+
+class QSettings;
 
 namespace drivaui {
 
