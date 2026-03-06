@@ -192,17 +192,17 @@ set(MODEL_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/models/pi_health_reader.cpp"
 )
 
-# # ------------------------
-# # Feeder Sources
-# # ------------------------
-# set(FEEDER_SOURCES
-#     "${CMAKE_CURRENT_SOURCE_DIR}/src/feeder/main.cpp"
-#     "${CMAKE_CURRENT_SOURCE_DIR}/src/feeder/publisher.cpp"
-#     "${CMAKE_CURRENT_SOURCE_DIR}/src/feeder/handlers.cpp"
-#     "${CMAKE_CURRENT_SOURCE_DIR}/src/feeder/feeder_cli.cpp"
-#     "${CMAKE_CURRENT_SOURCE_DIR}/src/feeder/feeder_signal.cpp"
-#     "${CMAKE_CURRENT_SOURCE_DIR}/src/feeder/feeder_can.cpp"
-# )
+# ------------------------
+# Feeder Sources
+# ------------------------
+set(FEEDER_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/feeder/main.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/feeder/publisher.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/feeder/handlers.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/feeder/feeder_cli.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/feeder/feeder_signal.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/feeder/feeder_can.cpp"
+)
 
 # ------------------------
 # Targets
@@ -213,10 +213,10 @@ add_executable(myqtapp
     ${GEN_PROTO_SRCS}
 )
 
-# add_executable(kuksa_feeder
-#     ${FEEDER_SOURCES}
-#     ${GEN_PROTO_SRCS}
-# )
+add_executable(kuksa_feeder
+    ${FEEDER_SOURCES}
+    ${GEN_PROTO_SRCS}
+)
 
 target_include_directories(myqtapp PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/inc/gui
@@ -224,10 +224,10 @@ target_include_directories(myqtapp PRIVATE
     ${GEN_DIR}
 )
 
-# target_include_directories(kuksa_feeder PRIVATE
-#     ${CMAKE_CURRENT_SOURCE_DIR}/inc/feeder
-#     ${GEN_DIR}
-# )
+target_include_directories(kuksa_feeder PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/inc/feeder
+    ${GEN_DIR}
+)
 
 if(ENABLE_CAN_MODE)
     target_compile_definitions(myqtapp PRIVATE ENABLE_CAN_MODE=1)
@@ -254,9 +254,9 @@ endif()
 # ------------------------
 
 # Important for the Qt6Gui -> zlib:
-# # - Make sure zlib is explicitly linked
-# # - And avoid --as-needed discarding it due to order
-# target_link_options(myqtapp PRIVATE "-Wl,--no-as-needed")
+# - Make sure zlib is explicitly linked
+# - And avoid --as-needed discarding it due to order
+target_link_options(myqtapp PRIVATE "-Wl,--no-as-needed")
 
 target_link_libraries(myqtapp PRIVATE
     Qt6::Core Qt6::Gui Qt6::Quick Qt6::Qml Qt6::QuickControls2
@@ -270,11 +270,11 @@ if(USE_PKGCONFIG_GRPC)
         PkgConfig::PROTOBUF
         PkgConfig::ABSL
     )
-    # target_link_libraries(kuksa_feeder PRIVATE
-    #     PkgConfig::GRPC
-    #     PkgConfig::PROTOBUF
-    #     PkgConfig::ABSL
-    # )
+    target_link_libraries(kuksa_feeder PRIVATE
+        PkgConfig::GRPC
+        PkgConfig::PROTOBUF
+        PkgConfig::ABSL
+    )
 else()
     target_link_libraries(myqtapp PRIVATE
         gRPC::grpc++
@@ -286,16 +286,16 @@ else()
         absl::synchronization
         absl::time
     )
-    # target_link_libraries(kuksa_feeder PRIVATE
-    #     gRPC::grpc++
-    #     protobuf::libprotobuf
-    #     absl::hash
-    #     absl::strings
-    #     absl::base
-    #     absl::log_internal_check_op
-    #     absl::synchronization
-    #     absl::time
-    # )
+    target_link_libraries(kuksa_feeder PRIVATE
+        gRPC::grpc++
+        protobuf::libprotobuf
+        absl::hash
+        absl::strings
+        absl::base
+        absl::log_internal_check_op
+        absl::synchronization
+        absl::time
+    )
 endif()
 
 # Put ZLIB at the end to guarantee correct link order
@@ -313,5 +313,5 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/resources/qml/"
             PATTERN "qmldir" PATTERN "*.frag" PATTERN "*.qsb"
 )
 
-install(TARGETS myqtapp
+install(TARGETS myqtapp kuksa_feeder
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
