@@ -6,6 +6,8 @@
 
 **Acceptance Criterion:** Physical wheel angle corresponds to commanded steering direction within ±2 degrees.
 
+> ⚠️ **Note:** Measurement fields marked `[TBD]` must be filled in from the video evidence before this document can be used to assign a TSF score. See `evidence/steering_precision_system_test.mp4`.
+
 ---
 
 ## Test Setup
@@ -13,8 +15,10 @@
 | Parameter | Value |
 |---|---|
 | Steering command source | HMI joystick input via AGL → CAN → STM32 → PCA9685 → servo |
-| Measurement method | Visual angle measurement with reference protractor |
+| Measurement method | [TBD — e.g. protractor, angle ruler, visual reference] |
 | Commanded positions tested | Full left, centre, full right |
+| Test date | [TBD] |
+| Tester | [TBD] |
 | Evidence | Video recording (`evidence/steering_precision_system_test.mp4`) |
 
 ---
@@ -22,24 +26,24 @@
 ## Test Procedure
 
 1. Vehicle placed on a flat surface with front wheels visible from above.
-2. Steering set to centre position — verify wheels straight.
-3. Full-left command issued from HMI joystick — physical angle measured.
-4. Full-right command issued from HMI joystick — physical angle measured.
-5. Each position held for ≥ 2 seconds to confirm stability.
+2. Steering set to centre position — verify wheels straight (0° reference).
+3. Full-left command issued from HMI joystick — measure physical wheel angle.
+4. Full-right command issued from HMI joystick — measure physical wheel angle.
+5. Each position held for ≥ 2 seconds to confirm stability (no drift).
 6. Return to centre — verify symmetric response.
 
 ---
 
 ## Observations
 
-| Command | Expected response | Observed response | Within tolerance? |
-|---|---|---|---|
-| Centre | Wheels straight (0°) | Wheels straight | ✅ |
-| Full left | Maximum left deflection | Symmetric left deflection | ✅ |
-| Full right | Maximum right deflection | Symmetric right deflection | ✅ |
-| Centre (return) | Wheels straight (0°) | Wheels straight | ✅ |
+| Command | Expected response | Measured angle (°) | Deviation from expected (°) | Within ±2°? |
+|---|---|---|---|---|
+| Centre | 0° (wheels straight) | [TBD] | [TBD] | [TBD] |
+| Full left | Max left deflection | [TBD] | [TBD] | [TBD] |
+| Full right | Max right deflection | [TBD] | [TBD] | [TBD] |
+| Centre (return) | 0° (wheels straight) | [TBD] | [TBD] | [TBD] |
 
-Steering response was smooth and consistent. No mechanical binding observed. Left/right deflection was visually symmetric. The servo held commanded position without drift during the 2-second hold period.
+Qualitative observations from video: [TBD — e.g. smooth response, no mechanical binding, symmetric deflection observed]
 
 ---
 
@@ -47,11 +51,11 @@ Steering response was smooth and consistent. No mechanical binding observed. Lef
 
 | Metric | Value |
 |---|---|
-| Commanded positions verified | 3 (left, centre, right) |
+| Commanded positions verified | [TBD] of 3 |
 | Angular tolerance criterion | ±2 degrees |
-| Observed max deviation | Within tolerance |
-| Stability (no drift) | ✅ PASS |
-| **Status** | ✅ **PASS** |
+| Observed max deviation | [TBD] ° |
+| Stability (no drift) | [TBD] |
+| **Status** | [TBD — PASS / FAIL] |
 
 **Video evidence:** `evidence/steering_precision_system_test.mp4`
 
@@ -59,6 +63,5 @@ Steering response was smooth and consistent. No mechanical binding observed. Lef
 
 ## Notes
 
-- The servo was driven via the PCA9685 I²C PWM controller at address 0x40.
-- Steering centre calibration was verified by confirming equal encoder counts in both directions at the same PWM duty cycle offset from centre.
-- Test was performed in a controlled environment on a flat surface with the vehicle held stationary.
+- The servo is driven via the PCA9685 I²C PWM controller at address 0x40 (steering channel).
+- Complete this document from the video recording before adding `score: MelanieReis: 1.0` to `TSF/requirements/hltc/HLTC-STEERING-ACCURACY.md`.
