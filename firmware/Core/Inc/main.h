@@ -67,6 +67,8 @@ void Error_Handler(void);
 #define USB_UCPD_CC1_GPIO_Port GPIOA
 #define OCTOSPI_F_NCS_Pin GPIO_PIN_5
 #define OCTOSPI_F_NCS_GPIO_Port GPIOI
+#define SOFT_SDA_Pin GPIO_PIN_6
+#define SOFT_SDA_GPIO_Port GPIOB
 #define OCTOSPI_R_IO5_Pin GPIO_PIN_0
 #define OCTOSPI_R_IO5_GPIO_Port GPIOI
 #define OCTOSPI_F_IO7_Pin GPIO_PIN_12
@@ -87,6 +89,8 @@ void Error_Handler(void);
 #define PC14_OSC32_IN_GPIO_Port GPIOC
 #define OCTOSPI_R_DQS_Pin GPIO_PIN_3
 #define OCTOSPI_R_DQS_GPIO_Port GPIOE
+#define SOFT_SCL_Pin GPIO_PIN_0
+#define SOFT_SCL_GPIO_Port GPIOE
 #define T_SWO_Pin GPIO_PIN_3
 #define T_SWO_GPIO_Port GPIOB
 #define OCTOSPI_R_IO7_Pin GPIO_PIN_7

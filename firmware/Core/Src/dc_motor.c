@@ -68,11 +68,11 @@ void MotorSetPWM(int32_t left_counts, int32_t right_counts)
 }
 
 /**
- * @brief DC motor control thread that processes speed commands from CAN queue
- * 
- * @param initial_input 
- * @return VOID 
- */
+* @brief DC motor thread entry that consumes speed commands from CAN.
+*
+* @param initial_input ThreadX initial input (unused).
+* @return VOID
+*/
 VOID DcMotor(ULONG initial_input)
 {
 	t_can_message 	msg;
@@ -81,24 +81,45 @@ VOID DcMotor(ULONG initial_input)
 	while (1)
 	{
 		tx_event_flags_get(&g_eventFlags, FLAG_CAN_SPEED_CMD,
-		TX_OR_CLEAR, &actual_flags, TX_NO_WAIT);
+		TX_OR_CLEAR, &actual_flags, TX_WAIT_FOREVER);
 
 		while (tx_queue_receive(&g_queueSpeedCmd, &msg, TX_NO_WAIT) == TX_SUCCESS)
 		{
+			int32_t left_count = 0;
+			int32_t right_count = 0;
 
-			if (msg.len >= 8)
+			memcpy(&left_count, msg.data, sizeof(int32_t));
+
+			tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
+			if(g_emergencyBrake && left_count > 0 )
 			{
-				int32_t left_count = 0;
-				int32_t right_count = 0;
-				memcpy(&left_count, msg.data, sizeof(int32_t));
-				memcpy(&right_count, msg.data + sizeof(int32_t), sizeof(int32_t));
-				MotorSetPWM(left_count, right_count);
-			} 
-			else if (msg.len >= 4)
+				tx_mutex_put(&g_emergencyMutex);
+				tx_thread_sleep(5);
+				continue ;
+			}
+			else
 			{
-				int32_t counts = 0;
-				memcpy(&counts, msg.data, sizeof(int32_t));
-				MotorSetPWM(counts, counts);
+				tx_mutex_put(&g_emergencyMutex);
+
+				if (msg.len >= 8)
+				{
+					right_count = 0;
+					memcpy(&left_count, msg.data, sizeof(int32_t));
+					memcpy(&right_count, msg.data + sizeof(int32_t), sizeof(int32_t));
+
+					tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
+					MotorSetPWM(left_count, right_count);
+					tx_mutex_put(&g_motorMutex);
+				}
+				else if (msg.len >= 4)
+				{
+					int32_t counts = 0;
+					memcpy(&counts, msg.data, sizeof(int32_t));
+
+					tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
+					MotorSetPWM(counts, counts);
+					tx_mutex_put(&g_motorMutex);
+				}
 			}
 		}
 		tx_thread_sleep(10);

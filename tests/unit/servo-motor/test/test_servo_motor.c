@@ -16,6 +16,7 @@ TX_MUTEX g_speedDataMutex;
 TX_EVENT_FLAGS_GROUP g_eventFlags;
 TX_QUEUE g_queueSpeedCmd;
 TX_QUEUE g_queueSteerCmd;
+TX_MUTEX g_servoMutex;
 
 I2C_HandleTypeDef hi2c3;
 UART_HandleTypeDef huart1;
@@ -182,7 +183,11 @@ static UINT ServoTxEventFlagsGetCallback(TX_EVENT_FLAGS_GROUP *group_ptr,
     (void)group_ptr;
     (void)get_option;
     (void)wait_option;
-    (void)cmock_num_calls;
+
+    if (cmock_num_calls > 0) {
+        longjmp(s_servoMotorLoopExit, 1);
+    }
+
     if (actual_flags != NULL) {
         *actual_flags = requested_flags;
     }
@@ -237,7 +242,8 @@ void test_ServoMotor_ShouldProcessQueueMessageAndSetServoAngle(void)
 
     tx_event_flags_get_StubWithCallback(ServoTxEventFlagsGetCallback);
     tx_queue_receive_StubWithCallback(ServoTxQueueReceiveOnceCallback);
-    tx_thread_sleep_StubWithCallback(ServoTxThreadSleepBreakCallback);
+    tx_mutex_get_IgnoreAndReturn(TX_SUCCESS);
+    tx_mutex_put_IgnoreAndReturn(TX_SUCCESS);
 
     PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_SERVO, SERVO_CH, 0, expected_pulse, HAL_OK);
 
@@ -250,7 +256,6 @@ void test_ServoMotor_ShouldSleepWhenQueueIsEmpty(void)
 {
     tx_event_flags_get_StubWithCallback(ServoTxEventFlagsGetCallback);
     tx_queue_receive_StubWithCallback(ServoTxQueueReceiveEmptyCallback);
-    tx_thread_sleep_StubWithCallback(ServoTxThreadSleepBreakCallback);
 
     if (setjmp(s_servoMotorLoopExit) == 0) {
         ServoMotor(0);

@@ -7,6 +7,9 @@ TX_MUTEX g_speedDataMutex;
 TX_EVENT_FLAGS_GROUP g_eventFlags;
 TX_QUEUE g_queueSpeedCmd;
 TX_QUEUE g_queueSteerCmd;
+float g_current_speed;
+int16_t g_current_pwm;
+TX_MUTEX g_gearMutex;
 
 float g_vehicleSpeed = 0.0f;
 
@@ -17,6 +20,8 @@ TIM_TypeDef fake_tim1_registers;
 
 /* --- INCLUDE SOURCE FILE DIRECTLY --- */
 #include "../../../firmware/Core/Src/speed_sensor.c"
+
+RNDGear_t g_current_gear;
 
 /* --- TEST INFRASTRUCTURE --- */
 static jmp_buf test_break_jump;
@@ -422,18 +427,22 @@ void test_SpeedSensor_Thread_Should_LoopTwice(void)
     HAL_UART_Transmit_IgnoreAndReturn(HAL_OK);
 
     // --- PASS 1 ---
-    tx_thread_sleep_ExpectAndReturn(100, TX_SUCCESS);
+    tx_thread_sleep_ExpectAndReturn(50, TX_SUCCESS);
     tx_time_get_ExpectAndReturn(1000);
     tx_mutex_get_ExpectAndReturn(&g_speedDataMutex, TX_WAIT_FOREVER, TX_SUCCESS);
     tx_mutex_put_ExpectAndReturn(&g_speedDataMutex, TX_SUCCESS);
+    tx_mutex_get_ExpectAndReturn(&g_gearMutex, TX_WAIT_FOREVER, TX_SUCCESS);
+    tx_mutex_put_ExpectAndReturn(&g_gearMutex, TX_SUCCESS);
 
     // [CRITICAL] NO tx_event_flags_set_Expect HERE! Delete it if it exists.
 
     // --- PASS 2 ---
-    tx_thread_sleep_ExpectAndReturn(100, TX_SUCCESS);
+    tx_thread_sleep_ExpectAndReturn(50, TX_SUCCESS);
     tx_time_get_ExpectAndReturn(1100);
     tx_mutex_get_ExpectAndReturn(&g_speedDataMutex, TX_WAIT_FOREVER, TX_SUCCESS);
     tx_mutex_put_ExpectAndReturn(&g_speedDataMutex, TX_SUCCESS);
+    tx_mutex_get_ExpectAndReturn(&g_gearMutex, TX_WAIT_FOREVER, TX_SUCCESS);
+    tx_mutex_put_ExpectAndReturn(&g_gearMutex, TX_SUCCESS);
 
     // --- Stub Register ---
     // This handles ALL calls. It doesn't check arguments unless you code it to.
@@ -455,15 +464,19 @@ void test_SpeedSensor_ShouldSendCanGearMessage_WhenGearChanges(void)
     HAL_TIM_Base_Stop_ExpectAndReturn(&htim1, HAL_OK);
     HAL_TIM_Base_Start_ExpectAndReturn(&htim1, HAL_OK);
 
-    tx_thread_sleep_ExpectAndReturn(100, TX_SUCCESS);
+    tx_thread_sleep_ExpectAndReturn(50, TX_SUCCESS);
     tx_time_get_ExpectAndReturn(1000);
     tx_mutex_get_ExpectAndReturn(&g_speedDataMutex, TX_WAIT_FOREVER, TX_SUCCESS);
     tx_mutex_put_ExpectAndReturn(&g_speedDataMutex, TX_SUCCESS);
+    tx_mutex_get_ExpectAndReturn(&g_gearMutex, TX_WAIT_FOREVER, TX_SUCCESS);
+    tx_mutex_put_ExpectAndReturn(&g_gearMutex, TX_SUCCESS);
 
-    tx_thread_sleep_ExpectAndReturn(100, TX_SUCCESS);
+    tx_thread_sleep_ExpectAndReturn(50, TX_SUCCESS);
     tx_time_get_ExpectAndReturn(2000);
     tx_mutex_get_ExpectAndReturn(&g_speedDataMutex, TX_WAIT_FOREVER, TX_SUCCESS);
     tx_mutex_put_ExpectAndReturn(&g_speedDataMutex, TX_SUCCESS);
+    tx_mutex_get_ExpectAndReturn(&g_gearMutex, TX_WAIT_FOREVER, TX_SUCCESS);
+    tx_mutex_put_ExpectAndReturn(&g_gearMutex, TX_SUCCESS);
 
     tx_event_flags_set_Stub(Stub_BreakLoop_OnSecondCallAndMoveCounter);
 

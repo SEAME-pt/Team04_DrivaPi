@@ -34,6 +34,8 @@ extern "C" {
 #include <stdio.h>
 #include <stdint.h>
 #include <math.h>
+#include <stdbool.h>
+#include <stdlib.h>
 #include "main.h"
 #include "pca9685.h"
 #include "dc_motor.h"
@@ -41,8 +43,9 @@ extern "C" {
 #include "dc_motor_test.h"
 #include "motor_utils.h"
 #include "sensors.h"
-#include "speed_sensor.h"
 
+#include "soft_i2c.h"
+#include "init_devices.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -63,6 +66,7 @@ typedef enum threads_s
 	can_rx_e,
 	sensor_hts221_e,
 	sensor_battery_e,
+	ultrasonic_sensor_e,
 }	t_e_threads;
 
 typedef struct can_message_s
@@ -84,15 +88,27 @@ typedef struct can_message_s
 #define FLAG_CAN_SPEED_CMD	(1 << 0)
 #define FLAG_CAN_STEER_CMD	(1 << 1)
 #define FLAG_SENSOR_UPDATE	(1 << 2)
+#define FLAG_EMERGENCY_STOP (1 << 3)
 #define THREAD_STACK_SIZE	1024
 #define QUEUE_SIZE         	10
 #define CMD_SPEED           44u
 #define CMD_STEERING        45u
 
-/* CAN Message IDs */
 #define CAN_ID_BATTERY_DATA        0x200  /* Battery percentage + voltage (512) */
 #define CAN_ID_HTS221_DATA         0x400  /* HTS221 Temperature + Humidity (1024) */
 #define CAN_ID_RND_GEAR            0x300  /* RND gear state (768) */
+
+/* RND Gear States */
+typedef enum {
+    GEAR_NEUTRAL = 0,   /* 'N' - Neutral */
+    GEAR_REVERSE = 1,   /* 'R' - Reverse */
+    GEAR_DRIVE = 2      /* 'D' - Drive */
+} RNDGear_t;
+
+/* RND Detection Thresholds */
+#define RND_DEADZONE_POSITIVE  0.2f
+#define RND_DEADZONE_NEGATIVE  -0.2f
+/* USER CODE END PD */
 
 /* Main thread defines -------------------------------------------------------*/
 /* USER CODE BEGIN MTD */
@@ -118,16 +134,26 @@ VOID	SpeedSensor(ULONG initial_input);
 VOID	SensorHTS221Thread(ULONG initial_input);
 VOID	SensorBatteryThread(ULONG initial_input);
 void	ThreadInit(void);
+void	UltrasonicEntry(ULONG initial_input);
 int		CanSend(t_can_message* msg);
 /* USER CODE END EFP */
 
 /* USER CODE BEGIN 1 */
-extern thread_t				g_threads[8];
+extern bool					g_emergencyBrake;
+extern thread_t				g_threads[9];
 extern TX_QUEUE             g_queueSpeedCmd;
 extern TX_QUEUE             g_queueSteerCmd;
 extern TX_EVENT_FLAGS_GROUP	g_eventFlags;
 extern TX_MUTEX             g_speedDataMutex;
+extern TX_MUTEX             g_emergencyMutex;
+extern TX_MUTEX             g_canMutex;
+extern TX_MUTEX             g_motorMutex;
+extern TX_MUTEX             g_servoMutex;
+extern TX_MUTEX             g_gearMutex;
+extern RNDGear_t			g_current_gear;
 extern float				g_vehicleSpeed;
+extern float 				g_current_speed;
+extern int16_t 				g_current_pwm;
 /* USER CODE END 1 */
 
 #ifdef __cplusplus

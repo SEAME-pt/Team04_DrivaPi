@@ -5,13 +5,16 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../Core/Test/dc_motor_test.c 
+../Core/Test/dc_motor_test.c \
+../Core/Test/servo_motor_test.c 
 
 OBJS += \
-./Core/Test/dc_motor_test.o 
+./Core/Test/dc_motor_test.o \
+./Core/Test/servo_motor_test.o 
 
 C_DEPS += \
-./Core/Test/dc_motor_test.d 
+./Core/Test/dc_motor_test.d \
+./Core/Test/servo_motor_test.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
@@ -21,7 +24,7 @@ Core/Test/%.o Core/Test/%.su Core/Test/%.cyclo: ../Core/Test/%.c Core/Test/subdi
 clean: clean-Core-2f-Test
 
 clean-Core-2f-Test:
-	-$(RM) ./Core/Test/dc_motor_test.cyclo ./Core/Test/dc_motor_test.d ./Core/Test/dc_motor_test.o ./Core/Test/dc_motor_test.su
+	-$(RM) ./Core/Test/dc_motor_test.cyclo ./Core/Test/dc_motor_test.d ./Core/Test/dc_motor_test.o ./Core/Test/dc_motor_test.su ./Core/Test/servo_motor_test.cyclo ./Core/Test/servo_motor_test.d ./Core/Test/servo_motor_test.o ./Core/Test/servo_motor_test.su
 
 .PHONY: clean-Core-2f-Test
 

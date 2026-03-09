@@ -41,15 +41,24 @@ char **environ = __env;
 
 
 /* Functions */
+/**
+ * @brief Initialize semihosting monitor handles (stub).
+ */
 void initialise_monitor_handles()
 {
 }
 
+/**
+ * @brief Return a dummy process ID.
+ */
 int _getpid(void)
 {
   return 1;
 }
 
+/**
+ * @brief Stub kill implementation for bare metal.
+ */
 int _kill(int pid, int sig)
 {
   (void)pid;
@@ -58,12 +67,18 @@ int _kill(int pid, int sig)
   return -1;
 }
 
+/**
+ * @brief Terminate the program (hangs in bare metal).
+ */
 void _exit (int status)
 {
   _kill(status, -1);
   while (1) {}    /* Make sure we hang here */
 }
 
+/**
+ * @brief Read from stdin using the weak __io_getchar hook.
+ */
 __attribute__((weak)) int _read(int file, char *ptr, int len)
 {
   (void)file;
@@ -77,6 +92,9 @@ __attribute__((weak)) int _read(int file, char *ptr, int len)
   return len;
 }
 
+/**
+ * @brief Write to stdout using the weak __io_putchar hook.
+ */
 __attribute__((weak)) int _write(int file, char *ptr, int len)
 {
   (void)file;
@@ -89,6 +107,9 @@ __attribute__((weak)) int _write(int file, char *ptr, int len)
   return len;
 }
 
+/**
+ * @brief Close a file (unsupported).
+ */
 int _close(int file)
 {
   (void)file;
@@ -96,6 +117,9 @@ int _close(int file)
 }
 
 
+/**
+ * @brief Return dummy file status.
+ */
 int _fstat(int file, struct stat *st)
 {
   (void)file;
@@ -103,12 +127,18 @@ int _fstat(int file, struct stat *st)
   return 0;
 }
 
+/**
+ * @brief Indicate that a file is a TTY.
+ */
 int _isatty(int file)
 {
   (void)file;
   return 1;
 }
 
+/**
+ * @brief Seek in a file (unsupported).
+ */
 int _lseek(int file, int ptr, int dir)
 {
   (void)file;
@@ -117,6 +147,9 @@ int _lseek(int file, int ptr, int dir)
   return 0;
 }
 
+/**
+ * @brief Open a file (unsupported).
+ */
 int _open(char *path, int flags, ...)
 {
   (void)path;
@@ -125,6 +158,9 @@ int _open(char *path, int flags, ...)
   return -1;
 }
 
+/**
+ * @brief Wait for a child process (unsupported).
+ */
 int _wait(int *status)
 {
   (void)status;
@@ -132,6 +168,9 @@ int _wait(int *status)
   return -1;
 }
 
+/**
+ * @brief Remove a file (unsupported).
+ */
 int _unlink(char *name)
 {
   (void)name;
@@ -139,12 +178,18 @@ int _unlink(char *name)
   return -1;
 }
 
+/**
+ * @brief Return process times (unsupported).
+ */
 int _times(struct tms *buf)
 {
   (void)buf;
   return -1;
 }
 
+/**
+ * @brief Return dummy file status for a path.
+ */
 int _stat(char *file, struct stat *st)
 {
   (void)file;
@@ -152,6 +197,9 @@ int _stat(char *file, struct stat *st)
   return 0;
 }
 
+/**
+ * @brief Create a link (unsupported).
+ */
 int _link(char *old, char *new)
 {
   (void)old;
@@ -160,12 +208,18 @@ int _link(char *old, char *new)
   return -1;
 }
 
+/**
+ * @brief Fork a process (unsupported).
+ */
 int _fork(void)
 {
   errno = EAGAIN;
   return -1;
 }
 
+/**
+ * @brief Execute a program (unsupported).
+ */
 int _execve(char *name, char **argv, char **env)
 {
   (void)name;

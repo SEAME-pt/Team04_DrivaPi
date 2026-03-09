@@ -8,9 +8,10 @@
 #include "../Inc/motor_utils.h"
 
 /**
+ * @brief Send a formatted string over UART1.
  *
- * @param format
- * @param ...
+ * @param format printf-style format string.
+ * @param ... Format arguments.
  */
 void UartPrintf(const char* format, ...)
 {
@@ -23,8 +24,9 @@ void UartPrintf(const char* format, ...)
 }
 
 /**
+ * @brief Send a null-terminated string over UART1.
  *
- * @param msg
+ * @param msg Message to transmit.
  */
 void UartPrint(const char* msg)
 {
@@ -32,8 +34,9 @@ void UartPrint(const char* msg)
 }
 
 /**
+ * @brief Busy-wait delay using a simple loop.
  *
- * @param ms
+ * @param ms Approximate delay in milliseconds.
  */
 void SoftwareDelay(uint32_t ms)
 {
@@ -43,10 +46,10 @@ void SoftwareDelay(uint32_t ms)
 }
 
 /**
-* @brief
+* @brief Clamp a signed value into the PCA9685 PWM range.
 *
-* @param v
-* @return uint16_t
+* @param computed_value Signed PWM count value.
+* @return uint16_t Clamped PWM value.
 */
 inline uint16_t ClampU16(int32_t computed_value)
 {

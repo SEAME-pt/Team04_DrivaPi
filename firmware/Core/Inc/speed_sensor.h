@@ -1,11 +1,11 @@
 /**
-  ******************************************************************************
-  * @file    firmware/Core/Inc/speed_sensor.h
-  * @author  DrivaPi Team
-  * @brief   This file contains the speed sensor definitions.
-  ******************************************************************************
-  * @attention
-  *
+	******************************************************************************
+	* @file    firmware/Core/Inc/speed_sensor.h
+	* @author  DrivaPi Team
+	* @brief   This file contains the speed sensor definitions.
+	******************************************************************************
+	* @attention
+	*
 */
 
 #ifndef __SPEED_SENSOR_H
@@ -16,17 +16,6 @@ extern "C" {
 #endif
 
 #include "app_threadx.h"
-
-/* RND Gear States */
-typedef enum {
-  GEAR_NEUTRAL = 0,
-  GEAR_REVERSE = 1,
-  GEAR_DRIVE = 2
-} RNDGear_t;
-
-/* RND Detection Thresholds */
-#define RND_DEADZONE_POSITIVE  0.2f
-#define RND_DEADZONE_NEGATIVE  -0.2f
 
 #define WHEEL_PERIMETER_M   0.212f
 #define PULSES_PER_REV      30.0f
@@ -39,18 +28,12 @@ typedef enum {
 extern TIM_HandleTypeDef htim1;
 extern UART_HandleTypeDef huart1;
 
-/* Global variables */
-extern float g_current_speed;
-extern int16_t g_current_pwm;
-extern RNDGear_t g_current_gear;
-
 /* Function prototypes */
-float ReadSpeedSensor(void);
-RNDGear_t DetermineRNDGear(float speed, int16_t pwm_value);
-VOID SpeedSensor(ULONG initial_input);
+float			ReadSpeedSensor(void);
+RNDGear_t		DetermineRNDGear(float speed, int16_t pwm_value);
+VOID 			SpeedSensor(ULONG initial_input);
 
 #ifdef __cplusplus
 }
 #endif
-
 #endif

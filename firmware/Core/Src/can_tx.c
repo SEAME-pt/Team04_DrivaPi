@@ -11,11 +11,11 @@
 #include "app_threadx.h"
 
 /**
-* @brief
+* @brief Format a float into a fixed-precision ASCII buffer.
 *
-* @param buffer
-* @param number
-* @param precision
+* @param buffer Destination buffer for the formatted string.
+* @param number Value to convert.
+* @param precision Number of decimal places.
 */
 void FloatToUint8(uint8_t* buffer, float number, int precision)
 {
@@ -27,10 +27,10 @@ void FloatToUint8(uint8_t* buffer, float number, int precision)
 }
 
 /**
-* @brief
+* @brief Build and send a CAN message with the current speed.
 *
-* @param msg
-* @param speed
+* @param msg Message container to populate.
+* @param speed Vehicle speed value to transmit.
 */
 void CraftSpeedMessage(t_can_message *msg, float speed)
 {
@@ -41,10 +41,10 @@ void CraftSpeedMessage(t_can_message *msg, float speed)
 }
 
 /**
-* @brief
+* @brief Send a CAN message through FDCAN1 TX FIFO.
 *
-* @param msg
-* @return int
+* @param msg Message to send.
+* @return int 0 on success, 1 on failure.
 */
 int CanSend(t_can_message* msg)
 {
@@ -72,17 +72,14 @@ int CanSend(t_can_message* msg)
 	tx_header.MessageMarker = 0;
 
 	if (HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &tx_header, (uint8_t*)msg->data) != HAL_OK)
-	{
-		/* FIFO full or error - just skip this message */
 		return 1;
-	}
 	return 0;
 }
 
 /**
-* @brief 
+* @brief CAN TX thread entry that publishes periodic speed data.
 *
-* @param initial_input
+* @param initial_input ThreadX initial input (unused).
 * @return VOID
 */
 VOID CanTx(ULONG initial_input)
@@ -98,9 +95,10 @@ VOID CanTx(ULONG initial_input)
 		float speed = g_vehicleSpeed;
 		tx_mutex_put(&g_speedDataMutex);
 
+		tx_mutex_get(&g_canMutex, TX_WAIT_FOREVER);
 		CraftSpeedMessage(&msg, speed);
+		tx_mutex_put(&g_canMutex);
 
-		/* Sleep for 1 second to avoid CAN bus saturation */
-		tx_thread_sleep(10);
+		tx_thread_sleep(20);
 	}
 }

@@ -12,10 +12,10 @@
 #include "app_threadx.h"
 
 /**
-* @brief
+* @brief Try to fetch a CAN message from RX FIFO0.
 *
-* @param msg
-* @return uint8_t
+* @param msg Output message buffer to fill on success.
+* @return uint8_t 1 when a message is read, 0 otherwise.
 */
 uint8_t CanReceive(t_can_message *msg)
 {
@@ -27,7 +27,7 @@ uint8_t CanReceive(t_can_message *msg)
 		if (HAL_FDCAN_GetRxMessage(&hfdcan1, FDCAN_RX_FIFO0, &rx_header, rx_data) == HAL_OK)
 		{
 			msg->id = rx_header.Identifier;
-			msg->len = (rx_header.DataLength <= 8) ? rx_header.DataLength : 8;
+			msg->len = 8;
 			memcpy(msg->data, rx_data, msg->len);
 			return 1; // Message received
 		}
@@ -36,9 +36,9 @@ uint8_t CanReceive(t_can_message *msg)
 }
 
 /**
-* @brief
+* @brief CAN RX thread entry that dispatches messages to queues.
 *
-* @param initial_input
+* @param initial_input ThreadX initial input (unused).
 * @return void
 */
 void CanRx(ULONG initial_input)
@@ -47,7 +47,11 @@ void CanRx(ULONG initial_input)
 
 	while (1)
 	{
-		if (CanReceive(&msg))
+		tx_mutex_get(&g_canMutex, TX_WAIT_FOREVER);
+		uint8_t received = CanReceive(&msg);
+		tx_mutex_put(&g_canMutex);
+
+		if (received)
 		{
 			if (msg.id == CMD_SPEED){
 				tx_queue_send(&g_queueSpeedCmd, &msg, TX_NO_WAIT);
@@ -58,6 +62,9 @@ void CanRx(ULONG initial_input)
 				tx_event_flags_set(&g_eventFlags, FLAG_CAN_STEER_CMD, TX_OR);
 			}
 		}
-		tx_thread_sleep(5);
+		else
+		{
+			tx_thread_sleep(1);
+		}
 	}
 }
