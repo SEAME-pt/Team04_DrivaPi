@@ -22,11 +22,12 @@ references:
     path: "tests/system/steering/evidence/steering_precision_system_test.mp4"
     note: "Video evidence of physical steering angle validation across all commanded positions."
 
+score:
+  MelanieReis: 1.0
+
 active: true
 derived: false
 normative: true
 level: 2.0
 ---
 Commanded steering angles (Left/Right) shall correspond to physical wheel angles within defined tolerance (+/- 2 degrees).
-
-<!-- Score pending: add `score:\n  MelanieReis: 1.0` here once tests/system/steering/steering_precision_system_test.md is completed with actual measurements, then run `trudag manage set-item HLTC-STEERING-ACCURACY`. -->
