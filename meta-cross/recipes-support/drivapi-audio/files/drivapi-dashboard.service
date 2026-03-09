@@ -10,7 +10,7 @@ Environment=QT_QPA_PLATFORM=wayland-egl
 Environment=PULSE_SERVER=unix:/run/pipewire/pulse/native
 
 # Wayland compositor must be ready before Qt can open a surface
-ExecStartPre=/bin/sh -c 'test -S /run/wayland/wayland-0'
+ExecStartPre=/bin/sh -c 'test -S /run/wayland-0'
 # Retry loop: wait up to 5s for PipeWire pulse socket
 ExecStartPre=/bin/sh -c 'for i in $(seq 1 10); do [ -S /run/pipewire/pulse/native ] && exit 0; sleep 0.5; done; exit 1'
 
