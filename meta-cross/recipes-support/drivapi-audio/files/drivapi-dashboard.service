@@ -1,7 +1,7 @@
 [Unit]
 Description=DrivaPi Dashboard (Qt)
 After=weston.service pipewire-system.service pipewire-pulse-system.service
-Wants=weston.target pipewire-system.service pipewire-pulse-system.service wireplumber-system.service
+Wants=pipewire-system.service pipewire-pulse-system.service wireplumber-system.service
 
 [Service]
 Type=simple
@@ -19,4 +19,4 @@ Restart=on-failure
 RestartSec=2
 
 [Install]
-WantedBy=weston.target
+WantedBy=graphical.target
