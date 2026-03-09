@@ -44,7 +44,7 @@ uint8_t CanReceive(t_can_message *msg)
 void CanRx(ULONG initial_input)
 {
 	t_can_message msg;
-
+	tx_trace_user_event_insert(1, 0, 0, 0, 0);
 	while (1)
 	{
 		tx_mutex_get(&g_canMutex, TX_WAIT_FOREVER);
