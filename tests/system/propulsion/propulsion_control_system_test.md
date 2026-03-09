@@ -2,7 +2,7 @@
 title: "Propulsion Control System Test"
 hltc_id: HLTC-PROPULSION-NOMINAL
 date: 2025-02-03
-tester: "Melanie Reis"
+tester: "DrivaPi Team"
 hardware: "DrivaPi vehicle — STM32 + PCA9685 (0x60) + DC motors + encoder"
 firmware_version: "main (integration-tests branch, Feb 3)"
 verdict: PASS
