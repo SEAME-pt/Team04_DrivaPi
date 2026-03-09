@@ -58,6 +58,7 @@ RNDGear_t				g_current_gear;
 float                   g_vehicleSpeed;
 float 					g_current_speed;
 int16_t 				g_current_pwm;
+unsigned char			trace_buffer[TRACE_BUFFER_SIZE];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/

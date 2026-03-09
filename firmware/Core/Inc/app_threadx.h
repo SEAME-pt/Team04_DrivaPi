@@ -85,7 +85,7 @@ typedef struct can_message_s
 /* Private defines -----------------------------------------------------------*/
 
 /* USER CODE BEGIN PD */
-#define TRACE_BUFFER_SIZE 65536
+#define TRACE_BUFFER_SIZE	65536
 #define FLAG_CAN_SPEED_CMD	(1 << 0)
 #define FLAG_CAN_STEER_CMD	(1 << 1)
 #define FLAG_SENSOR_UPDATE	(1 << 2)
@@ -155,7 +155,7 @@ extern RNDGear_t			g_current_gear;
 extern float				g_vehicleSpeed;
 extern float 				g_current_speed;
 extern int16_t 				g_current_pwm;
-unsigned char				trace_buffer[TRACE_BUFFER_SIZE];
+extern unsigned char		trace_buffer[TRACE_BUFFER_SIZE];
 /* USER CODE END 1 */
 
 #ifdef __cplusplus
