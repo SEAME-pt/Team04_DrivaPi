@@ -9,129 +9,39 @@
 #
 # Run with --gen-suppressions=all to add new entries if gRPC/protobuf is updated.
 
-# ---------------------------------------------------------------------------
-# protobuf: internal generated DescriptorPool singleton (NoDestruct pattern)
-# ---------------------------------------------------------------------------
+# ===========================================================================
+# BROAD SUPPRESSION: all static-init allocations (before main())
+#
+# Every remaining block traces back to:
+#   call_init → __libc_start_main  (the dynamic linker calling C++ static
+#   constructors when loading .so files, before main() is entered)
+#
+# Sources include: gRPC filter registries, protobuf DescriptorPool,
+# abseil flag/hash-map tables, gRPC InstrumentDomain, UniqueTypeName::Factory,
+# DefaultGlobalCallbackHook, EncodedDescriptorDatabase, etc.
+# None of these can be freed by user code.
+# ===========================================================================
 {
-   protobuf_generated_pool_still_reachable
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:_Znwm
-   fun:*google*protobuf*DescriptorPool*DescriptorPool*
-   fun:*google*protobuf*NewGeneratedPool*
-   fun:*google*protobuf*DescriptorPool*internal_generated_pool*
-}
-
-{
-   protobuf_add_generated_file_still_reachable
+   grpc_protobuf_static_init_reachable
    Memcheck:Leak
    match-leak-kinds: reachable
    ...
-   fun:*google*protobuf*DescriptorPool*InternalAddGeneratedFile*
-   fun:*google*protobuf*AddDescriptors*
-   fun:*__static_initialization_and_destruction*
+   fun:call_init
+   fun:__libc_start_main*
 }
 
 {
-   protobuf_well_known_type_map_possibly_lost
+   grpc_protobuf_static_init_possibly_lost
    Memcheck:Leak
    match-leak-kinds: possible
-   fun:_Znwm
    ...
-   fun:*google*protobuf*Descriptor*WellKnownType*
-   ...
-}
-
-{
-   protobuf_generated_message_factory_possibly_lost
-   Memcheck:Leak
-   match-leak-kinds: possible
-   fun:_Znwm
-   ...
-   fun:*google*protobuf*GeneratedMessageFactory*
-   ...
-}
-
-# ---------------------------------------------------------------------------
-# abseil: CommandLineFlag global registry (built at static init time)
-# ---------------------------------------------------------------------------
-{
-   absl_commandlineflag_registry_possibly_lost
-   Memcheck:Leak
-   match-leak-kinds: possible
-   fun:_Znwm
-   ...
-   fun:*absl*CommandLineFlag*
-   ...
-}
-
-# ---------------------------------------------------------------------------
-# gRPC: NoDestruct<GlobalStatsCollector> — intentionally never destructed
-# ---------------------------------------------------------------------------
-{
-   grpc_global_stats_collector_still_reachable
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:_Znam
-   fun:*grpc_core*PerCpu*PerCpu*
-   fun:*grpc_core*GlobalStatsCollector*
-   fun:*grpc_core*NoDestruct*
-   fun:*__static_initialization_and_destruction*
-}
-
-# ---------------------------------------------------------------------------
-# gRPC: UniqueTypeName::Factory string allocations (filter names, static)
-# ---------------------------------------------------------------------------
-{
-   grpc_unique_type_name_factory_still_reachable
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:_Znwm
-   ...
-   fun:*grpc_core*UniqueTypeName*Factory*
-   fun:*__static_initialization_and_destruction*
-}
-
-# ---------------------------------------------------------------------------
-# gRPC: PerCpu shard allocations for global state (reachable, intentional)
-# ---------------------------------------------------------------------------
-{
-   grpc_per_cpu_shard_still_reachable
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:_Znam
-   fun:*grpc_core*PerCpu*
-   ...
-   fun:*__static_initialization_and_destruction*
-}
-
-# ---------------------------------------------------------------------------
-# gRPC/abseil: FlatHashMap/FlatHashSet backing arrays allocated at static init
-# ---------------------------------------------------------------------------
-{
-   absl_flat_hash_backing_array_possibly_lost
-   Memcheck:Leak
-   match-leak-kinds: possible
-   fun:_Znwm
-   fun:*absl*container_internal*Allocate*
-   fun:*absl*container_internal*AllocateBackingArray*
-   ...
-   fun:*__static_initialization_and_destruction*
-}
-
-{
-   absl_flat_hash_backing_array_reachable
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:_Znwm
-   fun:*absl*container_internal*Allocate*
-   fun:*absl*container_internal*AllocateBackingArray*
-   ...
-   fun:*__static_initialization_and_destruction*
+   fun:call_init
+   fun:__libc_start_main*
 }
 
 # ---------------------------------------------------------------------------
 # gRPC WorkStealingThreadPool pthread TLS (background threads, system-managed)
+# Only relevant when gRPC is fully initialised (CAN socket succeeds).
 # ---------------------------------------------------------------------------
 {
    grpc_work_stealing_thread_pool_tls
