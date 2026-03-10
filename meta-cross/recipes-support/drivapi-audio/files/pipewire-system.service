@@ -8,7 +8,7 @@ RuntimeDirectory=pipewire
 RuntimeDirectoryMode=0755
 Environment=XDG_RUNTIME_DIR=/run/pipewire
 Environment=PIPEWIRE_RUNTIME_DIR=/run/pipewire
-ExecStart=/usr/bin/pipewire -c /etc/pipewire/pipewire.conf
+ExecStart=/usr/bin/pipewire
 Restart=on-failure
 RestartSec=2
 
