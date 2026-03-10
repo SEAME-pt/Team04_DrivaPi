@@ -23,19 +23,21 @@ int main(int argc, char** argv)
     feeder::FeederConfig config = feeder::ParseArgs(argc, argv);
     feeder::PrintConfig(config);
 
+    // --- 2. Open CAN socket before initialising gRPC ---
+    // Must fail-fast here: a return at this point skips gRPC entirely so no
+    // shutdown bookkeeping is needed.
+    int can_sock = feeder::OpenCanSocket(config.can_interface);
+    if (can_sock < 0) {
+        std::cerr << "[Error] Failed to open CAN interface. Is it up? Try:" << std::endl;
+        std::cerr << "        sudo ip link set " << config.can_interface << " up" << std::endl;
+        return 1;
+    }
+
     // Scope ensures publisher (and all gRPC objects) are destroyed before grpc_shutdown()
     {
-        // --- 2. Connect to KUKSA databroker ---
+        // --- 3. Connect to KUKSA databroker ---
         kuksa::Publisher publisher(config.publisher_options);
         std::cout << "[Feeder] Connected to KUKSA databroker." << std::endl;
-
-        // --- 3. Open CAN socket ---
-        int can_sock = feeder::OpenCanSocket(config.can_interface);
-        if (can_sock < 0) {
-            std::cerr << "[Error] Failed to open CAN interface. Is it up? Try:" << std::endl;
-            std::cerr << "        sudo ip link set " << config.can_interface << " up" << std::endl;
-            return 1;
-        }
 
         // --- 4. Install signal handlers for graceful shutdown ---
         feeder::InstallSignalHandlers();
