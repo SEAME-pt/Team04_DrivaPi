@@ -1,3 +1,4 @@
+PN = "qt_app"
 SUMMARY = "DrivaPi Qt Dashboard"
 DESCRIPTION = "Application Qt6/QML (CMake) for DrivaPi"
 LICENSE = "MIT"

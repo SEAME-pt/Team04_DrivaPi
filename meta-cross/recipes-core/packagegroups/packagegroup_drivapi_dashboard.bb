@@ -1,11 +1,12 @@
+PN = "packagegroup_drivapi_dashboard"
 SUMMARY = "Packagegroup DrivaPi Dashboard (Qt6+ multimedia + maps)"
 LICENSE = "MIT"
 
 ALLOW_EMPTY:${PN} = "1"
 
 RDEPENDS:${PN} = "\
-    drivapi-audio \
-    qt-app \
+    drivapi_audio \
+    qt_app \
     qtmultimedia \
     qtmultimedia-plugins \
     qtmultimedia-qmlplugins \
