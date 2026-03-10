@@ -367,3 +367,43 @@
    ...
    fun:*QLinkedStringHash*linkAndReserve*
 }
+
+# ===========================================================================
+# Qt Network / TLS stack (myqtapp QML XHR calls)
+#
+# QML makes XMLHttpRequest (XHR) calls which go through QNetworkAccessManager.
+# On the first HTTPS request Qt loads the system certificate store via
+# QTlsBackendOpenSSL::ensureCiphersAndCertsLoaded (QDirIterator over /etc/ssl).
+# These are Qt-managed objects outside application code.
+# ===========================================================================
+{
+   qt_network_reply_http
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QNetworkReplyHttpImpl*
+}
+
+{
+   qt_network_access_manager
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QNetworkAccessManager*createRequest*
+}
+
+{
+   qt_tls_backend_openssl
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QTlsBackendOpenSSL*ensureCiphersAndCertsLoaded*
+}
+
+{
+   qt_ssl_configuration
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QSslConfiguration*defaultConfiguration*
+}
