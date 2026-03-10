@@ -181,19 +181,73 @@
 
 # ---------------------------------------------------------------------------
 # gRPC WorkStealingThreadPool pthread TLS (background threads, system-managed)
-# Only relevant when gRPC is fully initialised (CAN socket succeeds).
+# Stack has two calloc frames (vgpreload + rtld-malloc), so start with ...
 # ---------------------------------------------------------------------------
 {
    grpc_work_stealing_thread_pool_tls
    Memcheck:Leak
    match-leak-kinds: reachable,possible
-   fun:calloc
+   ...
    fun:allocate_dtv
    fun:_dl_allocate_tls
    fun:allocate_stack
    fun:pthread_create*
    fun:*grpc_core*Thread*
    fun:*WorkStealingThreadPool*
+}
+
+# ---------------------------------------------------------------------------
+# gRPC call infrastructure leaked on forced shutdown (Ctrl+C / SIGTERM).
+# When myqtapp is interrupted while a KUKSA gRPC call is in flight the Arena,
+# FilterStackCall, and RetryFilter objects are never freed.  These are gRPC
+# internal objects — not in application code — and the OS reclaims them.
+# ---------------------------------------------------------------------------
+{
+   grpc_arena_create
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*grpc_core*Arena*Create*
+}
+
+{
+   grpc_filter_stack_call
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*grpc_core*FilterStackCall*Create*
+}
+
+{
+   grpc_retry_filter
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*grpc_core*RetryFilter*
+}
+
+{
+   grpc_status_alloc_heap
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*grpc_core*internal*StatusAllocHeapPtr*
+}
+
+{
+   absl_status_rep_clone
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*absl*status_internal*StatusRep*
+}
+
+{
+   grpc_cord_flat
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*absl*cord_internal*CordRepFlat*NewImpl*
 }
 
 # ===========================================================================
@@ -283,4 +337,33 @@
    ...
    fun:FcFontRenderPrepare
    ...
+}
+
+# ---------------------------------------------------------------------------
+# Qt: remaining internal allocations not covered by QQmlPropertyCacheCreator
+# ---------------------------------------------------------------------------
+{
+   qml_property_cache_shared_once
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:setSharedOnce*
+   ...
+   fun:*QQmlPropertyCache*
+}
+
+{
+   qt_binding_status_list
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:*QtPrivate*BindingStatusOrList*
+}
+
+{
+   qt_linked_string_hash
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QLinkedStringHash*linkAndReserve*
 }
