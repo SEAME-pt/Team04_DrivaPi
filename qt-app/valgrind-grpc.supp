@@ -1,4 +1,4 @@
-# Valgrind suppression file for kuksa_feeder
+# Valgrind suppression file for kuksa_feeder and myqtapp
 #
 # Suppresses known false-positives from gRPC, protobuf, and abseil that are
 # triggered at static-initialization time (before main()) or via intentional
@@ -6,6 +6,7 @@
 #
 # Usage:
 #   valgrind --leak-check=full --suppressions=valgrind-grpc.supp ./kuksa_feeder
+#   valgrind --leak-check=full --suppressions=valgrind-grpc.supp ./myqtapp
 #
 # Run with --gen-suppressions=all to add new entries if gRPC/protobuf is updated.
 
@@ -37,6 +38,26 @@
    ...
    fun:call_init
    fun:__libc_start_main*
+}
+
+# GCC splits call_init into call_init.part.0 in some builds (e.g. libGL,
+# libEGL, libGLdispatch on Ubuntu 22.04+).  Add matching rules for that form.
+{
+   static_init_part0_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:call_init.part.0
+   fun:_dl_init
+}
+
+{
+   static_init_part0_possibly_lost
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:call_init.part.0
+   fun:_dl_init
 }
 
 # ---------------------------------------------------------------------------
@@ -110,6 +131,50 @@
    match-leak-kinds: reachable
    ...
    fun:*grpc_core*InstrumentDomain*
+}
+
+# ---------------------------------------------------------------------------
+# Qt: D-Bus internal allocations (QDBusConnectionManager thread + signals)
+# Qt spins up a background thread and wires internal signals when initialising
+# the D-Bus session bus for the xcb platform plugin. These are Qt-managed
+# singletons that outlive main() intentionally.
+# ---------------------------------------------------------------------------
+{
+   qt_dbus_connection_manager_tls
+   Memcheck:Leak
+   match-leak-kinds: reachable,possible
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create*
+   fun:*QThread*start*
+   fun:*QDBusConnectionManager*
+}
+
+{
+   qt_dbus_signal_vector
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:*resizeSignalVector*
+   fun:*QObjectPrivate*connectImpl*
+   ...
+   fun:*QDBus*
+}
+
+# ---------------------------------------------------------------------------
+# Dynamic linker: _dl_find_object mapping table grown when dlopen() loads
+# a Qt platform plugin (.so). The linker owns this memory for the process
+# lifetime and frees it on exit — not a real leak.
+# ---------------------------------------------------------------------------
+{
+   dl_find_object_update_possible
+   Memcheck:Leak
+   match-leak-kinds: reachable,possible
+   ...
+   fun:_dl_find_object_update*
+   fun:dl_open_worker*
 }
 
 # ---------------------------------------------------------------------------
