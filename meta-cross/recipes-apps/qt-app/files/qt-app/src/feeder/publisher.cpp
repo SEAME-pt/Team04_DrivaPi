@@ -66,33 +66,33 @@ Publisher::~Publisher() {
     if (stream_reader_thread_.joinable()) {
         stream_reader_thread_.join();
     }
+
+    // Explicitly release gRPC objects so their memory is freed before grpc_shutdown()
+    stream_.reset();
+    stream_ctx_.reset();
+    stub_.reset();
+    channel_.reset();
 }
 
-bool Publisher::publishUnary(const std::string& path,
-                              const std::function<void(val::v2::PublishValueRequest&)>& fill)
-{
+bool Publisher::PublishDouble(const std::string& path, double value) {
     grpc::ClientContext context;
     AttachAuth(context);
     val::v2::PublishValueRequest request;
     val::v2::PublishValueResponse response;
 
     request.mutable_signal_id()->set_path(path);
-    fill(request);
+    request.mutable_data_point()->mutable_value()->set_double_(value);
 
     grpc::Status status = stub_->PublishValue(&context, request, &response);
+    
     if (!status.ok()) {
-        std::cerr << "[Publisher] PublishValue(" << path
+        std::cerr << "[Publisher] PublishValue(" << path << ", " << value
                   << ") failed: code=" << status.error_code()
                   << " msg='" << status.error_message() << "'" << std::endl;
         return false;
     }
+    
     return true;
-}
-
-bool Publisher::PublishDouble(const std::string& path, double value) {
-    return publishUnary(path, [value](auto& req) {
-        req.mutable_data_point()->mutable_value()->set_double_(value);
-    });
 }
 
 bool Publisher::PublishFloat(const std::string& path, float value) {
@@ -175,33 +175,107 @@ bool Publisher::PublishFloat(const std::string& path, float value) {
     }
 
     // Fallback: unary PublishValue
-    return publishUnary(path, [value](auto& req) {
-        req.mutable_data_point()->mutable_value()->set_float_(value);
-    });
+    grpc::ClientContext context;
+    AttachAuth(context);
+    val::v2::PublishValueRequest request;
+    val::v2::PublishValueResponse response;
+
+    request.mutable_signal_id()->set_path(path);
+    request.mutable_data_point()->mutable_value()->set_float_(value);
+
+    grpc::Status status = stub_->PublishValue(&context, request, &response);
+    
+    if (!status.ok()) {
+        std::cerr << "[Publisher] PublishValue(" << path << ", " << value
+                  << ") failed: code=" << status.error_code()
+                  << " msg='" << status.error_message() << "'" << std::endl;
+        return false;
+    }
+    
+    return true;
 }
 
 bool Publisher::PublishInt32(const std::string& path, int32_t value) {
-    return publishUnary(path, [value](auto& req) {
-        req.mutable_data_point()->mutable_value()->set_int32(value);
-    });
+    grpc::ClientContext context;
+    AttachAuth(context);
+    val::v2::PublishValueRequest request;
+    val::v2::PublishValueResponse response;
+
+    request.mutable_signal_id()->set_path(path);
+    request.mutable_data_point()->mutable_value()->set_int32(value);
+
+    grpc::Status status = stub_->PublishValue(&context, request, &response);
+    
+    if (!status.ok()) {
+        std::cerr << "[Publisher] PublishValue(" << path << ", " << value
+                  << ") failed: code=" << status.error_code()
+                  << " msg='" << status.error_message() << "'" << std::endl;
+        return false;
+    }
+    
+    return true;
 }
 
 bool Publisher::PublishUint32(const std::string& path, uint32_t value) {
-    return publishUnary(path, [value](auto& req) {
-        req.mutable_data_point()->mutable_value()->set_uint32(value);
-    });
+    grpc::ClientContext context;
+    AttachAuth(context);
+    val::v2::PublishValueRequest request;
+    val::v2::PublishValueResponse response;
+
+    request.mutable_signal_id()->set_path(path);
+    request.mutable_data_point()->mutable_value()->set_uint32(value);
+
+    grpc::Status status = stub_->PublishValue(&context, request, &response);
+    
+    if (!status.ok()) {
+        std::cerr << "[Publisher] PublishValue(" << path << ", " << value 
+                  << ") failed: " << status.error_message() << std::endl;
+        return false;
+    }
+    
+    return true;
 }
 
 bool Publisher::PublishBool(const std::string& path, bool value) {
-    return publishUnary(path, [value](auto& req) {
-        req.mutable_data_point()->mutable_value()->set_bool_(value);
-    });
+    grpc::ClientContext context;
+    AttachAuth(context);
+    val::v2::PublishValueRequest request;
+    val::v2::PublishValueResponse response;
+
+    request.mutable_signal_id()->set_path(path);
+    request.mutable_data_point()->mutable_value()->set_bool_(value);
+
+    grpc::Status status = stub_->PublishValue(&context, request, &response);
+    
+    if (!status.ok()) {
+        std::cerr << "[Publisher] PublishValue(" << path << ", " << (value ? "true" : "false")
+                  << ") failed: code=" << status.error_code()
+                  << " msg='" << status.error_message() << "'" << std::endl;
+        return false;
+    }
+    
+    return true;
 }
 
 bool Publisher::PublishString(const std::string& path, const std::string& value) {
-    return publishUnary(path, [&value](auto& req) {
-        req.mutable_data_point()->mutable_value()->set_string(value);
-    });
+    grpc::ClientContext context;
+    AttachAuth(context);
+    val::v2::PublishValueRequest request;
+    val::v2::PublishValueResponse response;
+
+    request.mutable_signal_id()->set_path(path);
+    request.mutable_data_point()->mutable_value()->set_string(value);
+
+    grpc::Status status = stub_->PublishValue(&context, request, &response);
+    
+    if (!status.ok()) {
+        std::cerr << "[Publisher] PublishValue(" << path << ", \"" << value
+                  << "\") failed: code=" << status.error_code()
+                  << " msg='" << status.error_message() << "'" << std::endl;
+        return false;
+    }
+    
+    return true;
 }
 
 // Ensure a provider stream is open and start a reader thread to consume responses
