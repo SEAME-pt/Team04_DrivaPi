@@ -14,7 +14,7 @@
 #include "feeder_can.hpp"
 #include <iostream>
 #include <linux/can.h>
-#include <grpcpp/grpcpp.h>
+#include <grpc/grpc.h>
 #include <google/protobuf/stubs/common.h>
 
 int main(int argc, char** argv)
@@ -42,10 +42,10 @@ int main(int argc, char** argv)
         std::cout << "[Feeder] Running. Press Ctrl+C to stop." << std::endl;
 
         // --- 5. Main read-dispatch loop ---
-        while (!feeder::g_stop_requested.load()) {
+        while (!feeder::g_stopRequested.load()) {
             can_frame frame;
             if (!feeder::ReadCanFrame(can_sock, frame)) {
-                if (feeder::g_stop_requested.load()) break;
+                if (feeder::g_stopRequested.load()) break;
                 continue;  // Retry on error (unless stop requested)
             }
 
@@ -65,10 +65,10 @@ int main(int argc, char** argv)
         // --- 6. Cleanup ---
         feeder::KillRegisteredChildren();
         feeder::CloseCanSocket(can_sock);
-    } // publisher destroyed here — all gRPC objects released before shutdown
+    } // publisher destroyed here — all gRPC objects released before grpc_shutdown()
 
     // --- 7. Shut down gRPC and Protobuf global state ---
-    grpc::Shutdown();
+    grpc_shutdown();
     google::protobuf::ShutdownProtobufLibrary();
 
     std::cout << "[Feeder] Stopped." << std::endl;
