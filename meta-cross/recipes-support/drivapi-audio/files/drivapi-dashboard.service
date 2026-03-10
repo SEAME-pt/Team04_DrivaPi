@@ -5,6 +5,7 @@ Wants=weston.service pipewire-system.service pipewire-pulse-system.service wirep
 
 [Service]
 Type=simple
+Environment=XDG_RUNTIME_DIR=/run
 Environment=WAYLAND_DISPLAY=wayland-0
 Environment=QT_QPA_PLATFORM=wayland-egl
 Environment=PULSE_SERVER=unix:/run/pipewire/pulse/native
