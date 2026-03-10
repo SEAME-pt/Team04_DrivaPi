@@ -41,13 +41,15 @@
 }
 
 # GCC splits call_init into call_init.part.0 in some builds (e.g. libGL,
-# libEGL, libGLdispatch on Ubuntu 22.04+).  Add matching rules for that form.
+# libEGL, libGLdispatch on Ubuntu 22.04+). The actual stack is:
+#   call_init.part.0 → call_init → _dl_init
 {
    static_init_part0_reachable
    Memcheck:Leak
    match-leak-kinds: reachable
    ...
    fun:call_init.part.0
+   fun:call_init
    fun:_dl_init
 }
 
@@ -57,6 +59,7 @@
    match-leak-kinds: possible
    ...
    fun:call_init.part.0
+   fun:call_init
    fun:_dl_init
 }
 
@@ -143,7 +146,7 @@
    qt_dbus_connection_manager_tls
    Memcheck:Leak
    match-leak-kinds: reachable,possible
-   fun:calloc
+   ...
    fun:allocate_dtv
    fun:_dl_allocate_tls
    fun:allocate_stack
@@ -158,9 +161,8 @@
    match-leak-kinds: possible
    ...
    fun:*resizeSignalVector*
-   fun:*QObjectPrivate*connectImpl*
    ...
-   fun:*QDBus*
+   fun:*QDBusConnectionInterface*
 }
 
 # ---------------------------------------------------------------------------
