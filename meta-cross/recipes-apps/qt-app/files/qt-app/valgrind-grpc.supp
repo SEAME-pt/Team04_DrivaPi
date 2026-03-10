@@ -40,6 +40,79 @@
 }
 
 # ---------------------------------------------------------------------------
+# Deep stacks: call_init is beyond Valgrind's default 12-frame capture limit.
+# Match on distinctive mid-stack functions instead.
+# ---------------------------------------------------------------------------
+
+# protobuf: all descriptor/pool allocations at binary load time
+{
+   protobuf_add_descriptors_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*google*protobuf*internal*AddDescriptors*
+}
+
+{
+   protobuf_internal_add_generated_file_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*google*protobuf*DescriptorPool*InternalAddGeneratedFile*
+}
+
+{
+   protobuf_encoded_descriptor_database_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*google*protobuf*EncodedDescriptorDatabase*
+}
+
+# protobuf: GeneratedMessageFactory and WellKnownType hash tables
+{
+   protobuf_generated_message_factory_possible
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:*google*protobuf*GeneratedMessageFactory*
+}
+
+{
+   protobuf_well_known_type_possible
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:*google*protobuf*Descriptor*WellKnownType*
+}
+
+# abseil: CommandLineFlag global registry
+{
+   absl_commandlineflag_possible
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:*absl*CommandLineFlag*
+}
+
+# gRPC: InstrumentMetadata / InstrumentDomain descriptor registries
+{
+   grpc_instrument_metadata_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*grpc_core*InstrumentMetadata*
+}
+
+{
+   grpc_instrument_domain_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*grpc_core*InstrumentDomain*
+}
+
+# ---------------------------------------------------------------------------
 # gRPC WorkStealingThreadPool pthread TLS (background threads, system-managed)
 # Only relevant when gRPC is fully initialised (CAN socket succeeds).
 # ---------------------------------------------------------------------------
