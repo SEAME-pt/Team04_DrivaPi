@@ -195,3 +195,92 @@
    fun:*grpc_core*Thread*
    fun:*WorkStealingThreadPool*
 }
+
+# ===========================================================================
+# Qt QML engine internals (myqtapp)
+#
+# When the QML engine compiles and instantiates .qml files it builds internal
+# property caches, meta-objects and type data structures.  Qt does not fully
+# release these on application exit — they are intentional caches held by the
+# QQmlEngine singleton.  None of these originate in application code.
+# ===========================================================================
+
+{
+   qml_property_cache_creator
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QQmlPropertyCacheCreator*
+}
+
+{
+   qml_type_data
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QQmlTypeData*
+}
+
+{
+   qml_type_compiler
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QQmlTypeCompiler*compile*
+}
+
+{
+   qml_object_creator
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QQmlObjectCreator*
+}
+
+{
+   qml_component_complete
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QQmlComponentPrivate*complete*
+}
+
+{
+   qtquick_animation
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QQuickAbstractAnimation*
+}
+
+{
+   qt_signal_vector_generic
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:*resizeSignalVector*
+   fun:addConnection*
+   fun:*QObjectPrivate*connectImpl*
+}
+
+# ===========================================================================
+# libfontconfig: FcFontMatch leaks a pattern on every fallback font query.
+# Known upstream bug — the FcPattern* is returned but never destroyed.
+# ===========================================================================
+{
+   fontconfig_fcfontmatch
+   Memcheck:Leak
+   match-leak-kinds: definite,indirect,possible,reachable
+   ...
+   fun:FcFontMatch
+   ...
+}
+
+{
+   fontconfig_fcfontrenderprep
+   Memcheck:Leak
+   match-leak-kinds: definite,indirect,possible,reachable
+   ...
+   fun:FcFontRenderPrepare
+   ...
+}
