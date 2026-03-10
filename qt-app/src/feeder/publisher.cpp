@@ -66,6 +66,12 @@ Publisher::~Publisher() {
     if (stream_reader_thread_.joinable()) {
         stream_reader_thread_.join();
     }
+
+    // Explicitly release gRPC objects so their memory is freed before grpc_shutdown()
+    stream_.reset();
+    stream_ctx_.reset();
+    stub_.reset();
+    channel_.reset();
 }
 
 bool Publisher::PublishDouble(const std::string& path, double value) {
