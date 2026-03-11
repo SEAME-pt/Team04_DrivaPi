@@ -770,27 +770,27 @@
 # shared_ptr-wrapped objects (StatsPluginGroup, EventEngine, channelz::BaseNode)
 # via the VTable copy lambda. The ChannelArgs AVL tree is ref-counted; copies
 # made during ExecCtx flush on exit may not be destroyed before heap sampling.
-# Stack (12 frames): vgpreload/operator new → VTable lambda::operator() →
-# VTable lambda::_FUN → ChannelArgs::Pointer::Pointer → ...
-# The VTable lambda frames have very long demangled names (~200 chars) with
-# {lambda(void*)#1} syntax; matching on those is unreliable in Valgrind 3.22.
-# Anchor on ChannelArgs::Pointer::Pointer (frame 4) — guaranteed unique in
-# codebase (confirmed: no source file uses ChannelArgs or ChannelArgTypeTraits).
-# Trailing ... is required to match remaining AVL / Set caller frames.
+# Both error contexts (StatsPluginGroup and EventEngine) share the same
+# ChannelArgs::Set(string_view, Pointer) outermost visible frame.
+# Note: fun:*ChannelArgs*Pointer*Pointer* failed in Valgrind 3.22 (repeated
+# word "Pointer" in both pattern and string causes VG_string_match issues).
+# Anchor on ChannelArgs::Set(string_view, Pointer) instead — unique name,
+# no repeated keywords, always present at the top of the 12-frame window.
+# Confirmed: no source file calls ChannelArgs::Set(string_view, Pointer).
 # ===========================================================================
 {
    grpc_channel_args_pointer_copy
    Memcheck:Leak
    match-leak-kinds: possible,reachable
-   obj:*vgpreload_memcheck*
    ...
-   fun:*ChannelArgs*Pointer*Pointer*
-   fun:*ChannelArgs*Value*Value*
-   ...
+   fun:*ChannelArgs*Set*ChannelArgs*Pointer*
 }
 
 # ===========================================================================
-# gRPC ChannelArgs AVL tree node — MakeRefCounted on subchannel creation
+# gRPC ChannelArgs AVL tree — AddKey path during subchannel ChannelArgs copy
+# AVL::MakeNode is inlined by the compiler so it never appears as a named
+# frame; this suppression uses AVL::Add which IS a visible non-inlined frame
+# in both ChannelArgs::Pointer copy error contexts.
 # Confirmed: no source file uses grpc_core::AVL or ChannelArgs::Set.
 # ===========================================================================
 {
@@ -798,7 +798,7 @@
    Memcheck:Leak
    match-leak-kinds: possible,reachable
    ...
-   fun:*grpc_core*AVL*MakeNode*
+   fun:*grpc_core*AVL*Add*
    ...
    fun:*grpc_core*ChannelArgs*Set*
 }
