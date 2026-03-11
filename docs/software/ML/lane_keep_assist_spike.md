@@ -145,10 +145,23 @@ flowchart LR
 ## 7. Performance Targets (MVP)
 - End-to-end perception-to-command latency: **<= 60 ms**
 - Controller update rate: **>= 20 Hz**
-- Mean lateral error on test track: **<= 0.20 m**
 - No unsafe oscillation under nominal lighting and marked-lane conditions
 
-These are engineering targets for validation and can be adjusted after first hardware runs.
+### 7.1 Lateral Error Targets by Development Phase
+Given the measured geometry (vehicle width: ~0.21 m, lane width: ~0.325 m), lateral targets are defined in phases:
+
+- **Phase 1 (initial bring-up):**
+	- Mean lateral error: **<= 0.04 m**
+	- P95 lateral error: **<= 0.06 m**
+- **Phase 2 (stabilized tuning):**
+	- Mean lateral error: **<= 0.03 m**
+	- P95 lateral error: **<= 0.05 m**
+- **Phase 3 (mature closed-loop behavior):**
+	- Mean lateral error: **<= 0.02 m**
+	- P95 lateral error: **<= 0.04 m**
+	- Hard bound (max lateral error): **<= 0.055 m**
+
+These are engineering targets for validation and can be tightened after repeated hardware runs.
 
 ---
 
