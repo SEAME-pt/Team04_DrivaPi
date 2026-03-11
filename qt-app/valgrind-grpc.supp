@@ -747,19 +747,21 @@
 
 # ===========================================================================
 # gRPC channelz / metadata std::variant<string_view, string> copy
-# The allocation chain is: operator new → basic_string::_M_construct →
-# std::__detail::__variant::_Uninitialized (frame 3, well within Valgrind's
-# 12-frame window). The original suppression matched on _Copy_ctor_base
-# (frame 7+) which could be missed when template frames pile up.
+# Allocation chain: operator new → basic_string::_M_construct (IN libstdc++)
+# → std::__detail::__variant::_Uninitialized (frame 3, compiled into myqtapp).
+# Using obj:*libstdc++* for frame 2 avoids cross-library fun: matching issues;
+# _M_construct in libstdc++ 3.22 does not reliably match via fun: wildcard when
+# reached through ... at the suppression start.
 # Confirmed: no source file in src/ uses std::variant with grpc_core types.
 # ===========================================================================
 {
    grpc_metadata_variant_string
    Memcheck:Leak
    match-leak-kinds: possible,reachable
+   obj:*vgpreload_memcheck*
+   obj:*libstdc++*
+   fun:*__variant*_Uninitialized*
    ...
-   fun:*std*__cxx11*basic_string*_M_construct*
-   fun:*std*__detail*__variant*_Uninitialized*
 }
 
 # ===========================================================================
@@ -769,23 +771,19 @@
 # via the VTable copy lambda. The ChannelArgs AVL tree is ref-counted; copies
 # made during ExecCtx flush on exit may not be destroyed before heap sampling.
 # Stack (12 frames): vgpreload/operator new → VTable lambda::operator() →
-# VTable lambda::_FUN → ChannelArgs::Pointer::Pointer →
-# ChannelArgs::Value::Value → AVL::AddKey(×4) → AVL::Add →
-# ChannelArgs::Set → ChannelArgs::Set(Pointer overload)
-# The OldSubchannel caller is beyond the 12-frame capture window.
-# Anchor: obj:*vgpreload_memcheck* at frame 1 (operator new interceptor)
-# guarantees a reliable match regardless of Valgrind wildcard edge cases.
-# Confirmed: no source file uses ChannelArgs, ChannelArgTypeTraits, or AVL.
+# VTable lambda::_FUN → ChannelArgs::Pointer::Pointer → ...
+# The VTable lambda frames have very long demangled names (~200 chars) with
+# {lambda(void*)#1} syntax; matching on those is unreliable in Valgrind 3.22.
+# Anchor on ChannelArgs::Pointer::Pointer (frame 4) — guaranteed unique in
+# codebase (confirmed: no source file uses ChannelArgs or ChannelArgTypeTraits).
+# Trailing ... is required to match remaining AVL / Set caller frames.
 # ===========================================================================
 {
    grpc_channel_args_pointer_copy
    Memcheck:Leak
    match-leak-kinds: possible,reachable
-   obj:*vgpreload_memcheck*
-   fun:*grpc_core*ChannelArgTypeTraits*VTable*
-   fun:*grpc_core*ChannelArgTypeTraits*VTable*
-   fun:*grpc_core*ChannelArgs*Pointer*Pointer*
-   fun:*grpc_core*ChannelArgs*Value*Value*
+   ...
+   fun:*ChannelArgs*Pointer*Pointer*
    ...
 }
 
@@ -836,16 +834,18 @@
 # Stack: vgpreload/operator new → MakeOrphanable<WorkSerializerImpl> →
 #        WorkSerializer::WorkSerializer → OldSubchannel::OldSubchannel →
 #        MakeRefCounted<OldSubchannel> → OldSubchannel::Create → ...
+# MakeOrphanable<WorkSerializerImpl> has a ~300-char demangled return type;
+# matching that frame with fun: + obj: proved unreliable in Valgrind 3.22.
+# Anchor on the unique substring WorkSerializerImpl — appears only in this
+# gRPC allocation path and never in our own source files.
 # Confirmed: WorkSerializer and WorkSerializerImpl are pure gRPC internals.
 # ===========================================================================
 {
    grpc_work_serializer_subchannel
    Memcheck:Leak
    match-leak-kinds: possible,reachable
-   obj:*vgpreload_memcheck*
-   fun:*grpc_core*MakeOrphanable*WorkSerializer*WorkSerializerImpl*
-   fun:*grpc_core*WorkSerializer*WorkSerializer*
-   fun:*grpc_core*OldSubchannel*OldSubchannel*
+   ...
+   fun:*WorkSerializerImpl*
    ...
 }
 
@@ -920,7 +920,28 @@
 }
 
 # ===========================================================================
-# Qt HTTP network channel — internal signal-slot connections
+# Qt software renderer — thread pool QRunnable for blend_untransformed_generic
+# When QT_QUICK_BACKEND=software is used, QSGSoftwareRenderer dispatches image
+# blending work via QThreadPool::start(QRunnable::create(lambda)). The QRunnable
+# heap object is "definitely lost" if the thread pool task is still in flight
+# when Valgrind samples the heap at process exit (child render process).
+# Stack: operator new → QRunnable::create<blend_untransformed_generic lambda> →
+#        QThreadPool::start → blend_untransformed_generic → fillRect_normalized →
+#        QRasterPaintEngine::drawImage → ... → QSGSoftwareRenderLoop::renderWindow
+# Confirmed: blend_untransformed_generic is Qt private API (qdrawhelper.cpp),
+# not used in any of our source files.
+# ===========================================================================
+{
+   qt_software_blend_threadpool_runnable
+   Memcheck:Leak
+   match-leak-kinds: definite,possible
+   ...
+   fun:*blend_untransformed_generic*
+   ...
+   fun:*QSGSoftwareRenderLoop*renderWindow*
+}
+
+
 # QHttpNetworkConnectionChannel::init() registers QObject connections via
 # QMetaObjectPrivate::connect. The ConnectionData vector (resizeSignalVector)
 # is not freed if the HTTP channel is destroyed before Qt's network manager
