@@ -26,7 +26,7 @@ Item {
     width:  120 * s
     height: 120 * s
 
-    // Outer glow layer (enhanced visibility - ISO 26262 ASIL-B)
+    // Outer glow layer
     Rectangle {
         anchors.centerIn: parent
         width:  root.outerGlow * root.s
