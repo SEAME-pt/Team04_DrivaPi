@@ -85,11 +85,10 @@ int AppController::run(QGuiApplication& app)
 
     piHealth->setIntervalMs(2000);  // Poll every 2 seconds
 
-    // Start polling
+    // Start polling — keep owned by unique_ptr; raw pointer is a non-owning observer
     piHealth->start();
 
-    // Keep it alive (don't delete)
-    drivaui::PiHealthReader* piHealthRaw = piHealth.release();
+    drivaui::PiHealthReader* piHealthRaw = piHealth.get();
 
     if (config_.useKuksa) {
         qInfo() << "Starting in KUKSA mode (default)";
@@ -152,11 +151,13 @@ int AppController::run(QGuiApplication& app)
 
     workerThread->start();
 
-    QObject::connect(&app, &QCoreApplication::aboutToQuit, [workerThread,
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, [workerThread, piHealthRaw,
 #ifdef ENABLE_CAN_MODE
         canReader,
 #endif
         kuksaReader]() {
+        // Stop Pi health polling first so no timer fires during teardown
+        if (piHealthRaw) piHealthRaw->stop();
 #ifdef ENABLE_CAN_MODE
         if (canReader) {
             QMetaObject::invokeMethod(canReader, "stop", Qt::DirectConnection);
