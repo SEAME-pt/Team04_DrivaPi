@@ -782,8 +782,10 @@
    grpc_channel_args_pointer_copy
    Memcheck:Leak
    match-leak-kinds: possible,reachable
+   obj:*vgpreload_memcheck*
    ...
    fun:*ChannelArgs*Pointer*Pointer*
+   fun:*ChannelArgs*Value*Value*
    ...
 }
 
