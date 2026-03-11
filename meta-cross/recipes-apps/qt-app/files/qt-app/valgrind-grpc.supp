@@ -192,7 +192,7 @@
    fun:_dl_allocate_tls
    fun:allocate_stack
    fun:pthread_create*
-   fun:*grpc_core*Thread*
+   ...
    fun:*WorkStealingThreadPool*
 }
 
@@ -585,6 +585,7 @@
    fontconfig_internal_leak
    Memcheck:Leak
    match-leak-kinds: possible,definite,indirect,reachable
+   ...
    obj:*/libfontconfig*
 }
 
@@ -592,6 +593,7 @@
    libexpat_internal_leak
    Memcheck:Leak
    match-leak-kinds: possible,definite,indirect,reachable
+   ...
    obj:*/libexpat*
 }
 
@@ -607,4 +609,161 @@
    match-leak-kinds: possible,definite,indirect,reachable
    ...
    fun:*QString*reallocData*
+}
+
+# ===========================================================================
+# gRPC timer manager thread TLS
+# ===========================================================================
+{
+   grpc_timer_manager_tls
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create*
+   ...
+   fun:*grpc_timer_manager_init*
+}
+
+# ===========================================================================
+# gRPC WorkStealingThreadPool Lifeguard thread TLS
+# ===========================================================================
+{
+   grpc_workstealing_lifeguard_tls
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create*
+   ...
+   fun:*WorkStealingThreadPool*Lifeguard*
+}
+
+# ===========================================================================
+# Qt QThread TLS — AppController background thread
+# ===========================================================================
+{
+   qt_app_controller_thread_tls
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create*
+   fun:*QThread*start*
+   ...
+   fun:*drivaui*AppController*run*
+}
+
+# ===========================================================================
+# Qt QThread TLS — QML engine type loader thread
+# ===========================================================================
+{
+   qt_qml_type_loader_thread_tls
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create*
+   fun:*QThread*start*
+   fun:*QQmlThread*startup*
+}
+
+# ===========================================================================
+# Qt thread pool TLS — DNS host info lookup
+# ===========================================================================
+{
+   qt_host_info_lookup_thread_tls
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create*
+   ...
+   fun:*QHostInfoLookupManager*
+}
+
+# ===========================================================================
+# Qt thread pool TLS — QImage format conversion worker
+# ===========================================================================
+{
+   qt_image_convert_thread_tls
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create*
+   ...
+   fun:*QImage*convertToFormat*
+}
+
+# ===========================================================================
+# QCommandLineParser allocated in main() — not freed at signal/Ctrl+C exit
+# Stack-allocated in main(), but heap d-pointer leaks if process killed before
+# main() returns and destructor runs. Not a real application leak.
+# ===========================================================================
+{
+   qt_commandline_parser_main
+   Memcheck:Leak
+   match-leak-kinds: definite,indirect,possible,reachable
+   ...
+   fun:*QCommandLineParser*QCommandLineParser*
+   fun:main
+}
+
+# ===========================================================================
+# QML IR builder QString allocations (QmlIR::IRBuilder::visit)
+# ===========================================================================
+{
+   qml_ir_builder_string
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:*QmlIR*IRBuilder*visit*
+}
+
+# ===========================================================================
+# gRPC MemoryQuota instrument domain storage (static singleton)
+# ===========================================================================
+{
+   grpc_memory_quota_instrument
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:*grpc_core*instrument_detail*QueryableDomain*GetDomainStorage*
+}
+
+# ===========================================================================
+# gRPC StatusCreate — absl::Status allocated on connection failure
+# ===========================================================================
+{
+   grpc_status_create
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:*grpc_core*StatusCreate*
+}
+
+# ===========================================================================
+# gRPC metadata std::variant<string_view, string> copy
+# gRPC metadata values use std::variant; copying allocates a std::string heap
+# buffer that may outlive the channel when the app exits during retry.
+# ===========================================================================
+{
+   grpc_metadata_variant_string
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:*std*__detail*__variant*__raw_idx_visit*
 }
