@@ -407,3 +407,204 @@
    ...
    fun:*QSslConfiguration*defaultConfiguration*
 }
+
+# ===========================================================================
+# Mesa/LLVMPIPE GPU JIT false positives (myqtapp offscreen rendering)
+#
+# QML map/shader components trigger Mesa's JIT compiler via mmap(/dev/zero).
+# Valgrind cannot track JIT code memory accesses - all errors here are false
+# positives from shader bytecode executing on mapped anonymous pages.
+# Root fix: run with QT_QUICK_BACKEND=software to bypass Mesa JIT entirely.
+# ===========================================================================
+{
+   mesa_jit_cond_uninit
+   Memcheck:Cond
+   obj:/dev/zero
+}
+
+{
+   mesa_jit_addr8
+   Memcheck:Addr8
+   obj:/dev/zero
+}
+
+{
+   mesa_jit_addr4
+   Memcheck:Addr4
+   obj:/dev/zero
+}
+
+{
+   mesa_jit_value8
+   Memcheck:Value8
+   obj:/dev/zero
+}
+
+# ===========================================================================
+# QProcess probe syscall — Qt platform detection at startup
+#
+# Qt calls sys_waitid with a null infop pointer intentionally as a probe to
+# detect clone/pidfd support. Not a real error.
+# ===========================================================================
+{
+   qprocess_detect_clone_pidfd
+   Memcheck:Param
+   waitid(infop)
+   fun:syscall
+   fun:sys_waitid
+   fun:detect_clone_pidfd_support
+   ...
+   fun:*QProcess*
+}
+
+# ===========================================================================
+# PulseAudio TLS pthread (child process — QMediaPlayer spawns media process)
+#
+# QMediaPlayer triggers QPulseAudioEngine which starts a pa_threaded_mainloop.
+# The pthread TLS block is OS-managed (never leaked in production).
+# ===========================================================================
+{
+   pulseaudio_tls_pthread
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create*
+   ...
+   fun:*QPulseAudioEngine*prepare*
+}
+
+# ===========================================================================
+# gRPC completion queue internal allocation
+#
+# grpc::CompletionQueue allocates its internal grpc_completion_queue via
+# grpc_completion_queue_create_internal. Freed on shutdown but Valgrind
+# sometimes reports it when app exits via signal.
+# ===========================================================================
+{
+   grpc_completion_queue_alloc
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*grpc_completion_queue_create_internal*
+}
+
+# ===========================================================================
+# gRPC call batch / cq_begin_op realloc
+#
+# FilterStackCall::StartBatch reallocates a completion queue op array.
+# Freed on call completion, but leaked when app exits mid-call.
+# ===========================================================================
+{
+   grpc_cq_begin_op_realloc
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*grpc_cq_begin_op*
+}
+
+# ===========================================================================
+# gRPC LegacyChannelIdleFilter SimpleArena allocation
+#
+# Internal timer arena allocated when an idle timer fires on channel shutdown.
+# ===========================================================================
+{
+   grpc_legacy_channel_idle_arena
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*grpc_core*LegacyChannelIdleFilter*
+}
+
+# ===========================================================================
+# absl flat_hash_map backing array growth
+#
+# absl::flat_hash_map reallocates its backing array during gRPC metadata
+# and channel registry operations. Not application code.
+# ===========================================================================
+{
+   absl_flat_hash_backing_array
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*absl*container_internal*AllocateBackingArray*
+}
+
+# ===========================================================================
+# absl::StrCat string allocation (gRPC error message construction)
+#
+# gRPC builds error messages with absl::StrCat when connections fail.
+# These temporary strings leak when app exits during connection retry.
+# ===========================================================================
+{
+   absl_strcat_grpc_error
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*absl*StrCat*
+}
+
+# ===========================================================================
+# Qt HTTP thread delegate signal connections
+#
+# QHttpThreadDelegate::startRequest() connects signals/slots for network
+# requests. The signal vector is a Qt-internal reachable allocation.
+# ===========================================================================
+{
+   qt_http_thread_delegate_signals
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QHttpThreadDelegate*startRequest*
+}
+
+# ===========================================================================
+# QNetworkRequest clone via QSharedDataPointer detach
+#
+# Qt detaches a shared QNetworkRequestPrivate when setAttribute is called.
+# The old copy may appear as a leak when app exits during active requests.
+# ===========================================================================
+{
+   qt_network_request_detach
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QNetworkRequest*setAttribute*
+}
+
+# ===========================================================================
+# libfontconfig / libexpat internal allocations
+#
+# libfontconfig uses libexpat to parse font config files. Both are system
+# libraries with no debug symbols (??? frames). These are one-time static
+# allocations kept alive for the process lifetime.
+# ===========================================================================
+{
+   fontconfig_internal_leak
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   obj:*/libfontconfig*
+}
+
+{
+   libexpat_internal_leak
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   obj:*/libexpat*
+}
+
+# ===========================================================================
+# QString::reallocData — string buffer resize
+#
+# Qt reallocates internal string storage. Appears as a leak when app exits
+# mid-operation (e.g. during SSL certificate path construction).
+# ===========================================================================
+{
+   qt_qstring_realloc_data
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QString*reallocData*
+}
