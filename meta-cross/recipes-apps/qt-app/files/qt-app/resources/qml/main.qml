@@ -6,7 +6,6 @@ import Qt5Compat.GraphicalEffects
 import "screens/cluster-screen"
 import "screens/media-screen"
 import "screens/weather-screen"
-import "screens/navigation-screen"
 import "screens/diagnostics-screen"
 import "screens/settings-screen"
 import "theme"
@@ -314,7 +313,10 @@ ApplicationWindow {
                 id: swipeView
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                currentIndex: 0
+                // Start on MediaScreen so the heavy NavigationScreen (QtLocation map
+                // with OpenGL) is not instantiated at startup. It is lazy-loaded on
+                // first visit via the Loader below.
+                currentIndex: 1
                 z: 50
                 clip: true
                 onCurrentIndexChanged: verticalTabBar.currentIndex = currentIndex
@@ -325,8 +327,18 @@ ApplicationWindow {
                     }
                 }
 
-                NavigationScreen {
+                // Lazy-load NavigationScreen: the QtLocation Map initialises an
+                // OpenGL context (Mesa LLVMPIPE on Linux) which is expensive and
+                // must not run until the user actually navigates to this tab.
+                // SwipeView.isCurrentItem becomes true only when the user visits
+                // this page; once loaded the component stays alive for the session.
+                Item {
                     id: navigationScreen
+                    Loader {
+                        anchors.fill: parent
+                        active: parent.SwipeView.isCurrentItem
+                        source: "screens/navigation-screen/NavigationScreen.qml"
+                    }
                 }
                 MediaScreen {
                     id: mediaScreen
