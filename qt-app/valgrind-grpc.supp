@@ -768,13 +768,22 @@
 # shared_ptr-wrapped objects (StatsPluginGroup, EventEngine, channelz::BaseNode)
 # via the VTable copy lambda. The ChannelArgs AVL tree is ref-counted; copies
 # made during ExecCtx flush on exit may not be destroyed before heap sampling.
+# Stack (12 frames): vgpreload/operator new → VTable lambda::operator() →
+# VTable lambda::_FUN → ChannelArgs::Pointer::Pointer →
+# ChannelArgs::Value::Value → AVL::AddKey(×4) → AVL::Add →
+# ChannelArgs::Set → ChannelArgs::Set(Pointer overload)
+# The OldSubchannel caller is beyond the 12-frame capture window.
+# Anchor: obj:*vgpreload_memcheck* at frame 1 (operator new interceptor)
+# guarantees a reliable match regardless of Valgrind wildcard edge cases.
 # Confirmed: no source file uses ChannelArgs, ChannelArgTypeTraits, or AVL.
 # ===========================================================================
 {
    grpc_channel_args_pointer_copy
    Memcheck:Leak
    match-leak-kinds: possible,reachable
-   ...
+   obj:*vgpreload_memcheck*
+   fun:*grpc_core*ChannelArgTypeTraits*VTable*
+   fun:*grpc_core*ChannelArgTypeTraits*VTable*
    fun:*grpc_core*ChannelArgs*Pointer*Pointer*
    fun:*grpc_core*ChannelArgs*Value*Value*
    ...
@@ -792,6 +801,74 @@
    fun:*grpc_core*AVL*MakeNode*
    ...
    fun:*grpc_core*ChannelArgs*Set*
+}
+
+# ===========================================================================
+# gRPC OldSubchannel — RefCountedString key allocation on subchannel creation
+# When OldSubchannel is constructed it calls ChannelArgs::SetObject which
+# invokes ChannelArgs::Set, which allocates a RefCountedStringValue key via
+# gpr_malloc/RefCountedString::Make. This is a key string (e.g. peer address)
+# stored in the subchannel's channelargs. The subchannel is not fully destroyed
+# before Valgrind samples the heap when KUKSA is unreachable at exit.
+# Stack: vgpreload/malloc → gpr_malloc → RefCountedString::Make →
+#        RefCountedStringValue → ChannelArgs::Set(×3) →
+#        ChannelArgs::SetObject → OldSubchannel::OldSubchannel →
+#        MakeRefCounted<OldSubchannel> → OldSubchannel::Create → Subchannel::Create
+# Confirmed: gpr_malloc and RefCountedString are pure gRPC internals.
+# ===========================================================================
+{
+   grpc_refcounted_string_subchannel
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   obj:*vgpreload_memcheck*
+   fun:*gpr_malloc*
+   fun:*grpc_core*RefCountedString*Make*
+   ...
+   fun:*grpc_core*OldSubchannel*Create*
+   ...
+}
+
+# ===========================================================================
+# gRPC WorkSerializer — WorkSerializerImpl allocated inside OldSubchannel
+# OldSubchannel::OldSubchannel constructs a WorkSerializer which allocates a
+# WorkSerializerImpl via MakeOrphanable. The subchannel is not fully destroyed
+# before heap sampling when KUKSA is unreachable at exit.
+# Stack: vgpreload/operator new → MakeOrphanable<WorkSerializerImpl> →
+#        WorkSerializer::WorkSerializer → OldSubchannel::OldSubchannel →
+#        MakeRefCounted<OldSubchannel> → OldSubchannel::Create → ...
+# Confirmed: WorkSerializer and WorkSerializerImpl are pure gRPC internals.
+# ===========================================================================
+{
+   grpc_work_serializer_subchannel
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   obj:*vgpreload_memcheck*
+   fun:*grpc_core*MakeOrphanable*WorkSerializer*WorkSerializerImpl*
+   fun:*grpc_core*WorkSerializer*WorkSerializer*
+   fun:*grpc_core*OldSubchannel*OldSubchannel*
+   ...
+}
+
+# ===========================================================================
+# gRPC OldSubchannel object — MakeRefCounted allocation on subchannel creation
+# The OldSubchannel object itself (688 bytes × 2 blocks) is allocated via
+# MakeRefCounted when PickFirst load-balancer creates subchannels for each
+# KUKSA endpoint address. The subchannel is not fully destroyed before heap
+# sampling when KUKSA is unreachable at exit.
+# Stack: vgpreload/operator new → MakeRefCounted<OldSubchannel,SubchannelKey>
+#        → OldSubchannel::Create → Subchannel::Create →
+#        GenericClientChannelFactory::CreateSubchannel → ...
+# Confirmed: OldSubchannel and MakeRefCounted are pure gRPC internals.
+# ===========================================================================
+{
+   grpc_old_subchannel_object
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   obj:*vgpreload_memcheck*
+   fun:*grpc_core*MakeRefCounted*OldSubchannel*
+   fun:*grpc_core*OldSubchannel*Create*
+   fun:*grpc_core*Subchannel*Create*
+   ...
 }
 
 # ===========================================================================
