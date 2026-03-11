@@ -36,8 +36,6 @@ Rectangle {
     }
     function _parseNumberOrNaN(s) { var v = parseFloat(s); return isNaN(v) ? NaN : v; }
 
-    // ... (Keep _decodePolyline6 and requestRoute exactly as they are) ...
-
     function startWazeMode(toLat, toLon, toName) {
         if (!_isValidCoord(currentLat, currentLon)) {
             turnByTurnInstructions = [{ instruction: "Waiting for GPS...", distance: "" }];
