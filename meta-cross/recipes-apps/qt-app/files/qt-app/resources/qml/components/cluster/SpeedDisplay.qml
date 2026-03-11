@@ -12,7 +12,6 @@ Item {
     Text {
         id: speedNumber
         // We use Math.floor or toFixed(0) usually for speed,
-        // but keeping your .toFixed(1) as requested
         text: root.speed.toFixed(1).toString()
         renderType: Text.NativeRendering
         font.pixelSize: AppTheme.typography.displayLarge * 2.5 // Scaling based on theme
