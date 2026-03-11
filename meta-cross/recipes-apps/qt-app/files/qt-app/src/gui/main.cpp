@@ -24,15 +24,16 @@ int main(int argc, char *argv[])
     QDir().mkpath(cacheBase + "/osm-light");
 
     drivaui::CliOptions opts;
-    QCommandLineParser parser;
-    drivaui::configureParser(parser, opts);
-    parser.process(app);
-
-    drivaui::RunConfig config = drivaui::buildRunConfig(parser, opts);
-
-    if (!drivaui::validateOptions(parser, opts, config, app.arguments())) {
-        return 1;
-    }
+    drivaui::RunConfig config;
+    {
+        QCommandLineParser parser;
+        drivaui::configureParser(parser, opts);
+        parser.process(app);
+        config = drivaui::buildRunConfig(parser, opts);
+        if (!drivaui::validateOptions(parser, opts, config, app.arguments())) {
+            return 1;
+        }
+    } // parser destroyed here — before the event loop starts
 
     drivaui::AppController controller(config);
     return controller.run(app);
