@@ -537,6 +537,7 @@
 #
 # gRPC builds error messages with absl::StrCat when connections fail.
 # These temporary strings leak when app exits during connection retry.
+# Anchored to a gRPC caller frame to avoid suppressing app-code StrCat calls.
 # ===========================================================================
 {
    absl_strcat_grpc_error
@@ -544,6 +545,8 @@
    match-leak-kinds: possible,definite,indirect,reachable
    ...
    fun:*absl*StrCat*
+   ...
+   fun:*grpc*
 }
 
 # ===========================================================================
@@ -598,15 +601,16 @@
 }
 
 # ===========================================================================
-# QString::reallocData — string buffer resize
+# QString::reallocData — string buffer resize in Qt-internal code only
 #
-# Qt reallocates internal string storage. Appears as a leak when app exits
-# mid-operation (e.g. during SSL certificate path construction).
+# Qt reallocates internal string storage. Suppresses only possible/reachable
+# (not definite/indirect) so that a real app-code QString definite leak is
+# never silently hidden.  Applies only to Qt's own string-growth paths.
 # ===========================================================================
 {
    qt_qstring_realloc_data
    Memcheck:Leak
-   match-leak-kinds: possible,definite,indirect,reachable
+   match-leak-kinds: possible,reachable
    ...
    fun:*QString*reallocData*
 }
@@ -706,20 +710,6 @@
    fun:pthread_create*
    ...
    fun:*QImage*convertToFormat*
-}
-
-# ===========================================================================
-# QCommandLineParser allocated in main() — not freed at signal/Ctrl+C exit
-# Stack-allocated in main(), but heap d-pointer leaks if process killed before
-# main() returns and destructor runs. Not a real application leak.
-# ===========================================================================
-{
-   qt_commandline_parser_main
-   Memcheck:Leak
-   match-leak-kinds: definite,indirect,possible,reachable
-   ...
-   fun:*QCommandLineParser*QCommandLineParser*
-   fun:main
 }
 
 # ===========================================================================
