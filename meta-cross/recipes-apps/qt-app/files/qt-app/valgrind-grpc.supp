@@ -1005,3 +1005,180 @@
    ...
    fun:dlopen*
 }
+
+# ===========================================================================
+# "still reachable" suppressions
+#
+# All blocks below are SYSTEM / THIRD-PARTY library global state that is
+# kept alive via live pointers until process exit.  None originates in
+# application source files.  These suppressions only affect the
+# "still reachable" bucket — they cannot hide real (definite/indirect/
+# possible) leaks in our code.
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# OpenSSL — libcrypto / libssl global object registry
+# OBJ_NAME_add, OPENSSL_LH_insert, CRYPTO_zalloc keep algorithm names and
+# cipher objects in a global hash table for the lifetime of the process.
+# ---------------------------------------------------------------------------
+{
+   openssl_libcrypto_global_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   obj:*libcrypto*
+}
+{
+   openssl_libssl_global_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   obj:*libssl*
+}
+
+# ---------------------------------------------------------------------------
+# PulseAudio — libpulse / libpulsecommon global context
+# pa_xmalloc / pa_xmemdup allocations held in the default mainloop context.
+# ---------------------------------------------------------------------------
+{
+   pulseaudio_global_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   obj:*libpulse*
+}
+
+# ---------------------------------------------------------------------------
+# GLib / GObject — global type system and signal tables
+# g_malloc / gobject type registration blocks held for process lifetime.
+# ---------------------------------------------------------------------------
+{
+   glib_global_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   obj:*libglib*
+}
+{
+   gobject_global_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   obj:*libgobject*
+}
+
+# ---------------------------------------------------------------------------
+# FreeType — global font cache
+# Allocations in libfreetype kept alive by Qt's font engine for the
+# entire application lifetime.
+# ---------------------------------------------------------------------------
+{
+   freetype_global_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   obj:*libfreetype*
+}
+
+# ---------------------------------------------------------------------------
+# libstdc++ — C++ runtime static storage (locale, codecvt, etc.)
+# ---------------------------------------------------------------------------
+{
+   libstdcpp_static_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   obj:*libstdc++*
+}
+
+# ---------------------------------------------------------------------------
+# Qt QML type registry — QQmlTypePrivate objects
+# Every qmlRegisterType / Q_DECLARE_METATYPE call inserts a QQmlTypePrivate
+# node into a global QMultiHash.  Qt never removes these entries; the entire
+# registry is reachable via a global pointer at exit.  Stacks anchored on:
+#   createQQmlType  →  QQmlTypePrivate::QQmlTypePrivate
+#   QQmlMetaType::registerType  →  QQmlPrivate::qmlregister
+# ---------------------------------------------------------------------------
+{
+   qt_qml_type_registry_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QQmlType*
+}
+{
+   qt_qml_metatype_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QQmlMetaType*
+}
+{
+   qt_qml_register_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QQmlPrivate*qmlregister*
+}
+
+# ---------------------------------------------------------------------------
+# QV4 (Qt JS engine) — property hash and InternalClass registry
+# PropertyHashData and QV4::Heap::InternalClass nodes live in the global
+# V4 engine state for the lifetime of the QML engine.
+# ---------------------------------------------------------------------------
+{
+   qt_qv4_property_hash_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QV4*PropertyHash*
+}
+{
+   qt_qv4_internal_class_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QV4*InternalClass*addMember*
+}
+{
+   qt_qv4_property_hash_data_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*PropertyHashData*
+}
+
+# ---------------------------------------------------------------------------
+# Qt hash / string interning — takeNode, allocateHelper, insertMulti
+# Qt's QHash/QMultiHash template internals compile into myqtapp.
+# These helper frames appear in QML type map insertion stacks and in
+# Qt's string deduplication pool (QHashedString intern table).
+# ---------------------------------------------------------------------------
+{
+   qt_hash_take_node_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*takeNode*
+}
+{
+   qt_hash_allocate_helper_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*allocateHelper*
+}
+{
+   qt_hash_insert_multi_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*insertMulti*
+}
+{
+   qt_array_reallocate_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QArrayData*reallocateUnaligned*
+}
