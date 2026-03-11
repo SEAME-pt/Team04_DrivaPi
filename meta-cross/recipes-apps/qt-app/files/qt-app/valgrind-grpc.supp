@@ -757,7 +757,7 @@
    grpc_metadata_variant_string
    Memcheck:Leak
    match-leak-kinds: possible,reachable
-   fun:*operator*new*
+   ...
    fun:*std*__cxx11*basic_string*_M_construct*
    fun:*std*__detail*__variant*_Uninitialized*
 }
@@ -838,8 +838,7 @@
    qtquick_software_renderer_lazy_node
    Memcheck:Leak
    match-leak-kinds: possible
-   fun:*operator*new*
-   fun:*value*
+   ...
    fun:*QQuickWindowPrivate*updateDirtyNode*
 }
 
@@ -856,6 +855,7 @@
    qt_http_network_channel_signals
    Memcheck:Leak
    match-leak-kinds: possible
+   fun:malloc
    fun:*resizeSignalVector*
    fun:*addConnection*
    fun:*QMetaObjectPrivate*connect*
