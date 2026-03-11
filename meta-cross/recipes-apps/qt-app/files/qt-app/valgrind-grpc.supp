@@ -765,5 +765,5 @@
    Memcheck:Leak
    match-leak-kinds: possible,reachable
    ...
-   fun:*std*__detail*__variant*__raw_idx_visit*
+   fun:*std*__detail*__variant*_Copy_ctor_base*
 }
