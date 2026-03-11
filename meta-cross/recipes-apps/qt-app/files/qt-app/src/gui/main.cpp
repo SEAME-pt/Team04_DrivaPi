@@ -5,8 +5,10 @@
  */
 
 #include <QGuiApplication>
+#include <QCoreApplication>
 #include <QDir>
 #include <QStandardPaths>
+#include <csignal>
 #include "app_controller.hpp"
 #include "cli_parser.hpp"
 
@@ -17,6 +19,12 @@ int main(int argc, char *argv[])
 
     QGuiApplication app(argc, argv);
     app.setApplicationName("DrivaPi Dashboard");
+
+    // Qt does not install default SIGINT/SIGTERM handlers on Linux.
+    // Without these, Ctrl+C kills the process abruptly — aboutToQuit never fires
+    // and the worker thread / gRPC objects are never cleaned up.
+    std::signal(SIGINT,  [](int) { QCoreApplication::quit(); });
+    std::signal(SIGTERM, [](int) { QCoreApplication::quit(); });
 
     // Ensure OSM tile cache directories exist before the map plugin initialises
     const QString cacheBase = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
