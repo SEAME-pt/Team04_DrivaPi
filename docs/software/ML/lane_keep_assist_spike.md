@@ -7,7 +7,7 @@
 
 ## 1. Executive Summary
 This document consolidates the technical research for a Lane Keep Assist (LKA) Minimum Viable Product (MVP).
-The selected architecture uses **Hailo-8** for low-latency lane perception on Raspberry Pi 5 and **ThreadX Real-Time Operating System (RTOS)** on STM32 for deterministic actuation and safety override (Emergency Braking (AEB)).
+The selected architecture uses a **modular stack**: **Hailo-8** for low-latency lane perception, a pluggable lateral controller on Raspberry Pi 5, and **ThreadX Real-Time Operating System (RTOS)** on STM32 for deterministic actuation and safety override (Emergency Braking (AEB)).
 
 ### 1.1 MVP Goal
 Keep the vehicle centered in lane at low-to-medium speed on a controlled track, with fail-safe braking priority over steering commands.
@@ -16,7 +16,7 @@ Keep the vehicle centered in lane at low-to-medium speed on a controlled track, 
 ### 1.2 Non-Goals (MVP)
 - Full autonomy in urban traffic.
 - Multi-lane behavior planning (lane changes, overtaking).
-- End-to-end trajectory optimization with high-compute controllers (e.g., full MPC stack).
+- End-to-end perception-to-control policy learning for the complete LKA loop.
 
 ---
 
@@ -70,31 +70,39 @@ $$
 - **A (Curvature):** Defines the turn intensity.
 - **C (Lateral Offset):** Distance from the center of the lane.
 
-### 4.3 Control Law: Pure Pursuit
-We compute the steering command $\delta$ by targeting a look-ahead point:
+### 4.3 Computer Vision (CV) Control Branch
+In the geometric branch, we compute steering from lane geometry using a model-based controller.
+For the Stanley method, the steering command can be expressed as:
 $$
-\delta = \arctan\left(\frac{2L\sin(\alpha)}{L_{fd}}\right)
+\delta = \psi_e + \arctan\left(\frac{k e_c}{v + \epsilon}\right)
 $$
-- $L$: Wheelbase of the PiRacer.
-- $L_{fd}$: Look-ahead distance (tuning parameter).
-- $\alpha$: Angle to the target point.
+- $\psi_e$: Heading error.
+- $e_c$: Cross-track error.
+- $k$: Stanley gain.
+- $v$: Vehicle speed.
+- $\epsilon$: Small term to avoid division by zero.
 
-To reduce oscillation, $L_{fd}$ should increase with speed within bounded limits.
+### 4.4 Machine Learning (ML) Control Branch
+In the learning branch, an **Imitation Learning (IL)** policy maps perception features (lane points, offset, heading cues, confidence) to steering commands.
+This branch is trained from expert trajectories and remains modular from perception so each module can be validated independently.
 
 ---
 
 ## 5. Control Theory: Algorithm Evaluation
 | Algorithm | Pros | Cons |
 | :--- | :--- | :--- |
-| **Pure Pursuit** | **Highly Stable**; robust to sensor noise. | Tends to cut corners in sharp turns. |
-| **Stanley** | **Superior Accuracy**; eliminates lateral error. | Sensitive to noisy lane detection (jitter). |
-| **MPC** | **Optimal**; accounts for vehicle physics. | Very high computational cost for Raspberry Pi 5. |
+| **CV Geometric Controller (Stanley candidate)** | Interpretable; deterministic; easy to bound for safety. | Sensitive to lane-noise and calibration drift. |
+| **ML Imitation Learning (IL)** | Captures human-like behavior; can smooth control in complex curvature. | Requires quality dataset and strict runtime monitoring. |
+| **Stanley Fallback Mode** | Strong recovery behavior under degraded main-control confidence. | Needs robust switching logic to avoid control chattering. |
 
-**Selected Algorithm:** **Pure Pursuit** due to its stability on small-scale robotic platforms.
+**Selected Approach:** **Modular hybrid control**.
+- Primary controller: **CV** or **ML (IL)** branch under evaluation.
+- Safety fallback controller: **Stanley** when main LKA control is invalid or low-confidence.
 
-### 5.1 Why Not Stanley or MPC for MVP
-- **Stanley** can outperform Pure Pursuit on precise centerline tracking, but it is more sensitive to noisy lane estimates.
-- **MPC** is attractive for long-term roadmap work, but current compute budget and integration time favor a simpler controller.
+### 5.1 Fallback Trigger Conditions (Initial)
+- Lane confidence below threshold for `N` consecutive frames.
+- Perception timeout or stale controller input.
+- Steering command out of bounds or unstable command variance.
 
 ---
 
@@ -106,26 +114,30 @@ The architecture ensures a fail-safe design by separating perception from safety
 - **ThreadX (RTOS):** Receives CAN commands and performs **Emergency Braking (AEB)** using ultrasonic sensors if an obstacle is detected, overriding LKA.
 
 ### 6.1 Control and Safety Priority
-1. LKA computes steering setpoint from lane geometry.
+1. LKA computes steering setpoint using primary controller (CV or IL).
 2. STM32 validates command bounds and command freshness.
-3. AEB logic has highest priority and can override throttle/steering behavior according to safety policy.
+3. If primary controller validity fails, switch to Stanley fallback mode.
+4. AEB logic has highest priority and can override throttle/steering behavior according to safety policy.
 
 ### 6.2 Interface Proposal (Initial)
 - CAN message: `target_steering_angle`
 - Recommended fields: `timestamp_ms`, `angle_deg`, `confidence`, `alive_counter`
-- Failsafe condition: if timeout or confidence below threshold, transition to neutral steering strategy and reduced speed.
+- Failsafe condition: if timeout or confidence below threshold, transition to Stanley fallback and reduced speed.
 
 ### 6.3 Data Flow Diagram
 ```mermaid
 flowchart LR
 	A[Camera Frame] --> B[Hailo-8 Lane Detection - UFLD v2]
 	B --> C[Lane Points + Confidence]
-	C --> D[IPM + Centerline Fit]
-	D --> E[Pure Pursuit Controller]
-	E --> F[CAN target_steering_angle]
-	F --> G[STM32 ThreadX Actuation]
+	C --> D[Feature Builder: Offset, Curvature, Heading]
+	D --> E[Primary Controller: CV or IL]
+	E --> F{Primary Valid?}
+	F -- Yes --> G[CAN target_steering_angle]
+	F -- No --> J[Stanley Fallback Controller]
+	J --> G
+	G --> K[STM32 ThreadX Actuation]
 	H[Ultrasonic Obstacle Detection] --> I[AEB Safety Logic]
-	I --> G
+	I --> K
 ```
 
 ---
@@ -143,20 +155,22 @@ These are engineering targets for validation and can be adjusted after first har
 ## 8. Implementation Roadmap
 1. **Calibration:** Generate JSON profiles for different manual camera heights.
 2. **Model Optimization:** Convert UFLD v2 to `.hef` format using the Hailo Dataflow Compiler.
-3. **Middleware:** Finalize CAN message IDs for steering and speed control.
-4. **Simulation Validation:** Validate closed-loop behavior in **CARLA** before physical deployment.
-5. **Hardware Tuning:** Tune $L_{fd}$ and filtering parameters on physical track.
-6. **Safety Validation:** Verify AEB override behavior under timeout and obstacle scenarios.
+3. **Control Prototyping:** Implement both CV and IL controller interfaces behind a common API.
+4. **Fallback Logic:** Implement Stanley fallback trigger conditions and hysteresis.
+5. **Middleware:** Finalize CAN message IDs and validity/health fields for steering control.
+6. **Simulation Validation:** Validate switching behavior and closed-loop tracking in **CARLA** before physical deployment.
+7. **Hardware Tuning:** Tune Stanley gain, fallback thresholds, and IL confidence gates on physical track.
+8. **Safety Validation:** Verify AEB and fallback interactions under timeout, dropout, and obstacle scenarios.
 
 ---
 
 ## 9. Risks and Mitigations
 - **Risk:** Lane dropouts under shadows or worn markings.  
-	**Mitigation:** Confidence gating + temporal smoothing + conservative fallback behavior.
+	**Mitigation:** Confidence gating + temporal smoothing + automatic Stanley fallback.
 - **Risk:** CAN delay/jitter causing stale steering commands.  
 	**Mitigation:** Timestamp checks, alive counters, and timeout-based neutral control.
-- **Risk:** Over-aggressive steering in tight curves.  
-	**Mitigation:** Speed-adaptive look-ahead and steering-rate limiting on STM32.
+- **Risk:** Controller switching instability (mode flapping).  
+	**Mitigation:** Hysteresis, minimum dwell time per mode, and bounded steering-rate transitions.
 
 ---
 
