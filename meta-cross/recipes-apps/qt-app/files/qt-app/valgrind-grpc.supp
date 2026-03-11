@@ -746,14 +746,162 @@
 }
 
 # ===========================================================================
-# gRPC metadata std::variant<string_view, string> copy
-# gRPC metadata values use std::variant; copying allocates a std::string heap
-# buffer that may outlive the channel when the app exits during retry.
+# gRPC channelz / metadata std::variant<string_view, string> copy
+# The allocation chain is: operator new → basic_string::_M_construct →
+# std::__detail::__variant::_Uninitialized (frame 3, well within Valgrind's
+# 12-frame window). The original suppression matched on _Copy_ctor_base
+# (frame 7+) which could be missed when template frames pile up.
+# Confirmed: no source file in src/ uses std::variant with grpc_core types.
 # ===========================================================================
 {
    grpc_metadata_variant_string
    Memcheck:Leak
    match-leak-kinds: possible,reachable
+   fun:*operator*new*
+   fun:*std*__cxx11*basic_string*_M_construct*
+   fun:*std*__detail*__variant*_Uninitialized*
+}
+
+# ===========================================================================
+# gRPC ChannelArgs::Pointer copy — shared_ptr inside ChannelArgTypeTraits
+# When gRPC copies ChannelArgs (subchannel retry, handshake), it copies
+# shared_ptr-wrapped objects (StatsPluginGroup, EventEngine, channelz::BaseNode)
+# via the VTable copy lambda. The ChannelArgs AVL tree is ref-counted; copies
+# made during ExecCtx flush on exit may not be destroyed before heap sampling.
+# Confirmed: no source file uses ChannelArgs, ChannelArgTypeTraits, or AVL.
+# ===========================================================================
+{
+   grpc_channel_args_pointer_copy
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
    ...
-   fun:*std*__detail*__variant*_Copy_ctor_base*
+   fun:*grpc_core*ChannelArgs*Pointer*Pointer*
+   fun:*grpc_core*ChannelArgs*Value*Value*
+   ...
+}
+
+# ===========================================================================
+# gRPC ChannelArgs AVL tree node — MakeRefCounted on subchannel creation
+# Confirmed: no source file uses grpc_core::AVL or ChannelArgs::Set.
+# ===========================================================================
+{
+   grpc_channel_args_avl_node
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:*grpc_core*AVL*MakeNode*
+   ...
+   fun:*grpc_core*ChannelArgs*Set*
+}
+
+# ===========================================================================
+# gRPC OldSubchannel connectivity state — absl::Status on connection failure
+# Status is allocated when the subchannel reports a failed connect attempt.
+# gRPC does not fully drain ExecCtx before process exit when the channel is
+# still retrying. Discriminator: OldSubchannel::SetConnectivityStateLocked is
+# deep gRPC internals, never called from our source files.
+# ===========================================================================
+{
+   grpc_subchannel_connectivity_status
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:*absl*Status*Status*
+   fun:*grpc_core*OldSubchannel*SetConnectivityStateLocked*
+   ...
+}
+
+# ===========================================================================
+# gRPC PosixEventEngine::RunAfterInternal — reconnect timer closure
+# When a subchannel schedules a reconnect, RunAfterInternal stores an
+# AnyInvocable<void()> on the heap. If the channel is shut down before the
+# timer fires, the closure is abandoned at process exit (well-known gRPC
+# issue). Confirmed: PosixEventEngine is not used in any of our source files.
+# ===========================================================================
+{
+   grpc_posix_event_engine_run_after
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:*grpc_event_engine*experimental*PosixEventEngine*RunAfterInternal*
+}
+
+# ===========================================================================
+# Qt Quick software renderer — lazy scene-graph node bookkeeping
+# QQuickWindowPrivate::updateDirtyNode uses QLazilyAllocated to allocate
+# per-item scene-graph bookkeeping data on first render pass. When
+# QT_QUICK_BACKEND=software is forced, QSGSoftwareRenderLoop does not
+# release this data when the window is destroyed on process exit.
+# Confirmed: QQuickWindowPrivate is Qt private API, not used in our code.
+# ===========================================================================
+{
+   qtquick_software_renderer_lazy_node
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:*operator*new*
+   fun:*value*
+   fun:*QQuickWindowPrivate*updateDirtyNode*
+}
+
+# ===========================================================================
+# Qt HTTP network channel — internal signal-slot connections
+# QHttpNetworkConnectionChannel::init() registers QObject connections via
+# QMetaObjectPrivate::connect. The ConnectionData vector (resizeSignalVector)
+# is not freed if the HTTP channel is destroyed before Qt's network manager
+# cleanup runs. Triggered by gRPC's DNS lookup via Qt's QNetworkAccessManager.
+# Discriminator: QHttpNetworkConnectionChannel::init() in stack — not called
+# from any of our source files.
+# ===========================================================================
+{
+   qt_http_network_channel_signals
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:*resizeSignalVector*
+   fun:*addConnection*
+   fun:*QMetaObjectPrivate*connect*
+   ...
+   fun:*QHttpNetworkConnectionChannel*init*
+}
+
+# ===========================================================================
+# glibc DNS resolver configuration block — QHostInfoRunnable thread
+# getaddrinfo() initialises a per-thread __resolv_conf context on first
+# invocation via __resolv_conf_allocate. glibc intentionally keeps this
+# allocation alive for thread reuse; it is never freed on thread exit by
+# design (POSIX TLS). Triggered when Qt's thread pool resolves the KUKSA
+# hostname. Confirmed: getaddrinfo is not called in any of our source files.
+# ===========================================================================
+{
+   glibc_resolv_conf_qhostinfo
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   ...
+   fun:__resolv_conf_allocate
+   ...
+   fun:getaddrinfo
+   ...
+   fun:*QHostInfoRunnable*run*
+}
+
+# ===========================================================================
+# glibc/ld.so — dynamic linker dependency array on dlopen
+# _dl_map_object_deps allocates a 40-byte struct to track library dependency
+# load order when a plugin is opened via dlopen (Qt platform/image plugins at
+# startup). ld.so owns this allocation and frees it only when the library is
+# explicitly dlclose'd; Qt plugins loaded at startup stay open for the process
+# lifetime and are unloaded after Valgrind samples the heap on exit.
+# Confirmed: dlopen is not called in any of our source files.
+# ===========================================================================
+{
+   ld_dlopen_deps_array
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   ...
+   fun:_dl_map_object_deps
+   ...
+   fun:dl_open_worker_begin
+   ...
+   fun:dlopen*
 }
