@@ -57,7 +57,18 @@ int main(int argc, char** argv)
                 case can::ID_SPEED:
                     handlers::HandleSpeed(frame, publisher);
                     break;
-                // Add more handlers as needed
+                case can::ID_STM32_BATTERY:
+                    handlers::HandleStm32Battery(frame, publisher);
+                    break;
+                case can::ID_RPI_BATTERY:
+                    handlers::HandleRpiBattery(frame, publisher);
+                    break;
+                case can::ID_GEAR:
+                    handlers::HandleGear(frame, publisher);
+                    break;
+                case can::ID_ENV:
+                    handlers::HandleEnv(frame, publisher);
+                    break;
                 default:
                     // Ignore unknown CAN IDs silently
                     break;
