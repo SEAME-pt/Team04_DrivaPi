@@ -11,7 +11,7 @@
 
 namespace handlers {
 
-void HandleSpeed(const can_frame& frame, kuksa::Publisher& publisher) {
+void HandleSpeed(const can_frame& frame, feeder::Publisher& publisher) {
     // Validate payload size (expect 4 bytes for float)
     if (frame.can_dlc < 4) {
         std::cerr << "[Handler] Speed frame too short: " << static_cast<int>(frame.can_dlc) 

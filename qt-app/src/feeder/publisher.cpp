@@ -10,7 +10,9 @@
 #include <chrono>
 #include <google/protobuf/timestamp.pb.h>
 
-namespace kuksa {
+using namespace kuksa;
+
+namespace feeder {
 
 Publisher::Publisher(const std::string& address) {
     channel_ = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
@@ -381,4 +383,4 @@ std::string Publisher::LoadFile(const std::string& path) {
     return content;
 }
 
-} // namespace kuksa
+} // namespace feeder

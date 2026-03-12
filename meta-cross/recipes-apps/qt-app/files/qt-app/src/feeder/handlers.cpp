@@ -12,7 +12,7 @@
 
 namespace handlers {
 
-	void HandleSpeed(const can_frame& frame, kuksa::Publisher& publisher) {
+	void HandleSpeed(const can_frame& frame, feeder::Publisher& publisher) {
 		// Validate payload size (expect 4 bytes for float)
 		if (frame.can_dlc < 4) {
 			std::cerr << "[Handler] Speed frame too short: " << static_cast<int>(frame.can_dlc)
@@ -31,7 +31,7 @@ namespace handlers {
 		}
 	}
 
-	void HandleStm32Battery(const can_frame& frame, kuksa::Publisher& publisher)
+	void HandleStm32Battery(const can_frame& frame, feeder::Publisher& publisher)
 	{
 		// Payload: [0]=u8 percent, [1..4]=float voltage LE
 		if (frame.can_dlc < 5) {
@@ -53,7 +53,7 @@ namespace handlers {
 				<< " = " << voltage_v << " V\n";
 	}
 
-	void HandleRpiBattery(const can_frame& frame, kuksa::Publisher& publisher)
+	void HandleRpiBattery(const can_frame& frame, feeder::Publisher& publisher)
 	{
 		// Payload: [0]=u8 percent, [1..4]=float voltage LE
 		if (frame.can_dlc < 5) {
@@ -74,7 +74,7 @@ namespace handlers {
 				<< " = " << voltage_v << " V\n";
 	}
 
-	void HandleGear(const can_frame& frame, kuksa::Publisher& publisher)
+	void HandleGear(const can_frame& frame, feeder::Publisher& publisher)
 	{
 		// Payload: [0]=u8 gear 0=N, 1=R, 2=D
 		if (frame.can_dlc < 1) {
@@ -99,7 +99,7 @@ namespace handlers {
 				<< " = " << current_gear << " (raw=" << static_cast<int>(gear_raw) << ")\n";
 	}
 
-	void HandleEnv(const can_frame& frame, kuksa::Publisher& publisher)
+	void HandleEnv(const can_frame& frame, feeder::Publisher& publisher)
 	{
 		// Payload: [0..3]=float temp LE, [4..7]=float humidity LE
 		if (frame.can_dlc < 8) {

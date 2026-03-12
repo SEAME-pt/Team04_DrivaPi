@@ -17,7 +17,7 @@ namespace feeder {
  */
 struct FeederConfig {
     std::string can_interface = "can1";
-    kuksa::PublisherOptions publisher_options;
+    feeder::PublisherOptions publisher_options;
 };
 
 /**

@@ -18,15 +18,18 @@
 #include <mutex>
 #include <atomic>
 #include <set>
+#include <cstdint>
 
-namespace kuksa {
+namespace feeder {
 
 /**
  * @brief Simple KUKSA VAL v2 publisher client
  */
 struct PublisherOptions {
     std::string address = "localhost:55555";
-    bool use_ssl = false;                 // false = insecure
+    bool use_ssl = false;                 // insecure by design: broker runs on localhost (same device),
+                                          // no network traversal occurs. Enable TLS via root_ca_path
+                                          // if the broker is ever exposed over the network.
     std::string root_ca_path;             // optional
     std::string client_cert_path;         // optional (for mTLS)
     std::string client_key_path;          // optional (for mTLS)
@@ -80,11 +83,10 @@ public:
      */
     bool PublishString(const std::string& path, const std::string& value);
 
-    // Provider-stream publishing helpers (used internally)
+private:
     bool EnsureProviderStream();
     int32_t LookupSignalId(const std::string& path);
 
-private:
     // Attach authorization metadata if token present
     void AttachAuth(grpc::ClientContext& client_context);
 
@@ -110,4 +112,4 @@ private:
     std::set<int32_t> provided_signals_;
 };
 
-} // namespace kuksa
+} // namespace feeder
