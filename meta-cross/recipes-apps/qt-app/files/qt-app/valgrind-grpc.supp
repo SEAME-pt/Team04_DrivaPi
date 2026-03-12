@@ -1718,3 +1718,100 @@
    ...
    fun:*QSharedData*
 }
+
+# ===========================================================================
+# gRPC event-engine — WorkStealingThreadPool heap allocations
+# ===========================================================================
+# These blocks are allocated inside WorkStealingThreadPool's constructor
+# (and its Start() method) during gRPC event-engine initialisation.
+# The existing WorkStealingThreadPool suppression covers only the pthread-TLS
+# path (allocate_dtv → pthread_create → …).  The blocks below are the
+# thread-pool object itself and its work queues (BasicWorkQueue / deque of
+# Closure*), which are kept alive for the process lifetime via gRPC's
+# global event-engine singleton and are freed in grpc_shutdown().
+# ---------------------------------------------------------------------------
+{
+   grpc_work_stealing_thread_pool_ctor
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*WorkStealingThreadPool*WorkStealingThreadPool*
+}
+{
+   grpc_work_stealing_thread_pool_start
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*WorkStealingThreadPool*WorkStealingThreadPoolImpl*Start*
+}
+{
+   grpc_basic_work_queue_ctor
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*BasicWorkQueue*BasicWorkQueue*
+}
+
+# ===========================================================================
+# gRPC MemoryQuota / CollectionScope / TimerManager — global singletons
+# ===========================================================================
+# MemoryQuota is constructed as part of ResourceQuota's default singleton
+# (grpc_core::ResourceQuota::Default()).  CollectionScope is gRPC's
+# stats/telemetry collection object.  TimerManager is the event-engine's
+# timer implementation, held in a std::shared_ptr.
+# All three are process-lifetime singletons freed during grpc_shutdown().
+# ---------------------------------------------------------------------------
+{
+   grpc_memory_quota_ctor
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*MemoryQuota*MemoryQuota*
+}
+{
+   grpc_collection_scope_ctor
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*CollectionScope*CollectionScope*
+}
+{
+   grpc_timer_manager_shared_ptr
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*TimerManager*TimerManager*
+}
+
+# ===========================================================================
+# Qt QThreadData::current — per-thread Qt data
+# ===========================================================================
+# QThreadData::current(bool) allocates a QThreadData object on first use in
+# each thread (including gRPC worker threads).  The main-thread QThreadData
+# is held in a global QThreadStorageData and freed during QCoreApplication
+# destruction — after Valgrind's leak-check snapshot.
+# ---------------------------------------------------------------------------
+{
+   qt_thread_data_current
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QThreadData*current*
+}
+
+# ===========================================================================
+# Qt QQuickCanvasItem — 2D canvas rendering context
+# ===========================================================================
+# QQuickCanvasItem::createContext / getContext / initializeContext allocates
+# the canvas rendering context (CanvasRenderingContext2D) and its backing
+# store on first use.  The context is owned by the CanvasItem QObject and
+# is destroyed when the QML scene is torn down; it briefly appears reachable
+# at the Valgrind snapshot point before the engine fully completes shutdown.
+# ---------------------------------------------------------------------------
+{
+   qt_quick_canvas_context
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QQuickCanvasItem*
+}
