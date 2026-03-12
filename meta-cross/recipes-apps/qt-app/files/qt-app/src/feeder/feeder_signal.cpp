@@ -96,12 +96,14 @@ void KillRegisteredChildren()
         }
     }
 
-    // Step 2: Wait briefly for graceful shutdown
+    // Step 2: Wait briefly for graceful shutdown.
+    // nanosleep() is interrupted by SIGCHLD (children exiting emit that signal).
+    // Loop on EINTR, restoring the remaining sleep duration each time.
     const int wait_ms = 200;
-    struct timespec sleep_duration;
-    sleep_duration.tv_sec = 0;
-    sleep_duration.tv_nsec = wait_ms * 1000000;
-    nanosleep(&sleep_duration, nullptr);
+    struct timespec remaining = { 0, static_cast<long>(wait_ms) * 1000000L };
+    while (nanosleep(&remaining, &remaining) != 0 && errno == EINTR) {
+        /* SIGCHLD interrupted the sleep; resume with remaining time */
+    }
 
     // Step 3: Force kill any stragglers
     for (pid_t pid : g_childPids) {

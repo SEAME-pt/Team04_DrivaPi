@@ -12,6 +12,7 @@
 #include <QString>
 #include <memory>
 #include <atomic>
+#include <mutex>
 
 #include <grpcpp/grpcpp.h>
 #include "kuksa/val/v2/val.grpc.pb.h"
@@ -72,6 +73,7 @@ private:
     using VAL = kuksa::val::v2::VAL;
     std::unique_ptr<VAL::Stub> m_stub;
     std::atomic<bool> m_stopRequested{false};
+    std::mutex m_contextMutex;           // guards m_context across worker and stop() threads
     std::unique_ptr<grpc::ClientContext> m_context;
 };
 
