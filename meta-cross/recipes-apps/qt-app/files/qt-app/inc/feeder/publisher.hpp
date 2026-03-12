@@ -92,7 +92,7 @@ private:
 
     // Helper: prepare context+request, call PublishValue, log on failure
     bool publishUnary(const std::string& path,
-                      const std::function<void(val::v2::PublishValueRequest&)>& fill);
+                      const std::function<void(kuksa::val::v2::PublishValueRequest&)>& fill);
 
     // Load file contents into string (returns empty if path empty or read fails)
     static std::string LoadFile(const std::string& path);
