@@ -13,12 +13,12 @@ namespace vss {
 // Speed (official VSS)
 constexpr const char* VEHICLE_SPEED = "Vehicle.Speed";  // km/h (float)
 
-// Battery (official VSS)
-constexpr const char* BATTERY_SOC_DISPLAYED =
-    "Vehicle.Powertrain.TractionBattery.StateOfCharge.Displayed";  // percent (float)
+// STM32 12V battery (custom VSS nodes under STM32 control unit)
+constexpr const char* STM32_BATTERY_SOC =
+    "Vehicle.ControlUnit.STM32.Health.Resources.BatteryLevel";     // percent (float)
 
-constexpr const char* BATTERY_VOLTAGE =
-    "Vehicle.Powertrain.TractionBattery.CurrentVoltage";  // volts (float)
+constexpr const char* STM32_BATTERY_VOLTAGE =
+    "Vehicle.ControlUnit.STM32.Health.Resources.BatteryVoltage";   // volts (float)
 
 // Gear (official VSS)
 constexpr const char* CURRENT_GEAR =
