@@ -147,6 +147,10 @@ flowchart LR
 - Controller update rate: **>= 20 Hz**
 - No unsafe oscillation under nominal lighting and marked-lane conditions
 
+Definitions:
+- **Mean lateral error:** Arithmetic average of absolute lateral offset from lane center over the full run.
+- **P95 lateral error:** Value below which 95% of absolute lateral offset samples fall.
+
 ### 7.1 Lateral Error Targets by Development Phase
 Given the measured geometry (vehicle width: ~0.21 m, lane width: ~0.325 m), lateral targets are defined in phases:
 
