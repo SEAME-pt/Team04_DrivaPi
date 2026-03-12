@@ -1,99 +1,140 @@
 # KUKSA CAN Feeder
 
-A C++ daemon that reads CAN frames from SocketCAN and publishes vehicle signals to KUKSA databroker using the VAL v2 gRPC API.
+A C++ daemon that reads CAN frames from SocketCAN and publishes vehicle signals to
+KUKSA databroker using the VAL v2 gRPC API.
 
 ## Architecture
 
 ```
 [STM32 ThreadX]  ──CAN──>  [RPi5: kuksa_feeder]  ──gRPC──>  [KUKSA Databroker]  ──gRPC──>  [Qt Dashboard]
-     (0x100)                   CAN→VSS                          (localhost:55555)              Subscribe
+ (0x100..0x400)                  CAN→VSS                        (localhost:55555)             Subscribe
 ```
+
+All components run on the same device (RPi5). The databroker is bound exclusively to
+the loopback interface — no network exposure occurs.
 
 ## Features
 
-- **Zero-copy CAN reading**: Direct SocketCAN integration
-- **VAL v2 native**: Uses latest KUKSA databroker API
-- **Type-safe publishing**: Typed helper methods (publishFloat, publishDouble, etc.)
-- **Extensible handlers**: Easy to add new CAN IDs and VSS signals
-- **No Python dependency**: Pure C++ for low latency
+- **Zero-copy CAN reading**: Direct SocketCAN integration via `feeder_can`
+- **VAL v2 native**: Uses the latest KUKSA databroker gRPC API
+- **Type-safe publishing**: Typed methods (`PublishFloat`, `PublishInt32`, etc.)
+- **Multi-signal pipeline**: Speed, battery (STM32 + RPi), gear and environment
+- **Graceful shutdown**: SIGINT/SIGTERM handled; gRPC and Protobuf state cleaned up
+- **No Python dependency**: Pure C++ — same toolchain as the Qt app
 
-## Current Signal Mapping
+## Signal Mapping
 
 | CAN ID | Payload | VSS Path | Unit | Type |
 |--------|---------|----------|------|------|
-| 0x100 | 4-byte float (LE) m/s | `Vehicle.Speed` | km/h | float |
+| `0x100` | 4-byte float LE — m/s | `Vehicle.Speed` | km/h | float |
+| `0x200` | `[0]` uint8 percent, `[1..4]` float LE — V | `Vehicle.Powertrain.TractionBattery.StateOfCharge.Displayed` | % | float |
+| `0x200` | same frame | `Vehicle.Powertrain.TractionBattery.CurrentVoltage` | V | float |
+| `0x210` | `[0]` uint8 percent, `[1..4]` float LE — V | `Vehicle.ControlUnit.Central.Health.Resources.BatteryLevel` | % | float |
+| `0x210` | same frame | `Vehicle.ControlUnit.Central.Health.Resources.BatteryVoltage` | V | float |
+| `0x300` | `[0]` uint8 — `0`=N, `1`=R, `2`=D | `Vehicle.Powertrain.Transmission.CurrentGear` | — | int32 (`0`/`-1`/`1`) |
+| `0x400` | `[0..3]` float LE — °C, `[4..7]` float LE — % | `Vehicle.ControlUnit.STM32.Health.Resources.Temperature` | °C | float |
+| `0x400` | same frame | `Vehicle.ControlUnit.STM32.Health.Resources.Humidity` | % | float |
+
+> **Gear encoding:** STM32 raw `0`→VSS `0` (Neutral), `1`→VSS `-1` (Reverse), `2`→VSS `1` (Drive).
 
 ## Building
 
-The feeder is built automatically with the Qt app via CMake:
+The feeder is built alongside the Qt app via CMake:
 
 ```bash
-cd qt-app
+cd meta-cross/recipes-apps/qt-app/files/qt-app
 mkdir build && cd build
 cmake ..
-make kuksa_feeder
+make -j$(nproc) kuksa_feeder
 ```
 
 This produces the `kuksa_feeder` executable.
 
 ## Prerequisites
 
-### 1. KUKSA Databroker Running
+### 1. KUKSA Databroker
 
-Ensure KUKSA databroker is running on the target system (RPi5):
+Ensure the databroker is running on the RPi5:
 
 ```bash
-# Check if databroker is running
 systemctl status kuksa-databroker
-
-# Start if needed
-sudo systemctl start kuksa-databroker
+sudo systemctl start kuksa-databroker   # if not running
 ```
 
-Configuration (typically in `/etc/default/kuksa-databroker`):
+Configuration file: `/etc/default/kuksa-databroker`
 
-**Production (with TLS/authorization):**
+**Production (TLS + authorization):**
 ```bash
 EXTRA_ARGS="--address 127.0.0.1 --port 55555 --vss /etc/kuksa/vss.json --tls /etc/kuksa/server.crt --tls-key /etc/kuksa/server.key"
 ```
-> **Note:** The databroker is bound to `127.0.0.1` (loopback only). This is intentional: both the feeder and the Qt app run on the same device, so no network traversal is required. Do **not** use `0.0.0.0` unless you explicitly need remote access, in which case TLS is mandatory.
 
-**Development/Testing ONLY (⚠️ INSECURE - local loopback only):**
+> The broker is bound to `127.0.0.1` (loopback only). Both the feeder and the Qt app
+> run on the same device — no network traversal is required. Do **not** use `0.0.0.0`
+> unless remote access is explicitly required; if it is, TLS is mandatory.
+
+**Development/Testing ONLY (⚠️ insecure — loopback only):**
 ```bash
 EXTRA_ARGS="--address 127.0.0.1 --port 55555 --vss /etc/kuksa/vss.json --insecure --disable-authorization"
 ```
-⚠️ **WARNING:** The test-only configuration above disables encryption and authorization. It is safe **only** because the broker is bound to the loopback interface (`127.0.0.1`) and is unreachable from any remote host. **Never bind to `0.0.0.0` with `--insecure`.**
+
+> ⚠️ This configuration disables encryption and authorization. It is safe **only** because
+> the broker is bound to `127.0.0.1`. **Never bind to `0.0.0.0` with `--insecure`.**
 
 ### 2. VSS Signal Definitions
 
-Your `vss.json` **must** include the signals you publish. At minimum:
+`vss.json` must declare every path the feeder publishes. Minimum required entries:
 
 ```json
 {
   "Vehicle.Speed": {
-    "datatype": "float",
-    "type": "sensor",
-    "unit": "km/h",
+    "datatype": "float", "type": "sensor", "unit": "km/h",
     "description": "Vehicle speed"
+  },
+  "Vehicle.Powertrain.TractionBattery.StateOfCharge.Displayed": {
+    "datatype": "float", "type": "sensor", "unit": "percent",
+    "description": "STM32 12V battery state of charge"
+  },
+  "Vehicle.Powertrain.TractionBattery.CurrentVoltage": {
+    "datatype": "float", "type": "sensor", "unit": "V",
+    "description": "STM32 12V battery voltage"
+  },
+  "Vehicle.Powertrain.Transmission.CurrentGear": {
+    "datatype": "int8", "type": "sensor",
+    "description": "Current gear: 0=Neutral, -1=Reverse, 1=Drive"
+  },
+  "Vehicle.ControlUnit.STM32.Health.Resources.Temperature": {
+    "datatype": "float", "type": "sensor", "unit": "celsius",
+    "description": "STM32 internal temperature"
+  },
+  "Vehicle.ControlUnit.STM32.Health.Resources.Humidity": {
+    "datatype": "float", "type": "sensor", "unit": "percent",
+    "description": "STM32 internal humidity"
+  },
+  "Vehicle.ControlUnit.Central.Health.Resources.BatteryLevel": {
+    "datatype": "float", "type": "sensor", "unit": "percent",
+    "description": "RPi UPS battery level"
+  },
+  "Vehicle.ControlUnit.Central.Health.Resources.BatteryVoltage": {
+    "datatype": "float", "type": "sensor", "unit": "V",
+    "description": "RPi UPS battery voltage"
   }
 }
 ```
 
-Restart databroker after updating `vss.json`:
+Restart the databroker after modifying `vss.json`:
+
 ```bash
 sudo systemctl restart kuksa-databroker
 ```
 
-### 3. CAN Interface Setup
-
-Bring up your CAN interface before running the feeder:
+### 3. CAN Interface
 
 ```bash
-# For real CAN (adjust bitrate as needed)
-sudo ip link set can0 type can bitrate 500000
-sudo ip link set can0 up
+# Physical CAN (adjust bitrate to match STM32 configuration)
+sudo ip link set can1 type can bitrate 500000
+sudo ip link set can1 up
 
-# For testing with virtual CAN
+# Virtual CAN (for testing without hardware)
 sudo modprobe vcan
 sudo ip link add dev can1 type vcan
 sudo ip link set can1 up
@@ -101,236 +142,170 @@ sudo ip link set can1 up
 
 ## Usage
 
-### Basic Usage
+### Basic
 
 ```bash
 ./kuksa_feeder
 ```
 
-Default values:
-- CAN interface: `can0`
+Defaults:
+- CAN interface: `can1`
 - KUKSA address: `localhost:55555`
+- Security: insecure (loopback only)
 
-### Custom Interface/Address
+### Named flags
 
 ```bash
-# Same device — loopback is the correct and secure default
-./kuksa_feeder can1 localhost:55555
-
-# Remote databroker — TLS is mandatory when connecting over a network
-./kuksa_feeder --can-if can1 --address databroker.local:55555 --tls --ca /etc/kuksa/ca.crt
+./kuksa_feeder --can-if can0 --address localhost:55555
 ```
-> ⚠️ **Never use a non-loopback address with `--insecure`.** Doing so will transmit
-> vehicle telemetry in plaintext over the network. The feeder will emit a runtime
-> warning if this misconfiguration is detected.
 
 ### TLS and Authorization
 
-The feeder supports TLS and optional mTLS, plus JWT-based authorization.
-
-Flags:
-- `--tls` / `--insecure`: Enable TLS or use insecure mode (default: insecure)
-- `--ca <path>`: Root CA certificate
-- `--cert <path>`: Client certificate (for mTLS)
-- `--key <path>`: Client private key (for mTLS)
-- `--token <jwt>`: Authorization token (sends `Authorization: Bearer <jwt>`)
-
-Examples:
-
 ```bash
-# TLS with root CA
-./kuksa_feeder can1 kuksa.local:55555 --tls --ca /etc/kuksa/ca.crt
+# TLS with root CA only
+./kuksa_feeder --tls --ca /etc/kuksa/ca.crt
 
-# mTLS with token
-./kuksa_feeder can1 kuksa.local:55555 --tls --ca /etc/kuksa/ca.crt \
+# mTLS with JWT token
+./kuksa_feeder --tls --ca /etc/kuksa/ca.crt \
   --cert /etc/kuksa/client.crt --key /etc/kuksa/client.key \
   --token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
-```
+
+> ⚠️ Never pass a non-loopback `--address` without `--tls`. The feeder will print a
+> warning and the channel will transmit telemetry in plaintext.
+
+### All CLI flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--can-if <name>` | `can1` | SocketCAN interface |
+| `--address <host:port>` | `localhost:55555` | KUKSA databroker address |
+| `--insecure` | *(default)* | Use insecure channel |
+| `--tls` | — | Enable TLS |
+| `--ca <path>` | — | Root CA certificate |
+| `--cert <path>` | — | Client certificate (mTLS) |
+| `--key <path>` | — | Client private key (mTLS) |
+| `--token <jwt>` | — | JWT authorization token |
+| `--help`, `-h` | — | Print usage |
 
 ### Expected Output
 
 ```
 ========================================
-  KUKSA CAN Feeder
+  KUKSA CAN Feeder Configuration
 ========================================
-CAN Interface: can0
-KUKSA Address: localhost:55555
+CAN Interface:    can1
+KUKSA Address:    localhost:55555
+Security Mode:    Insecure
 ========================================
-[Publisher] Connected to KUKSA databroker at localhost:55555
-[CAN] Listening on interface: can0
+[Publisher] Connected to KUKSA databroker at localhost:55555 (insecure)
+[Feeder] Connected to KUKSA databroker.
 [Feeder] Running. Press Ctrl+C to stop.
 [Handler] Published Vehicle.Speed = 19.08 km/h (5.3 m/s)
-[Handler] Published Vehicle.Speed = 20.88 km/h (5.8 m/s)
+[Handler] Published Vehicle.Powertrain.TractionBattery.StateOfCharge.Displayed = 87 %
+[Handler] Published Vehicle.Powertrain.TractionBattery.CurrentVoltage = 12.4 V
+[Handler] Published Vehicle.Powertrain.Transmission.CurrentGear = 1 (raw=2)
+[Handler] Published Vehicle.ControlUnit.STM32.Health.Resources.Temperature = 34.2 C
+[Handler] Published Vehicle.ControlUnit.STM32.Health.Resources.Humidity = 52.1 %
+[Handler] Published Vehicle.ControlUnit.Central.Health.Resources.BatteryLevel = 91 %
+[Handler] Published Vehicle.ControlUnit.Central.Health.Resources.BatteryVoltage = 4.15 V
 ```
 
 ## Testing
 
-### 1. Send Test CAN Frame (can1)
+### Send test CAN frames
 
 ```bash
-# Install can-utils if needed
 sudo apt-get install can-utils
 
-# Send a speed frame (0x100) with float value 12.5 m/s (45.0 km/h)
-# Convert 12.5 to little-endian hex: 0x41480000
-cansend can1 100#00004841
+# Speed frame (0x100): 5.3 m/s as float LE → 0x4229999A
+cansend can1 100#9A992942
+
+# STM32 battery frame (0x200): 87% + 12.4V (float LE → 0x41469999)
+cansend can1 200#579999464100000000
+
+# RPi battery frame (0x210): 91% + 4.15V (float LE → 0x40851EB8)
+cansend can1 210#5BB81E854000000000
+
+# Gear frame (0x300): Drive (raw=2)
+cansend can1 300#02
+
+# Environment frame (0x400): 34.2°C + 52.1% humidity
+# 34.2 float LE → 0x42091EB8, 52.1 float LE → 0x42503333
+cansend can1 400#B81E0942333350420000000000000000
 ```
 
-### 2. Verify in KUKSA CLI
+### Verify in KUKSA CLI
 
 ```bash
-kuksa-client
+kuksa-client --protocol grpc --insecure
 > get Vehicle.Speed
+> get Vehicle.Powertrain.TractionBattery.StateOfCharge.Displayed
+> get Vehicle.Powertrain.Transmission.CurrentGear
 ```
 
-Expected output:
-```
-Vehicle.Speed: 12.5
-```
+### Verify in Qt Dashboard
 
-### 3. Verify in Qt Dashboard
-
-Run the Qt app in KUKSA mode:
 ```bash
 ./myqtapp --kuksa
 ```
 
-The speedometer should display the value published by the feeder.
+The dashboard subscribes to all VSS paths above via `KuksaReader` and updates the
+speedometer, battery indicators, gear display, and health panels in real time.
 
-## Adding New Signals
+## Adding a New Signal
 
-### 1. Define CAN ID
-
-Edit `src/feeder/can_ids.hpp`:
+### 1. Add the CAN ID — `inc/feeder/can_ids.hpp`
 
 ```cpp
-namespace can {
-constexpr uint32_t ID_SPEED = 0x100;
-constexpr uint32_t ID_TEMPERATURE = 0x200;  // New ID
+constexpr uint32_t ID_NEW_SENSOR = 0x500;  // document payload layout here
+```
+
+### 2. Add the VSS path — `inc/feeder/signals.hpp`
+
+```cpp
+constexpr const char* NEW_SENSOR_VALUE = "Vehicle.Some.VssPath";
+```
+
+### 3. Add the handler — `inc/feeder/handlers.hpp` + `src/feeder/handlers.cpp`
+
+```cpp
+// handlers.hpp
+void HandleNewSensor(const can_frame& frame, feeder::Publisher& publisher);
+
+// handlers.cpp
+void HandleNewSensor(const can_frame& frame, feeder::Publisher& publisher) {
+    if (frame.can_dlc < 4) return;
+    float value = can_decode::FloatLe(frame.data);
+    publisher.PublishFloat(vss::NEW_SENSOR_VALUE, value);
 }
 ```
 
-### 2. Define VSS Path
-
-Edit `src/feeder/signals.hpp`:
+### 4. Wire the dispatcher — `src/feeder/main.cpp`
 
 ```cpp
-namespace vss {
-constexpr const char* VEHICLE_SPEED = "Vehicle.Speed";
-constexpr const char* VEHICLE_EXTERIOR_TEMP = "Vehicle.Exterior.AirTemperature";  // New path
-}
-```
-
-### 3. Create Handler
-
-Edit `src/feeder/handlers.hpp`:
-
-```cpp
-void handleTemperature(const can_frame& frame, kuksa::Publisher& publisher);
-```
-
-Edit `src/feeder/handlers.cpp`:
-
-```cpp
-void handleTemperature(const can_frame& frame, kuksa::Publisher& publisher) {
-    if (frame.can_dlc < 2) return;
-    
-    int16_t temp_x10 = can_decode::i16_le(frame.data);
-    float temp_c = temp_x10 / 10.0f;
-    
-    publisher.publishFloat(vss::VEHICLE_EXTERIOR_TEMP, temp_c);
-}
-```
-
-### 4. Wire Dispatcher
-
-Edit `src/feeder/main.cpp` in `dispatchFrame()`:
-
-```cpp
-case can::ID_TEMPERATURE:
-    handlers::handleTemperature(frame, publisher);
+case can::ID_NEW_SENSOR:
+    handlers::HandleNewSensor(frame, publisher);
     break;
 ```
 
-### 5. Update VSS File
-
-Add to `/etc/kuksa/vss.json`:
-
-```json
-{
-  "Vehicle.Exterior.AirTemperature": {
-    "datatype": "float",
-    "type": "sensor",
-    "unit": "celsius",
-    "description": "Ambient air temperature"
-  }
-}
-```
-
-Restart databroker and rebuild the feeder.
+### 5. Update `vss.json` and restart the databroker
 
 ## Troubleshooting
 
-### "Path not found" Error
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `Path not found` on publish | VSS path missing from `vss.json` | Add entry + restart databroker |
+| `No such device` on CAN open | Interface not up | `sudo ip link set can1 up` |
+| `Failed to connect` / channel error | Databroker not running | `sudo systemctl start kuksa-databroker` |
+| No CAN frames received | STM32 not transmitting or wrong interface | `candump can1` to verify traffic |
+| `WARNING: insecure channel for non-loopback` | `--address` is a remote IP without `--tls` | Add `--tls --ca <path>` |
 
-```
-[Publisher] PublishValue(Vehicle.Speed, 10.5) failed: Path not found
-```
+## Performance
 
-**Fix**: Ensure the VSS path exists in `/etc/kuksa/vss.json` and restart databroker.
-
-### CAN Interface Not Found
-
-```
-[CAN] Failed to get interface index for can0: No such device
-```
-
-**Fix**: Bring up the interface:
-```bash
-sudo ip link set can0 up
-```
-
-### Connection Refused
-
-```
-[Publisher] Failed to connect to localhost:55555
-```
-
-**Fix**: Start KUKSA databroker:
-```bash
-sudo systemctl start kuksa-databroker
-```
-
-### No CAN Frames Received
-
-Check if CAN traffic exists:
-```bash
-candump can0
-```
-
-If empty, verify STM32 is transmitting and the CAN bus is wired correctly.
-
-## Performance Notes
-
-- The feeder introduces **~2 ms average latency** (CAN → KUKSA publish), which is acceptable for 60 Hz UI updates.
-- Occasional spikes up to 37 ms may occur due to OS scheduling (non-RTOS Linux).
-- For critical signals, consider prioritizing the feeder process:
-
-```bash
-sudo nice -n -20 ./kuksa_feeder
-```
-
-## Architecture Benefits vs. kuksa-can-provider
-
-| Aspect | kuksa-can-provider (Python) | C++ Feeder |
-|--------|----------------------------|------------|
-| Language | Python | C++ |
-| Latency | Higher (interpreter overhead) | Lower (native) |
-| Dependencies | Python runtime + libs | gRPC + protobuf (already used by Qt) |
-| Integration | Separate tool | Same codebase as Qt app |
-| Customization | DBC + mapping.json | Direct handler code |
-| Cross-compilation | Requires Python on target | Same toolchain as Qt |
+- Average CAN → KUKSA publish latency: **~2 ms**
+- OS scheduling spikes: up to ~37 ms (non-RTOS Linux)
+- To reduce scheduling jitter on the RPi5: `sudo nice -n -20 ./kuksa_feeder`
 
 ## License
 
