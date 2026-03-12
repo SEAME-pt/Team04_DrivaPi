@@ -46,10 +46,11 @@ bool CanReader::openDevice()
         return false;
     }
 
-    // --- CRITICAL: NO CONFIGURATION CALLS ---
-    // The device must be configured externally (via 'ip link') before running the app.
-    // Qt will simply attempt to connect to the existing, configured socket.
-
+    // QCanBusDevice does not own the CAN interface configuration (bitrate, mode, etc.).
+    // Those parameters must be set up externally before the application starts, e.g.:
+    //   sudo ip link set can1 type can bitrate 500000
+    //   sudo ip link set can1 up
+    // Calling any Qt configuration API here would fail — the socket is already open.
     connect(m_device, &QCanBusDevice::framesReceived, this, &CanReader::handleFramesReceived);
     connect(m_device, &QCanBusDevice::errorOccurred, this, &CanReader::handleErrorOccurred);
 
