@@ -17,9 +17,9 @@ using kuksa::val::v2::Datapoint;
 
 static constexpr const char* PATH_SPEED        = "Vehicle.Speed";
 
-// Match the actual KUKSA feeder output paths
-static constexpr const char* PATH_BATTERY_PERCENT   = "Vehicle.Powertrain.TractionBattery.StateOfCharge.Displayed";
-static constexpr const char* PATH_BATTERY_VOLT      = "Vehicle.Powertrain.TractionBattery.CurrentVoltage";
+// STM32 12V battery (custom VSS nodes under STM32 control unit — mirrors signals.hpp)
+static constexpr const char* PATH_BATTERY_PERCENT   = "Vehicle.ControlUnit.STM32.Health.Resources.BatteryLevel";
+static constexpr const char* PATH_BATTERY_VOLT      = "Vehicle.ControlUnit.STM32.Health.Resources.BatteryVoltage";
 
 static constexpr const char* PATH_CURRENT_GEAR = "Vehicle.Powertrain.Transmission.CurrentGear";
 

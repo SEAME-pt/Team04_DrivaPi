@@ -27,8 +27,8 @@ the loopback interface — no network exposure occurs.
 | CAN ID | Payload | VSS Path | Unit | Type |
 |--------|---------|----------|------|------|
 | `0x100` | 4-byte float LE — m/s | `Vehicle.Speed` | km/h | float |
-| `0x200` | `[0]` uint8 percent, `[1..4]` float LE — V | `Vehicle.Powertrain.TractionBattery.StateOfCharge.Displayed` | % | float |
-| `0x200` | same frame | `Vehicle.Powertrain.TractionBattery.CurrentVoltage` | V | float |
+| `0x200` | `[0]` uint8 percent, `[1..4]` float LE — V | `Vehicle.ControlUnit.STM32.Health.Resources.BatteryLevel` | % | float |
+| `0x200` | same frame | `Vehicle.ControlUnit.STM32.Health.Resources.BatteryVoltage` | V | float |
 | `0x210` | `[0]` uint8 percent, `[1..4]` float LE — V | `Vehicle.ControlUnit.Central.Health.Resources.BatteryLevel` | % | float |
 | `0x210` | same frame | `Vehicle.ControlUnit.Central.Health.Resources.BatteryVoltage` | V | float |
 | `0x300` | `[0]` uint8 — `0`=N, `1`=R, `2`=D | `Vehicle.Powertrain.Transmission.CurrentGear` | — | int32 (`0`/`-1`/`1`) |
@@ -90,11 +90,11 @@ EXTRA_ARGS="--address 127.0.0.1 --port 55555 --vss /etc/kuksa/vss.json --insecur
     "datatype": "float", "type": "sensor", "unit": "km/h",
     "description": "Vehicle speed"
   },
-  "Vehicle.Powertrain.TractionBattery.StateOfCharge.Displayed": {
+  "Vehicle.ControlUnit.STM32.Health.Resources.BatteryLevel": {
     "datatype": "float", "type": "sensor", "unit": "percent",
     "description": "STM32 12V battery state of charge"
   },
-  "Vehicle.Powertrain.TractionBattery.CurrentVoltage": {
+  "Vehicle.ControlUnit.STM32.Health.Resources.BatteryVoltage": {
     "datatype": "float", "type": "sensor", "unit": "V",
     "description": "STM32 12V battery voltage"
   },
@@ -222,8 +222,8 @@ Security Mode:    Insecure
 [Feeder] Connected to KUKSA databroker.
 [Feeder] Running. Press Ctrl+C to stop.
 [Handler] Published Vehicle.Speed = 19.08 km/h (5.3 m/s)
-[Handler] Published Vehicle.Powertrain.TractionBattery.StateOfCharge.Displayed = 87 %
-[Handler] Published Vehicle.Powertrain.TractionBattery.CurrentVoltage = 12.4 V
+[Handler] Published Vehicle.ControlUnit.STM32.Health.Resources.BatteryLevel = 87 %
+[Handler] Published Vehicle.ControlUnit.STM32.Health.Resources.BatteryVoltage = 12.4 V
 [Handler] Published Vehicle.Powertrain.Transmission.CurrentGear = 1 (raw=2)
 [Handler] Published Vehicle.ControlUnit.STM32.Health.Resources.Temperature = 34.2 C
 [Handler] Published Vehicle.ControlUnit.STM32.Health.Resources.Humidity = 52.1 %
@@ -260,7 +260,7 @@ cansend can1 400#B81E0942333350420000000000000000
 ```bash
 kuksa-client --protocol grpc --insecure
 > get Vehicle.Speed
-> get Vehicle.Powertrain.TractionBattery.StateOfCharge.Displayed
+> get Vehicle.ControlUnit.STM32.Health.Resources.BatteryLevel
 > get Vehicle.Powertrain.Transmission.CurrentGear
 ```
 

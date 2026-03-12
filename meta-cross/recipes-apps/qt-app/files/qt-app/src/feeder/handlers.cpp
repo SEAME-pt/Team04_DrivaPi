@@ -44,12 +44,12 @@ namespace handlers {
 		const float voltage_v = can_decode::FloatLe(frame.data + 1);
 
 		// Publish SOC as float percent (VSS)
-		publisher.PublishFloat(vss::BATTERY_SOC_DISPLAYED, static_cast<float>(percent_u8));
-		publisher.PublishFloat(vss::BATTERY_VOLTAGE, voltage_v);
+		publisher.PublishFloat(vss::STM32_BATTERY_SOC, static_cast<float>(percent_u8));
+		publisher.PublishFloat(vss::STM32_BATTERY_VOLTAGE, voltage_v);
 
-		std::cout << "[Handler] Published " << vss::BATTERY_SOC_DISPLAYED
+		std::cout << "[Handler] Published " << vss::STM32_BATTERY_SOC
 				<< " = " << static_cast<int>(percent_u8) << " %\n";
-		std::cout << "[Handler] Published " << vss::BATTERY_VOLTAGE
+		std::cout << "[Handler] Published " << vss::STM32_BATTERY_VOLTAGE
 				<< " = " << voltage_v << " V\n";
 	}
 
