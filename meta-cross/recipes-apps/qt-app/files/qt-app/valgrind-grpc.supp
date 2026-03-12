@@ -1511,3 +1511,92 @@
    ...
    obj:*libfontconfig*
 }
+
+# ---------------------------------------------------------------------------
+# QGuiApplication constructor — Qt-internal platform initialisation.
+# The user creates QGuiApplication in main.cpp, but the allocations here
+# happen INSIDE Qt's constructor (platform plugin loading, event dispatcher,
+# screen enumeration, input-method setup).  The user has no control over
+# these and cannot free them — Qt holds them intentionally for the lifetime
+# of the process.  Covers: QGuiApplicationPrivate::init,
+# createPlatformIntegration, createEventDispatcher, init_platform,
+# QOffscreenIntegration, QFactoryLoader plugin-metadata cache.
+# NOT affected: kuksaReader/canReader are allocated AFTER QGuiApplication
+# is fully constructed, so their stacks never contain this frame.
+# ---------------------------------------------------------------------------
+{
+   qt_gui_application_init
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QGuiApplication*QGuiApplication*
+}
+
+# ---------------------------------------------------------------------------
+# QML / JS engine constructors — global prototype chains, intrinsics, and
+# compiled bytecode caches allocated at engine construction time.
+# ---------------------------------------------------------------------------
+{
+   qt_qml_engine_base_ctor
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QQmlEngine*QQmlEngine*
+}
+{
+   qt_js_engine_ctor
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QJSEngine*QJSEngine*
+}
+{
+   qt_v4_execution_engine_ctor
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QV4*ExecutionEngine*ExecutionEngine*
+}
+
+# ---------------------------------------------------------------------------
+# Qt plugin factory loader — scans QT_PLUGIN_PATH once at startup and
+# caches CBOR plugin metadata for the process lifetime.
+# ---------------------------------------------------------------------------
+{
+   qt_factory_loader_ctor
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QFactoryLoader*QFactoryLoader*
+}
+{
+   qt_plugin_cbor_container
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*createContainerFromCbor*
+}
+
+# ---------------------------------------------------------------------------
+# Dynamic linker — _dl_catch_exception allocates unwind state for each
+# dlopen call (Qt platform and image plugins loaded at startup).
+# ---------------------------------------------------------------------------
+{
+   dl_catch_exception_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*_dl_catch_exception*
+}
+
+# ---------------------------------------------------------------------------
+# Qt path rendering — emitLineTo allocates straight-line segments in the
+# raster outline mapper (counterpart to emitCubicTo, already suppressed).
+# ---------------------------------------------------------------------------
+{
+   qt_path_emit_line
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*emitLineTo*
+}
