@@ -97,7 +97,6 @@ int AppController::run(QGuiApplication& app)
         kuksaReader->moveToThread(workerThread);
 
         QObject::connect(workerThread, &QThread::started, kuksaReader, &kuksa::KuksaReader::start);
-        QObject::connect(workerThread, &QThread::finished, kuksaReader, &kuksa::KuksaReader::deleteLater);
 
         QObject::connect(kuksaReader, &kuksa::KuksaReader::speedReceived,
                          vehicleData.get(), &VehicleData::setSpeed,
@@ -141,7 +140,6 @@ int AppController::run(QGuiApplication& app)
         canReader->moveToThread(workerThread);
 
         QObject::connect(workerThread, &QThread::started, canReader, &CanReader::start);
-        QObject::connect(workerThread, &QThread::finished, canReader, &CanReader::deleteLater);
 
         QObject::connect(canReader, &CanReader::canMessageReceived,
                          vehicleData.get(), &VehicleData::handleCanMessage,
@@ -173,6 +171,12 @@ int AppController::run(QGuiApplication& app)
                 workerThread->terminate();
                 workerThread->wait();
             }
+            // Worker thread has fully stopped; its event loop is gone so deleteLater()
+            // would never fire. Delete reader objects explicitly before the thread.
+            delete kuksaReader;
+#ifdef ENABLE_CAN_MODE
+            delete canReader;
+#endif
             delete workerThread;
         }
     });

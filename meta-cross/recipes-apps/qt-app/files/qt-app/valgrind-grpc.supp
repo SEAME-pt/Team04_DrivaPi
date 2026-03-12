@@ -1217,3 +1217,153 @@
    ...
    fun:*registerSequentialContainer*
 }
+
+# ---------------------------------------------------------------------------
+# QV4 JIT compiler — executable memory pools
+# QML/JS is JIT-compiled on first execution; the resulting machine-code
+# pages live in an ExecutableAllocator pool for the QML engine lifetime.
+# ---------------------------------------------------------------------------
+{
+   qt_qv4_jit_executable_copy
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*executableCopy*
+}
+{
+   qt_qv4_executable_allocator
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QV4*ExecutableAllocator*allocate*
+}
+{
+   qt_qv4_executable_memory_handle
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*ExecutableMemoryHandle*
+}
+{
+   qt_qv4_jit_link_code
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*linkCode*
+}
+{
+   qt_qv4_jit_platform_assembler_link
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QV4*JIT*PlatformAssembler*link*
+}
+{
+   qt_qv4_vme_exec
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QV4*Moth*VME*exec*
+}
+
+# ---------------------------------------------------------------------------
+# gRPC core configuration — global singleton built on first channel creation.
+# grpc_channel_create → BuildCoreConfiguration populates a global registry
+# that lives for the full process lifetime.
+# ---------------------------------------------------------------------------
+{
+   grpc_core_build_configuration
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*grpc_core*BuildCoreConfiguration*
+}
+{
+   grpc_core_config_get
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*grpc_core*CoreConfiguration*Get*
+}
+{
+   grpc_core_config_build_set
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*grpc_core*CoreConfiguration*BuildNewAndMaybeSet*
+}
+{
+   grpc_channel_create_global
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*grpc_channel_create*
+}
+
+# ---------------------------------------------------------------------------
+# Qt SceneGraph and software raster rendering pipeline
+# Rendering data structures (path outlines, brushes, dirty-node updates)
+# are owned by the scene-graph root and remain alive for the window lifetime.
+# ---------------------------------------------------------------------------
+{
+   qt_scenegraph_node_visitor
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QSGNodeVisitorEx*visitChildren*
+}
+{
+   qt_raster_paint_engine_fill
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QRasterPaintEngine*fill*
+}
+{
+   qt_outline_mapper_convert_path
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QOutlineMapper*convertPath*
+}
+{
+   qt_quickwindow_update_dirty_node
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QQuickWindowPrivate*updateDirtyNode*
+}
+{
+   qt_brush_init
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QBrush*init*
+}
+
+# ---------------------------------------------------------------------------
+# Qt signal/slot connection tables
+# QObjectPrivate keeps per-signal connection lists; entries for long-lived
+# objects (engine, window) remain reachable at exit.
+# ---------------------------------------------------------------------------
+{
+   qt_connect_impl
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QObjectPrivate*connectImpl*
+}
+{
+   qt_meta_object_connect
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QMetaObjectPrivate*connect*
+}
+{
+   qt_object_connect
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QObject*connect*
+}
