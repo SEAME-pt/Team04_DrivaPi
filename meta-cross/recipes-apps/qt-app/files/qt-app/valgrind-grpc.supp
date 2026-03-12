@@ -1182,3 +1182,38 @@
    ...
    fun:*QArrayData*reallocateUnaligned*
 }
+{
+   qt_hash_allocate_data_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*allocateData*
+}
+{
+   qt_hash_emplace_helper_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*emplace_helper*
+}
+{
+   qt_hash_create_in_place_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*createInPlace*
+}
+{
+   qt_string_reserve_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QHashedString*
+}
+{
+   qt_qml_sequential_container_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*registerSequentialContainer*
+}
