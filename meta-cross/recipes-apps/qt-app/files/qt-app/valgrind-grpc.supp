@@ -1367,3 +1367,147 @@
    ...
    fun:*QObject*connect*
 }
+
+# ---------------------------------------------------------------------------
+# Qt font database — global font registry loaded once at startup
+# QFontDatabasePrivate, QFontconfigDatabase and qt_registerFont populate a
+# process-wide font cache that is never freed until exit.
+# ---------------------------------------------------------------------------
+{
+   qt_font_database
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QFontDatabasePrivate*
+}
+{
+   qt_fontconfig_database
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QFontconfigDatabase*
+}
+{
+   qt_register_font
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*qt_registerFont*
+}
+
+# ---------------------------------------------------------------------------
+# Qt QML property cache — per-type QQmlPropertyCache objects are created
+# once per QMetaObject and kept in a global registry for the engine lifetime.
+# ---------------------------------------------------------------------------
+{
+   qt_qml_property_cache
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QQmlPropertyCache*createStandalone*
+}
+{
+   qt_qml_property_data_write
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QQmlPropertyData*writeProperty*
+}
+
+# ---------------------------------------------------------------------------
+# Qt QML notification / signal infrastructure
+# QQmlData::NotifyList and signalEmitted bookkeeping is held alive by the
+# QML engine for every bound QObject for the engine lifetime.
+# ---------------------------------------------------------------------------
+{
+   qt_qml_data_signal_emitted
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QQmlData*signalEmitted*
+}
+{
+   qt_qml_data_notify_list
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QQmlData*NotifyList*
+}
+
+# ---------------------------------------------------------------------------
+# Qt signal activation — doActivate<false> allocates per-signal connection
+# data stored in QObjectPrivate for every connected QObject pair.
+# ---------------------------------------------------------------------------
+{
+   qt_signal_do_activate
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*doActivate*
+}
+
+# ---------------------------------------------------------------------------
+# Qt QML application engine — QQmlApplicationEngine constructor allocates
+# global QML component/import state kept alive for the engine lifetime.
+# ---------------------------------------------------------------------------
+{
+   qt_qml_engine_ctor
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QQmlApplicationEngine*QQmlApplicationEngine*
+}
+
+# ---------------------------------------------------------------------------
+# Qt Quick text layout — QQuickTextPrivate caches shaped glyph runs and
+# layout data for each visible text item; held alive by the scene graph.
+# ---------------------------------------------------------------------------
+{
+   qt_quick_text_layout
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QQuickTextPrivate*setupTextLayout*
+}
+
+# ---------------------------------------------------------------------------
+# Qt SceneGraph software renderer — QSGSoftwareRenderLoop allocates render
+# targets and tile buffers held alive by the window's render loop.
+# ---------------------------------------------------------------------------
+{
+   qt_sg_software_render_loop
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QSGSoftwareRenderLoop*renderWindow*
+}
+
+# ---------------------------------------------------------------------------
+# Qt path rendering — emitCubicTo/emitQuadraticTo allocate spline path
+# segments in the raster engine's outline mapper, kept alive by the painter.
+# ---------------------------------------------------------------------------
+{
+   qt_path_emit_cubic
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*emitCubicTo*
+}
+{
+   qt_painter_begin
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QPainter*begin*
+}
+
+# ---------------------------------------------------------------------------
+# libfontconfig — global font matching state initialised on first font query
+# ---------------------------------------------------------------------------
+{
+   libfontconfig_global_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   obj:*libfontconfig*
+}
