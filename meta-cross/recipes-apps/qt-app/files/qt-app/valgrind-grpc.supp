@@ -1666,3 +1666,55 @@
    ...
    fun:*RefCountedStringValue*RefCountedStringValue*
 }
+
+# ---------------------------------------------------------------------------
+# gRPC allocator broad — gpr_malloc / grpc_slice_malloc / RefCountedString
+# Broad catch-all for gRPC's custom allocator and slice pool blocks that
+# are not on the OldSubchannel creation path (covered by the specific
+# grpc_refcounted_string_subchannel suppression above).
+# ---------------------------------------------------------------------------
+{
+   grpc_gpr_malloc_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*gpr_malloc*
+}
+{
+   grpc_slice_malloc_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*grpc_slice_malloc*
+}
+{
+   grpc_refcounted_string_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*grpc_core*RefCountedString*Make*
+}
+
+# ---------------------------------------------------------------------------
+# Fontconfig innerFunction — static helper inside FcFontMatch; fontconfig
+# is compiled into Qt on this system so obj:*libfontconfig* does not match.
+# ---------------------------------------------------------------------------
+{
+   fontconfig_inner_function
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*innerFunction*
+}
+
+# ---------------------------------------------------------------------------
+# Qt shared-data CoW detach — QSharedDataPointer::detach allocates a copy
+# of the shared data when a shared Qt container is first written to.
+# ---------------------------------------------------------------------------
+{
+   qt_shared_data_detach
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*QSharedData*
+}
