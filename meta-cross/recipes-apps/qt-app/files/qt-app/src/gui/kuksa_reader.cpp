@@ -80,8 +80,20 @@ void KuksaReader::start()
     m_stopRequested.store(false);
 
     try {
+        const std::string addr = m_opts.address.isEmpty()
+            ? std::string("localhost:55555")
+            : m_opts.address.toStdString();
+
         std::shared_ptr<grpc::ChannelCredentials> creds;
         if (!m_opts.useSsl) {
+            const bool isLoopback = addr.find("localhost") == 0
+                                 || addr.find("127.") == 0
+                                 || addr.find("[::1]") == 0;
+            if (!isLoopback) {
+                qWarning("[KUKSA] WARNING: insecure channel requested for non-loopback address '%s'. "
+                         "Vehicle telemetry will be transmitted in plaintext. Enable TLS via useSsl=true.",
+                         addr.c_str());
+            }
             creds = grpc::InsecureChannelCredentials();
         } else {
             grpc::SslCredentialsOptions ssl_opts;
@@ -96,10 +108,6 @@ void KuksaReader::start()
             }
             creds = grpc::SslCredentials(ssl_opts);
         }
-
-        const std::string addr = m_opts.address.isEmpty()
-            ? std::string("localhost:55555")
-            : m_opts.address.toStdString();
 
         auto channel = grpc::CreateChannel(addr, creds);
         m_stub = VAL::NewStub(channel);

@@ -14,7 +14,21 @@ using namespace kuksa;
 
 namespace feeder {
 
+// Returns true if the address targets the loopback interface (127.x.x.x, localhost, ::1).
+// Used to guard against insecure channels being accidentally opened over the network.
+static bool IsLoopback(const std::string& address)
+{
+    return address.find("localhost") == 0
+        || address.find("127.") == 0
+        || address.find("[::1]") == 0;
+}
+
 Publisher::Publisher(const std::string& address) {
+    if (!IsLoopback(address)) {
+        std::cerr << "[Publisher] WARNING: insecure channel requested for non-loopback address '"
+                  << address << "'. Vehicle telemetry will be transmitted in plaintext. "
+                  << "Use PublisherOptions with use_ssl=true to enable TLS." << std::endl;
+    }
     channel_ = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     stub_ = val::v2::VAL::NewStub(channel_);
     std::cout << "[Publisher] Connected to KUKSA databroker at " << address << std::endl;
@@ -25,6 +39,11 @@ Publisher::Publisher(const PublisherOptions& options)
 {
     std::shared_ptr<grpc::ChannelCredentials> channel_credentials;
     if (!options_.use_ssl) {
+        if (!IsLoopback(options_.address)) {
+            std::cerr << "[Publisher] WARNING: insecure channel requested for non-loopback address '"
+                      << options_.address << "'. Vehicle telemetry will be transmitted in plaintext. "
+                      << "Pass --tls to enable encryption." << std::endl;
+        }
         channel_credentials = grpc::InsecureChannelCredentials();
     } else {
         grpc::SslCredentialsOptions ssl_options;
