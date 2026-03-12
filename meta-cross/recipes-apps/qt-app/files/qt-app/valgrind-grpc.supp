@@ -1600,3 +1600,69 @@
    ...
    fun:*emitLineTo*
 }
+
+# ===========================================================================
+# gRPC global initialisation — grpc_init() / GrpcLibrary
+# ===========================================================================
+# grpc_init() is called once per process (triggered by GrpcLibrary's ctor when
+# the first gRPC channel is created). It allocates global singletons for:
+#   - the I/O manager (grpc_iomgr_init)
+#   - the WorkStealing event-engine thread pool
+#   - the default ResourceQuota
+#   - ChannelCredentials objects
+# All of these are intentionally reachable for the lifetime of the process
+# (freed only in grpc_shutdown(), which fires in the GrpcLibrary dtor).
+# Because gRPC defers full cleanup to static destructors that run after
+# Valgrind's leak-check snapshot, these blocks appear as "still reachable".
+# The existing subchannel suppression targets OldSubchannel::Create; these
+# new entries cover the earlier one-time init path.
+# ---------------------------------------------------------------------------
+{
+   grpc_global_init
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*grpc_init*
+}
+{
+   grpc_library_ctor
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*GrpcLibrary*GrpcLibrary*
+}
+{
+   grpc_iomgr_global_init
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*grpc_iomgr_init*
+}
+{
+   grpc_resource_quota_default
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*ResourceQuota*Default*
+}
+{
+   grpc_resource_quota_ctor
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*ResourceQuota*ResourceQuota*
+}
+{
+   grpc_channel_credentials_ctor
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*ChannelCredentials*ChannelCredentials*
+}
+{
+   grpc_refcounted_string_value
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*RefCountedStringValue*RefCountedStringValue*
+}
