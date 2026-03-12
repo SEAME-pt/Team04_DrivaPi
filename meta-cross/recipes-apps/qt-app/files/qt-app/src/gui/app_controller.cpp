@@ -77,11 +77,14 @@ int AppController::run(QGuiApplication& app)
     // Create and configure Pi Health Reader
     std::unique_ptr<drivaui::PiHealthReader> piHealth(new drivaui::PiHealthReader());
 
-    // Option A: If Qt app runs ON the Raspberry Pi (local)
+    // Deployment mode A (default): Qt app runs directly on the Raspberry Pi.
+    // The script is executed locally as a child process — no network involved.
     piHealth->setLocalScript("/usr/bin/pi_health.sh");
 
-    // Option B: If Qt app runs on macOS and calls Pi remotely
-    // piHealth->setRemoteSsh("pi@10.21.220.188", "/usr/bin/pi_health.sh");
+    // Deployment mode B (development only): Qt app runs on a remote host (e.g. macOS)
+    // and fetches health data from the RPi over SSH. Replace <rpi-user>@<rpi-host> with
+    // the actual SSH target before using this mode.
+    // piHealth->setRemoteSsh("<rpi-user>@<rpi-host>", "/usr/bin/pi_health.sh");
 
     piHealth->setIntervalMs(2000);  // Poll every 2 seconds
 
@@ -206,14 +209,18 @@ int AppController::run(QGuiApplication& app)
             return -1; // Exit gracefully
         }
 
-        // 2. Safe access to the window
+        // QQmlApplicationEngine::rootObjects() returns QObject*, not QWindow*.
+        // The QML root may be a QtQuick Window, ApplicationWindow, or a plain Item
+        // depending on the QML file. We must attempt a dynamic cast before calling
+        // any window-specific API such as showFullScreen().
         QObject* rootObj = engine.rootObjects().first();
         if (rootObj) {
             QWindow* window = qobject_cast<QWindow*>(rootObj);
             if (window) {
                 window->showFullScreen();
             } else {
-                qWarning() << "Root object is not a QWindow type.";
+                qWarning() << "Root QML object is not a QWindow — showFullScreen() skipped."
+                           << "Ensure main.qml has a Window or ApplicationWindow as its root.";
             }
         }
 

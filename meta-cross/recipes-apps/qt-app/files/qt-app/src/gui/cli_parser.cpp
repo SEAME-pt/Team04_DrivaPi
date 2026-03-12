@@ -71,29 +71,27 @@ static bool hasRawFlag(const QStringList& args, const QString& flag)
 bool validateOptions(const QCommandLineParser& parser, const CliOptions& opts,
                      const RunConfig& config, const QStringList& rawArgs)
 {
-    bool ok = true;
-
     if (parser.isSet(opts.kuksaTlsOption) && parser.isSet(opts.kuksaInsecureOption)) {
         qCritical() << "Cannot combine --kuksa-tls with --kuksa-insecure.";
-        ok = false;
+        return false;
     }
     if (parser.isSet(opts.kuksaTlsOption) && config.kuksa.rootCaPath.isEmpty()) {
         qCritical() << "--kuksa-tls requires --kuksa-ca to specify a root CA.";
-        ok = false;
+        return false;
     }
 #ifdef ENABLE_CAN_MODE
     if (!parser.isSet(opts.canModeOption) && parser.isSet(opts.canIfOption)) {
         qCritical() << "--can-if requires --can when CAN support is enabled.";
-        ok = false;
+        return false;
     }
 #else
     if (hasRawFlag(rawArgs, "--can") || hasRawFlag(rawArgs, "--can-if") || hasRawFlag(rawArgs, "-c")) {
         qCritical() << "CAN options require building with -DENABLE_CAN_MODE=ON.";
-        ok = false;
+        return false;
     }
 #endif
 
-    return ok;
+    return true;
 }
 
 }  // namespace drivaui
