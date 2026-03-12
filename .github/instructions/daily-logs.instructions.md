@@ -2,12 +2,14 @@
 
 When asked to create or update daily logs:
 
-1. **Location**: Store logs in `docs/standups/YYYY-MM-DD.md`
-2. **Format**: Use ISO date format (YYYY-MM-DD) for filenames
-3. **Day Counter**: Track day number in header (check previous logs to increment)
-4. **Team Members**: Afonso, Bernardo, Gaspar, Hugo, Melanie, Miguel
+1. **Identify the requesting user first**: Before anything else, determine who is asking — by GitHub username, name mentioned in the prompt, or context. Map them to their assigned weekday using the GitHub username mapping below. This determines which day's log to create.
+2. **Daily logs are never written on the same day**: The log date is always the author's assigned weekday in the past — never today. Logs can be created the next day or several days later, but never on the day itself. Always use `date -d "last [weekday]"` to find the most recent occurrence of the author's assigned day.
+3. **Location**: Store logs in `docs/standups/YYYY-MM-DD.md`
+4. **Format**: Use ISO date format (YYYY-MM-DD) for filenames
+5. **Day Counter**: Track day number in header (check previous logs to increment)
+6. **Team Members**: Afonso, Bernardo, Gaspar, Hugo, Melanie, Miguel
 
-5. **Date Detection & Assignment**:
+7. **Date Detection & Assignment**:
    - The team uses a **6-week rotating schedule** where Afonso covers for one person each week
    - **Week 1 Start Date**: February 23, 2026 (Monday)
    - Determine current week: `((weeks_since_feb_23_2026) % 6) + 1`
@@ -26,10 +28,11 @@ When asked to create or update daily logs:
      - `berestv` → Bernardo (Thursday, off Week 5)
      - `Biltes` → Miguel (Friday, off Week 6)
    - **Date Determination Logic** (if no date specified in prompt):
-     1. Calculate current week in rotation cycle from start date (Feb 24, 2026)
-     2. Check rotation schedule to see if requesting user is on duty this week
-     3. Use `date -d "last [weekday]" +%Y-%m-%d` to find the date of the last occurrence
-     4. Use that date for the new daily log
+     1. Identify the requesting user (name or GitHub username)
+     2. Map them to their assigned weekday using the GitHub username mapping above
+     3. Check the rotation schedule to confirm they are on duty this week (Afonso rotates)
+     4. Use `date -d "last [weekday]" +%Y-%m-%d` to get the date of their most recent assigned day
+     5. Use that date for the new daily log
      - If user explicitly specifies a date in the request, use that date regardless of rotation
    - Note: Any team member can create logs for another day if explicitly requested (e.g., covering for sick team member)
    - **Check Previous Log**: Always check and read the daily log from the day before the target date to:
@@ -37,7 +40,7 @@ When asked to create or update daily logs:
      - Reference ongoing work or blockers
      - Maintain continuity in navigation footer
 
-6. **Required Sections**:
+8. **Required Sections**:
    - Header with Day #, Date (Weekday, Month DD, YYYY), Team
    - "What We Did Today" - 2-3 sentence overview
    - "Team Progress" - Per person with ✅ Done and 🔄 In progress items
@@ -48,7 +51,7 @@ When asked to create or update daily logs:
    - "Standards & Research" - Relevant standards/research work
    - Navigation footer with Previous/Next links
 
-7. **Team Roles**:
+9. **Team Roles**:
    - Afonso: Qt Development
    - Bernardo: Hardware Integration & Testing
    - Gaspar: OS & Development Environment
@@ -56,14 +59,14 @@ When asked to create or update daily logs:
    - Melanie: GUI & Team Coordination
    - Miguel: GitHub Project & Agile/Scrum
 
-8. **Status Indicators**:
+10. **Status Indicators**:
    - ✅ Completed items
    - 🔄 In progress items
 
-9. **Images**: Use `![Description](../photos/filename.jpeg)` or HTML `<img>` tags
+11. **Images**: Use `![Description](../photos/filename.jpeg)` or HTML `<img>` tags
 
-10. **Reference template** at `docs/standups/daily-log-template.md` for exact format
-11. **Check Git Activity**: Before creating the log, review:
+12. **Reference template** at `docs/standups/daily-log-template.md` for exact format
+13. **Check Git Activity**: Before creating the log, review:
     - Commits from that day using `git log --since="YYYY-MM-DD 00:00" --until="YYYY-MM-DD 23:59" --oneline --all`
     - Pull requests from that day (merged, opened, or closed)
     - Use this information to accurately populate Team Progress and Software sections

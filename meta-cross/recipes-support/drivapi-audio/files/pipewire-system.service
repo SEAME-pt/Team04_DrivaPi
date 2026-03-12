@@ -1,0 +1,16 @@
+[Unit]
+Description=PipeWire (system-mode) for DrivaPi
+After=sound.service
+
+[Service]
+Type=simple
+RuntimeDirectory=pipewire
+RuntimeDirectoryMode=0755
+Environment=XDG_RUNTIME_DIR=/run/pipewire
+Environment=PIPEWIRE_RUNTIME_DIR=/run/pipewire
+ExecStart=/usr/bin/pipewire
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
