@@ -54,14 +54,15 @@ Configuration (typically in `/etc/default/kuksa-databroker`):
 
 **Production (with TLS/authorization):**
 ```bash
-EXTRA_ARGS="--address 0.0.0.0 --port 55555 --vss /etc/kuksa/vss.json --tls /etc/kuksa/server.crt --tls-key /etc/kuksa/server.key"
+EXTRA_ARGS="--address 127.0.0.1 --port 55555 --vss /etc/kuksa/vss.json --tls /etc/kuksa/server.crt --tls-key /etc/kuksa/server.key"
 ```
+> **Note:** The databroker is bound to `127.0.0.1` (loopback only). This is intentional: both the feeder and the Qt app run on the same device, so no network traversal is required. Do **not** use `0.0.0.0` unless you explicitly need remote access, in which case TLS is mandatory.
 
-**Development/Testing ONLY (⚠️ INSECURE - exposes signals without credentials):**
+**Development/Testing ONLY (⚠️ INSECURE - local loopback only):**
 ```bash
-EXTRA_ARGS="--address 0.0.0.0 --port 55555 --vss /etc/kuksa/vss.json --insecure --disable-authorization"
+EXTRA_ARGS="--address 127.0.0.1 --port 55555 --vss /etc/kuksa/vss.json --insecure --disable-authorization"
 ```
-⚠️ **WARNING:** The test-only configuration above allows any local network client to read or actuate all vehicle signals without encryption or authentication. **Never use in production or on networked deployments.**
+⚠️ **WARNING:** The test-only configuration above disables encryption and authorization. It is safe **only** because the broker is bound to the loopback interface (`127.0.0.1`) and is unreachable from any remote host. **Never bind to `0.0.0.0` with `--insecure`.**
 
 ### 2. VSS Signal Definitions
 
@@ -113,7 +114,16 @@ Default values:
 ### Custom Interface/Address
 
 ```bash
-./kuksa_feeder can1 192.168.1.100:55555
+# Same device — loopback is the correct and secure default
+./kuksa_feeder can1 localhost:55555
+
+# Remote databroker — TLS is mandatory when connecting over a network
+./kuksa_feeder --can-if can1 --address databroker.local:55555 --tls --ca /etc/kuksa/ca.crt
+```
+> ⚠️ **Never use a non-loopback address with `--insecure`.** Doing so will transmit
+> vehicle telemetry in plaintext over the network. The feeder will emit a runtime
+> warning if this misconfiguration is detected.
+
 ### TLS and Authorization
 
 The feeder supports TLS and optional mTLS, plus JWT-based authorization.
