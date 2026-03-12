@@ -8,6 +8,7 @@
 #include "feeder_signal.hpp"
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/time.h>
 #include <net/if.h>
 #include <linux/can/raw.h>
 #include <unistd.h>
@@ -51,6 +52,17 @@ int OpenCanSocket(const std::string& interface_name)
         return -1;
     }
 
+    // Set receive timeout so read() never blocks indefinitely.
+    // A 1 s window lets the main loop periodically check g_stopRequested on idle CAN lines.
+    struct timeval timeout;
+    timeout.tv_sec  = 1;
+    timeout.tv_usec = 0;
+    if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
+        std::cerr << "[CAN] Warning: failed to set receive timeout: " << std::strerror(errno)
+                  << " — read() may block indefinitely on idle lines" << std::endl;
+        // Non-fatal; fall through and continue with the blocking socket.
+    }
+
     std::cout << "[CAN] Listening on interface: " << interface_name << std::endl;
     return sock;
 }
@@ -72,6 +84,12 @@ bool ReadCanFrame(int sock, can_frame& frame)
     const ssize_t bytes_read = read(sock, &frame, sizeof(frame));
 
     if (bytes_read < 0) {
+        // SO_RCVTIMEO expired — no frame arrived in the timeout window.
+        // Expected on idle CAN lines; the caller should check stop flags and retry.
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            return false;
+        }
+
         // Read interrupted by signal
         if (errno == EINTR) {
             // Check if we were asked to stop

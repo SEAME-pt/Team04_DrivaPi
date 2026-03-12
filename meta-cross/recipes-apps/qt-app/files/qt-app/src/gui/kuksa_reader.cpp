@@ -146,8 +146,12 @@ void KuksaReader::start()
 
 bool KuksaReader::subscribeLoop(const std::vector<std::string>& paths)
 {
-    m_context = std::make_unique<grpc::ClientContext>();
-    attachAuth(*m_context);
+    // Guard the assignment: stop() may call TryCancel() concurrently from another thread.
+    {
+        std::lock_guard<std::mutex> lock(m_contextMutex);
+        m_context = std::make_unique<grpc::ClientContext>();
+        attachAuth(*m_context);
+    }
 
     SubscribeRequest request;
     for (const auto& p : paths)
@@ -204,6 +208,7 @@ bool KuksaReader::subscribeLoop(const std::vector<std::string>& paths)
 void KuksaReader::stop()
 {
     m_stopRequested.store(true);
+    std::lock_guard<std::mutex> lock(m_contextMutex);
     if (m_context) m_context->TryCancel();
 }
 

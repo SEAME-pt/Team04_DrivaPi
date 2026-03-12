@@ -13,9 +13,12 @@ namespace feeder {
 FeederConfig ParseArgs(int argc, char** argv)
 {
     FeederConfig config;
-    config.publisher_options.address = "localhost:55555";
-    config.publisher_options.use_ssl = false;
-    config.can_interface = "can1";
+    config.publisher_options.address  = "localhost:55555";
+    // Insecure by default: the databroker and feeder co-locate on the same RPi.
+    // Loopback traffic (127.0.0.1) never leaves the device, so TLS adds no meaningful
+    // protection here. Pass --tls (+ --ca) when the broker is accessed over the network.
+    config.publisher_options.use_ssl  = false;
+    config.can_interface              = "can1";
 
     int positional_count = 0;
     for (int i = 1; i < argc; ++i) {
@@ -62,6 +65,14 @@ FeederConfig ParseArgs(int argc, char** argv)
         else {
             std::cerr << "[CLI] Unknown option: " << arg << std::endl;
         }
+    }
+
+    // Post-parse validation: --tls without --ca falls back to the system CA store, which may
+    // not include the broker's self-signed certificate. Warn so the operator can correct this.
+    if (config.publisher_options.use_ssl && config.publisher_options.root_ca_path.empty()) {
+        std::cerr << "[CLI] Warning: --tls specified without --ca. "
+                  << "gRPC will use the system CA store. "
+                  << "Pass --ca /path/to/ca.crt for explicit certificate validation." << std::endl;
     }
 
     return config;

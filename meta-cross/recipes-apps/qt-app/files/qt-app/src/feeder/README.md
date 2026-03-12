@@ -142,6 +142,26 @@ sudo ip link set can1 up
 
 ## Usage
 
+### Permissions
+
+The feeder opens a raw CAN socket (`AF_CAN, SOCK_RAW`), which normally requires root.
+Instead of running the binary as root, grant only the specific capability it needs:
+
+```bash
+sudo setcap cap_net_raw+ep ./kuksa_feeder
+```
+
+This follows the **principle of least privilege**: the binary can open raw network sockets
+without having a full root context. Re-run `setcap` after every recompile (the capability
+is cleared when the file is replaced).
+
+To also allow higher scheduling priority (reduces CAN latency jitter):
+
+```bash
+sudo setcap cap_net_raw,cap_sys_nice+ep ./kuksa_feeder
+nice -n -20 ./kuksa_feeder   # no sudo needed once cap_sys_nice is granted
+```
+
 ### Basic
 
 ```bash
@@ -305,7 +325,7 @@ case can::ID_NEW_SENSOR:
 
 - Average CAN → KUKSA publish latency: **~2 ms**
 - OS scheduling spikes: up to ~37 ms (non-RTOS Linux)
-- To reduce scheduling jitter on the RPi5: `sudo nice -n -20 ./kuksa_feeder`
+- To reduce scheduling jitter on the RPi5: `nice -n -20 ./kuksa_feeder` (requires `cap_sys_nice` — see Permissions above)
 
 ## License
 

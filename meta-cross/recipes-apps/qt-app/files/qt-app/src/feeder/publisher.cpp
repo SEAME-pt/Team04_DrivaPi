@@ -129,7 +129,6 @@ bool Publisher::PublishFloat(const std::string& path, float value) {
             }
 
             if (local_stream) {
-                stream_stop_.store(false);
                 std::cout << "[Publisher] Provider stream opened" << std::endl;
                 // Send ProvideSignalRequest once per signal
                 bool need_provide = false;
@@ -316,8 +315,17 @@ bool Publisher::EnsureProviderStream() {
     stream_ = std::shared_ptr<grpc::ClientReaderWriter<kuksa::val::v2::OpenProviderStreamRequest,
                                                       kuksa::val::v2::OpenProviderStreamResponse>>(raw_uptr.release(), [](auto*p){ delete p; });
 
-    // No reader thread: we perform writes only and rely on permissive server behavior
+    // A bidirectional gRPC stream (ClientReaderWriter) requires the client to consume
+    // incoming server messages. Without a reader the server-side write buffer fills up,
+    // triggering HTTP/2 flow-control back-pressure that will eventually stall our writes.
     stream_stop_.store(false);
+    auto local_stream = stream_;
+    stream_reader_thread_ = std::thread([local_stream, &stop = stream_stop_]() {
+        kuksa::val::v2::OpenProviderStreamResponse response;
+        while (!stop.load() && local_stream && local_stream->Read(&response)) {
+            // Drain server acks / error responses — no processing required.
+        }
+    });
 
     return true;
 }
@@ -341,13 +349,9 @@ int32_t Publisher::LookupSignalId(const std::string& path) {
                 return md.id();
             }
         }
-        // If exact match not found, try to find an entry that equals the path
-        for (const auto& md : list_metadata_response.metadata()) {
-            if (md.path().size() >= path.size() && md.path().find(path) != std::string::npos) {
-                signal_id_cache_[path] = md.id();
-                return md.id();
-            }
-        }
+        // No exact match at this root level; fall through to parent-branch search below.
+        // A substring/contains match is intentionally avoided: "Vehicle.Speed" would
+        // incorrectly match "Vehicle.SpeedLimit" and return the wrong signal ID.
     }
 
     // Try parent branch search
