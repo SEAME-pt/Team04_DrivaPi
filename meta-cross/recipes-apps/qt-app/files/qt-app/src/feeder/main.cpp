@@ -36,7 +36,7 @@ int main(int argc, char** argv)
     // Scope ensures publisher (and all gRPC objects) are destroyed before grpc_shutdown()
     {
         // --- 3. Connect to KUKSA databroker ---
-        kuksa::Publisher publisher(config.publisher_options);
+        feeder::Publisher publisher(config.publisher_options);
         std::cout << "[Feeder] Connected to KUKSA databroker." << std::endl;
 
         // --- 4. Install signal handlers for graceful shutdown ---

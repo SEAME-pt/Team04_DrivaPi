@@ -8,7 +8,7 @@
 
 #include <linux/can.h>
 
-namespace kuksa {
+namespace feeder {
 class Publisher;
 }
 
@@ -23,10 +23,10 @@ namespace handlers {
  * @param frame The CAN frame
  * @param publisher KUKSA publisher instance
  */
-void HandleSpeed(const can_frame& frame, kuksa::Publisher& publisher);
-void HandleStm32Battery(const can_frame& frame, kuksa::Publisher& publisher);
-void HandleRpiBattery(const can_frame& frame, kuksa::Publisher& publisher);
-void HandleGear(const can_frame& frame, kuksa::Publisher& publisher);
-void HandleEnv(const can_frame& frame, kuksa::Publisher& publisher);
+void HandleSpeed(const can_frame& frame, feeder::Publisher& publisher);
+void HandleStm32Battery(const can_frame& frame, feeder::Publisher& publisher);
+void HandleRpiBattery(const can_frame& frame, feeder::Publisher& publisher);
+void HandleGear(const can_frame& frame, feeder::Publisher& publisher);
+void HandleEnv(const can_frame& frame, feeder::Publisher& publisher);
 
 } // namespace handlers
