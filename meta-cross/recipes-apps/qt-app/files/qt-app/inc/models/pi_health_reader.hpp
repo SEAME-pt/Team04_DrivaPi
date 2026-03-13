@@ -1,15 +1,14 @@
 /**
  * @file pi_health_reader.hpp
  * @author DrivaPi Team
- * @brief Polls Raspberry Pi system health metrics via a local or remote shell script.
+ * @brief Polls Raspberry Pi system health metrics directly from procfs/sysfs.
+ * @note No subprocess spawning — reads /proc and /sys via std::ifstream for deterministic latency.
  */
 
 #pragma once
 
 #include <QObject>
-#include <QProcess>
 #include <QTimer>
-#include <QJsonObject>
 #include <QString>
 
 namespace drivaui {
@@ -37,8 +36,6 @@ public:
     QString uptime() const { return m_uptime; }
     bool isOnline() const { return m_isOnline; }
 
-    void setRemoteSsh(const QString& userAtHost, const QString& remotePath);
-    void setLocalScript(const QString& path);
     void setIntervalMs(int ms);
 
 public slots:
@@ -51,11 +48,9 @@ signals:
 
 private slots:
     void poll();
-    void onProcessFinished(int exitCode, QProcess::ExitStatus status);
-    void onProcessError(QProcess::ProcessError err);
 
 private:
-    void parseJson(const QJsonObject& obj);
+    void readProcFs();
 
     float m_cpuTemp = 0.0f;
     int m_cpuFreq = 0;
@@ -65,14 +60,6 @@ private:
     QString m_uptime{"--"};
     bool m_isOnline = false;
 
-    enum Mode { Local, Remote };
-    Mode m_mode = Local;
-
-    QString m_localScript{"/usr/bin/pi_health.sh"};
-    QString m_sshTarget;
-    QString m_remoteScript;
-
-    QProcess* m_process = nullptr;
     QTimer* m_timer = nullptr;
 };
 
