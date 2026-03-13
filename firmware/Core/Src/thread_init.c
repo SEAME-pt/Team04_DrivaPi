@@ -108,12 +108,3 @@ void ThreadInit(void)
 	}
 }
 
-//	tx_trace_object_register(TX_TRACE_THREAD_EVENTS, &g_threads[supervisor_e].thread_ptr, "Supervisor Thread", 0);
-//	tx_trace_object_register(TX_TRACE_THREAD_EVENTS, &g_threads[ultrasonic_sensor_e].thread_ptr, "Ultrasonic Sensor Thread", 0);
-//	tx_trace_object_register(TX_TRACE_THREAD_EVENTS, &g_threads[dc_motor_e].thread_ptr, "DC Motor Thread", 0);
-//	tx_trace_object_register(TX_TRACE_THREAD_EVENTS, &g_threads[servo_motor_e].thread_ptr, "Servo Motor Thread", 0);
-//	tx_trace_object_register(TX_TRACE_THREAD_EVENTS, &g_threads[speed_sensor_e].thread_ptr, "Speed Sensor Thread", 0);
-//	tx_trace_object_register(TX_TRACE_THREAD_EVENTS, &g_threads[can_tx_e].thread_ptr, "CAN TX Thread", 0);
-//	tx_trace_object_register(TX_TRACE_THREAD_EVENTS, &g_threads[can_rx_e].thread_ptr, "CAN RX Thread", 0);
-//	tx_trace_object_register(TX_TRACE_THREAD_EVENTS, &g_threads[sensor_hts221_e].thread_ptr, "HTS221 Sensor Thread", 0);
-//	tx_trace_object_register(TX_TRACE_THREAD_EVENTS, &g_threads[sensor_battery_e].thread_ptr, "Battery Se nsor Thread", 0);
