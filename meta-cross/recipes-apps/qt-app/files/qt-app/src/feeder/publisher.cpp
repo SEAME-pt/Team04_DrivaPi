@@ -138,6 +138,8 @@ bool Publisher::PublishFloat(const std::string& path, float value) {
                         need_provide = true;
                     }
                 }
+
+                bool provide_ok = true;
                 if (need_provide) {
                     kuksa::val::v2::OpenProviderStreamRequest provide_request;
                     auto* provide_signal_request = provide_request.mutable_provide_signal_request();
@@ -147,49 +149,57 @@ bool Publisher::PublishFloat(const std::string& path, float value) {
                     sample_intervals[signal_id] = sample_interval;
 
                     try {
-                        if (!local_stream->Write(provide_request)) {
-                            std::cerr << "[Publisher] Failed to send ProvideSignalRequest for id=" << signal_id << std::endl;
-                        } else {
+                        if (local_stream->Write(provide_request)) {
                             std::lock_guard<std::mutex> lg(stream_mutex_);
                             provided_signals_.insert(signal_id);
                             std::cerr << "[Publisher] Sent ProvideSignalRequest for id=" << signal_id << std::endl;
+                        } else {
+                            std::cerr << "[Publisher] Failed to send ProvideSignalRequest for id=" << signal_id << std::endl;
+                            provide_ok = false;
                         }
                     } catch (const std::exception& e) {
                         std::cerr << "[Publisher] Exception writing ProvideSignalRequest: " << e.what() << std::endl;
+                        provide_ok = false;
                     } catch (...) {
                         std::cerr << "[Publisher] Unknown exception writing ProvideSignalRequest" << std::endl;
+                        provide_ok = false;
                     }
                 }
 
-                // Build PublishValuesRequest
-                kuksa::val::v2::OpenProviderStreamRequest publish_request;
-                auto* publish_values_request = publish_request.mutable_publish_values_request();
-                publish_values_request->set_request_id(next_request_id_++);
+                if (provide_ok) {
+                    // Build PublishValuesRequest
+                    kuksa::val::v2::OpenProviderStreamRequest publish_request;
+                    auto* publish_values_request = publish_request.mutable_publish_values_request();
+                    publish_values_request->set_request_id(next_request_id_++);
 
-                kuksa::val::v2::Datapoint data_point;
-                auto now = std::chrono::system_clock::now();
-                auto secs = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
-                auto nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count() - secs * 1000000000LL;
-                google::protobuf::Timestamp* timestamp = data_point.mutable_timestamp();
-                timestamp->set_seconds(secs);
-                timestamp->set_nanos(static_cast<int>(nanos));
-                data_point.mutable_value()->set_float_(value);
+                    kuksa::val::v2::Datapoint data_point;
+                    auto now = std::chrono::system_clock::now();
+                    auto secs = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
+                    auto nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count() - secs * 1000000000LL;
+                    google::protobuf::Timestamp* timestamp = data_point.mutable_timestamp();
+                    timestamp->set_seconds(secs);
+                    timestamp->set_nanos(static_cast<int>(nanos));
+                    data_point.mutable_value()->set_float_(value);
 
-                (*publish_values_request->mutable_data_points())[signal_id] = data_point;
+                    (*publish_values_request->mutable_data_points())[signal_id] = data_point;
 
-                try {
-                    if (local_stream->Write(publish_request)) {
-                        std::cerr << "[Publisher] Sent PublishValuesRequest for id=" << signal_id << std::endl;
-                        return true;
-                    } else {
-                        std::cerr << "[Publisher] Provider stream write failed for " << path << std::endl;
-                        // fallthrough to unary fallback
+                    try {
+                        if (local_stream->Write(publish_request)) {
+                            std::cerr << "[Publisher] Sent PublishValuesRequest for id=" << signal_id << std::endl;
+                            return true;
+                        } else {
+                            std::cerr << "[Publisher] Provider stream write failed for " << path << std::endl;
+                        }
+                    } catch (const std::exception& e) {
+                        std::cerr << "[Publisher] Exception writing PublishValuesRequest: " << e.what() << std::endl;
+                    } catch (...) {
+                        std::cerr << "[Publisher] Unknown exception writing PublishValuesRequest" << std::endl;
                     }
-                } catch (const std::exception& e) {
-                    std::cerr << "[Publisher] Exception writing PublishValuesRequest: " << e.what() << std::endl;
-                } catch (...) {
-                    std::cerr << "[Publisher] Unknown exception writing PublishValuesRequest" << std::endl;
                 }
+
+                // Stream write failed: reset so EnsureProviderStream() creates a fresh one
+                // on the next call. local_stream still holds a ref keeping the object alive.
+                ResetProviderStream();
             }
         }
     }
@@ -296,6 +306,25 @@ bool Publisher::PublishString(const std::string& path, const std::string& value)
     }
     
     return true;
+}
+
+// Tear down the broken provider stream so EnsureProviderStream() rebuilds it next call.
+// Safe to call from PublishFloat when a Write() fails: the local_stream shared_ptr copy
+// in the caller keeps the gRPC object alive until the function returns.
+void Publisher::ResetProviderStream() {
+    // Tell the reader thread to stop and unblock its Read() call.
+    stream_stop_.store(true);
+    if (stream_ctx_) {
+        stream_ctx_->TryCancel();
+    }
+    if (stream_reader_thread_.joinable()) {
+        stream_reader_thread_.join();
+    }
+    // Reset stream state under the lock so EnsureProviderStream() recreates it next call.
+    std::lock_guard<std::mutex> lg(stream_mutex_);
+    stream_.reset();
+    stream_ctx_.reset();
+    provided_signals_.clear();
 }
 
 // Ensure a provider stream is open and start a reader thread to consume responses

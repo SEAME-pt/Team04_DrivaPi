@@ -85,6 +85,7 @@ public:
 
 private:
     bool EnsureProviderStream();
+    void ResetProviderStream();
     int32_t LookupSignalId(const std::string& path);
 
     // Attach authorization metadata if token present
