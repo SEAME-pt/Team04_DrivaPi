@@ -74,21 +74,9 @@ int AppController::run(QGuiApplication& app)
     CanReader* canReader = nullptr;
 #endif
 
-    // Create and configure Pi Health Reader
+    // Create Pi Health Reader — reads metrics directly from procfs/sysfs
     std::unique_ptr<drivaui::PiHealthReader> piHealth(new drivaui::PiHealthReader());
-
-    // Deployment mode A (default): Qt app runs directly on the Raspberry Pi.
-    // The script is executed locally as a child process — no network involved.
-    piHealth->setLocalScript("/usr/bin/pi_health.sh");
-
-    // Deployment mode B (development only): Qt app runs on a remote host (e.g. macOS)
-    // and fetches health data from the RPi over SSH. Replace <rpi-user>@<rpi-host> with
-    // the actual SSH target before using this mode.
-    // piHealth->setRemoteSsh("<rpi-user>@<rpi-host>", "/usr/bin/pi_health.sh");
-
-    piHealth->setIntervalMs(2000);  // Poll every 2 seconds
-
-    // Start polling — keep owned by unique_ptr; raw pointer is a non-owning observer
+    piHealth->setIntervalMs(2000);
     piHealth->start();
 
     drivaui::PiHealthReader* piHealthRaw = piHealth.get();
