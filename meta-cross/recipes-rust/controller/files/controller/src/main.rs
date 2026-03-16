@@ -10,11 +10,11 @@ use std::{thread, time::Duration};
 /* CAN Protocol Constants */
 const CAN_ID_MOTOR: u16 = 44;
 const CAN_ID_SERVO: u16 = 45;
-const CAN_INTERFACE: &str = "can1";
+const CAN_INTERFACE: &str = "vcan0";
 
 /* Motor Constants */
-const MAX_MOTOR_SPEED: f64 = 4095.0;
-const MIN_MOTOR_SPEED: f64 = -4095.0;
+const MAX_MOTOR_SPEED: f64 = 2.5;
+const MIN_MOTOR_SPEED: f64 = -2.5;
 
 /* Servo Constants */
 const MAX_SERVO_ANGLE: f64 = 180.0;
@@ -268,7 +268,7 @@ fn run_manual_mode(gamepad: &mut Gamepad, controller: &MotorController) -> Resul
     let mut prev_servo_angle = 90.0;
     
     // Threshold for detecting meaningful changes
-    const MOTOR_THRESHOLD: f64 = 10.0;  // Only send if change > 10 counts
+    const MOTOR_THRESHOLD: f64 = 0.01;  // Only send if change > 10 counts
     const SERVO_THRESHOLD: f64 = 1.0;   // Only send if change > 1 degree
 
     loop {
@@ -286,9 +286,12 @@ fn run_manual_mode(gamepad: &mut Gamepad, controller: &MotorController) -> Resul
         // Get control inputs
         let steering = input.analog_stick_right.x;   // Right stick X: -1.0 to 1.0
         let throttle = input.analog_stick_left.y;    // Left stick Y: -1.0 to 1.0
+        let max_speed = input.button_r2;
 
         // Calculate motor speeds (same for both motors, no differential)
-        let motor_speed = throttle * MAX_MOTOR_SPEED;
+        let motor_speed;
+        if max_speed{ motor_speed = throttle * MAX_MOTOR_SPEED; }
+        else { motor_speed = throttle * MAX_MOTOR_SPEED / 2.0; }
 
         // Calculate servo angle (map -1..1 to 0..180)
         let servo_angle = ((steering + 1.0) / 2.0) * MAX_SERVO_ANGLE;
@@ -297,7 +300,7 @@ fn run_manual_mode(gamepad: &mut Gamepad, controller: &MotorController) -> Resul
         if (motor_speed - prev_motor_speed).abs() > MOTOR_THRESHOLD {
             controller.send_motor_command(motor_speed, motor_speed)?;
             prev_motor_speed = motor_speed;
-            println!("Motor updated: {:.0}", motor_speed);
+            println!("Motor updated: {}", motor_speed);
         }
 
         // Send servo command only if value changed significantly
