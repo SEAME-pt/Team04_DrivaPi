@@ -31,4 +31,4 @@ jobs:
 
       - name: Push to meta-cross repo
         run: |
-git push https://x-access-token:${{ secrets.META_DRIVAPI_PUSH_TOKEN }}@github.com/Zahhask45/meta-drivapi.git meta-cross-only:main --force
+          git push https://x-access-token:${{ secrets.META_DRIVAPI_PUSH_TOKEN }}@github.com/Zahhask45/meta-drivapi.git meta-cross-only:main --force
