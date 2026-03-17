@@ -51,8 +51,24 @@ int main(int argc, char** argv)
                 continue;  // Retry on error (unless stop requested)
             }
 
+            // Skip SocketCAN error frames — they carry fault flags, not telemetry.
+            // Without CAN_RAW_ERR_FILTER, the OS drops them by default; but relying on
+            // that implicit behaviour is fragile: an error frame reaching this point would
+            // have its ID truncated by CAN_SFF_MASK and be dispatched as vehicle data,
+            // disguising a hardware fault as a valid telemetry value.
+            if (frame.can_id & CAN_ERR_FLAG) {
+                std::cerr << "[CAN] Error frame received — skipping." << std::endl;
+                continue;
+            }
+
+            // Mask the CAN ID according to the actual frame type.
+            // Extended frames (CAN_EFF_FLAG) use 29-bit IDs; standard frames use 11-bit.
+            // Blindly applying CAN_SFF_MASK to an EFF frame silently truncates the upper bits.
+            const uint32_t can_id = (frame.can_id & CAN_EFF_FLAG)
+                                        ? (frame.can_id & CAN_EFF_MASK)
+                                        : (frame.can_id & CAN_SFF_MASK);
+
             // Dispatch frame to appropriate handler
-            const uint32_t can_id = frame.can_id & CAN_SFF_MASK;
             switch (can_id) {
                 case can::ID_SPEED:
                     handlers::HandleSpeed(frame, publisher);
