@@ -33,4 +33,6 @@ jobs:
 
       - name: Push to meta-cross repo
         run: |
-          git push https://${{ secrets.META_DRIVAPI_PUSH_TOKEN }}@github.com/Zahhask45/meta-drivapi.git meta-cross-only:main --force -v || exit 1
+          git config --global credential.helper store
+          echo "https://${{ secrets.META_DRIVAPI_PUSH_TOKEN }}@github.com" > ~/.git-credentials
+          git push https://github.com/Zahhask45/meta-drivapi.git meta-cross-only:main --force -v || exit 1
