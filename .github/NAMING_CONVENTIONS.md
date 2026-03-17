@@ -97,6 +97,25 @@ Configuration files follow their ecosystem conventions:
 - `Gemfile` (capitalized)
 - `CODE_OF_CONDUCT.md` (uppercase)
 
+### Systemd Service Files
+Systemd `.service` files use **kebab-case** (hyphens), following the systemd/freedesktop ecosystem convention. This is intentional and **not** a violation of the snake_case rule.
+
+Systemd identifies and references units by their filename (e.g. via `After=`, `Wants=`, `systemctl enable`). Renaming to snake_case would change the unit name visible to the OS and could break service dependencies.
+
+**Examples:**
+- `pipewire-system.service` ✅
+- `wireplumber-system.service` ✅
+- `drivapi-dashboard.service` ✅
+
+### Yocto Recipe Files
+Yocto `.bb` recipe files use **snake_case**, consistent with the project convention.
+
+**Exception:** `.bbappend` files **must** match the upstream recipe name they extend (Bitbake file-based matching). Renaming a `.bbappend` causes it to be silently ignored by the build system.
+
+**Examples:**
+- `qt_app_git.bb` ✅ (snake_case, with explicit `PN` override if needed)
+- `gstreamer1.0-plugins-good_%.bbappend` ✅ (must match upstream name — not a convention violation)
+
 ## Summary Table
 
 | Type | Convention | Example |
@@ -110,6 +129,9 @@ Configuration files follow their ecosystem conventions:
 | QML components | **PascalCase** (mandatory) | `BatteryIndicator.qml`, `EnergyDisplay.qml` |
 | Markdown files | snake_case | `project_guidelines.md` |
 | Template files | snake_case + `_template` | `issue_template.md` |
+| Yocto `.bb` files | snake_case | `qt_app_git.bb`, `drivapi_audio_1.0.bb` |
+| Yocto `.bbappend` files | match upstream recipe name | `gstreamer1.0-plugins-good_%.bbappend` |
+| Systemd `.service` files | kebab-case (ecosystem convention) | `pipewire-system.service` |
 
 ## Guidelines
 
