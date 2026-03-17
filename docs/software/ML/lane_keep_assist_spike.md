@@ -57,25 +57,25 @@ The transformation pipeline converts raw camera frames into physical steering an
 
 ### 4.1 Inverse Perspective Mapping (IPM)
 To reduce perspective distortion and approximate ground-plane geometry, we apply a homography matrix $H$:
-$$
+```math
 \begin{bmatrix} x_{bev} \\ y_{bev} \\ 1 \end{bmatrix} = H \cdot \begin{bmatrix} u \\ v \\ 1 \end{bmatrix}
-$$
+```
 where $(u, v)$ are image pixels and $(x_{bev}, y_{bev})$ are bird's-eye-view coordinates.
 
 ### 4.2 Path Fitting
 Detected centerline points are fitted to a second-order polynomial:
-$$
+```math
 f(x) = Ax^2 + Bx + C
-$$
+```
 - **A (Curvature):** Defines the turn intensity.
 - **C (Lateral Offset):** Distance from the center of the lane.
 
 ### 4.3 Computer Vision (CV) Control Branch
 In the geometric branch, we compute steering from lane geometry using a model-based controller.
 For the Stanley method, the steering command can be expressed as:
-$$
+```math
 \delta = \psi_e + \arctan\left(\frac{k e_c}{v + \epsilon}\right)
-$$
+```
 - $\psi_e$: Heading error.
 - $e_c$: Cross-track error.
 - $k$: Stanley gain.
