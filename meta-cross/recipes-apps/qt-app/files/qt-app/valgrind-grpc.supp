@@ -1,0 +1,759 @@
+# Valgrind suppression file for kuksa_feeder and myqtapp
+#
+# Suppresses known false-positives from gRPC, protobuf, and abseil that are
+# triggered at static-initialization time (before main()) or via intentional
+# NoDestruct<> singletons, and which cannot be freed by user code.
+#
+# Usage:
+#   valgrind --leak-check=full --suppressions=valgrind-grpc.supp ./kuksa_feeder
+#   valgrind --leak-check=full --suppressions=valgrind-grpc.supp ./myqtapp
+#
+# Run with --gen-suppressions=all to add new entries if gRPC/protobuf is updated.
+
+# ===========================================================================
+# BROAD SUPPRESSION: all static-init allocations (before main())
+#
+# Every remaining block traces back to:
+#   call_init → __libc_start_main  (the dynamic linker calling C++ static
+#   constructors when loading .so files, before main() is entered)
+#
+# Sources include: gRPC filter registries, protobuf DescriptorPool,
+# abseil flag/hash-map tables, gRPC InstrumentDomain, UniqueTypeName::Factory,
+# DefaultGlobalCallbackHook, EncodedDescriptorDatabase, etc.
+# None of these can be freed by user code.
+# ===========================================================================
+{
+   grpc_protobuf_static_init_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:call_init
+   fun:__libc_start_main*
+}
+
+{
+   grpc_protobuf_static_init_possibly_lost
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:call_init
+   fun:__libc_start_main*
+}
+
+# GCC splits call_init into call_init.part.0 in some builds (e.g. libGL,
+# libEGL, libGLdispatch on Ubuntu 22.04+). The actual stack is:
+#   call_init.part.0 → call_init → _dl_init
+{
+   static_init_part0_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:call_init.part.0
+   fun:call_init
+   fun:_dl_init
+}
+
+{
+   static_init_part0_possibly_lost
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:call_init.part.0
+   fun:call_init
+   fun:_dl_init
+}
+
+# ---------------------------------------------------------------------------
+# Deep stacks: call_init is beyond Valgrind's default 12-frame capture limit.
+# Match on distinctive mid-stack functions instead.
+# ---------------------------------------------------------------------------
+
+# protobuf: all descriptor/pool allocations at binary load time
+{
+   protobuf_add_descriptors_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*google*protobuf*internal*AddDescriptors*
+}
+
+{
+   protobuf_internal_add_generated_file_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*google*protobuf*DescriptorPool*InternalAddGeneratedFile*
+}
+
+{
+   protobuf_encoded_descriptor_database_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*google*protobuf*EncodedDescriptorDatabase*
+}
+
+# protobuf: GeneratedMessageFactory and WellKnownType hash tables
+{
+   protobuf_generated_message_factory_possible
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:*google*protobuf*GeneratedMessageFactory*
+}
+
+{
+   protobuf_well_known_type_possible
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:*google*protobuf*Descriptor*WellKnownType*
+}
+
+# abseil: CommandLineFlag global registry
+{
+   absl_commandlineflag_possible
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:*absl*CommandLineFlag*
+}
+
+# gRPC: InstrumentMetadata / InstrumentDomain descriptor registries
+{
+   grpc_instrument_metadata_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*grpc_core*InstrumentMetadata*
+}
+
+{
+   grpc_instrument_domain_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*grpc_core*InstrumentDomain*
+}
+
+# ---------------------------------------------------------------------------
+# Qt: D-Bus internal allocations (QDBusConnectionManager thread + signals)
+# Qt spins up a background thread and wires internal signals when initialising
+# the D-Bus session bus for the xcb platform plugin. These are Qt-managed
+# singletons that outlive main() intentionally.
+# ---------------------------------------------------------------------------
+{
+   qt_dbus_connection_manager_tls
+   Memcheck:Leak
+   match-leak-kinds: reachable,possible
+   ...
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create*
+   fun:*QThread*start*
+   fun:*QDBusConnectionManager*
+}
+
+{
+   qt_dbus_signal_vector
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:*resizeSignalVector*
+   ...
+   fun:*QDBusConnectionInterface*
+}
+
+# ---------------------------------------------------------------------------
+# Dynamic linker: _dl_find_object mapping table grown when dlopen() loads
+# a Qt platform plugin (.so). The linker owns this memory for the process
+# lifetime and frees it on exit — not a real leak.
+# ---------------------------------------------------------------------------
+{
+   dl_find_object_update_possible
+   Memcheck:Leak
+   match-leak-kinds: reachable,possible
+   ...
+   fun:_dl_find_object_update*
+   fun:dl_open_worker*
+}
+
+# ---------------------------------------------------------------------------
+# gRPC WorkStealingThreadPool pthread TLS (background threads, system-managed)
+# Stack has two calloc frames (vgpreload + rtld-malloc), so start with ...
+# ---------------------------------------------------------------------------
+{
+   grpc_work_stealing_thread_pool_tls
+   Memcheck:Leak
+   match-leak-kinds: reachable,possible
+   ...
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create*
+   ...
+   fun:*WorkStealingThreadPool*
+}
+
+# ---------------------------------------------------------------------------
+# gRPC call infrastructure leaked on forced shutdown (Ctrl+C / SIGTERM).
+# When myqtapp is interrupted while a KUKSA gRPC call is in flight the Arena,
+# FilterStackCall, and RetryFilter objects are never freed.  These are gRPC
+# internal objects — not in application code — and the OS reclaims them.
+# ---------------------------------------------------------------------------
+{
+   grpc_arena_create
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*grpc_core*Arena*Create*
+}
+
+{
+   grpc_filter_stack_call
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*grpc_core*FilterStackCall*Create*
+}
+
+{
+   grpc_retry_filter
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*grpc_core*RetryFilter*
+}
+
+{
+   grpc_status_alloc_heap
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*grpc_core*internal*StatusAllocHeapPtr*
+}
+
+{
+   absl_status_rep_clone
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*absl*status_internal*StatusRep*
+}
+
+{
+   grpc_cord_flat
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*absl*cord_internal*CordRepFlat*NewImpl*
+}
+
+# ===========================================================================
+# Qt QML engine internals (myqtapp)
+#
+# When the QML engine compiles and instantiates .qml files it builds internal
+# property caches, meta-objects and type data structures.  Qt does not fully
+# release these on application exit — they are intentional caches held by the
+# QQmlEngine singleton.  None of these originate in application code.
+# ===========================================================================
+
+{
+   qml_property_cache_creator
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QQmlPropertyCacheCreator*
+}
+
+{
+   qml_type_data
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QQmlTypeData*
+}
+
+{
+   qml_type_compiler
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QQmlTypeCompiler*compile*
+}
+
+{
+   qml_object_creator
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QQmlObjectCreator*
+}
+
+{
+   qml_component_complete
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QQmlComponentPrivate*complete*
+}
+
+{
+   qtquick_animation
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QQuickAbstractAnimation*
+}
+
+{
+   qt_signal_vector_generic
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:*resizeSignalVector*
+   fun:addConnection*
+   fun:*QObjectPrivate*connectImpl*
+}
+
+# ===========================================================================
+# libfontconfig: FcFontMatch leaks a pattern on every fallback font query.
+# Known upstream bug — the FcPattern* is returned but never destroyed.
+# ===========================================================================
+{
+   fontconfig_fcfontmatch
+   Memcheck:Leak
+   match-leak-kinds: definite,indirect,possible,reachable
+   ...
+   fun:FcFontMatch
+   ...
+}
+
+{
+   fontconfig_fcfontrenderprep
+   Memcheck:Leak
+   match-leak-kinds: definite,indirect,possible,reachable
+   ...
+   fun:FcFontRenderPrepare
+   ...
+}
+
+# ---------------------------------------------------------------------------
+# Qt: remaining internal allocations not covered by QQmlPropertyCacheCreator
+# ---------------------------------------------------------------------------
+{
+   qml_property_cache_shared_once
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:setSharedOnce*
+   ...
+   fun:*QQmlPropertyCache*
+}
+
+{
+   qt_binding_status_list
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:*QtPrivate*BindingStatusOrList*
+}
+
+{
+   qt_linked_string_hash
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QLinkedStringHash*linkAndReserve*
+}
+
+# ===========================================================================
+# Qt Network / TLS stack (myqtapp QML XHR calls)
+#
+# QML makes XMLHttpRequest (XHR) calls which go through QNetworkAccessManager.
+# On the first HTTPS request Qt loads the system certificate store via
+# QTlsBackendOpenSSL::ensureCiphersAndCertsLoaded (QDirIterator over /etc/ssl).
+# These are Qt-managed objects outside application code.
+# ===========================================================================
+{
+   qt_network_reply_http
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QNetworkReplyHttpImpl*
+}
+
+{
+   qt_network_access_manager
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QNetworkAccessManager*createRequest*
+}
+
+{
+   qt_tls_backend_openssl
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QTlsBackendOpenSSL*ensureCiphersAndCertsLoaded*
+}
+
+{
+   qt_ssl_configuration
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QSslConfiguration*defaultConfiguration*
+}
+
+# ===========================================================================
+# Mesa/LLVMPIPE GPU JIT false positives (myqtapp offscreen rendering)
+#
+# QML map/shader components trigger Mesa's JIT compiler via mmap(/dev/zero).
+# Valgrind cannot track JIT code memory accesses - all errors here are false
+# positives from shader bytecode executing on mapped anonymous pages.
+# Root fix: run with QT_QUICK_BACKEND=software to bypass Mesa JIT entirely.
+# ===========================================================================
+{
+   mesa_jit_cond_uninit
+   Memcheck:Cond
+   obj:/dev/zero
+}
+
+{
+   mesa_jit_addr8
+   Memcheck:Addr8
+   obj:/dev/zero
+}
+
+{
+   mesa_jit_addr4
+   Memcheck:Addr4
+   obj:/dev/zero
+}
+
+{
+   mesa_jit_value8
+   Memcheck:Value8
+   obj:/dev/zero
+}
+
+# ===========================================================================
+# QProcess probe syscall — Qt platform detection at startup
+#
+# Qt calls sys_waitid with a null infop pointer intentionally as a probe to
+# detect clone/pidfd support. Not a real error.
+# ===========================================================================
+{
+   qprocess_detect_clone_pidfd
+   Memcheck:Param
+   waitid(infop)
+   fun:syscall
+   fun:sys_waitid
+   fun:detect_clone_pidfd_support
+   ...
+   fun:*QProcess*
+}
+
+# ===========================================================================
+# PulseAudio TLS pthread (child process — QMediaPlayer spawns media process)
+#
+# QMediaPlayer triggers QPulseAudioEngine which starts a pa_threaded_mainloop.
+# The pthread TLS block is OS-managed (never leaked in production).
+# ===========================================================================
+{
+   pulseaudio_tls_pthread
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create*
+   ...
+   fun:*QPulseAudioEngine*prepare*
+}
+
+# ===========================================================================
+# gRPC completion queue internal allocation
+#
+# grpc::CompletionQueue allocates its internal grpc_completion_queue via
+# grpc_completion_queue_create_internal. Freed on shutdown but Valgrind
+# sometimes reports it when app exits via signal.
+# ===========================================================================
+{
+   grpc_completion_queue_alloc
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*grpc_completion_queue_create_internal*
+}
+
+# ===========================================================================
+# gRPC call batch / cq_begin_op realloc
+#
+# FilterStackCall::StartBatch reallocates a completion queue op array.
+# Freed on call completion, but leaked when app exits mid-call.
+# ===========================================================================
+{
+   grpc_cq_begin_op_realloc
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*grpc_cq_begin_op*
+}
+
+# ===========================================================================
+# gRPC LegacyChannelIdleFilter SimpleArena allocation
+#
+# Internal timer arena allocated when an idle timer fires on channel shutdown.
+# ===========================================================================
+{
+   grpc_legacy_channel_idle_arena
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*grpc_core*LegacyChannelIdleFilter*
+}
+
+# ===========================================================================
+# absl flat_hash_map backing array growth
+#
+# absl::flat_hash_map reallocates its backing array during gRPC metadata
+# and channel registry operations. Not application code.
+# ===========================================================================
+{
+   absl_flat_hash_backing_array
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*absl*container_internal*AllocateBackingArray*
+}
+
+# ===========================================================================
+# absl::StrCat string allocation (gRPC error message construction)
+#
+# gRPC builds error messages with absl::StrCat when connections fail.
+# These temporary strings leak when app exits during connection retry.
+# Anchored to a gRPC caller frame to avoid suppressing app-code StrCat calls.
+# ===========================================================================
+{
+   absl_strcat_grpc_error
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*absl*StrCat*
+   ...
+   fun:*grpc*
+}
+
+# ===========================================================================
+# Qt HTTP thread delegate signal connections
+#
+# QHttpThreadDelegate::startRequest() connects signals/slots for network
+# requests. The signal vector is a Qt-internal reachable allocation.
+# ===========================================================================
+{
+   qt_http_thread_delegate_signals
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QHttpThreadDelegate*startRequest*
+}
+
+# ===========================================================================
+# QNetworkRequest clone via QSharedDataPointer detach
+#
+# Qt detaches a shared QNetworkRequestPrivate when setAttribute is called.
+# The old copy may appear as a leak when app exits during active requests.
+# ===========================================================================
+{
+   qt_network_request_detach
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   fun:*QNetworkRequest*setAttribute*
+}
+
+# ===========================================================================
+# libfontconfig / libexpat internal allocations
+#
+# libfontconfig uses libexpat to parse font config files. Both are system
+# libraries with no debug symbols (??? frames). These are one-time static
+# allocations kept alive for the process lifetime.
+# ===========================================================================
+{
+   fontconfig_internal_leak
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   obj:*/libfontconfig*
+}
+
+{
+   libexpat_internal_leak
+   Memcheck:Leak
+   match-leak-kinds: possible,definite,indirect,reachable
+   ...
+   obj:*/libexpat*
+}
+
+# ===========================================================================
+# QString::reallocData — string buffer resize in Qt-internal code only
+#
+# Qt reallocates internal string storage. Suppresses only possible/reachable
+# (not definite/indirect) so that a real app-code QString definite leak is
+# never silently hidden.  Applies only to Qt's own string-growth paths.
+# ===========================================================================
+{
+   qt_qstring_realloc_data
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:*QString*reallocData*
+}
+
+# ===========================================================================
+# gRPC timer manager thread TLS
+# ===========================================================================
+{
+   grpc_timer_manager_tls
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create*
+   ...
+   fun:*grpc_timer_manager_init*
+}
+
+# ===========================================================================
+# gRPC WorkStealingThreadPool Lifeguard thread TLS
+# ===========================================================================
+{
+   grpc_workstealing_lifeguard_tls
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create*
+   ...
+   fun:*WorkStealingThreadPool*Lifeguard*
+}
+
+# ===========================================================================
+# Qt QThread TLS — AppController background thread
+# ===========================================================================
+{
+   qt_app_controller_thread_tls
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create*
+   fun:*QThread*start*
+   ...
+   fun:*drivaui*AppController*run*
+}
+
+# ===========================================================================
+# Qt QThread TLS — QML engine type loader thread
+# ===========================================================================
+{
+   qt_qml_type_loader_thread_tls
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create*
+   fun:*QThread*start*
+   fun:*QQmlThread*startup*
+}
+
+# ===========================================================================
+# Qt thread pool TLS — DNS host info lookup
+# ===========================================================================
+{
+   qt_host_info_lookup_thread_tls
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create*
+   ...
+   fun:*QHostInfoLookupManager*
+}
+
+# ===========================================================================
+# Qt thread pool TLS — QImage format conversion worker
+# ===========================================================================
+{
+   qt_image_convert_thread_tls
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create*
+   ...
+   fun:*QImage*convertToFormat*
+}
+
+# ===========================================================================
+# QML IR builder QString allocations (QmlIR::IRBuilder::visit)
+# ===========================================================================
+{
+   qml_ir_builder_string
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:*QmlIR*IRBuilder*visit*
+}
+
+# ===========================================================================
+# gRPC MemoryQuota instrument domain storage (static singleton)
+# ===========================================================================
+{
+   grpc_memory_quota_instrument
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:*grpc_core*instrument_detail*QueryableDomain*GetDomainStorage*
+}
+
+# ===========================================================================
+# gRPC StatusCreate — absl::Status allocated on connection failure
+# ===========================================================================
+{
+   grpc_status_create
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:*grpc_core*StatusCreate*
+}
+
+# ===========================================================================
+# gRPC metadata std::variant<string_view, string> copy
+# gRPC metadata values use std::variant; copying allocates a std::string heap
+# buffer that may outlive the channel when the app exits during retry.
+# ===========================================================================
+{
+   grpc_metadata_variant_string
+   Memcheck:Leak
+   match-leak-kinds: possible,reachable
+   ...
+   fun:*std*__detail*__variant*_Copy_ctor_base*
+}
