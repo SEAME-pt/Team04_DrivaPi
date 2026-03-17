@@ -1,5 +1,5 @@
 ---
-id: HLTC-SPEED_ACCURACY
+id: HLTC-SPEED-ACCURACY
 header: "Speed Measurement Accuracy Test"
 text: |
   "Verifies odometer accuracy against external ground truth."
@@ -13,6 +13,14 @@ reviewers:
   - name: "Melanie Reis"
     email: "melanie.reis@seame.pt"
 reviewed: ''
+
+references:
+  - type: "file"
+    path: "tests/system/speed/speed_accuracy_system_test.md"
+    note: "System test result — 2.52% deviation at ~1.05 m/s over 2 m, PASS (tolerance < 5%). Measurements from KUKSA data broker cross-checked against stopwatch timing."
+
+score:
+  MelanieReis: 1.0
 
 active: true
 derived: false
