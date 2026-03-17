@@ -1,0 +1,17 @@
+[Unit]
+Description=pipewire-pulse (system-mode) for DrivaPi
+After=pipewire-system.service wireplumber-system.service pipewire.socket
+Requires=pipewire-system.service
+Wants=wireplumber-system.service
+
+[Service]
+Type=simple
+Environment=XDG_RUNTIME_DIR=/run/pipewire
+Environment=PIPEWIRE_RUNTIME_DIR=/run/pipewire
+ExecStart=/usr/bin/pipewire-pulse
+Restart=on-failure
+RestartSec=2
+SyslogIdentifier=pipewire-pulse
+
+[Install]
+WantedBy=multi-user.target

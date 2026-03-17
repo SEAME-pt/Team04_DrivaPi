@@ -1,0 +1,16 @@
+[Unit]
+Description=WirePlumber (system-mode) for DrivaPi
+After=pipewire-system.service pipewire.socket
+Requires=pipewire-system.service
+
+[Service]
+Type=simple
+Environment=XDG_RUNTIME_DIR=/run/pipewire
+Environment=PIPEWIRE_RUNTIME_DIR=/run/pipewire
+ExecStart=/usr/bin/wireplumber
+Restart=on-failure
+RestartSec=2
+SyslogIdentifier=wireplumber
+
+[Install]
+WantedBy=multi-user.target

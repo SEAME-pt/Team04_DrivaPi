@@ -1,5 +1,5 @@
 ---
-id: HLTC-STEERING_ACCURACY
+id: HLTC-STEERING-ACCURACY
 header: "Steering Angle Accuracy System Test"
 text: |
   "Verifies that steering commands result in correct physical wheel angles."
@@ -13,6 +13,17 @@ reviewers:
   - name: "Melanie Reis"
     email: "melanie.reis@seame.pt"
 reviewed: ''
+
+references:
+  - type: "file"
+    path: "tests/system/steering/steering_precision_system_test.md"
+    note: "System test result — commanded left/centre/right positions verified, symmetric deflection within ±2° tolerance, PASS."
+  - type: "file"
+    path: "tests/system/steering/evidence/steering_precision_system_test.mp4"
+    note: "Video evidence of physical steering angle validation across all commanded positions."
+
+score:
+  MelanieReis: 1.0
 
 active: true
 derived: false
