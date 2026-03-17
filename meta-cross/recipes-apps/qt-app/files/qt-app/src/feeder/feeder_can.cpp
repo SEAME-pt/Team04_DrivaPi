@@ -101,8 +101,11 @@ bool ReadCanFrame(int sock, can_frame& frame)
             return false;
         }
 
-        // Actual read error
-        std::cerr << "[CAN] Read error: " << std::strerror(errno) << std::endl;
+        // Fatal error: socket is unusable. Signal the main loop to exit rather than
+        // spinning on continuous errors (e.g. ENETDOWN, EBADF, ENODEV).
+        std::cerr << "[CAN] Fatal read error: " << std::strerror(errno)
+                  << " — stopping feeder" << std::endl;
+        g_stopRequested.store(true);
         return false;
     }
 

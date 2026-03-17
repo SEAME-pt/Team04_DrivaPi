@@ -10,9 +10,18 @@
 #include <chrono>
 #include <google/protobuf/timestamp.pb.h>
 
-using namespace kuksa;
-
 namespace feeder {
+
+// Explicit type imports to avoid polluting the global namespace.
+using kuksa::val::v2::VAL;
+using kuksa::val::v2::PublishValueRequest;
+using kuksa::val::v2::PublishValueResponse;
+using kuksa::val::v2::ListMetadataRequest;
+using kuksa::val::v2::ListMetadataResponse;
+using kuksa::val::v2::OpenProviderStreamRequest;
+using kuksa::val::v2::OpenProviderStreamResponse;
+using kuksa::val::v2::SampleInterval;
+using kuksa::val::v2::Datapoint;
 
 // Returns true if the address targets the loopback interface (127.x.x.x, localhost, ::1).
 // Used to guard against insecure channels being accidentally opened over the network.
@@ -30,7 +39,7 @@ Publisher::Publisher(const std::string& address) {
                   << "Use PublisherOptions with use_ssl=true to enable TLS." << std::endl;
     }
     channel_ = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-    stub_ = val::v2::VAL::NewStub(channel_);
+    stub_ = VAL::NewStub(channel_);
     std::cout << "[Publisher] Connected to KUKSA databroker at " << address << std::endl;
 }
 
@@ -59,7 +68,7 @@ Publisher::Publisher(const PublisherOptions& options)
     }
 
     channel_ = grpc::CreateChannel(options_.address, channel_credentials);
-    stub_ = val::v2::VAL::NewStub(channel_);
+    stub_ = VAL::NewStub(channel_);
     // Verify channel connectivity (blocks briefly)
     if (!channel_->WaitForConnected(std::chrono::system_clock::now() + std::chrono::seconds(2))) {
         std::cerr << "[Publisher] Warning: Channel not connected to " << options_.address 
@@ -98,8 +107,8 @@ Publisher::~Publisher() {
 bool Publisher::PublishDouble(const std::string& path, double value) {
     grpc::ClientContext context;
     AttachAuth(context);
-    val::v2::PublishValueRequest request;
-    val::v2::PublishValueResponse response;
+    PublishValueRequest request;
+    PublishValueResponse response;
 
     request.mutable_signal_id()->set_path(path);
     request.mutable_data_point()->mutable_value()->set_double_(value);
@@ -207,8 +216,8 @@ bool Publisher::PublishFloat(const std::string& path, float value) {
     // Fallback: unary PublishValue
     grpc::ClientContext context;
     AttachAuth(context);
-    val::v2::PublishValueRequest request;
-    val::v2::PublishValueResponse response;
+    PublishValueRequest request;
+    PublishValueResponse response;
 
     request.mutable_signal_id()->set_path(path);
     request.mutable_data_point()->mutable_value()->set_float_(value);
@@ -228,8 +237,8 @@ bool Publisher::PublishFloat(const std::string& path, float value) {
 bool Publisher::PublishInt32(const std::string& path, int32_t value) {
     grpc::ClientContext context;
     AttachAuth(context);
-    val::v2::PublishValueRequest request;
-    val::v2::PublishValueResponse response;
+    PublishValueRequest request;
+    PublishValueResponse response;
 
     request.mutable_signal_id()->set_path(path);
     request.mutable_data_point()->mutable_value()->set_int32(value);
@@ -249,8 +258,8 @@ bool Publisher::PublishInt32(const std::string& path, int32_t value) {
 bool Publisher::PublishUint32(const std::string& path, uint32_t value) {
     grpc::ClientContext context;
     AttachAuth(context);
-    val::v2::PublishValueRequest request;
-    val::v2::PublishValueResponse response;
+    PublishValueRequest request;
+    PublishValueResponse response;
 
     request.mutable_signal_id()->set_path(path);
     request.mutable_data_point()->mutable_value()->set_uint32(value);
@@ -269,8 +278,8 @@ bool Publisher::PublishUint32(const std::string& path, uint32_t value) {
 bool Publisher::PublishBool(const std::string& path, bool value) {
     grpc::ClientContext context;
     AttachAuth(context);
-    val::v2::PublishValueRequest request;
-    val::v2::PublishValueResponse response;
+    PublishValueRequest request;
+    PublishValueResponse response;
 
     request.mutable_signal_id()->set_path(path);
     request.mutable_data_point()->mutable_value()->set_bool_(value);
@@ -290,8 +299,8 @@ bool Publisher::PublishBool(const std::string& path, bool value) {
 bool Publisher::PublishString(const std::string& path, const std::string& value) {
     grpc::ClientContext context;
     AttachAuth(context);
-    val::v2::PublishValueRequest request;
-    val::v2::PublishValueResponse response;
+    PublishValueRequest request;
+    PublishValueResponse response;
 
     request.mutable_signal_id()->set_path(path);
     request.mutable_data_point()->mutable_value()->set_string(value);
@@ -367,9 +376,9 @@ int32_t Publisher::LookupSignalId(const std::string& path) {
     // Try ListMetadata with the full path first
     grpc::ClientContext client_context;
     AttachAuth(client_context);
-    val::v2::ListMetadataRequest list_metadata_request;
+    ListMetadataRequest list_metadata_request;
     list_metadata_request.set_root(path);
-    val::v2::ListMetadataResponse list_metadata_response;
+    ListMetadataResponse list_metadata_response;
     grpc::Status status = stub_->ListMetadata(&client_context, list_metadata_request, &list_metadata_response);
     if (status.ok()) {
         for (const auto& md : list_metadata_response.metadata()) {
@@ -389,9 +398,9 @@ int32_t Publisher::LookupSignalId(const std::string& path) {
         std::string parent = path.substr(0, pos);
         grpc::ClientContext parent_context;
         AttachAuth(parent_context);
-        val::v2::ListMetadataRequest parent_list_metadata_request;
+        ListMetadataRequest parent_list_metadata_request;
         parent_list_metadata_request.set_root(parent);
-        val::v2::ListMetadataResponse parent_list_metadata_response;
+        ListMetadataResponse parent_list_metadata_response;
         grpc::Status parent_status = stub_->ListMetadata(&parent_context, parent_list_metadata_request, &parent_list_metadata_response);
         if (parent_status.ok()) {
             for (const auto& md : parent_list_metadata_response.metadata()) {
