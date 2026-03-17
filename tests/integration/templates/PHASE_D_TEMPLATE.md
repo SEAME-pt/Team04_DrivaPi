@@ -17,7 +17,7 @@
 - **Test Objective:** Validate that the STM32 correctly detects speed sensor pulses via external interrupt and increments the pulse counter, verifying basic hardware integration
 - **Related Requirements:**
   - Integration Test Plan - Phase D
-  - `tests/integration/integration_tests_plan.md`
+  - `/docs/tests/integration-test-plan.md`
   - Speed sensor datasheet and pulse specification
 
 ---

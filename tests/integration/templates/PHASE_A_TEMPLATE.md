@@ -17,7 +17,7 @@
 - **Test Objective:** Validate PS3 controller input is correctly decoded
 - **Related Requirements:** 
   - Integration Test Plan - Phase A
-  - `tests/integration/integration_tests_plan.md`
+  - `/docs/tests/integration-test-plan.md`
   - Controller application specification
 
 ---
