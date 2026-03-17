@@ -3,7 +3,9 @@ name: Sync meta-cross to separate repo
 on:
   push:
     branches:
-      - fix/sync-meta-cross
+      - master
+    paths:
+      - 'meta-cross/**'
 
 permissions:
   contents: write
@@ -34,9 +36,6 @@ jobs:
       - name: Split meta-cross folder
         run: |
           git subtree split --prefix=meta-cross --branch meta-cross-only || exit 1
-
-      - name: Debug Secret
-        run: '[ -z "${{ secrets.META_DRIVAPI_SSH_KEY }}" ] && echo "SSH Key is missing!" && exit 1 || echo "SSH Key is set"'
 
       - name: Setup SSH
         run: |
