@@ -14,8 +14,6 @@
 #include "feeder_can.hpp"
 #include <iostream>
 #include <linux/can.h>
-#include <grpc/grpc.h>
-#include <google/protobuf/stubs/common.h>
 
 int main(int argc, char** argv)
 {
@@ -33,7 +31,9 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    // Scope ensures publisher (and all gRPC objects) are destroyed before grpc_shutdown()
+    // Scope ensures publisher (and all gRPC objects) are destroyed before process exit.
+    // Modern gRPC C++ handles global shutdown automatically via static destructors —
+    // calling grpc_shutdown() explicitly is unnecessary and can cause double-free crashes.
     {
         // --- 3. Connect to KUKSA databroker ---
         feeder::Publisher publisher(config.publisher_options);
@@ -79,10 +79,6 @@ int main(int argc, char** argv)
         feeder::KillRegisteredChildren();
         feeder::CloseCanSocket(can_sock);
     } // publisher destroyed here — all gRPC objects released before grpc_shutdown()
-
-    // --- 7. Shut down gRPC and Protobuf global state ---
-    grpc_shutdown();
-    google::protobuf::ShutdownProtobufLibrary();
 
     std::cout << "[Feeder] Stopped." << std::endl;
     return 0;

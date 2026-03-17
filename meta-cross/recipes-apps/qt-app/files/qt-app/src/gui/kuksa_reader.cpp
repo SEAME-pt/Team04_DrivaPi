@@ -160,6 +160,9 @@ bool KuksaReader::subscribeLoop(const std::vector<std::string>& paths)
     auto reader = m_stub->Subscribe(m_context.get(), request);
     SubscribeResponse response;
 
+    // m_stopRequested is std::atomic<bool>: load() is lock-free and data-race free.
+    // A separate mutex is not required here; stop() uses m_contextMutex only to guard
+    // m_context (the gRPC ClientContext), not the atomic flag itself.
     while (!m_stopRequested.load() && reader->Read(&response)) {
         const auto& entries = response.entries();
 
