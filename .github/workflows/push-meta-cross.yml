@@ -3,9 +3,7 @@ name: Sync meta-cross to separate repo
 on:
   push:
     branches:
-      - master
-    paths:
-      - 'meta-cross/**'
+      - fix/sync-meta-cross
 
 permissions:
   contents: write
