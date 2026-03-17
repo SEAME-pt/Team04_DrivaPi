@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400">
+  <defs>
+    <linearGradient id="gridFade" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#4fb3d9" stop-opacity="0.28"/>
+      <stop offset="60%" stop-color="#4fb3d9" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#4fb3d9" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="400" fill="none"/>
+  <g stroke="url(#gridFade)" stroke-width="1">
+    <!-- radial grid lines -->
+    <path d="M640 260 L200 400"/>
+    <path d="M640 260 L320 400"/>
+    <path d="M640 260 L480 400"/>
+    <path d="M640 260 L640 400"/>
+    <path d="M640 260 L800 400"/>
+    <path d="M640 260 L960 400"/>
+    <path d="M640 260 L1080 400"/>
+    <path d="M640 260 L1180 400"/>
+    <!-- horizontal grid bands -->
+    <path d="M160 320 H1120"/>
+    <path d="M200 350 H1080"/>
+    <path d="M240 380 H1040"/>
+  </g>
+</svg>
