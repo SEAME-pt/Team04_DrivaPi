@@ -1,0 +1,80 @@
+<!DOCTYPE RCC>
+<RCC>
+    <qresource prefix="/">
+        <file>qml/theme/AppTheme.qml</file>
+        <file>qml/main.qml</file>
+        <file>qml/theme/qmldir</file>
+
+        <file>qml/screens/cluster-screen/ClusterScreen.qml</file>
+        <file>qml/screens/cluster-screen/adas/SpeedLimitIndicator.qml</file>
+        <file>qml/screens/cluster-screen/panels/MediaMini.qml</file>
+        <file>qml/screens/cluster-screen/panels/NavigationMini.qml</file>
+        <file>qml/screens/cluster-screen/panels/RightInfoPanel.qml</file>
+        <file>qml/screens/cluster-screen/bottom-bar/BottomBar.qml</file>
+        <file>qml/screens/cluster-screen/background/Background.qml</file>
+        <file>qml/screens/cluster-screen/background/GlowLayers.qml</file>
+        <file>qml/screens/cluster-screen/background/road-layer/RoadLayer.qml</file>
+        <file>qml/screens/cluster-screen/background/road-layer/FogLayer.qml</file>
+
+
+        <file>qml/screens/navigation-screen/NavigationScreen.qml</file>
+        <file>qml/screens/media-screen/MediaScreen.qml</file>
+        <file>qml/screens/diagnostics-screen/DiagnosticsScreen.qml</file>
+        <file>qml/screens/diagnostics-screen/StatusCardCompact.qml</file>
+        <file>qml/screens/diagnostics-screen/MetricTileMini.qml</file>
+        <file>qml/screens/settings-screen/SettingsScreen.qml</file>
+        <file>qml/screens/settings-screen/SettingRow.qml</file>
+        <file>qml/screens/settings-screen/CustomComboBox.qml</file>
+        <file>qml/screens/weather-screen/WeatherScreen.qml</file>
+        <file>qml/screens/weather-screen/WeatherKeyboard.qml</file>
+
+        <file>qml/components/battery/BatteryIndicator.qml</file>
+        <file>qml/components/battery/BatteryPopup.qml</file>
+        <file>qml/components/battery/BatteryStatusRow.qml</file>
+        <file>qml/components/cluster/ClusterTopBar.qml</file>
+        <file>qml/components/cluster/EnergyDisplay.qml</file>
+        <file>qml/components/cluster/GearSelector.qml</file>
+        <file>qml/components/cluster/SpeedDisplay.qml</file>
+        <file>qml/components/settings/SettingsButton.qml</file>
+        <file>qml/components/settings/SettingsOption.qml</file>
+        <file>qml/components/settings/SettingsSectionHeader.qml</file>
+        <file>qml/components/settings/SettingsToggle.qml</file>
+        <file>qml/components/weather/WeatherMini.qml</file>
+
+        <file>assets/cluster/car.png</file>
+        <file>assets/cluster/road.png</file>
+        <file>assets/cluster/top-dashboard.png</file>
+        <file>assets/cluster/left-dashboard.png</file>
+        <file>assets/cluster/bottom-dashboard.png</file>
+        <file>assets/cluster/right-dashboard.png</file>
+        <file>assets/cluster/floor-grid.svg</file>
+        <file>assets/cluster/car-glow.svg</file>
+
+        <file>icons/cluster/left-arrow.svg</file>
+        <file>icons/cluster/right-arrow.svg</file>
+
+        <file>icons/common/nav-mode.svg</file>
+        <file>icons/common/media-mode.svg</file>
+        <file>icons/common/arrow-forward.svg</file>
+        <file>icons/common/music-note.svg</file>
+
+        <file>icons/controls/play.svg</file>
+        <file>icons/controls/pause.svg</file>
+        <file>icons/controls/next.svg</file>
+        <file>icons/controls/previous.svg</file>
+        <file>icons/controls/volume-high.svg</file>
+        <file>icons/controls/volume-mute.svg</file>
+
+        <file>icons/hardware/cpu.svg</file>
+        <file>icons/hardware/sensor.svg</file>
+        <file>icons/hardware/mcu.svg</file>
+
+        <file>icons/settings/gear.svg</file>
+
+        <file>icons/weather/sun.svg</file>
+        <file>icons/weather/cloud.svg</file>
+        <file>icons/weather/rain.svg</file>
+        <file>icons/weather/snow.svg</file>
+        <file>icons/weather/fog.svg</file>
+    </qresource>
+</RCC>
