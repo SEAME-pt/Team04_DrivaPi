@@ -1,0 +1,34 @@
+name: Sync meta-cross to separate repo
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'meta-cross/**'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Git
+        run: |
+          git config --global user.name "meta-layer bot"
+          git config --global user.email "bot@drivapi.com"
+
+      - name: Split meta-cross folder
+        run: |
+          git subtree split --prefix=meta-cross --branch meta-cross-only
+
+      - name: Push to meta-cross repo
+        run: |
+git push https://x-access-token:${{ secrets.META_DRIVAPI_PUSH_TOKEN }}@github.com/Zahhask45/meta-drivapi.git meta-cross-only:main --force
