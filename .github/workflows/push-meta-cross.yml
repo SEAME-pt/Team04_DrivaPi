@@ -31,6 +31,9 @@ jobs:
         run: |
           git subtree split --prefix=meta-cross --branch meta-cross-only || exit 1
 
+      - name: Debug Secret
+        run: '[ -z "${{ secrets.META_DRIVAPI_PUSH_TOKEN }}" ] && echo "Secret is missing!" && exit 1 || echo "Secret is set"'
+
       - name: Push to meta-cross repo
         run: |
           git config --global credential.helper store
