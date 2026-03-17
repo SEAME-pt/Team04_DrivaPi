@@ -36,11 +36,15 @@ jobs:
           git subtree split --prefix=meta-cross --branch meta-cross-only || exit 1
 
       - name: Debug Secret
-        run: '[ -z "${{ secrets.META_DRIVAPI_PUSH_TOKEN }}" ] && echo "Secret is missing!" && exit 1 || echo "Secret is set"'
+        run: '[ -z "${{ secrets.META_DRIVAPI_SSH_KEY }}" ] && echo "SSH Key is missing!" && exit 1 || echo "SSH Key is set"'
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.META_DRIVAPI_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
 
       - name: Push to meta-cross repo
         run: |
-          git config --global credential.helper store
-          echo "https://x-oauth-basic:${{ secrets.META_DRIVAPI_PUSH_TOKEN }}@github.com" > ~/.git-credentials
-          chmod 600 ~/.git-credentials
-          git push https://github.com/Zahhask45/meta-drivapi.git meta-cross-only:main --force -v || exit 1
+          git push git@github.com:Zahhask45/meta-drivapi.git meta-cross-only:main --force -v || exit 1
