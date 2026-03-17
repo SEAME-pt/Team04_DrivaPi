@@ -7,6 +7,10 @@ on:
 
 permissions:
   contents: write
+  id-token: write
+  
+env:
+  GITHUB_TOKEN: ""
 
 concurrency:
   group: meta-cross-sync
