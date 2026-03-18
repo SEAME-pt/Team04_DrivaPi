@@ -13,8 +13,8 @@ const CAN_ID_SERVO: u16 = 45;
 const CAN_INTERFACE: &str = "vcan0";
 
 /* Motor Constants */
-const MAX_MOTOR_SPEED: f64 = 2.5;
-const MIN_MOTOR_SPEED: f64 = -2.5;
+const MAX_MOTOR_SPEED: f64 = 90.0;
+const MIN_MOTOR_SPEED: f64 = -90.0;
 
 /* Servo Constants */
 const MAX_SERVO_ANGLE: f64 = 180.0;
