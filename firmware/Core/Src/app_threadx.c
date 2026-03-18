@@ -123,6 +123,8 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
 void MX_ThreadX_Init(void)
 {
   /* USER CODE BEGIN Before_Kernel_Start */
+	SEGGER_SYSVIEW_Conf();
+	SEGGER_SYSVIEW_Start();
   /* USER CODE END Before_Kernel_Start */
 
   tx_kernel_enter();
