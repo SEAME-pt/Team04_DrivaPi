@@ -10,7 +10,7 @@ use std::{thread, time::Duration};
 /* CAN Protocol Constants */
 const CAN_ID_MOTOR: u16 = 44;
 const CAN_ID_SERVO: u16 = 45;
-const CAN_INTERFACE: &str = "vcan0";
+const CAN_INTERFACE: &str = "can1";
 
 /* Motor Constants */
 const MAX_MOTOR_SPEED: f64 = 90.0;
@@ -268,7 +268,7 @@ fn run_manual_mode(gamepad: &mut Gamepad, controller: &MotorController) -> Resul
     let mut prev_servo_angle = 90.0;
     
     // Threshold for detecting meaningful changes
-    const MOTOR_THRESHOLD: f64 = 0.01;  // Only send if change > 10 counts
+    const MOTOR_THRESHOLD: f64 = 5.0;  // Only send if change > 5 counts
     const SERVO_THRESHOLD: f64 = 1.0;   // Only send if change > 1 degree
 
     loop {
