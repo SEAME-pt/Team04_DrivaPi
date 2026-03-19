@@ -54,7 +54,9 @@ void MotorPIDUpdate(MotorPIDState *state, float current_speed)
         state->pwm_raw = -(int16_t)PWM_MIN;
     
     // Step 9: Send signed PWM counts to motor driver (left_counts, right_counts)
+    tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
     MotorSetPWM((int32_t)state->pwm_raw, (int32_t)state->pwm_raw);
+    tx_mutex_put(&g_motorMutex);
     
     // Step 10: Store current error for derivative calculation in next cycle
     state->error_prev = state->error;
