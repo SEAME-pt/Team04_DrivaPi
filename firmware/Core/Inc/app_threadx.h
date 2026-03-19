@@ -42,6 +42,7 @@ extern "C" {
 #include "servo_motor.h"
 #include "dc_motor_test.h"
 #include "motor_utils.h"
+#include "motor_control.h"
 #include "sensors.h"
 
 #include "soft_i2c.h"
@@ -154,7 +155,7 @@ extern RNDGear_t			g_current_gear;
 extern float				g_vehicleSpeed;
 extern float 				g_current_speed;
 extern int16_t 				g_currentPWM;
-
+// extern MotorPIDState		g_motorPidState;
 /* USER CODE END 1 */
 
 #ifdef __cplusplus

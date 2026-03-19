@@ -1,5 +1,9 @@
-#ifndef MOTOR_CONTROL_H
-#define MOTOR_CONTROL_H
+#ifndef __MOTOR_CONTROL_H
+#define __MOTOR_CONTROL_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <app_threadx.h>
 
@@ -50,4 +54,7 @@ void UpdateMotorControl(void);
  */
 void MotorPIDInit(MotorPIDState *state);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

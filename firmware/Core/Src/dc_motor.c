@@ -26,7 +26,7 @@ void MotorSetPWM(int32_t left_counts, int32_t right_counts)
 		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, max);
 		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, 0);
 		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, pwm);
-		g_current_pwm = (int16_t)pwm;
+		g_currentPWM = (int16_t)pwm;
 	}
 	else if (left_counts < 0)
 	{
@@ -34,14 +34,14 @@ void MotorSetPWM(int32_t left_counts, int32_t right_counts)
 		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, 0);
 		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, max);
 		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, pwm);
-		g_current_pwm = -(int16_t)pwm;
+		g_currentPWM = -(int16_t)pwm;
 	}
 	else
 	{
 		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, max);
 		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, max);
 		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, max);
-		g_current_pwm = 0;
+		g_currentPWM = 0;
 	}
 
 	/* Right motor */
@@ -85,50 +85,11 @@ VOID DcMotor(ULONG initial_input)
 
 		while (tx_queue_receive(&g_queueSpeedCmd, &msg, TX_NO_WAIT) == TX_SUCCESS)
 		{
-<<<<<<< Updated upstream
-			int32_t left_count = 0;
-			int32_t right_count = 0;
-=======
 			memcpy(&g_motorPidState.target_speed, msg.data, sizeof(float));
 		}
 		g_motorPidState.target_speed = 30;
 		MotorPIDUpdate(&g_motorPidState, g_vehicleSpeed);
->>>>>>> Stashed changes
 
-			memcpy(&left_count, msg.data, sizeof(int32_t));
-
-			tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
-			if(g_emergencyBrake && left_count > 0 )
-			{
-				tx_mutex_put(&g_emergencyMutex);
-				tx_thread_sleep(5);
-				continue ;
-			}
-			else
-			{
-				tx_mutex_put(&g_emergencyMutex);
-
-				if (msg.len >= 8)
-				{
-					right_count = 0;
-					memcpy(&left_count, msg.data, sizeof(int32_t));
-					memcpy(&right_count, msg.data + sizeof(int32_t), sizeof(int32_t));
-
-					tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
-					MotorSetPWM(left_count, right_count);
-					tx_mutex_put(&g_motorMutex);
-				}
-				else if (msg.len >= 4)
-				{
-					int32_t counts = 0;
-					memcpy(&counts, msg.data, sizeof(int32_t));
-
-					tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
-					MotorSetPWM(counts, counts);
-					tx_mutex_put(&g_motorMutex);
-				}
-			}
-		}
 		tx_thread_sleep(10);
 	}
 }
