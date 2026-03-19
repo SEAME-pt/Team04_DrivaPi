@@ -46,6 +46,7 @@ extern "C" {
 #include "tx_trace.h"
 #include "soft_i2c.h"
 #include "init_devices.h"
+#include "../../Middlewares/SystemView/SEGGER_SYSVIEW.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
