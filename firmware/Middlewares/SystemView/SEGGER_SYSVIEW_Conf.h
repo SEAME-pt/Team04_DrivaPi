@@ -91,8 +91,18 @@ Additional information:
 * TODO: Add your defines here.                                       *
 **********************************************************************
 */
+#define SYSVIEW_OS_THREADX 1
+#define SYSVIEW_TIMESTAMP_FREQ (160000000u)
+#define SYSVIEW_CPU_FREQ (160000000u)
 
 
+#define SEGGER_SYSVIEW_RTT_CHANNEL          1
+#define SEGGER_SYSVIEW_POST_MORTEM_MODE     1
+#define SEGGER_SYSVIEW_RTT_BUFFER_SIZE      (16 * 1024)
+#define SEGGER_SYSVIEW_SYSDESC0             "I#15=SysTick"
+#define SEGGER_SYSVIEW_TIMESTAMP_BITS       (32)
+
+  
 #endif  // SEGGER_SYSVIEW_CONF_H
 
 /*************************** End of file ****************************/

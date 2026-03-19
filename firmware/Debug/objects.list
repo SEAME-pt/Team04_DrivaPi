@@ -17,6 +17,7 @@
 "./Core/Src/syscalls.o"
 "./Core/Src/sysmem.o"
 "./Core/Src/system_stm32u5xx.o"
+"./Core/Src/systemview_threadx_hooks.o"
 "./Core/Src/thread_init.o"
 "./Core/Src/tx_initialize_low_level.o"
 "./Core/Src/ultrasonic.o"

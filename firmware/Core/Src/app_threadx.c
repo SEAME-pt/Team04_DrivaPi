@@ -73,12 +73,12 @@ unsigned char			trace_buffer[TRACE_BUFFER_SIZE];
   */
 UINT App_ThreadX_Init(VOID *memory_ptr)
 {
-  UINT ret = TX_SUCCESS;
+UINT ret = TX_SUCCESS;
   /* USER CODE BEGIN App_ThreadX_MEM_POOL */
 
   /* USER CODE END App_ThreadX_MEM_POOL */
   /* USER CODE BEGIN App_ThreadX_Init */
-  	g_emergencyBrake = false;
+	g_emergencyBrake = false;
 	g_vehicleSpeed = 0;
 	g_current_gear = GEAR_NEUTRAL;
 	g_current_speed = 0.0f;
@@ -115,19 +115,21 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
   return ret;
 }
 
-  /**
-  * @brief  Function that implements the kernel's initialization.
-  * @param  None
-  * @retval None
-  */
+/**
+	 * @brief  Function that implements the kernel's initialization.
+	 * @param  None
+	 * @retval None
+ */
 void MX_ThreadX_Init(void)
 {
   /* USER CODE BEGIN Before_Kernel_Start */
+	tx_trace_enable(trace_buffer, sizeof(trace_buffer), 32);
 	SEGGER_SYSVIEW_Conf();
 	SEGGER_SYSVIEW_Start();
+	//SEGGER_RTT_Init();
   /* USER CODE END Before_Kernel_Start */
 
-  tx_kernel_enter();
+	tx_kernel_enter();
 
   /* USER CODE BEGIN Kernel_Start_Error */
 
@@ -135,6 +137,4 @@ void MX_ThreadX_Init(void)
 }
 
 /* USER CODE BEGIN 1 */
-
-
 /* USER CODE END 1 */

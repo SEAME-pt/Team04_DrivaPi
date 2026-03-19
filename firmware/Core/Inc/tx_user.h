@@ -204,6 +204,9 @@
 
 #define TX_ENABLE_EVENT_TRACE
 
+/* Enable scheduler execution-change callbacks used to feed SystemView task switch events. */
+#define TX_ENABLE_EXECUTION_CHANGE_NOTIFY
+
 /* Determine if block pool performance gathering is required by the application. When the following is
    defined, ThreadX gathers various block pool performance information. */
 

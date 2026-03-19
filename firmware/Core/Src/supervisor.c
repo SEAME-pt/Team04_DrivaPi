@@ -20,7 +20,6 @@ void ld1_ThreadEntry(ULONG initial_input)
 {
 	while (1)
 	{
-		HAL_UART_Transmit(&huart1, (uint8_t*)"supervisor\r\n", 11, 100);
 		tx_thread_sleep(50);
 	}
 }

@@ -47,6 +47,8 @@ extern "C" {
 #include "soft_i2c.h"
 #include "init_devices.h"
 #include "../../Middlewares/SystemView/SEGGER_SYSVIEW.h"
+#include "../../Middlewares/SystemView/SEGGER_RTT.h"
+#include "../../Middlewares/SystemView/SEGGER_SYSVIEW_ThreadX.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -138,6 +140,7 @@ VOID	SensorBatteryThread(ULONG initial_input);
 void	ThreadInit(void);
 void	UltrasonicEntry(ULONG initial_input);
 int		CanSend(t_can_message* msg);
+extern void sysview_register_thread(TX_THREAD *thread);
 /* USER CODE END EFP */
 
 /* USER CODE BEGIN 1 */

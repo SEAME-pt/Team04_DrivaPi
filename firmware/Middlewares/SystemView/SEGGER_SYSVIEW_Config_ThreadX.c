@@ -65,11 +65,6 @@ extern U32 SystemCoreClock;
 // The target device name
 #define SYSVIEW_DEVICE_NAME     	"Cortex-M33"
 
-// Frequency of the timestamp. Must match SEGGER_SYSVIEW_GET_TIMESTAMP in SEGGER_SYSVIEW_Conf.h
-#define SYSVIEW_TIMESTAMP_FREQ  	(SystemCoreClock)
-
-// System Frequency.
-#define SYSVIEW_CPU_FREQ        	(SystemCoreClock)
 
 
 /*********************************************************************
