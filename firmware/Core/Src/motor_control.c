@@ -7,14 +7,14 @@ void MotorPIDUpdate(MotorPIDState *state, float current_speed)
     state->error = state->target_speed - hm_speed;
 
     // Might need to round the value up
-    if (fabs(state->error) < SPEED_MARGIN)
-    {
-        state->pwm_output = 0.0f;
-        state->pwm_raw = 0;
-        state->error_prev = state->error;
-        state->current_speed = hm_speed;
-        return ;
-    }
+//    if (fabs(state->error) < SPEED_MARGIN)
+//    {
+//        state->pwm_output = 0.0f;
+//        state->pwm_raw = 0;
+//        state->error_prev = state->error;
+//        state->current_speed = hm_speed;
+//        return ;
+//    }
     
     // Step 2: Proportional term (immediate response)
     float p_term = state->gain_p * state->error;

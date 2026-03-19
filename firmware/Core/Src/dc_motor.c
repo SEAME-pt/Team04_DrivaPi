@@ -88,14 +88,15 @@ VOID DcMotor(ULONG initial_input)
 		{
 			memcpy(&g_motorPidState.target_speed, msg.data, sizeof(float));
 		}
-		tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
-		if(g_emergencyBrake && g_motorPidState.target_speed > 0 )
-		{
-			tx_mutex_put(&g_emergencyMutex);
-			tx_thread_sleep(5);
-			continue ;
-		}
-		tx_mutex_put(&g_emergencyMutex);
+		g_motorPidState.target_speed = -40.0;
+//		tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
+//		if(g_emergencyBrake && g_motorPidState.target_speed > 0 )
+//		{
+//			tx_mutex_put(&g_emergencyMutex);
+//			tx_thread_sleep(5);
+//			continue ;
+//		}
+//		tx_mutex_put(&g_emergencyMutex);
 		MotorPIDUpdate(&g_motorPidState, g_vehicleSpeed);
 		tx_thread_sleep(10);
 	}
