@@ -153,12 +153,8 @@ extern TX_MUTEX             g_gearMutex;
 extern RNDGear_t			g_current_gear;
 extern float				g_vehicleSpeed;
 extern float 				g_current_speed;
-<<<<<<< Updated upstream
-extern int16_t 				g_current_pwm;
-=======
 extern int16_t 				g_currentPWM;
 
->>>>>>> Stashed changes
 /* USER CODE END 1 */
 
 #ifdef __cplusplus
