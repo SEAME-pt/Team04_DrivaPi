@@ -78,6 +78,7 @@ TSF_Report.html
 *.exe
 *.out
 *.app
+*.d
 
 # Qt
 *.pro.user

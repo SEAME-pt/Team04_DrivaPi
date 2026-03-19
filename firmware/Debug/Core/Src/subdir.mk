@@ -11,6 +11,7 @@ C_SRCS += \
 ../Core/Src/dc_motor.c \
 ../Core/Src/init_devices.c \
 ../Core/Src/main.c \
+../Core/Src/motor_control.c \
 ../Core/Src/motor_utils.c \
 ../Core/Src/pca9685.c \
 ../Core/Src/sensors.c \
@@ -36,6 +37,7 @@ OBJS += \
 ./Core/Src/dc_motor.o \
 ./Core/Src/init_devices.o \
 ./Core/Src/main.o \
+./Core/Src/motor_control.o \
 ./Core/Src/motor_utils.o \
 ./Core/Src/pca9685.o \
 ./Core/Src/sensors.o \
@@ -62,6 +64,7 @@ C_DEPS += \
 ./Core/Src/dc_motor.d \
 ./Core/Src/init_devices.d \
 ./Core/Src/main.d \
+./Core/Src/motor_control.d \
 ./Core/Src/motor_utils.d \
 ./Core/Src/pca9685.d \
 ./Core/Src/sensors.d \

@@ -85,8 +85,15 @@ VOID DcMotor(ULONG initial_input)
 
 		while (tx_queue_receive(&g_queueSpeedCmd, &msg, TX_NO_WAIT) == TX_SUCCESS)
 		{
+<<<<<<< Updated upstream
 			int32_t left_count = 0;
 			int32_t right_count = 0;
+=======
+			memcpy(&g_motorPidState.target_speed, msg.data, sizeof(float));
+		}
+		g_motorPidState.target_speed = 30;
+		MotorPIDUpdate(&g_motorPidState, g_vehicleSpeed);
+>>>>>>> Stashed changes
 
 			memcpy(&left_count, msg.data, sizeof(int32_t));
 
