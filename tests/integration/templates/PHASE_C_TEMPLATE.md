@@ -17,7 +17,7 @@
 - **Test Objective:** Validate basic I2C communication with the PCA9685 motor controllers (0x60 and 0x40) using the on-device test suite and confirm ACK results in UART logs
 - **Related Requirements:**
   - Integration Test Plan - Phase C
-  - `/docs/tests/integration-test-plan.md`
+  - `tests/integration/integration_tests_plan.md`
   - I2C motor controller datasheet and addressing specification
 
 ---
