@@ -78,6 +78,7 @@ VOID DcMotor(ULONG initial_input)
 	t_can_message 	msg;
 	ULONG			actual_flags;
 	MotorPIDInit(&g_motorPidState);
+	g_motorPidState.target_speed = 0.0f;
 
 	while (1)
 	{
@@ -88,16 +89,19 @@ VOID DcMotor(ULONG initial_input)
 		{
 			memcpy(&g_motorPidState.target_speed, msg.data, sizeof(float));
 		}
-		g_motorPidState.target_speed = -40.0;
-//		tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
-//		if(g_emergencyBrake && g_motorPidState.target_speed > 0 )
-//		{
-//			tx_mutex_put(&g_emergencyMutex);
-//			tx_thread_sleep(5);
-//			continue ;
-//		}
-//		tx_mutex_put(&g_emergencyMutex);
-		MotorPIDUpdate(&g_motorPidState, g_vehicleSpeed);
+		tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
+		if(g_emergencyBrake && g_motorPidState.target_speed > 0 )
+		{
+			tx_mutex_put(&g_emergencyMutex);
+			tx_thread_sleep(5);
+			continue ;
+		}
+		tx_mutex_put(&g_emergencyMutex);
+		tx_mutex_get(&g_speedDataMutex, TX_WAIT_FOREVER);
+		float speed = g_vehicleSpeed;
+		tx_mutex_put(&g_speedDataMutex);
+		if (fabs(g_motorPidState.target_speed - (speed * 36)) > SPEED_MARGIN)
+			MotorPIDUpdate(&g_motorPidState, speed);
 		tx_thread_sleep(10);
 	}
 }
