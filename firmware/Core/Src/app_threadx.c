@@ -126,7 +126,6 @@ void MX_ThreadX_Init(void)
 	tx_trace_enable(trace_buffer, sizeof(trace_buffer), 32);
 	SEGGER_SYSVIEW_Conf();
 	SEGGER_SYSVIEW_Start();
-	//SEGGER_RTT_Init();
   /* USER CODE END Before_Kernel_Start */
 
 	tx_kernel_enter();
