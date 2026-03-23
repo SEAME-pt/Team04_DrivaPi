@@ -43,12 +43,12 @@ extern "C" {
 #include "dc_motor_test.h"
 #include "motor_utils.h"
 #include "sensors.h"
-#include "tx_trace.h"
 #include "soft_i2c.h"
 #include "init_devices.h"
 #include "../../Middlewares/SystemView/SEGGER_SYSVIEW.h"
 #include "../../Middlewares/SystemView/SEGGER_RTT.h"
 #include "../../Middlewares/SystemView/SEGGER_SYSVIEW_ThreadX.h"
+#include "tx_trace.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
