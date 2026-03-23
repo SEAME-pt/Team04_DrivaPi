@@ -1,3 +1,4 @@
+
 use std::fs::File;
 use std::io::{Read, ErrorKind};
 use std::os::unix::io::AsRawFd;
@@ -10,7 +11,7 @@ use std::{thread, time::Duration};
 /* CAN Protocol Constants */
 const CAN_ID_MOTOR: u16 = 44;
 const CAN_ID_SERVO: u16 = 45;
-const CAN_INTERFACE: &str = "can1";
+const CAN_INTERFACE: &str = "vcan0";
 
 /* Motor Constants */
 const MAX_MOTOR_SPEED: f64 = 90.0;
@@ -26,6 +27,8 @@ const JOYSTICK_EVENT_SIZE: usize = 8;
 const JS_EVENT_BUTTON: u8 = 0x01;
 const JS_EVENT_AXIS: u8 = 0x02;
 const JS_EVENT_INIT: u8 = 0x80;
+
+static mut CRUISE_CONTROL_STATUS: bool = false;
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct Vector2f {
@@ -213,18 +216,15 @@ impl MotorController {
         Ok(Self { socket, motor_id, servo_id })
     }
 
-    fn send_motor_command(&self, left_speed: f64, right_speed: f64) -> Result<(), Box<dyn std::error::Error>> {
+    fn send_motor_command(&self, speed: f64) -> Result<(), Box<dyn std::error::Error>> {
         // Clamp and convert to i32
-        let left = left_speed.clamp(MIN_MOTOR_SPEED, MAX_MOTOR_SPEED) as i32;
-        let right = right_speed.clamp(MIN_MOTOR_SPEED, MAX_MOTOR_SPEED) as i32;
+        let value = speed.clamp(MIN_MOTOR_SPEED, MAX_MOTOR_SPEED) as i32;
 
         // Build CAN frame: [left_i32][right_i32] = 8 bytes
-        let left_bytes = left.to_le_bytes();
-        let right_bytes = right.to_le_bytes();
+        let bytes = value.to_le_bytes();
 
         let data = [
-            left_bytes[0], left_bytes[1], left_bytes[2], left_bytes[3],
-            right_bytes[0], right_bytes[1], right_bytes[2], right_bytes[3],
+            bytes[0], bytes[1], bytes[2], bytes[3],
         ];
 
         let frame = CanFrame::new(self.motor_id, &data)
@@ -271,6 +271,11 @@ fn run_manual_mode(gamepad: &mut Gamepad, controller: &MotorController) -> Resul
     const MOTOR_THRESHOLD: f64 = 5.0;  // Only send if change > 5 counts
     const SERVO_THRESHOLD: f64 = 1.0;   // Only send if change > 1 degree
 
+    let mut cruise_control: bool;
+    unsafe {
+        CRUISE_CONTROL_STATUS = false;
+    }
+
     loop {
         gamepad.update();
         let input = gamepad.get_input();
@@ -287,6 +292,17 @@ fn run_manual_mode(gamepad: &mut Gamepad, controller: &MotorController) -> Resul
         let steering = input.analog_stick_right.x;   // Right stick X: -1.0 to 1.0
         let throttle = input.analog_stick_left.y;    // Left stick Y: -1.0 to 1.0
         let max_speed = input.button_r2;
+        cruise_control = input.button_l3;
+
+        unsafe { 
+            while cruise_control { 
+                gamepad.update();
+                if !gamepad.get_input().button_l3{
+                    CRUISE_CONTROL_STATUS = !CRUISE_CONTROL_STATUS;
+                    break ;   
+                }
+            }
+        }
 
         // Calculate motor speeds (same for both motors, no differential)
         let motor_speed;
@@ -297,10 +313,14 @@ fn run_manual_mode(gamepad: &mut Gamepad, controller: &MotorController) -> Resul
         let servo_angle = ((steering + 1.0) / 2.0) * MAX_SERVO_ANGLE;
 
         // Send motor command only if value changed significantly
-        if (motor_speed - prev_motor_speed).abs() > MOTOR_THRESHOLD {
-            controller.send_motor_command(motor_speed, motor_speed)?;
-            prev_motor_speed = motor_speed;
-            println!("Motor updated: {}", motor_speed);
+        unsafe {
+            if !CRUISE_CONTROL_STATUS {
+                if (motor_speed - prev_motor_speed).abs() > MOTOR_THRESHOLD {
+                    controller.send_motor_command(motor_speed, motor_speed)?;
+                    prev_motor_speed = motor_speed;
+                    println!("Motor updated: {}", motor_speed);
+                }
+            }
         }
 
         // Send servo command only if value changed significantly
