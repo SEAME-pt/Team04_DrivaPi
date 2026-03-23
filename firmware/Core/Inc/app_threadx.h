@@ -48,7 +48,7 @@ extern "C" {
 #include "../../Middlewares/SystemView/SEGGER_SYSVIEW.h"
 #include "../../Middlewares/SystemView/SEGGER_RTT.h"
 #include "../../Middlewares/SystemView/SEGGER_SYSVIEW_ThreadX.h"
-#include "tx_trace.h"
+#include "../../Middlewares/ST/threadx/common/inc/tx_trace.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
