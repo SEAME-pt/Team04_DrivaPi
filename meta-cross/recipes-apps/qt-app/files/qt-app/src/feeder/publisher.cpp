@@ -4,11 +4,6 @@
  */
 
 #include "publisher.hpp"
-#include <iostream>
-#include <fstream>
-#include <thread>
-#include <chrono>
-#include <google/protobuf/timestamp.pb.h>
 
 namespace feeder {
 
