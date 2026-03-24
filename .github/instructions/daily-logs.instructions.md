@@ -70,3 +70,54 @@ When asked to create or update daily logs:
     - Commits from that day using `git log --since="YYYY-MM-DD 00:00" --until="YYYY-MM-DD 23:59" --oneline --all`
     - Pull requests from that day (merged, opened, or closed)
     - Use this information to accurately populate Team Progress and Software sections
+
+---
+
+## ⚠️ Critical Priority: User Input First
+
+**ALWAYS prioritize information provided by the user** (raw notes, prompt, direct input) as the source of truth. Use git logs to verify and add technical details, NOT to override user-provided information.
+
+### Workflow:
+1. **Accept user input as given**: If raw_notes.txt says Gaspar did X on Monday, that's the primary source
+2. **Use git logs to verify & enhance**: Cross-check with git logs to add commit details, technical depth, and accuracy
+3. **Never override user input with git logs**: If git shows different work on a different date, ASK FOR CLARIFICATION instead of changing the user's stated facts
+4. **Ask clarifying questions**: When user input conflicts with git logs, ask which is correct rather than assuming
+
+### Example:
+- ❌ WRONG: User says "Brake work today" → I find brake commits on a different date → I move it to that date
+- ✅ CORRECT: User says "Brake work today" → I find brake commits elsewhere → I ask "Did you mean the brake commits from March 24, or is there different brake work from today?"
+
+---
+
+## Git Log Usage Guidelines
+
+13. **Check Git Activity**: Use git logs to SUPPORT and VERIFY user input, NOT to replace it:
+    - `git log --since="YYYY-MM-DD 00:00" --until="YYYY-MM-DD 23:59" --oneline --all` to find commits matching the date
+    - Verify commit authors to confirm who did the work
+    - Extract detailed commit messages to add technical depth to team progress
+    - Cross-reference multiple branches (`--all`) for complete work visibility
+
+### When Using Git Logs:
+- Use them to ADD DETAILS to user-provided work (e.g., commit hashes, detailed change descriptions)
+- Use them to CONFIRM the user's stated facts (e.g., verify the person really did make commits that day)
+- Use them to FILL GAPS in user input (e.g., if user didn't mention specific work, add found commits)
+- **NEVER use them to CONTRADICT user input** without asking first
+
+---
+
+## ⚠️ Common Mistakes to Avoid
+
+1. **Don't override user input with git logs**: If the user says work happened on a date, trust that. Use git logs to verify and add details, but don't change the user's stated facts.
+
+2. **Don't invent work without user confirmation**: If git logs show work you didn't see in user input, ask before adding it. Don't assume the user forgot to mention it.
+
+3. **Ask clarifying questions**: When user input conflicts with git logs (e.g., "brake was today not yesterday"), use that feedback to understand the correct facts. Next time, ask first instead of assuming.
+
+4. **Verify commit authors carefully**: Use `git log --author="username"` or check commit details to match people to their work. Cross-reference GitHub usernames with real names.
+
+5. **Document what the user told you**: The daily log should reflect what the user provided in raw notes/prompts, enhanced with git commit details.
+
+6. **Check commit messages for TODO items**: Some commits include "TODO" comments. These indicate incomplete work and should be marked as 🔄 In Progress, not ✅ Completed.
+
+7. **Use date context from user input as primary**: If user provides a date (either directly or via raw notes), that's the correct date for the log. Don't "correct" it based on git logs without asking.
+
