@@ -11,11 +11,13 @@ use std::{thread, time::Duration};
 /* CAN Protocol Constants */
 const CAN_ID_MOTOR: u16 = 44;
 const CAN_ID_SERVO: u16 = 45;
-const CAN_INTERFACE: &str = "vcan0";
+const CAN_INTERFACE: &str = "can1";
 
 /* Motor Constants */
 const MAX_MOTOR_SPEED: f64 = 90.0;
 const MIN_MOTOR_SPEED: f64 = -90.0;
+const FORWARD: u8 = 1;
+const BACKWARD: u8 = 0;
 
 /* Servo Constants */
 const MAX_SERVO_ANGLE: f64 = 180.0;
@@ -222,9 +224,16 @@ impl MotorController {
 
         // Build CAN frame: [left_i32][right_i32] = 8 bytes
         let bytes = value.to_le_bytes();
+        let direction;
+        if value < 0 {
+            direction = BACKWARD.to_le_bytes(); 
+        } else {
+            direction = FORWARD.to_le_bytes(); 
+        }
 
         let data = [
             bytes[0], bytes[1], bytes[2], bytes[3],
+            direction[0],
         ];
 
         let frame = CanFrame::new(self.motor_id, &data)
@@ -253,7 +262,7 @@ impl MotorController {
     }
 
     fn stop_dc_motors(&self) -> Result<(), Box<dyn std::error::Error>> {
-        self.send_motor_command(0.0, 0.0)
+        self.send_motor_command(0.0)
     }
     fn stop_servo_motors(&self) -> Result<(), Box<dyn std::error::Error>> {
         self.send_servo_command(90.0)
@@ -268,7 +277,7 @@ fn run_manual_mode(gamepad: &mut Gamepad, controller: &MotorController) -> Resul
     let mut prev_servo_angle = 90.0;
     
     // Threshold for detecting meaningful changes
-    const MOTOR_THRESHOLD: f64 = 5.0;  // Only send if change > 5 counts
+    const MOTOR_THRESHOLD: f64 = 2.0;  // Only send if change > 2 counts
     const SERVO_THRESHOLD: f64 = 1.0;   // Only send if change > 1 degree
 
     let mut cruise_control: bool;
@@ -292,6 +301,7 @@ fn run_manual_mode(gamepad: &mut Gamepad, controller: &MotorController) -> Resul
         let steering = input.analog_stick_right.x;   // Right stick X: -1.0 to 1.0
         let throttle = input.analog_stick_left.y;    // Left stick Y: -1.0 to 1.0
         let max_speed = input.button_r2;
+        let brake = input.button_l2;
         cruise_control = input.button_l3;
 
         unsafe { 
@@ -312,15 +322,20 @@ fn run_manual_mode(gamepad: &mut Gamepad, controller: &MotorController) -> Resul
         // Calculate servo angle (map -1..1 to 0..180)
         let servo_angle = ((steering + 1.0) / 2.0) * MAX_SERVO_ANGLE;
 
-        // Send motor command only if value changed significantly
+        // Send motor command only if value changed significantly and cruise control is disabled
         unsafe {
-            if !CRUISE_CONTROL_STATUS {
+            if !CRUISE_CONTROL_STATUS && !brake{
                 if (motor_speed - prev_motor_speed).abs() > MOTOR_THRESHOLD {
-                    controller.send_motor_command(motor_speed, motor_speed)?;
+                    controller.send_motor_command(motor_speed)?;
                     prev_motor_speed = motor_speed;
                     println!("Motor updated: {}", motor_speed);
                 }
             }
+        }
+
+        if brake {
+            controller.stop_dc_motors()?;
+            println!("Brake activated {}", brake);
         }
 
         // Send servo command only if value changed significantly
