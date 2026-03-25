@@ -20,6 +20,7 @@ void ld1_ThreadEntry(ULONG initial_input)
 {
 	while (1)
 	{
+		HAL_UART_Transmit(&huart1, (uint8_t *)"BANANA3\n", (uint16_t)8, 20);
 		tx_thread_sleep(50);
 	}
 }

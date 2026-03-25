@@ -5,13 +5,14 @@
 extern "C" {
 #endif
 
-#include <app_threadx.h>
+#include "app_threadx.h"
 
 #define PID_SAMPLE_TIME 	0.01f   // 10 ms update rate (matches SpeedSensor thread)
 #define PWM_MIN 			300u   	// Minimum absolute PWM to overcome dead zone
 #define PWM_MAX				4095u  	// Maximum absolute PWM value
-#define PID_INTEGRAL_LIMIT	100.0f	// Anti-windup clamp for integral state (error * seconds)
-#define SPEED_MARGIN		5.0f
+#define PID_INTEGRAL_LIMIT	10.0f	// Anti-windup clamp: faster recovery from saturation (was 100.0f)
+#define SPEED_MARGIN		2.0f
+#define PID_DEBUG_PRINT_EVERY_MS 200u // UART telemetry period for PID debug output
 
 /**
  * @struct MotorPIDState

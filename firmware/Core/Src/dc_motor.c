@@ -75,33 +75,34 @@ void MotorSetPWM(int32_t left_counts, int32_t right_counts)
 */
 VOID DcMotor(ULONG initial_input)
 {
-	t_can_message 	msg;
-	ULONG			actual_flags;
+	//t_can_message 	msg;
+	//ULONG			actual_flags;
+	HAL_UART_Transmit(&huart1, (uint8_t *)"BANANA\n", (uint16_t)7, HAL_MAX_DELAY);
 	MotorPIDInit(&g_motorPidState);
 	g_motorPidState.target_speed = 0.0f;
 
 	while (1)
 	{
-		tx_event_flags_get(&g_eventFlags, FLAG_CAN_SPEED_CMD,
-		TX_OR_CLEAR, &actual_flags, TX_WAIT_FOREVER);
-
-		if (tx_queue_receive(&g_queueSpeedCmd, &msg, TX_NO_WAIT) == TX_SUCCESS)
-		{
-			memcpy(&g_motorPidState.target_speed, msg.data, sizeof(float));
-		}
-		tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
-		if(g_emergencyBrake && g_motorPidState.target_speed > 0 )
-		{
-			tx_mutex_put(&g_emergencyMutex);
-			tx_thread_sleep(5);
-			continue ;
-		}
-		tx_mutex_put(&g_emergencyMutex);
+		HAL_UART_Transmit(&huart1, (uint8_t *)"BANANA2\n", (uint16_t)8, HAL_MAX_DELAY);
+//		tx_event_flags_get(&g_eventFlags, FLAG_CAN_SPEED_CMD,
+//		TX_OR_CLEAR, &actual_flags, TX_WAIT_FOREVER);
+//
+//		if (tx_queue_receive(&g_queueSpeedCmd, &msg, TX_NO_WAIT) == TX_SUCCESS)
+//		{
+//			memcpy(&g_motorPidState.target_speed, msg.data, sizeof(float));
+//		}
+//		tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
+//		if(g_emergencyBrake && g_motorPidState.target_speed > 0 )
+//		{
+//			tx_mutex_put(&g_emergencyMutex);
+//			tx_thread_sleep(5);
+//			continue ;
+//		}
+//		tx_mutex_put(&g_emergencyMutex);
 		tx_mutex_get(&g_speedDataMutex, TX_WAIT_FOREVER);
 		float speed = g_vehicleSpeed;
 		tx_mutex_put(&g_speedDataMutex);
-		if (fabs(g_motorPidState.target_speed - (speed * 36)) > SPEED_MARGIN)
-			MotorPIDUpdate(&g_motorPidState, speed);
+		MotorPIDUpdate(&g_motorPidState, speed);
 		tx_thread_sleep(10);
 	}
 }

@@ -113,7 +113,7 @@ int main(void)
   MX_I2C3_Init();
   MX_I2C2_Init();
   /* USER CODE BEGIN 2 */
-	
+  HAL_UART_Transmit(&huart1, (uint8_t *)"BANANA2\n", (uint16_t)8, 20);
   /* USER CODE END 2 */
 
   MX_ThreadX_Init();
