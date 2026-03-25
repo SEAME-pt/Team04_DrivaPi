@@ -155,8 +155,7 @@ extern RNDGear_t			g_current_gear;
 extern float				g_vehicleSpeed;
 extern float 				g_current_speed;
 extern int16_t 				g_currentPWM;
-
-extern UART_HandleTypeDef huart1;
+// extern MotorPIDState		g_motorPidState;
 /* USER CODE END 1 */
 
 #ifdef __cplusplus
