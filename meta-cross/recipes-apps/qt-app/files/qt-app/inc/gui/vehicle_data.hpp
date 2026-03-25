@@ -44,6 +44,8 @@ class VehicleData : public QObject
     Q_PROPERTY(bool autonomousMode READ getAutonomousMode WRITE setAutonomousMode NOTIFY autonomousModeChanged)
     Q_PROPERTY(int temperature READ getTemperature WRITE setTemperature NOTIFY temperatureChanged)
 
+    Q_PROPERTY(int odometer READ getOdometer NOTIFY odometerChanged)
+
 public:
     /// @brief Construct VehicleData.
     explicit VehicleData(QObject *parent = nullptr);
@@ -87,6 +89,8 @@ public:
     Q_INVOKABLE void toggleAutonomousMode();
     Q_INVOKABLE void resetValues();
     Q_INVOKABLE void resetTrip();
+    Q_INVOKABLE void requestOdometerReset();
+
 
     void handleCurrentGearUpdate(int currentGear); ///< Maps VSS int (0=N, neg=R, pos=D) to gear string.
 
