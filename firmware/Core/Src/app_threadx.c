@@ -59,6 +59,7 @@ float                   g_vehicleSpeed;
 float 					g_current_speed;
 int16_t 				g_current_pwm;
 MotorPIDState			g_motorPidState;
+float					g_targetSpeed;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/

@@ -124,4 +124,5 @@ void MotorPIDInit(MotorPIDState *state)
 
     state->pwm_output = 0.0f;
     state->pwm_raw = 0;
+    g_targetSpeed = 0;
 }

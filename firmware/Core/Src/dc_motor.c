@@ -89,23 +89,22 @@ void MotorSetPWM(int32_t left_counts, int32_t right_counts)
 */
 VOID DcMotor(ULONG initial_input)
 {
-	//t_can_message 	msg;
-	//ULONG			actual_flags;
+	t_can_message 	msg;
+	ULONG			actual_flags;
 
 	while (1)
 	{
-//		tx_event_flags_get(&g_eventFlags, FLAG_CAN_SPEED_CMD,
-//		TX_OR_CLEAR, &actual_flags, TX_WAIT_FOREVER);
+		tx_event_flags_get(&g_eventFlags, FLAG_CAN_SPEED_CMD,
+		TX_OR_CLEAR, &actual_flags, TX_WAIT_FOREVER);
 //		UartPrintf("Velocidade atual:%f\r\n",g_current_speed);
-		g_motorPidState.target_speed = 0.0f;
+//		g_motorPidState.target_speed = 0.0f;
 		MotorPIDUpdate(&g_motorPidState, g_current_speed);
-//		while (tx_queue_receive(&g_queueSpeedCmd, &msg, TX_NO_WAIT) == TX_SUCCESS)
-//		{
-//			int32_t left_count = 0;
-//			int32_t right_count = 0;
-//
-//			memcpy(&left_count, msg.data, sizeof(int32_t));
-//
+		while (tx_queue_receive(&g_queueSpeedCmd, &msg, TX_NO_WAIT) == TX_SUCCESS)
+		{
+//			int32_t direction = 0;
+
+			memcpy(&g_targetSpeed, msg.data, sizeof(int32_t));
+			UpdateMotorControl();
 //			tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
 //			if(g_emergencyBrake && left_count > 0 )
 //			{
@@ -115,8 +114,8 @@ VOID DcMotor(ULONG initial_input)
 //			}
 //			else
 //			{
-//				tx_mutex_put(&g_emergencyMutex);
-//
+//			tx_mutex_put(&g_emergencyMutex);
+
 //				if (msg.len >= 8)
 //				{
 //					right_count = 0;
@@ -136,8 +135,7 @@ VOID DcMotor(ULONG initial_input)
 //					MotorSetPWM(counts, counts);
 //					tx_mutex_put(&g_motorMutex);
 //				}
-//			}
-		//}
+		}
 		tx_thread_sleep(10);
 	}
 }
