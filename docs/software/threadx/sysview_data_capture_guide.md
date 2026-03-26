@@ -1,4 +1,4 @@
-# SystemView Capture Guide (Simple)
+# SystemView Capture Guide
 
 This guide explains, in a simple way:
 - What OpenOCD is
@@ -17,7 +17,7 @@ It is a tool that lets your computer talk to a microcontroller through a debug p
 
 In this project, OpenOCD is used to read SystemView trace bytes from RAM.
 
-## What this script does (very brief)
+## What this script does
 
 Script: `firmware/sysview_data_generate.sh`
 
