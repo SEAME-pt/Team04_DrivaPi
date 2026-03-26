@@ -1,3 +1,11 @@
+/*
+ * motor_control.c
+ *
+ *  Created on: Mar 25, 2026
+ *      Author: hugofslopes
+ */
+
+
 #include "motor_control.h"
 
 void MotorPIDUpdate(MotorPIDState *state, float current_speed)
@@ -57,7 +65,7 @@ void MotorPIDUpdate(MotorPIDState *state, float current_speed)
 void UpdateMotorControl(void)
 {
     // CAN receiver has already populated g_targetSpeed
-    
+
     // Update motor PID controller with current speed feedback
     g_motorPidState.target_speed = g_targetSpeed;
     MotorPIDUpdate(&g_motorPidState, g_vehicleSpeed);

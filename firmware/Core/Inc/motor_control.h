@@ -1,11 +1,18 @@
-#ifndef __MOTOR_CONTROL_H
-#define __MOTOR_CONTROL_H
+/*
+ * motor_control.h
+ *
+ *  Created on: Mar 25, 2026
+ *      Author: hugofslopes
+ */
+
+#ifndef INC_MOTOR_CONTROL_H_
+#define INC_MOTOR_CONTROL_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <app_threadx.h>
+#include "app_threadx.h"
 
 #define PID_SAMPLE_TIME 	0.01f   // 10 ms update rate (matches SpeedSensor thread)
 #define PWM_MIN 			300u   	// Minimum absolute PWM to overcome dead zone
@@ -23,7 +30,7 @@ typedef struct {
 	float       error;             		// e[n]
 	float       error_prev;        		// e[n-1] for derivative
 	float       integral;          		// sum of errors for integral term
-	
+
 	float       gain_p, gain_i, gain_d;	// PID gains
 	float       pwm_output;        		// computed normalized PWM (-1.0 to 1.0)
 	int16_t     pwm_raw;				// signed PWM counts for MotorSetPWM (-4095 to 4095)
@@ -57,4 +64,5 @@ void MotorPIDInit(MotorPIDState *state);
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif /* INC_MOTOR_CONTROL_H_ */

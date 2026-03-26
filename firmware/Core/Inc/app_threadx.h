@@ -44,7 +44,6 @@ extern "C" {
 #include "motor_utils.h"
 #include "motor_control.h"
 #include "sensors.h"
-
 #include "soft_i2c.h"
 #include "init_devices.h"
 /* USER CODE END Includes */
@@ -154,8 +153,7 @@ extern TX_MUTEX             g_gearMutex;
 extern RNDGear_t			g_current_gear;
 extern float				g_vehicleSpeed;
 extern float 				g_current_speed;
-extern int16_t 				g_currentPWM;
-// extern MotorPIDState		g_motorPidState;
+extern int16_t 				g_current_pwm;
 /* USER CODE END 1 */
 
 #ifdef __cplusplus
