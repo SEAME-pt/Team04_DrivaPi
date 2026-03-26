@@ -14,7 +14,7 @@ extern "C" {
 
 #include "app_threadx.h"
 
-#define PID_SAMPLE_TIME 	0.01f   // 10 ms update rate (matches SpeedSensor thread)
+#define PID_SAMPLE_TIME 	0.1f    // 100 ms update rate (matches DcMotor thread sleep(10) = 10 ticks = 100ms)
 #define PWM_MIN 			300u   	// Minimum absolute PWM to overcome dead zone
 #define PWM_MAX				4095u  	// Maximum absolute PWM value
 #define PID_INTEGRAL_LIMIT	100.0f	// Anti-windup clamp for integral state (error * seconds)

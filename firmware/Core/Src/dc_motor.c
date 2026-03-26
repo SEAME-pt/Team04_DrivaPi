@@ -38,11 +38,18 @@ void MotorSetPWM(int32_t left_counts, int32_t right_counts)
 	}
 	else
 	{
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, max);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, max);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, max);
+		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, 0);
+		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, 0);
+		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, 0);
 		g_current_pwm = 0;
 	}
+//	else
+//	{
+//		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, max);
+//		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, max);
+//		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, max);
+//		g_current_pwm = 0;
+//	}
 
 	/* Right motor */
 	if (right_counts > 0)
@@ -61,10 +68,17 @@ void MotorSetPWM(int32_t left_counts, int32_t right_counts)
 	}
 	else
 	{
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, max);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, max);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, max);
+		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, 0);
+		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, 0);
+		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, 0);
+		g_current_pwm = 0;
 	}
+//	else
+//	{
+//		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, max);
+//		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, max);
+//		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, max);
+//	}
 }
 
 /**
@@ -82,8 +96,8 @@ VOID DcMotor(ULONG initial_input)
 	{
 //		tx_event_flags_get(&g_eventFlags, FLAG_CAN_SPEED_CMD,
 //		TX_OR_CLEAR, &actual_flags, TX_WAIT_FOREVER);
-		UartPrintf("Velocidade atual:%f\r\n",g_current_speed);
-		g_motorPidState.target_speed = 0;
+//		UartPrintf("Velocidade atual:%f\r\n",g_current_speed);
+		g_motorPidState.target_speed = 0.0f;
 		MotorPIDUpdate(&g_motorPidState, g_current_speed);
 //		while (tx_queue_receive(&g_queueSpeedCmd, &msg, TX_NO_WAIT) == TX_SUCCESS)
 //		{
