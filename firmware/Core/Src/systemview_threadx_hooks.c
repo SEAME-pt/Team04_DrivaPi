@@ -6,17 +6,7 @@
  ******************************************************************************
  */
 
-#include "app_threadx.h"
 #include "systemview_threadx_hooks.h"
-
-/**
- * @brief ThreadX execution profile initialization hook.
- * @retval None
- */
-VOID _tx_execution_initialize(VOID)
-{
-	/* Scheduler hooks only; SystemView init/start is handled in MX_ThreadX_Init(). */
-}
 
 /**
  * @brief Called by ThreadX scheduler when a thread starts executing.
@@ -28,13 +18,9 @@ VOID _tx_execution_thread_enter(VOID)
 
 	TX_THREAD_GET_CURRENT(current_thread);
 	if (current_thread != NULL)
-	{
 		SEGGER_SYSVIEW_OnTaskStartExec(TX_POINTER_TO_ULONG_CONVERT(current_thread));
-	}
 	else
-	{
 		SEGGER_SYSVIEW_OnIdle();
-	}
 }
 
 /**
@@ -47,9 +33,7 @@ VOID _tx_execution_thread_exit(VOID)
 
 	TX_THREAD_GET_CURRENT(current_thread);
 	if (current_thread != NULL)
-	{
 		SEGGER_SYSVIEW_OnTaskStopReady(TX_POINTER_TO_ULONG_CONVERT(current_thread), 0u);
-	}
 }
 
 /**
