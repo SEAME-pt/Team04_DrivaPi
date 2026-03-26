@@ -16,6 +16,7 @@ extern "C" {
 #include "tx_api.h"
 #include "app_threadx.h"
 
+VOID _tx_execution_initialize(VOID);
 VOID _tx_execution_thread_enter(VOID);
 VOID _tx_execution_thread_exit(VOID);
 VOID _tx_execution_isr_enter(VOID);

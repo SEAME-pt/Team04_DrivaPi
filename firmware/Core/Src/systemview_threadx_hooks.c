@@ -9,6 +9,13 @@
 #include "systemview_threadx_hooks.h"
 
 /**
+ * @brief Initializes execution profiling hooks used by ThreadX. Empty but needed to satisfy 
+ * linker when execution-change notify is enabled.
+ * @retval None
+ */
+VOID _tx_execution_initialize(VOID){}
+
+/**
  * @brief Called by ThreadX scheduler when a thread starts executing.
  * @retval None
  */
