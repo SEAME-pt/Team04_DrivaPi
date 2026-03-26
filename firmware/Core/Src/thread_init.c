@@ -17,9 +17,7 @@
 void sysview_register_thread(TX_THREAD *thread)
 {
 	if ((thread == TX_NULL) || (thread->tx_thread_name == TX_NULL))
-	{
 		return;
-	}
 
 	SEGGER_SYSVIEW_NameResource((U32)(uintptr_t)thread, (const char *)thread->tx_thread_name);
 }
@@ -122,8 +120,6 @@ void ThreadInit(void)
 	}
 
 	for (uint8_t idx = supervisor_e; idx <= ultrasonic_sensor_e; idx++)
-	{
 		sysview_register_thread(&g_threads[idx].thread_ptr);
-	}
 }
 
