@@ -1,11 +1,3 @@
-/*
- * motor_control.c
- *
- *  Created on: Mar 25, 2026
- *      Author: hugofslopes
- */
-
-
 #include "motor_control.h"
 
 void MotorPIDUpdate(MotorPIDState *state, float current_speed)
@@ -15,7 +7,7 @@ void MotorPIDUpdate(MotorPIDState *state, float current_speed)
     if (fabs(hm_speed - state->target_speed) < SPEED_MARGIN)
     {
 //    	tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
-//		MotorSetPWM((int32_t)state->pwm_raw, (int32_t)state->pwm_raw);
+//		MotorSetPWM((int32_t)state->current_speed, (int32_t)state->current_speed);
 //		tx_mutex_put(&g_motorMutex);
 		return ;
     }
@@ -80,18 +72,6 @@ void MotorPIDUpdate(MotorPIDState *state, float current_speed)
 	tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
 	MotorSetPWM((int32_t)state->pwm_raw, (int32_t)state->pwm_raw);
 	tx_mutex_put(&g_motorMutex);
-	
-	// Debug output every 10 iterations (1 second at 100ms loop)
-	static uint8_t debug_counter = 0;
-	if (++debug_counter >= 10)
-	{
-		debug_counter = 0;
-		char debug_msg[100];
-		sprintf(debug_msg, "T:%.1f C:%.1f E:%.1f I:%.2f PWM:%d\r\n", 
-		        target_magnitude * target_direction, hm_speed * target_direction, 
-		        state->error, state->integral, state->pwm_raw);
-		UartPrint(debug_msg);
-	}
 
 	// Step 11: Store state
 	state->error_prev = state->error;
@@ -109,10 +89,10 @@ void UpdateMotorControl(void)
 
 void MotorPIDInit(MotorPIDState *state)
 {
-    /* PID gains tuned for motor speed control (hm/h units) */
-    state->gain_p = 0.05f;   /* Proportional gain - adjust error response */
-    state->gain_i = 0.01f;   /* Integral gain - eliminate steady-state error */
-    state->gain_d = 0.002f;  /* Derivative gain - reduce overshoot */
+    /* PID gains tuned for motor speed control - BALANCED for stability + responsiveness */
+    state->gain_p = 0.03f;   /* Proportional - doubled from 0.015, still < original 0.05 */
+    state->gain_i = 0.008f;  /* Integral - stronger for large steady-state errors */
+    state->gain_d = 0.002f;  /* Derivative - restored to original (was working) */
 
     state->target_speed = 0.0f;
     state->current_speed = 0.0f;
@@ -126,3 +106,4 @@ void MotorPIDInit(MotorPIDState *state)
     state->pwm_raw = 0;
     g_targetSpeed = 0;
 }
+

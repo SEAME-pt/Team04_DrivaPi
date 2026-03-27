@@ -91,51 +91,59 @@ VOID DcMotor(ULONG initial_input)
 {
 	t_can_message 	msg;
 	ULONG			actual_flags;
+	static uint8_t debug_counter = 0;
 
 	while (1)
 	{
-		tx_event_flags_get(&g_eventFlags, FLAG_CAN_SPEED_CMD,
-		TX_OR_CLEAR, &actual_flags, TX_WAIT_FOREVER);
-//		UartPrintf("Velocidade atual:%f\r\n",g_current_speed);
-//		g_motorPidState.target_speed = 0.0f;
-		MotorPIDUpdate(&g_motorPidState, g_current_speed);
-		while (tx_queue_receive(&g_queueSpeedCmd, &msg, TX_NO_WAIT) == TX_SUCCESS)
+		// Check for new CAN messages (non-blocking)
+		if (tx_event_flags_get(&g_eventFlags, FLAG_CAN_SPEED_CMD,
+		    TX_OR_CLEAR, &actual_flags, TX_NO_WAIT) == TX_SUCCESS)
 		{
-//			int32_t direction = 0;
-
-			memcpy(&g_targetSpeed, msg.data, sizeof(int32_t));
-			UpdateMotorControl();
-//			tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
-//			if(g_emergencyBrake && left_count > 0 )
-//			{
-//				tx_mutex_put(&g_emergencyMutex);
-//				tx_thread_sleep(5);
-//				continue ;
-//			}
-//			else
-//			{
-//			tx_mutex_put(&g_emergencyMutex);
-
-//				if (msg.len >= 8)
-//				{
-//					right_count = 0;
-//					memcpy(&left_count, msg.data, sizeof(int32_t));
-//					memcpy(&right_count, msg.data + sizeof(int32_t), sizeof(int32_t));
-//
-//					tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
-//					MotorSetPWM(left_count, right_count);
-//					tx_mutex_put(&g_motorMutex);
-//				}
-//				else if (msg.len >= 4)
-//				{
-//					int32_t counts = 0;
-//					memcpy(&counts, msg.data, sizeof(int32_t));
-//
-//					tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
-//					MotorSetPWM(counts, counts);
-//					tx_mutex_put(&g_motorMutex);
-//				}
+			// Process all pending CAN messages
+			while (tx_queue_receive(&g_queueSpeedCmd, &msg, TX_NO_WAIT) == TX_SUCCESS)
+			{
+				// Parse as two int32_t values (speed magnitude and direction)
+				int32_t speed_magnitude = 0;
+				int32_t direction = 0;  // 1 = forward, 0 = backward
+				
+				memcpy(&speed_magnitude, msg.data, sizeof(int32_t));
+				memcpy(&direction, msg.data + sizeof(int32_t), sizeof(int32_t));
+				
+				// Debug print
+				char debug_buf[80];
+				sprintf(debug_buf, "CAN: Speed=%ld, Dir=%ld (%s)\r\n", 
+				        speed_magnitude, direction, (direction == 1) ? "FWD" : "BWD");
+				UartPrint(debug_buf);
+				
+				// Convert to signed speed: positive for forward, negative for backward
+				if (direction == 1)
+				{
+					g_motorPidState.target_speed = (float)speed_magnitude;
+				}
+				else  // direction == 0 (backward)
+				{
+					g_motorPidState.target_speed = -(float)speed_magnitude;
+				}
+				
+				sprintf(debug_buf, "Target: %d hm/h\r\n", (int)g_motorPidState.target_speed);
+				UartPrint(debug_buf);
+			}
 		}
-		tx_thread_sleep(10);
+		
+		// Run PID control EVERY loop iteration (100ms)
+		MotorPIDUpdate(&g_motorPidState, g_current_speed);
+		
+		// Print current speed every 10 iterations (1 second)
+		if (++debug_counter >= 10)
+		{
+			debug_counter = 0;
+			char speed_buf[80];
+			int current_hm = (int)(g_current_speed * 36.0f);
+			sprintf(speed_buf, "Curr: %d hm/h, Target: %d, PWM: %d\r\n", 
+			        current_hm, (int)g_motorPidState.target_speed, (int)g_motorPidState.pwm_raw);
+			UartPrint(speed_buf);
+		}
+		
+		tx_thread_sleep(10);  // 100ms loop
 	}
 }
