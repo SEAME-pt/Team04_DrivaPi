@@ -58,7 +58,7 @@ RNDGear_t				g_current_gear;
 float                   g_vehicleSpeed;
 float 					g_current_speed;
 int16_t 				g_current_pwm;
-MotorPIDState			g_motorPidState;
+MotorControlState		g_motorControlState;
 float					g_targetSpeed;
 /* USER CODE END PV */
 
@@ -106,7 +106,7 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
 	tx_mutex_create(&g_gearMutex, "Gear Mutex", TX_NO_INHERIT);
 
 	InitAllDevices();
-	MotorPIDInit(&g_motorPidState);
+	MotorControlInit(&g_motorControlState);
 	msg = "Initializing threads...\r\n";
 	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
 	ThreadInit();

@@ -14,38 +14,42 @@ extern "C" {
 
 #include "app_threadx.h"
 
-#define PID_SAMPLE_TIME 	0.1f    // 100 ms update rate (matches DcMotor thread sleep(10) = 10 ticks = 100ms)
 #define PWM_MIN 			300u   	// Minimum absolute PWM to overcome dead zone
 #define PWM_MAX				4095u  	// Maximum absolute PWM value
-#define PID_INTEGRAL_LIMIT	100.0f	// Anti-windup clamp for integral state (error * seconds)
-#define SPEED_MARGIN		5.0f
+#define SPEED_MARGIN		5.0f    // hm/h tolerance for "at target" detection
+#define INTEGRAL_LIMIT		500.0f  // Anti-windup limit for PI controller
 
 /**
- * @struct MotorPIDState
- * @brief PID controller state for the motor
+ * @struct MotorControlState
+ * @brief Hybrid feedforward + PI feedback controller
+ * 
+ * Strategy:
+ * 1. Feedforward: Direct PWM mapping (target/100 * 4095) - handles ~90% of control
+ * 2. PI Feedback: Small corrections for disturbances (curves, hills, weight, etc.)
  */
 typedef struct {
-	float       target_speed;      		// desired speed (m/s)
-	float       current_speed;     		// measured speed (m/s) from speed_sensor.c
-	float       error;             		// e[n]
-	float       error_prev;        		// e[n-1] for derivative
-	float       integral;          		// sum of errors for integral term
+	float       target_speed;      		// desired speed (hm/h)
+	float       current_speed;     		// measured speed (hm/h) from speed_sensor.c
+	float       error;             		// current error (target - actual)
+	float       integral;          		// accumulated error for I term
 
-	float       gain_p, gain_i, gain_d;	// PID gains
+	float       feedforward_gain;  		// Direct mapping ratio (1/100 for 100 hm/h max)
+	float       proportional_gain; 		// Kp: Proportional gain for error correction (PWM per hm/h error)
+	float       integral_gain;     		// Ki: Integral gain for steady-state error elimination
 	float       pwm_output;        		// computed normalized PWM (-1.0 to 1.0)
 	int16_t     pwm_raw;				// signed PWM counts for MotorSetPWM (-4095 to 4095)
-} MotorPIDState;
+} MotorControlState;
 
-extern MotorPIDState g_motorPidState;  // motor PID controller state
-extern float         g_vehicleSpeed;   // from speed_sensor.c (measured m/s)
-extern float         g_targetSpeed;    // from CAN message (remote command m/s)
+extern MotorControlState g_motorControlState;  // motor controller state
+extern float             g_vehicleSpeed;       // from speed_sensor.c (measured m/s)
+extern float             g_targetSpeed;        // from CAN message (remote command m/s)
 
 /**
- * @brief Compute PID control output and send signed PWM counts to motor driver
- * @param state PID state structure with gains and controller memory
+ * @brief Compute feedforward + proportional control output and send signed PWM to motor
+ * @param state Controller state structure with gains
  * @param current_speed Current measured vehicle speed (m/s)
  */
-void MotorPIDUpdate(MotorPIDState *state, float current_speed);
+void MotorControlUpdate(MotorControlState *state, float current_speed);
 
 /**
  * @brief Update motor control loop using current target and measured speed
@@ -53,13 +57,10 @@ void MotorPIDUpdate(MotorPIDState *state, float current_speed);
 void UpdateMotorControl(void);
 
 /**
- * @brief Initialize PID controller gains and internal state
- * @param state PID state structure to initialize
- * @param kp Proportional gain
- * @param ki Integral gain
- * @param kd Derivative gain
+ * @brief Initialize controller gains
+ * @param state Controller state structure to initialize
  */
-void MotorPIDInit(MotorPIDState *state);
+void MotorControlInit(MotorControlState *state);
 
 #ifdef __cplusplus
 }

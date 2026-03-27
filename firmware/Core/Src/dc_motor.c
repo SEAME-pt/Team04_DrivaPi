@@ -118,32 +118,32 @@ VOID DcMotor(ULONG initial_input)
 				// Convert to signed speed: positive for forward, negative for backward
 				if (direction == 1)
 				{
-					g_motorPidState.target_speed = (float)speed_magnitude;
+					g_motorControlState.target_speed = (float)speed_magnitude;
 				}
 				else  // direction == 0 (backward)
 				{
-					g_motorPidState.target_speed = -(float)speed_magnitude;
+					g_motorControlState.target_speed = (float)speed_magnitude;
 				}
 				
-				sprintf(debug_buf, "Target: %d hm/h\r\n", (int)g_motorPidState.target_speed);
+				sprintf(debug_buf, "Target: %d hm/h\r\n", (int)g_motorControlState.target_speed);
 				UartPrint(debug_buf);
 			}
 		}
 		
-		// Run PID control EVERY loop iteration (100ms)
-		MotorPIDUpdate(&g_motorPidState, g_current_speed);
+		// Run motor control EVERY loop iteration (100ms)
+		MotorControlUpdate(&g_motorControlState, g_current_speed);
 		
 		// Print current speed every 10 iterations (1 second)
-		if (++debug_counter >= 10)
-		{
-			debug_counter = 0;
-			char speed_buf[80];
-			int current_hm = (int)(g_current_speed * 36.0f);
-			sprintf(speed_buf, "Curr: %d hm/h, Target: %d, PWM: %d\r\n", 
-			        current_hm, (int)g_motorPidState.target_speed, (int)g_motorPidState.pwm_raw);
-			UartPrint(speed_buf);
-		}
-		
+//		if (++debug_counter >= 10)
+//		{
+//			debug_counter = 0;
+//			char speed_buf[80];
+//			int current_hm = (int)(g_current_speed * 36.0f);
+//			sprintf(speed_buf, "Curr: %d hm/h, Target: %d, PWM: %d\r\n",
+//			        current_hm, (int)g_motorControlState.target_speed, (int)g_motorControlState.pwm_raw);
+//			UartPrint(speed_buf);
+//		}
+
 		tx_thread_sleep(10);  // 100ms loop
 	}
 }
