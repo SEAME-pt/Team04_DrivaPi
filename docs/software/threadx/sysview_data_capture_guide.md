@@ -2,9 +2,11 @@
 
 This guide explains, in a simple way:
 - What OpenOCD is
-- What `sysview_data_generate.sh` does
 - What SystemView is
+- What `sysview_data_generate.sh` does
+- How to run the script
 - How to see the recorded data
+
 
 ## What is OpenOCD?
 
@@ -17,9 +19,20 @@ It is a tool that lets your computer talk to a microcontroller through a debug p
 
 In this project, OpenOCD is used to read SystemView trace bytes from RAM.
 
-## What this script does
 
-Script: `firmware/sysview_data_generate.sh`
+## What is SystemView?
+
+SEGGER SystemView is a timeline/profiling tool for embedded systems.
+
+It records RTOS and application events such as:
+- task switches
+- interrupts
+- timing and execution behavior
+
+Internally, events are written into an RTT buffer in RAM. This script dumps that buffer after runtime so you can inspect it later.
+
+
+## What `firmware/sysview_data_generate.sh` script does
 
 The script:
 1. Finds the RTT control block address (`_SEGGER_RTT`) from `Debug/firmware.map`.
@@ -33,16 +46,6 @@ The script:
    - data wrapped around in a ring buffer
 8. Saves the result as an `.SVDat` file.
 
-## What is SystemView?
-
-SEGGER SystemView is a timeline/profiling tool for embedded systems.
-
-It records RTOS and application events such as:
-- task switches
-- interrupts
-- timing and execution behavior
-
-Internally, events are written into an RTT buffer in RAM. This script dumps that buffer after runtime so you can inspect it later.
 
 ## How to run the script
 
@@ -66,6 +69,7 @@ Arguments:
 - `output_file` (optional): output `.SVDat` file name
 - `capture_ms` (optional): capture duration in milliseconds (default `5000`)
 - `reset_target` (optional): `1` to reset before capture, `0` otherwise (default `0`)
+
 
 ## How to view the recorded data
 
