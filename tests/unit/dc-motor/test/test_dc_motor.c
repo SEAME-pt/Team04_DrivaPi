@@ -11,6 +11,7 @@
 #include "mock_stm32u5xx_hal.h"
 #include "mock_tx_api.h"
 #include "mock_pca9685.h"
+#include "motor_control.h"  // Defines MotorControlState type
 
 /* --- GLOBAL VARIABLES (required by firmware) --- */
 TX_MUTEX g_speedDataMutex;
