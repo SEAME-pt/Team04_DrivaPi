@@ -97,7 +97,7 @@ void UltrasonicEntry(ULONG initial_input)
 
 
 		tx_mutex_get(&g_gearMutex, TX_WAIT_FOREVER);
-		current_gear = g_current_gear;
+		current_gear = g_currentGear;
 		tx_mutex_put(&g_gearMutex);
 
 		// 4. PHYSICS & SAFETY

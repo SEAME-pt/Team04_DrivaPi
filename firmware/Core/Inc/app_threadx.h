@@ -150,10 +150,10 @@ extern TX_MUTEX             g_canMutex;
 extern TX_MUTEX             g_motorMutex;
 extern TX_MUTEX             g_servoMutex;
 extern TX_MUTEX             g_gearMutex;
-extern RNDGear_t			g_current_gear;
+extern RNDGear_t			g_currentGear;
 extern float				g_vehicleSpeed;
 extern float 				g_currentSpeed;
-extern int16_t 				g_current_pwm;
+extern int16_t 				g_currentPWM;
 /* USER CODE END 1 */
 
 #ifdef __cplusplus

@@ -102,8 +102,8 @@ VOID SpeedSensor(ULONG initial_input)
 		tx_mutex_put(&g_speedDataMutex);
 
 		tx_mutex_get(&g_gearMutex, TX_WAIT_FOREVER);
-		g_current_gear = DetermineRNDGear(current_speed, g_current_pwm);
-		RNDGear_t current_gear = g_current_gear;
+		g_currentGear = DetermineRNDGear(current_speed, g_currentPWM);
+		RNDGear_t current_gear = g_currentGear;
 		tx_mutex_put(&g_gearMutex);
 
 		if (current_gear != last_gear)
