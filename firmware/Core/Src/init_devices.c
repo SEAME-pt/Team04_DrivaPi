@@ -2,7 +2,7 @@
  * init_devices.c
  *
  *  Created on: Feb 13, 2026
- *      Author: hugofslopes
+ *      Author: DrivaPi
  */
 
 
