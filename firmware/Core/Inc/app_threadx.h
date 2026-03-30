@@ -43,9 +43,12 @@ extern "C" {
 #include "dc_motor_test.h"
 #include "motor_utils.h"
 #include "sensors.h"
-
 #include "soft_i2c.h"
 #include "init_devices.h"
+#include "../../Middlewares/SystemView/SEGGER_SYSVIEW.h"
+#include "../../Middlewares/SystemView/SEGGER_RTT.h"
+#include "../../Middlewares/SystemView/SEGGER_SYSVIEW_ThreadX.h"
+#include "../../Middlewares/ST/threadx/common/inc/tx_trace.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -85,6 +88,7 @@ typedef struct can_message_s
 /* Private defines -----------------------------------------------------------*/
 
 /* USER CODE BEGIN PD */
+#define TRACE_BUFFER_SIZE	65536
 #define FLAG_CAN_SPEED_CMD	(1 << 0)
 #define FLAG_CAN_STEER_CMD	(1 << 1)
 #define FLAG_SENSOR_UPDATE	(1 << 2)
@@ -136,6 +140,7 @@ VOID	SensorBatteryThread(ULONG initial_input);
 void	ThreadInit(void);
 void	UltrasonicEntry(ULONG initial_input);
 int		CanSend(t_can_message* msg);
+extern void sysview_register_thread(TX_THREAD *thread);
 /* USER CODE END EFP */
 
 /* USER CODE BEGIN 1 */
@@ -154,6 +159,7 @@ extern RNDGear_t			g_current_gear;
 extern float				g_vehicleSpeed;
 extern float 				g_current_speed;
 extern int16_t 				g_current_pwm;
+extern unsigned char		trace_buffer[TRACE_BUFFER_SIZE];
 /* USER CODE END 1 */
 
 #ifdef __cplusplus

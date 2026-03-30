@@ -39,8 +39,8 @@ int SetServoAngle(uint8_t channel, uint16_t angle_deg)
  */
 void ServoMotor(ULONG initial_input)
 {
-	t_can_message msg;
-	ULONG actual_flags;
+	t_can_message	msg;
+	ULONG			actual_flags;
 
 	while (1)
 	{

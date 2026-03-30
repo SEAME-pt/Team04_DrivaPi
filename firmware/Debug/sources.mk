@@ -1,6 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
-# Toolchain: GNU Tools for STM32 (13.3.rel1)
+# Toolchain: GNU Tools for STM32 (14.3.rel1)
 ################################################################################
 
 ELF_SRCS := 
@@ -29,4 +29,5 @@ Core/Test \
 Drivers/STM32U5xx_HAL_Driver/Src \
 Middlewares/ST/threadx/common/src \
 Middlewares/ST/threadx/ports/cortex_m33/gnu/src \
+Middlewares/SystemView \
 

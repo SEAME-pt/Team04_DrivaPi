@@ -344,7 +344,6 @@ void SensorBatteryThread(ULONG initial_input)
 		else
 		{
 			error_count++;
-			UartPrintf("Battery: Read error #%lu (status=%d)\r\n", error_count, status);
 			if (error_count >= 3)
 			{
 				if (tx_mutex_get(&g_sensorDataMutex, TX_WAIT_FOREVER) == TX_SUCCESS)

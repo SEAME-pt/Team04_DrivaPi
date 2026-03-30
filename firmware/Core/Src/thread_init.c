@@ -11,6 +11,18 @@
 #include "app_threadx.h"
 
 /**
+ * @brief  Function that implements the kernel's initialization.
+ * @param  None
+ */
+void sysview_register_thread(TX_THREAD *thread)
+{
+	if ((thread == TX_NULL) || (thread->tx_thread_name == TX_NULL))
+		return;
+
+	SEGGER_SYSVIEW_NameResource((U32)(uintptr_t)thread, (const char *)thread->tx_thread_name);
+}
+
+/**
  * @brief Create and start all application threads.
  *
  */
@@ -106,4 +118,8 @@ void ThreadInit(void)
 		sprintf(err_msg, "FailBattery\r\n");
 		HAL_UART_Transmit(&huart1, (uint8_t *)err_msg, strlen(err_msg), HAL_MAX_DELAY);
 	}
+
+	for (uint8_t idx = supervisor_e; idx <= ultrasonic_sensor_e; idx++)
+		sysview_register_thread(&g_threads[idx].thread_ptr);
 }
+

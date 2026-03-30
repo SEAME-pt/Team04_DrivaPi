@@ -116,11 +116,6 @@ void UltrasonicEntry(ULONG initial_input)
 			else
 				ttc_ms = 9999.0f;
 
-			// Log
-			char msg[64];
-			snprintf(msg, sizeof(msg), "D:%d cm | TTC:%.0f ms\r\n", range_cm, ttc_ms);
-			HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), 10);
-
 			if (current_gear != GEAR_REVERSE && (ttc_ms < TTC_THRESHOLD_MS || range_cm < BRAKE_THRESHOLD_CM))
 			{
 				tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
