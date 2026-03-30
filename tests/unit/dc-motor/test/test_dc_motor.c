@@ -23,11 +23,14 @@ bool g_emergencyBrake;
 int16_t g_currentPWM;
 float g_currentSpeed;
 
+MotorControlState g_motorControlState;
+
 I2C_HandleTypeDef hi2c3;
 UART_HandleTypeDef huart1;
 
 /* --- INCLUDE FIRMWARE SOURCE FILES DIRECTLY --- */
 #include "../../../firmware/Core/Src/motor_utils.c"
+#include "../../../firmware/Core/Src/motor_control.c"
 #include "../../../firmware/Core/Src/dc_motor.c"
 
 /* --- TEST INFRASTRUCTURE --- */
