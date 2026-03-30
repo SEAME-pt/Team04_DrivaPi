@@ -25,6 +25,8 @@ int16_t g_currentPWM;
 float g_currentSpeed;
 
 MotorControlState g_motorControlState;
+float g_vehicleSpeed;   // from speed_sensor.c (measured m/s)
+float g_targetSpeed;    // from CAN message (remote command m/s)
 
 I2C_HandleTypeDef hi2c3;
 UART_HandleTypeDef huart1;
