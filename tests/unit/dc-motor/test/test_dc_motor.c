@@ -22,7 +22,6 @@ TX_MUTEX g_emergencyMutex;
 bool g_emergencyBrake;
 int16_t g_currentPWM;
 float g_currentSpeed;
-MotorControlState g_motorControlState;
 
 I2C_HandleTypeDef hi2c3;
 UART_HandleTypeDef huart1;

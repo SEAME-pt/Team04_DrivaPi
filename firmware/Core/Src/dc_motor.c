@@ -43,13 +43,6 @@ void MotorSetPWM(int32_t left_counts, int32_t right_counts)
 		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, 0);
 		g_current_pwm = 0;
 	}
-//	else
-//	{
-//		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, max);
-//		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, max);
-//		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, max);
-//		g_current_pwm = 0;
-//	}
 
 	/* Right motor */
 	if (right_counts > 0)
@@ -73,12 +66,6 @@ void MotorSetPWM(int32_t left_counts, int32_t right_counts)
 		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, 0);
 		g_current_pwm = 0;
 	}
-//	else
-//	{
-//		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, max);
-//		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, max);
-//		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, max);
-//	}
 }
 
 /**
@@ -109,12 +96,6 @@ VOID DcMotor(ULONG initial_input)
 				memcpy(&speed_magnitude, msg.data, sizeof(int32_t));
 				memcpy(&direction, msg.data + sizeof(int32_t), sizeof(int32_t));
 				
-				// Debug print
-				char debug_buf[80];
-				sprintf(debug_buf, "CAN: Speed=%ld, Dir=%ld (%s)\r\n", 
-				        speed_magnitude, direction, (direction == 1) ? "FWD" : "BWD");
-				UartPrint(debug_buf);
-				
 				// Convert to signed speed: positive for forward, negative for backward
 				if (direction == 1)
 				{
@@ -125,25 +106,11 @@ VOID DcMotor(ULONG initial_input)
 					g_motorControlState.target_speed = (float)speed_magnitude;
 				}
 				
-				sprintf(debug_buf, "Target: %d hm/h\r\n", (int)g_motorControlState.target_speed);
-				UartPrint(debug_buf);
+
 			}
 		}
-		
-		// Run motor control EVERY loop iteration (100ms)
 		MotorControlUpdate(&g_motorControlState, g_currentSpeed);
 		
-		// Print current speed every 10 iterations (1 second)
-//		if (++debug_counter >= 10)
-//		{
-//			debug_counter = 0;
-//			char speed_buf[80];
-//			int current_hm = (int)(g_currentSpeed * 36.0f);
-//			sprintf(speed_buf, "Curr: %d hm/h, Target: %d, PWM: %d\r\n",
-//			        current_hm, (int)g_motorControlState.target_speed, (int)g_motorControlState.pwm_raw);
-//			UartPrint(speed_buf);
-//		}
-
-		tx_thread_sleep(10);  // 100ms loop
+		tx_thread_sleep(10);
 	}
 }
