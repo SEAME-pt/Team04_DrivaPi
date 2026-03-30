@@ -20,9 +20,14 @@ void MotorControlUpdate(MotorControlState *state, float current_speed)
     
     // Extract magnitude and direction from target
     float target_magnitude = (state->target_speed < 0.0f) ? -state->target_speed : state->target_speed;
-    int8_t target_direction = (state->target_speed >= 0.0f) ? 1 : -1;
+    int8_t target_direction;
+
+    if (state->direction == 1)
+        target_direction = 1;
+    else if (state->direction == 0)
+        target_direction = -1;
     
-    // Stop motor if target is zero
+    // Neutral motor if target is zero
     if (target_magnitude < 0.5f)
     {
         state->pwm_raw = 0;
@@ -57,9 +62,9 @@ void MotorControlUpdate(MotorControlState *state, float current_speed)
         state->integral += state->error * 0.1f;  // 0.1s sample time
         
         // Clamp integral to prevent excessive windup
-        if (state->integral > INTEGRAL_LIMIT)
+        if (state->integral >= INTEGRAL_LIMIT)
             state->integral = INTEGRAL_LIMIT;
-        if (state->integral < -INTEGRAL_LIMIT)
+        else if (state->integral <= -INTEGRAL_LIMIT)
             state->integral = -INTEGRAL_LIMIT;
     }
     
@@ -78,8 +83,7 @@ void MotorControlUpdate(MotorControlState *state, float current_speed)
     int16_t pwm_magnitude = (int16_t)(pwm_normalized * 4095.0f);
     
     // Apply deadzone minimum ONLY when starting from stop
-    float error_magnitude = (state->error < 0) ? -state->error : state->error;
-    if (error_magnitude > 20.0f && pwm_magnitude > 0 && pwm_magnitude < (int16_t)PWM_MIN)
+    if (pwm_magnitude > 0 && pwm_magnitude < (int16_t)PWM_MIN)
     {
         pwm_magnitude = (int16_t)PWM_MIN;
     }

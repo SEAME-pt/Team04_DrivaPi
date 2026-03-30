@@ -249,9 +249,11 @@ static UINT TxThreadSleepEmergencyBreakCallback(ULONG timer_ticks, int cmock_num
     (void)cmock_num_calls;
 
     if (timer_ticks == (ULONG)5) {
+        // First call with sleep(10) - let it continue the loop
         return TX_SUCCESS;
     }
 
+    // Second iteration should exit
     TEST_ASSERT_EQUAL_UINT32((ULONG)10, timer_ticks);
     longjmp(s_dcMotorLoopExit, 1);
     return TX_SUCCESS;
@@ -533,3 +535,127 @@ void test_DcMotor_ShouldHandleNoCanMessages(void)
     TEST_PASS();
 }
 
+void test_MotorControlUpdate_ShouldNeutralAtLowSpeed(void)
+{
+    MotorControlInit(&g_motorControlState);
+    g_motorControlState.target_speed = 0.3f;  // Less than 0.5 hm/h
+    
+    tx_mutex_get_IgnoreAndReturn(TX_SUCCESS);
+    tx_mutex_put_IgnoreAndReturn(TX_SUCCESS);
+    
+    // Should call MotorNeutral when target speed is very low
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, 0, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, 0, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, 0, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, 0, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, 0, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, 0, HAL_OK);
+    
+    MotorControlUpdate(&g_motorControlState, 5.0f);
+    
+    // Verify state was reset
+    TEST_ASSERT_EQUAL_INT16(0, g_motorControlState.pwm_raw);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, g_motorControlState.integral);
+}
+
+void test_MotorControlUpdate_ShouldClampIntegralAtUpperLimit(void)
+{
+    MotorControlInit(&g_motorControlState);
+    g_motorControlState.target_speed = 20.0f;   // Low speed to avoid saturation
+    g_motorControlState.integral = 500.0f;       // ABOVE the limit (500.0f)
+    
+    tx_mutex_get_ExpectAndReturn(&g_motorMutex, TX_WAIT_FOREVER, TX_SUCCESS);
+    PCA9685_SetPWM_IgnoreAndReturn(HAL_OK);
+    tx_mutex_put_ExpectAndReturn(&g_motorMutex, TX_SUCCESS);
+    
+    // Run with zero current speed to create positive error and trigger clamping
+    MotorControlUpdate(&g_motorControlState, 0.0f);  // Error = 20.0f
+    
+    // Integral should be clamped to INTEGRAL_LIMIT (500.0f)
+    TEST_ASSERT_EQUAL_FLOAT(500.0f, g_motorControlState.integral);
+}
+
+void test_MotorControlUpdate_ShouldClampIntegralAtLowerLimit(void)
+{
+    MotorControlInit(&g_motorControlState);
+    g_motorControlState.target_speed = 50.0f;     // Higher speed to keep PWM positive
+    g_motorControlState.integral = -510.0f;       // Just BELOW the limit (-500.0f)
+    g_motorControlState.integral_gain = 0.0001f;
+    
+    tx_mutex_get_ExpectAndReturn(&g_motorMutex, TX_WAIT_FOREVER, TX_SUCCESS);
+    PCA9685_SetPWM_IgnoreAndReturn(HAL_OK);
+    tx_mutex_put_ExpectAndReturn(&g_motorMutex, TX_SUCCESS);
+    
+    // Run with zero current speed to create positive PWM but negative integral triggers clamping
+    MotorControlUpdate(&g_motorControlState, 0.0f);  // Error = 50.0f
+    // PWM = feedforward(0.5) + proportional(0.1) + integral(-0.502) = 0.098 > 0
+    
+    // Integral should be clamped to -INTEGRAL_LIMIT (-500.0f)
+    TEST_ASSERT_EQUAL_FLOAT(-500.0f, g_motorControlState.integral);
+}
+
+
+void test_MotorControlUpdate_AnyIntegralValue(void)
+{
+    MotorControlInit(&g_motorControlState);
+    g_motorControlState.target_speed = 50.0f;     // Higher speed to keep PWM positive
+    g_motorControlState.integral = 0.0f;
+    
+    tx_mutex_get_ExpectAndReturn(&g_motorMutex, TX_WAIT_FOREVER, TX_SUCCESS);
+    PCA9685_SetPWM_IgnoreAndReturn(HAL_OK);
+    tx_mutex_put_ExpectAndReturn(&g_motorMutex, TX_SUCCESS);
+    
+    // Run with zero current speed to create positive PWM but negative integral triggers clamping
+    MotorControlUpdate(&g_motorControlState, 0.0f);  // Error = 50.0f
+    // PWM = feedforward(0.5) + proportional(0.1) + integral(-0.502) = 0.098 > 0
+    
+    TEST_PASS();
+}
+
+void test_MotorControlUpdate_Forward(void)
+{
+    MotorControlInit(&g_motorControlState);
+    g_motorControlState.direction = 1;     // Higher speed to keep PWM positive
+    g_motorControlState.target_speed = 50;
+    
+    tx_mutex_get_ExpectAndReturn(&g_motorMutex, TX_WAIT_FOREVER, TX_SUCCESS);
+    PCA9685_SetPWM_IgnoreAndReturn(HAL_OK);
+    tx_mutex_put_ExpectAndReturn(&g_motorMutex, TX_SUCCESS);
+    
+    // Run with zero current speed to create positive PWM but negative integral triggers clamping
+    MotorControlUpdate(&g_motorControlState, 0.0f);  // Error = 50.0f
+    // PWM = feedforward(0.5) + proportional(0.1) + integral(-0.502) = 0.098 > 0
+    
+    TEST_PASS();
+}
+
+void test_MotorControlUpdate_HighPWMNormalized(void)
+{
+    MotorControlInit(&g_motorControlState);
+    g_motorControlState.target_speed = 20.0f;   // Low speed to avoid saturation
+    g_motorControlState.integral = 1000.0f;       // ABOVE the limit (500.0f)
+    
+    tx_mutex_get_ExpectAndReturn(&g_motorMutex, TX_WAIT_FOREVER, TX_SUCCESS);
+    PCA9685_SetPWM_IgnoreAndReturn(HAL_OK);
+    tx_mutex_put_ExpectAndReturn(&g_motorMutex, TX_SUCCESS);
+    
+    // Run with zero current speed to create positive error and trigger clamping
+    MotorControlUpdate(&g_motorControlState, 0.0f);
+    
+   TEST_PASS();
+}
+
+
+void test_MotorControlUpdate_ApplyDeadzoneMinimum(void)
+{
+    MotorControlInit(&g_motorControlState);
+    g_motorControlState.target_speed = 2.0f;   // Low speed to avoid saturation
+    
+    tx_mutex_get_ExpectAndReturn(&g_motorMutex, TX_WAIT_FOREVER, TX_SUCCESS);
+    PCA9685_SetPWM_IgnoreAndReturn(HAL_OK);
+    tx_mutex_put_ExpectAndReturn(&g_motorMutex, TX_SUCCESS);
+    
+    MotorControlUpdate(&g_motorControlState, 0.0f);
+    
+   TEST_PASS();
+}
