@@ -40,6 +40,19 @@ function usage() {
     echo "  deploy  - build then flash"
 }
 
+function clean() {
+    echo "Cleaning build artifacts..."
+    make clean
+    rm -f "$BIN"
+    echo "Clean complete!"
+}
+
+function reset() {
+    echo "Erasing flash memory..."
+st-flash --reset erase
+    echo "Reset complete!"
+}
+
 case "$1" in
     build)
         build
@@ -50,6 +63,12 @@ case "$1" in
     deploy)
         build
         flash
+        ;;
+    clean)
+        clean
+        ;;
+    reset)
+        reset
         ;;
     *)
         usage

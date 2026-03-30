@@ -50,6 +50,8 @@ void speed_sensor_module_start(ULONG id)
 
     TX_PARAMETER_NOT_USED(id);
 
+    (void)ModuleRequest(SPEED_SENSOR_MODULE_REQ_DEBUG_LOG, SPEED_SENSOR_MODULE_LOG_RUNNING, 0u, 0u);
+
     while (1)
     {
         ULONG current_ticks;

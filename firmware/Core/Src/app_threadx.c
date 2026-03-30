@@ -76,8 +76,10 @@ static VOID ModuleFaultHandler(TX_THREAD *thread_ptr, TXM_MODULE_INSTANCE *modul
 /* USER CODE BEGIN 0 */
 static VOID ModuleFaultHandler(TX_THREAD *thread_ptr, TXM_MODULE_INSTANCE *module_instance_ptr)
 {
+	const char *fault_msg = "Speed module memory fault\r\n";
 	(void)thread_ptr;
 	(void)module_instance_ptr;
+	HAL_UART_Transmit(&huart1, (uint8_t*)fault_msg, strlen(fault_msg), HAL_MAX_DELAY);
 }
 /* USER CODE END 0 */
 
@@ -162,6 +164,7 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
 		HAL_UART_Transmit(&huart1, (uint8_t*)"Speed module start failed\r\n", 28, HAL_MAX_DELAY);
 		return ret;
 	}
+	HAL_UART_Transmit(&huart1, (uint8_t*)"Speed module started\r\n", 22, HAL_MAX_DELAY);
 
 	InitAllDevices();
 

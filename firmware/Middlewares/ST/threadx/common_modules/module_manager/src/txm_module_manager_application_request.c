@@ -63,7 +63,7 @@
 /*    _txm_module_manager_kernel_dispatch   Kernel dispatch function      */
 /*                                                                        */
 /**************************************************************************/
-UINT  _txm_module_manager_application_request(ULONG request_id, ALIGN_TYPE param_1, ALIGN_TYPE param_2, ALIGN_TYPE param_3)
+__attribute__((weak)) UINT  _txm_module_manager_application_request(ULONG request_id, ALIGN_TYPE param_1, ALIGN_TYPE param_2, ALIGN_TYPE param_3)
 {
     /* By default, simply return the status of not available.  */
     return(TX_NOT_AVAILABLE);

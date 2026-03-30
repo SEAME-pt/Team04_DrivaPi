@@ -188,7 +188,6 @@
 #define TXM_TRACE_ISR_ENTER_INSERT_CALL_NOT_USED
 #define TXM_TRACE_ISR_EXIT_INSERT_CALL_NOT_USED
 #define TXM_TRACE_USER_EVENT_INSERT_CALL_NOT_USED
-#define TXM_MODULE_APPLICATION_REQUEST_CALL_NOT_USED
 
 /* Determine if global ThreadX variables should be cleared. If the compiler startup code clears
    the .bss section prior to ThreadX running, the define can be used to eliminate unnecessary

@@ -69,6 +69,19 @@ UINT _txm_module_manager_application_request(ULONG request_id, ALIGN_TYPE param_
         return TX_SUCCESS;
     }
 
+    case SPEED_SENSOR_MODULE_REQ_DEBUG_LOG:
+    {
+        UINT log_code = (UINT)param_1;
+
+        if (log_code == SPEED_SENSOR_MODULE_LOG_RUNNING)
+        {
+            UartPrint("Speed sensor module is running\r\n");
+            return TX_SUCCESS;
+        }
+
+        return TX_PTR_ERROR;
+    }
+
     default:
         return TX_NOT_AVAILABLE;
     }

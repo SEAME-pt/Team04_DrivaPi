@@ -20,6 +20,7 @@ void ld1_ThreadEntry(ULONG initial_input)
 {
 	while (1)
 	{
+    UartPrint("Supervisor thread is running\r\n");
 		tx_thread_sleep(50);
 	}
 }
