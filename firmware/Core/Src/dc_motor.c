@@ -131,14 +131,14 @@ VOID DcMotor(ULONG initial_input)
 		}
 		
 		// Run motor control EVERY loop iteration (100ms)
-		MotorControlUpdate(&g_motorControlState, g_current_speed);
+		MotorControlUpdate(&g_motorControlState, g_currentSpeed);
 		
 		// Print current speed every 10 iterations (1 second)
 //		if (++debug_counter >= 10)
 //		{
 //			debug_counter = 0;
 //			char speed_buf[80];
-//			int current_hm = (int)(g_current_speed * 36.0f);
+//			int current_hm = (int)(g_currentSpeed * 36.0f);
 //			sprintf(speed_buf, "Curr: %d hm/h, Target: %d, PWM: %d\r\n",
 //			        current_hm, (int)g_motorControlState.target_speed, (int)g_motorControlState.pwm_raw);
 //			UartPrint(speed_buf);

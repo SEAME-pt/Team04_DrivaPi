@@ -152,7 +152,7 @@ extern TX_MUTEX             g_servoMutex;
 extern TX_MUTEX             g_gearMutex;
 extern RNDGear_t			g_current_gear;
 extern float				g_vehicleSpeed;
-extern float 				g_current_speed;
+extern float 				g_currentSpeed;
 extern int16_t 				g_current_pwm;
 /* USER CODE END 1 */
 

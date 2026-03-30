@@ -98,7 +98,7 @@ VOID SpeedSensor(ULONG initial_input)
 
 		tx_mutex_get(&g_speedDataMutex, TX_WAIT_FOREVER);
 		g_vehicleSpeed = current_speed;
-		g_current_speed = current_speed;
+		g_currentSpeed = current_speed;
 		tx_mutex_put(&g_speedDataMutex);
 
 		tx_mutex_get(&g_gearMutex, TX_WAIT_FOREVER);

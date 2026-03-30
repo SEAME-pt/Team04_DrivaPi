@@ -56,7 +56,7 @@ TX_MUTEX                g_servoMutex;
 TX_MUTEX             	g_gearMutex;
 RNDGear_t				g_current_gear;
 float                   g_vehicleSpeed;
-float 					g_current_speed;
+float 					g_currentSpeed;
 int16_t 				g_current_pwm;
 MotorControlState		g_motorControlState;
 float					g_targetSpeed;
@@ -82,7 +82,7 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
   	g_emergencyBrake = false;
 	g_vehicleSpeed = 0;
 	g_current_gear = GEAR_NEUTRAL;
-	g_current_speed = 0.0f;
+	g_currentSpeed = 0.0f;
 	g_current_pwm = 0;
 
 	const char *msg = "\r\n=== DrivaPi ThreadX Init ===\r\n";
