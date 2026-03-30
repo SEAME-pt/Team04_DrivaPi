@@ -38,6 +38,7 @@ typedef struct {
 	float       integral_gain;     		// Ki: Integral gain for steady-state error elimination
 	float       pwm_output;        		// computed normalized PWM (-1.0 to 1.0)
 	int16_t     pwm_raw;				// signed PWM counts for MotorSetPWM (-4095 to 4095)
+	int32_t		direction;
 } MotorControlState;
 
 extern MotorControlState g_motorControlState;  // motor controller state

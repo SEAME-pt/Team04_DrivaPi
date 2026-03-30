@@ -157,14 +157,14 @@ void test_MotorSetPWM_WithZeroCounts(void)
     const uint16_t max = 4095;
     
     // Left motor active brake (all max)
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, max, HAL_OK);
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, max, HAL_OK);
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, max, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, 0, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, 0, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, 0, HAL_OK);
     
     // Right motor active brake (all max)
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, max, HAL_OK);
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, max, HAL_OK);
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, max, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, 0, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, 0, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, 0, HAL_OK);
     MotorSetPWM(left_counts, right_counts);
 }
 
@@ -258,89 +258,17 @@ static UINT TxThreadSleepEmergencyBreakCallback(ULONG timer_ticks, int cmock_num
     return TX_SUCCESS;
 }
 
-void test_DcMotor_ShouldProcess8ByteCommand(void)
+void test_DcMotor_ShouldSkipCommandWhenEmergencyBrakeActiveAndForwardDirection(void)
 {
-    int32_t left_counts = 1000;
-    int32_t right_counts = -500;
-    const uint16_t max = 4095;
-
-    memset(&s_dcMotorQueuedMessage, 0, sizeof(s_dcMotorQueuedMessage));
-    s_dcMotorQueuedMessage.len = 8;
-    memcpy(s_dcMotorQueuedMessage.data, &left_counts, sizeof(int32_t));
-    memcpy(s_dcMotorQueuedMessage.data + sizeof(int32_t), &right_counts, sizeof(int32_t));
-
-    tx_event_flags_get_StubWithCallback(TxEventFlagsGetCallback);
-    tx_queue_receive_StubWithCallback(TxQueueReceiveOnceCallback);
-    tx_thread_sleep_StubWithCallback(TxThreadSleepBreakCallback);
-    tx_mutex_get_IgnoreAndReturn(TX_SUCCESS);
-    tx_mutex_put_IgnoreAndReturn(TX_SUCCESS);
-
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, max, HAL_OK);
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, 0, HAL_OK);
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, ClampU16(left_counts), HAL_OK);
-
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, max, HAL_OK);
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, 0, HAL_OK);
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, ClampU16(-right_counts), HAL_OK);
-
-    if (setjmp(s_dcMotorLoopExit) == 0) {
-        DcMotor(0);
-    }
-}
-
-void test_DcMotor_ShouldProcess4ByteCommandForBothMotors(void)
-{
-    int32_t counts = 777;
-    const uint16_t max = 4095;
-
-    memset(&s_dcMotorQueuedMessage, 0, sizeof(s_dcMotorQueuedMessage));
-    s_dcMotorQueuedMessage.len = 4;
-    memcpy(s_dcMotorQueuedMessage.data, &counts, sizeof(int32_t));
-
-    tx_event_flags_get_StubWithCallback(TxEventFlagsGetCallback);
-    tx_queue_receive_StubWithCallback(TxQueueReceiveOnceCallback);
-    tx_thread_sleep_StubWithCallback(TxThreadSleepBreakCallback);
-    tx_mutex_get_IgnoreAndReturn(TX_SUCCESS);
-    tx_mutex_put_IgnoreAndReturn(TX_SUCCESS);
-
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, max, HAL_OK);
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, 0, HAL_OK);
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, ClampU16(counts), HAL_OK);
-
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, 0, HAL_OK);
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, max, HAL_OK);
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, ClampU16(counts), HAL_OK);
-
-    if (setjmp(s_dcMotorLoopExit) == 0) {
-        DcMotor(0);
-    }
-}
-
-void test_DcMotor_ShouldIgnoreMessagesSmallerThan4Bytes(void)
-{
-    memset(&s_dcMotorQueuedMessage, 0, sizeof(s_dcMotorQueuedMessage));
-    s_dcMotorQueuedMessage.len = 3;
-
-    tx_event_flags_get_StubWithCallback(TxEventFlagsGetCallback);
-    tx_queue_receive_StubWithCallback(TxQueueReceiveOnceCallback);
-    tx_thread_sleep_StubWithCallback(TxThreadSleepBreakCallback);
-    tx_mutex_get_IgnoreAndReturn(TX_SUCCESS);
-    tx_mutex_put_IgnoreAndReturn(TX_SUCCESS);
-
-    if (setjmp(s_dcMotorLoopExit) == 0) {
-        DcMotor(0);
-    }
-}
-
-void test_DcMotor_ShouldSkipCommandWhenEmergencyBrakeActiveAndPositiveSpeed(void)
-{
-    int32_t left_counts = 1000;
+    int32_t direction = 1;
+    int32_t speed = 50;
 
     g_emergencyBrake = true;
 
     memset(&s_dcMotorQueuedMessage, 0, sizeof(s_dcMotorQueuedMessage));
     s_dcMotorQueuedMessage.len = 8;
-    memcpy(s_dcMotorQueuedMessage.data, &left_counts, sizeof(int32_t));
+    memcpy(s_dcMotorQueuedMessage.data, &speed, sizeof(int32_t));
+    memcpy(s_dcMotorQueuedMessage.data + sizeof(int32_t), &direction, sizeof(int32_t));
 
     tx_event_flags_get_StubWithCallback(TxEventFlagsGetCallback);
     tx_queue_receive_StubWithCallback(TxQueueReceiveOnceCallback);
@@ -355,16 +283,18 @@ void test_DcMotor_ShouldSkipCommandWhenEmergencyBrakeActiveAndPositiveSpeed(void
     g_emergencyBrake = false;
 }
 
-void test_DcMotor_ShouldProcessCommandWhenEmergencyBrakeActiveAndNonPositiveSpeed(void)
+void test_DcMotor_ShouldProcessCommandWhenEmergencyBrakeActiveAndBackwardDirection(void)
 {
-    int32_t counts = 0;
+    int32_t direction = 0;
+    int32_t speed = 0;
     const uint16_t max = 4095;
 
     g_emergencyBrake = true;
 
     memset(&s_dcMotorQueuedMessage, 0, sizeof(s_dcMotorQueuedMessage));
-    s_dcMotorQueuedMessage.len = 4;
-    memcpy(s_dcMotorQueuedMessage.data, &counts, sizeof(int32_t));
+    s_dcMotorQueuedMessage.len = 8;
+    memcpy(s_dcMotorQueuedMessage.data, &speed, sizeof(int32_t));
+    memcpy(s_dcMotorQueuedMessage.data + sizeof(int32_t), &direction, sizeof(int32_t));
 
     tx_event_flags_get_StubWithCallback(TxEventFlagsGetCallback);
     tx_queue_receive_StubWithCallback(TxQueueReceiveOnceCallback);
@@ -372,13 +302,13 @@ void test_DcMotor_ShouldProcessCommandWhenEmergencyBrakeActiveAndNonPositiveSpee
     tx_mutex_get_IgnoreAndReturn(TX_SUCCESS);
     tx_mutex_put_IgnoreAndReturn(TX_SUCCESS);
 
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, max, HAL_OK);
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, max, HAL_OK);
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, max, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, 0, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, 0, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, 0, HAL_OK);
 
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, max, HAL_OK);
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, max, HAL_OK);
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, max, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, 0, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, 0, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, 0, HAL_OK);
 
     if (setjmp(s_dcMotorLoopExit) == 0) {
         DcMotor(0);

@@ -12,15 +12,6 @@
  * @param state Controller state with target
  * @param current_speed Measured speed in m/s (magnitude only, always positive)
  * 
- * Algorithm: Two-stage control
- * 1. FEEDFORWARD (90%): Direct PWM mapping based on motor calibration
- *    - base_pwm = (target / 100.0) * 4095
- *    - Handles ideal case (flat road, no load, etc.)
- * 
- * 2. FEEDBACK (10%): PI controller for real-world corrections
- *    - Handles: curves, hills, weight changes, wind, etc.
- *    - P term: immediate response to error
- *    - I term: eliminates steady-state error from disturbances
  */
 void MotorControlUpdate(MotorControlState *state, float current_speed)
 {
@@ -145,5 +136,6 @@ void MotorControlInit(MotorControlState *state)
     state->integral = 0.0f;
     state->pwm_output = 0.0f;
     state->pwm_raw = 0;
+    state->direction = -1;
 }
 
