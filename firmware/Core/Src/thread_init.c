@@ -57,16 +57,6 @@ void ThreadInit(void)
 		HAL_UART_Transmit(&huart1, (uint8_t *)err_msg, strlen(err_msg), HAL_MAX_DELAY);
 	}
 
-	// SPEED SENSOR THREAD
-	if (tx_thread_create(&g_threads[speed_sensor_e].thread_ptr, "speedS_thread", SpeedSensor, 0, g_threads[speed_sensor_e].thread_Stack, THREAD_STACK_SIZE,
-	6, 6, TX_NO_TIME_SLICE, TX_AUTO_START) != TX_SUCCESS)
-		status = TX_THREAD_ERROR;
-	if (status == TX_THREAD_ERROR)
-	{
-		sprintf(err_msg, "FailSS\r\n");
-		HAL_UART_Transmit(&huart1, (uint8_t *)err_msg, strlen(err_msg), HAL_MAX_DELAY);
-	}
-
 	// CAN TX THREAD
 	if (tx_thread_create(&g_threads[can_tx_e].thread_ptr, "Can TX", CanTx, 0, g_threads[can_tx_e].thread_Stack, THREAD_STACK_SIZE,
 	7, 7, TX_NO_TIME_SLICE, TX_AUTO_START) != TX_SUCCESS)

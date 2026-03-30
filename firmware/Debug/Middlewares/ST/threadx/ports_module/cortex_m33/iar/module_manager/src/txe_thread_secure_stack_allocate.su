@@ -1,0 +1,1 @@
+../Middlewares/ST/threadx/ports_module/cortex_m33/iar/module_manager/src/txe_thread_secure_stack_allocate.c:68:9:_txe_thread_secure_stack_allocate	16	static

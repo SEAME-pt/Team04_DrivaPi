@@ -43,7 +43,7 @@ extern "C" {
 #include "dc_motor_test.h"
 #include "motor_utils.h"
 #include "sensors.h"
-
+#include "../../Middlewares/ST/threadx/common_modules/inc/txm_module.h"
 #include "soft_i2c.h"
 #include "init_devices.h"
 /* USER CODE END Includes */

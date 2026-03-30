@@ -158,6 +158,38 @@
 
 #define TX_DISABLE_PREEMPTION_THRESHOLD
 
+/* Enable ThreadX Module Manager support in the kernel build. */
+#define TX_MODULE_MANAGER_ENABLE
+
+/* Disable module-manager dispatch entries that require optional
+   performance and trace symbols not built in this project. */
+#define TXM_BLOCK_POOL_PERFORMANCE_INFO_GET_CALL_NOT_USED
+#define TXM_BLOCK_POOL_PERFORMANCE_SYSTEM_INFO_GET_CALL_NOT_USED
+#define TXM_BYTE_POOL_PERFORMANCE_INFO_GET_CALL_NOT_USED
+#define TXM_BYTE_POOL_PERFORMANCE_SYSTEM_INFO_GET_CALL_NOT_USED
+#define TXM_EVENT_FLAGS_PERFORMANCE_INFO_GET_CALL_NOT_USED
+#define TXM_EVENT_FLAGS_PERFORMANCE_SYSTEM_INFO_GET_CALL_NOT_USED
+#define TXM_MUTEX_PERFORMANCE_INFO_GET_CALL_NOT_USED
+#define TXM_MUTEX_PERFORMANCE_SYSTEM_INFO_GET_CALL_NOT_USED
+#define TXM_QUEUE_PERFORMANCE_INFO_GET_CALL_NOT_USED
+#define TXM_QUEUE_PERFORMANCE_SYSTEM_INFO_GET_CALL_NOT_USED
+#define TXM_SEMAPHORE_PERFORMANCE_INFO_GET_CALL_NOT_USED
+#define TXM_SEMAPHORE_PERFORMANCE_SYSTEM_INFO_GET_CALL_NOT_USED
+#define TXM_THREAD_PERFORMANCE_INFO_GET_CALL_NOT_USED
+#define TXM_THREAD_PERFORMANCE_SYSTEM_INFO_GET_CALL_NOT_USED
+#define TXM_TIMER_PERFORMANCE_INFO_GET_CALL_NOT_USED
+#define TXM_TIMER_PERFORMANCE_SYSTEM_INFO_GET_CALL_NOT_USED
+#define TXM_TRACE_BUFFER_FULL_NOTIFY_CALL_NOT_USED
+#define TXM_TRACE_DISABLE_CALL_NOT_USED
+#define TXM_TRACE_ENABLE_CALL_NOT_USED
+#define TXM_TRACE_EVENT_FILTER_CALL_NOT_USED
+#define TXM_TRACE_EVENT_UNFILTER_CALL_NOT_USED
+#define TXM_TRACE_INTERRUPT_CONTROL_CALL_NOT_USED
+#define TXM_TRACE_ISR_ENTER_INSERT_CALL_NOT_USED
+#define TXM_TRACE_ISR_EXIT_INSERT_CALL_NOT_USED
+#define TXM_TRACE_USER_EVENT_INSERT_CALL_NOT_USED
+#define TXM_MODULE_APPLICATION_REQUEST_CALL_NOT_USED
+
 /* Determine if global ThreadX variables should be cleared. If the compiler startup code clears
    the .bss section prior to ThreadX running, the define can be used to eliminate unnecessary
    clearing of ThreadX global variables.  */
@@ -181,7 +213,7 @@
    enabled. If the application does not use notify callbacks, they may be disabled to reduce
    code size and improve performance.  */
 
-#define TX_DISABLE_NOTIFY_CALLBACKS
+/*#define TX_DISABLE_NOTIFY_CALLBACKS*/
 
 /* Defined, the basic parameter error checking is disabled. */
 
@@ -266,7 +298,7 @@
 /*#define TX_SAFETY_CRITICAL*/
 
 /* USER CODE BEGIN 2 */
-
+#define TX_ENABLE_MODULE
 /* USER CODE END 2 */
 
 #endif
