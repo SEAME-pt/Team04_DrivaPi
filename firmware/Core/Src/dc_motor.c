@@ -19,17 +19,6 @@ void MotorSetPWM(int32_t left_counts, int32_t right_counts)
 {
 	const uint16_t max = (uint16_t)(PCA9685_COUNTS - 1u);
 
-	if (g_motorControlState.direction == 2)
-	{
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, max);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, max);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, max);
-
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, max);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, max);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, max);	
-	}
-
 	/* Left motor */
 	if (left_counts > 0)
 	{
@@ -79,6 +68,19 @@ void MotorSetPWM(int32_t left_counts, int32_t right_counts)
 	}
 }
 
+void MotorBrake(void)
+{
+	const uint16_t max = (uint16_t)(PCA9685_COUNTS - 1u);
+	
+	PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, max);
+	PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, max);
+	PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, max);
+
+	PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, max);
+	PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, max);
+	PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, max);
+}
+
 /**
 * @brief DC motor thread entry that consumes speed commands from CAN.
 *
@@ -112,12 +114,11 @@ VOID DcMotor(ULONG initial_input)
 				{
 					g_motorControlState.target_speed = (float)speed_magnitude;
 				}
-				else  // direction == 0 (backward)
+				else if (g_motorControlState.direction == 0) // direction == 0 (backward)
 				{
-					g_motorControlState.target_speed = (float)speed_magnitude;
+					g_motorControlState.target_speed = -(float)speed_magnitude;
 				}
 				
-
 			}
 		}
 		tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
@@ -130,14 +131,15 @@ VOID DcMotor(ULONG initial_input)
 		tx_mutex_put(&g_emergencyMutex);
 
 		if (g_motorControlState.direction == 0)
+		{
 			MotorControlUpdate(&g_motorControlState, g_currentSpeed);
+		}
 		else if (g_motorControlState.direction == 2)
 		{
 			tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
-		    MotorSetPWM(0, 0);
+		    MotorBrake();
 		    tx_mutex_put(&g_motorMutex);
 		}
-		
 		
 		tx_thread_sleep(10);
 	}

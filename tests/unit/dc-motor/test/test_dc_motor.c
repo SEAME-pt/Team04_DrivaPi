@@ -154,14 +154,13 @@ void test_MotorSetPWM_WithZeroCounts(void)
 {
     int32_t left_counts = 0;
     int32_t right_counts = 0;
-    const uint16_t max = 4095;
     
-    // Left motor active brake (all max)
+    // Left motor active neutral (all zero)
     PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, 0, HAL_OK);
     PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, 0, HAL_OK);
     PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, 0, HAL_OK);
     
-    // Right motor active brake (all max)
+    // Right motor active neutral (all zero)
     PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, 0, HAL_OK);
     PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, 0, HAL_OK);
     PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, 0, HAL_OK);
@@ -258,6 +257,22 @@ static UINT TxThreadSleepEmergencyBreakCallback(ULONG timer_ticks, int cmock_num
     return TX_SUCCESS;
 }
 
+static UINT TxEventFlagsGetNoEventsCallback(TX_EVENT_FLAGS_GROUP *group_ptr,
+                                             ULONG requested_flags,
+                                             UINT get_option,
+                                             ULONG *actual_flags,
+                                             ULONG wait_option,
+                                             int cmock_num_calls)
+{
+    (void)group_ptr;
+    (void)requested_flags;
+    (void)get_option;
+    (void)actual_flags;
+    (void)wait_option;
+    (void)cmock_num_calls;
+    return 1;  // Return non-TX_SUCCESS to indicate no events
+}
+
 void test_DcMotor_ShouldSkipCommandWhenEmergencyBrakeActiveAndForwardDirection(void)
 {
     int32_t direction = 1;
@@ -286,7 +301,7 @@ void test_DcMotor_ShouldSkipCommandWhenEmergencyBrakeActiveAndForwardDirection(v
 void test_DcMotor_ShouldProcessCommandWhenEmergencyBrakeActiveAndBackwardDirection(void)
 {
     int32_t direction = 0;
-    int32_t speed = 0;
+    int32_t speed = 100;
     const uint16_t max = 4095;
 
     g_emergencyBrake = true;
@@ -303,12 +318,77 @@ void test_DcMotor_ShouldProcessCommandWhenEmergencyBrakeActiveAndBackwardDirecti
     tx_mutex_put_IgnoreAndReturn(TX_SUCCESS);
 
     PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, 0, HAL_OK);
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, 0, HAL_OK);
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, 0, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, max, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, max, HAL_OK);
 
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, 0, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, max, HAL_OK);
     PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, 0, HAL_OK);
-    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, 0, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, max, HAL_OK);
+
+    if (setjmp(s_dcMotorLoopExit) == 0) {
+        DcMotor(0);
+    }
+
+    g_emergencyBrake = false;
+}
+
+void test_DcMotor_ShouldBrake(void)
+{
+    int32_t direction = 2;
+    int32_t speed = 45;
+    const uint16_t max = 4095;
+
+    memset(&s_dcMotorQueuedMessage, 0, sizeof(s_dcMotorQueuedMessage));
+    s_dcMotorQueuedMessage.len = 8;
+    memcpy(s_dcMotorQueuedMessage.data, &speed, sizeof(int32_t));
+    memcpy(s_dcMotorQueuedMessage.data + sizeof(int32_t), &direction, sizeof(int32_t));
+
+    tx_event_flags_get_StubWithCallback(TxEventFlagsGetCallback);
+    tx_queue_receive_StubWithCallback(TxQueueReceiveOnceCallback);
+    tx_thread_sleep_StubWithCallback(TxThreadSleepBreakCallback);
+    tx_mutex_get_IgnoreAndReturn(TX_SUCCESS);
+    tx_mutex_put_IgnoreAndReturn(TX_SUCCESS);
+
+    // When direction = 2 (brake), apply active braking: all pins to max
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, max, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, max, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, max, HAL_OK);
+
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, max, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, max, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, max, HAL_OK);
+
+    if (setjmp(s_dcMotorLoopExit) == 0) {
+        DcMotor(0);
+    }
+}
+
+void test_DcMotor_ShouldProcessCommandWhenEmergencyBrakeActiveAndBrakeInstruction(void)
+{
+    int32_t direction = 2;
+    int32_t speed = -45;
+    const uint16_t max = 4095;
+
+    g_emergencyBrake = true;
+
+    memset(&s_dcMotorQueuedMessage, 0, sizeof(s_dcMotorQueuedMessage));
+    s_dcMotorQueuedMessage.len = 8;
+    memcpy(s_dcMotorQueuedMessage.data, &speed, sizeof(int32_t));
+    memcpy(s_dcMotorQueuedMessage.data + sizeof(int32_t), &direction, sizeof(int32_t));
+
+    tx_event_flags_get_StubWithCallback(TxEventFlagsGetCallback);
+    tx_queue_receive_StubWithCallback(TxQueueReceiveOnceCallback);
+    tx_thread_sleep_StubWithCallback(TxThreadSleepBreakCallback);
+    tx_mutex_get_IgnoreAndReturn(TX_SUCCESS);
+    tx_mutex_put_IgnoreAndReturn(TX_SUCCESS);
+
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, max, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, max, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, max, HAL_OK);
+
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, max, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, max, HAL_OK);
+    PCA9685_SetPWM_ExpectAndReturn(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, max, HAL_OK);
 
     if (setjmp(s_dcMotorLoopExit) == 0) {
         DcMotor(0);
@@ -366,3 +446,90 @@ void test_SoftwareDelay_ShouldNotReturnImmediately(void)
     SoftwareDelay(5);
     TEST_PASS();
 }
+
+// ========================================================
+// TESTS FOR MOTOR CONTROL FUNCTIONS
+// ========================================================
+
+void test_MotorControlInit_ShouldInitializeGains(void)
+{
+    MotorControlState state;
+    memset(&state, 0xFF, sizeof(state));  // Fill with garbage
+    
+    MotorControlInit(&state);
+    
+    TEST_ASSERT_EQUAL_FLOAT(0.01f, state.feedforward_gain);
+    TEST_ASSERT_EQUAL_FLOAT(0.002f, state.proportional_gain);
+    TEST_ASSERT_EQUAL_FLOAT(0.001f, state.integral_gain);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, state.target_speed);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, state.current_speed);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, state.error);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, state.integral);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, state.pwm_output);
+    TEST_ASSERT_EQUAL_INT16(0, state.pwm_raw);
+    TEST_ASSERT_EQUAL_INT32(-1, state.direction);
+}
+
+void test_UpdateMotorControl_ShouldCallMotorControlUpdate(void)
+{
+    g_targetSpeed = 50.0f;
+    g_vehicleSpeed = 45.0f;
+    
+    MotorControlInit(&g_motorControlState);
+    
+    tx_mutex_get_IgnoreAndReturn(TX_SUCCESS);
+    tx_mutex_put_IgnoreAndReturn(TX_SUCCESS);
+    PCA9685_SetPWM_IgnoreAndReturn(HAL_OK);
+    
+    UpdateMotorControl();
+    
+    // Verify target speed was set
+    TEST_ASSERT_EQUAL_FLOAT(50.0f, g_motorControlState.target_speed);
+}
+
+void test_DcMotor_ShouldProcessForwardCommand(void)
+{
+    int32_t direction = 1;
+    int32_t speed = 100;
+
+    memset(&s_dcMotorQueuedMessage, 0, sizeof(s_dcMotorQueuedMessage));
+    s_dcMotorQueuedMessage.len = 8;
+    memcpy(s_dcMotorQueuedMessage.data, &speed, sizeof(int32_t));
+    memcpy(s_dcMotorQueuedMessage.data + sizeof(int32_t), &direction, sizeof(int32_t));
+
+    tx_event_flags_get_StubWithCallback(TxEventFlagsGetCallback);
+    tx_queue_receive_StubWithCallback(TxQueueReceiveOnceCallback);
+    tx_thread_sleep_StubWithCallback(TxThreadSleepBreakCallback);
+    tx_mutex_get_IgnoreAndReturn(TX_SUCCESS);
+    tx_mutex_put_IgnoreAndReturn(TX_SUCCESS);
+
+    // Forward direction should process normally (no emergency brake)
+    PCA9685_SetPWM_IgnoreAndReturn(HAL_OK);
+
+    if (setjmp(s_dcMotorLoopExit) == 0) {
+        DcMotor(0);
+    }
+    
+    // Verify direction and target speed were set correctly
+    TEST_ASSERT_EQUAL_INT32(1, g_motorControlState.direction);
+    TEST_ASSERT_EQUAL_FLOAT(100.0f, g_motorControlState.target_speed);
+}
+
+void test_DcMotor_ShouldHandleNoCanMessages(void)
+{
+    // Simulate no CAN messages available
+    tx_event_flags_get_StubWithCallback(TxEventFlagsGetNoEventsCallback);
+    tx_thread_sleep_StubWithCallback(TxThreadSleepBreakCallback);
+    tx_mutex_get_IgnoreAndReturn(TX_SUCCESS);
+    tx_mutex_put_IgnoreAndReturn(TX_SUCCESS);
+    
+    // Should still call motor control update
+    PCA9685_SetPWM_IgnoreAndReturn(HAL_OK);
+
+    if (setjmp(s_dcMotorLoopExit) == 0) {
+        DcMotor(0);
+    }
+    
+    TEST_PASS();
+}
+

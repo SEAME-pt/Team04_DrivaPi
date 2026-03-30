@@ -30,6 +30,7 @@ extern "C" {
 
 void SetMotor(double value);
 void MotorSetPWM(int32_t left_counts, int32_t right_counts);
+void MotorBrake(void);
 void MotorStop(void);
 void MotorForward(double speed);
 void MotorBackward(double speed);
