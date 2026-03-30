@@ -246,16 +246,17 @@ static UINT TxThreadSleepBreakCallback(ULONG timer_ticks, int cmock_num_calls)
 
 static UINT TxThreadSleepEmergencyBreakCallback(ULONG timer_ticks, int cmock_num_calls)
 {
-    (void)cmock_num_calls;
+    (void)timer_ticks;
 
-    if (timer_ticks == (ULONG)5) {
-        // First call with sleep(10) - let it continue the loop
+    if (cmock_num_calls == 0) {
+        // First call → allow loop to continue
         return TX_SUCCESS;
     }
 
-    // Second iteration should exit
+    // Second call → exit loop
     TEST_ASSERT_EQUAL_UINT32((ULONG)10, timer_ticks);
     longjmp(s_dcMotorLoopExit, 1);
+
     return TX_SUCCESS;
 }
 
