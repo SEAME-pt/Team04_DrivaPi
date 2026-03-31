@@ -36,6 +36,9 @@ CFLAGS=(
   -fno-unwind-tables
   -fno-asynchronous-unwind-tables
   -fPIC
+  -msingle-pic-base
+  -mpic-register=r9
+  -mno-pic-data-is-text-relative
   -DTXM_MODULE
 )
 

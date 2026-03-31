@@ -1,21 +1,20 @@
 #include "txm_module.h"
 #include "speed_sensor_module_api.h"
 
-#define TIMER_PERIOD               65535.0f
-#define PULSES_PER_REV             30.0f
-#define WHEEL_PERIMETER_M          0.212f
+#define TIMER_PERIOD               65535L
+#define PULSES_PER_REV             30L
+#define WHEEL_PERIMETER_MM         212L
 
-#define RND_DEADZONE_POSITIVE      0.2f
-#define RND_DEADZONE_NEGATIVE     -0.2f
+#define RND_DEADZONE_MMPS          200L
 
 static UINT ModuleRequest(ULONG request, ALIGN_TYPE p1, ALIGN_TYPE p2, ALIGN_TYPE p3)
 {
     return txm_module_application_request(request, p1, p2, p3);
 }
 
-static UINT DetermineGear(float speed_mps, INT pwm_value)
+static UINT DetermineGear(INT speed_mmps, INT pwm_value)
 {
-    if (speed_mps > RND_DEADZONE_POSITIVE)
+    if (speed_mmps > (INT)RND_DEADZONE_MMPS)
     {
         if (pwm_value > 0)
         {
@@ -27,7 +26,7 @@ static UINT DetermineGear(float speed_mps, INT pwm_value)
         }
     }
 
-    if (speed_mps < RND_DEADZONE_NEGATIVE)
+    if (speed_mmps < (INT)(-RND_DEADZONE_MMPS))
     {
         if (pwm_value > 0)
         {
@@ -46,11 +45,9 @@ void speed_sensor_module_start(ULONG id)
 {
     static ULONG last_ticks = 0u;
     static ULONG last_count = 0u;
-    static UINT first_sample = 1u;
+    static UINT sample_initialized = 0u;
 
     TX_PARAMETER_NOT_USED(id);
-
-    (void)ModuleRequest(SPEED_SENSOR_MODULE_REQ_DEBUG_LOG, SPEED_SENSOR_MODULE_LOG_RUNNING, 0u, 0u);
 
     while (1)
     {
@@ -59,12 +56,9 @@ void speed_sensor_module_start(ULONG id)
         INT pwm_value;
         INT delta_count;
         ULONG delta_ticks;
-        float dt;
-        float rotations;
-        float distance_m;
-        float speed_mps;
         INT speed_mmps;
         UINT gear;
+        INT distance_mm;
 
         tx_thread_sleep(50u);
 
@@ -72,13 +66,14 @@ void speed_sensor_module_start(ULONG id)
         current_ticks = (ULONG)ModuleRequest(SPEED_SENSOR_MODULE_REQ_GET_TICKS, 0u, 0u, 0u);
         pwm_value = (INT)ModuleRequest(SPEED_SENSOR_MODULE_REQ_GET_PWM, 0u, 0u, 0u);
 
-        if (first_sample)
+        if (sample_initialized == 0u)
         {
             last_count = current_count;
             last_ticks = current_ticks;
-            first_sample = 0u;
+            sample_initialized = 1u;
             (void)ModuleRequest(SPEED_SENSOR_MODULE_REQ_PUBLISH_SPEED_MMPS, 0u, 0u, 0u);
             (void)ModuleRequest(SPEED_SENSOR_MODULE_REQ_PUBLISH_GEAR, SPEED_SENSOR_MODULE_GEAR_NEUTRAL, 0u, 0u);
+            (void)ModuleRequest(SPEED_SENSOR_MODULE_REQ_DEBUG_LOG, SPEED_SENSOR_MODULE_LOG_RUNNING, 0u, 0u);
             continue;
         }
 
@@ -89,32 +84,24 @@ void speed_sensor_module_start(ULONG id)
         }
 
         delta_count = (INT)current_count - (INT)last_count;
-        if (delta_count > (INT)(TIMER_PERIOD / 2.0f))
+        if (delta_count > (INT)(TIMER_PERIOD / 2L))
         {
-            delta_count -= (INT)(TIMER_PERIOD + 1.0f);
+            delta_count -= (INT)(TIMER_PERIOD + 1L);
         }
-        else if (delta_count < (INT)(-(TIMER_PERIOD / 2.0f)))
+        else if (delta_count < (INT)(-(TIMER_PERIOD / 2L)))
         {
-            delta_count += (INT)(TIMER_PERIOD + 1.0f);
+            delta_count += (INT)(TIMER_PERIOD + 1L);
         }
 
         last_count = current_count;
         last_ticks = current_ticks;
 
-        dt = (float)delta_ticks / (float)TX_TIMER_TICKS_PER_SECOND;
-        if (dt <= 0.001f)
-        {
-            continue;
-        }
-
-        rotations = (float)delta_count / PULSES_PER_REV;
-        distance_m = rotations * WHEEL_PERIMETER_M;
-        speed_mps = distance_m / dt;
-        speed_mmps = (INT)(speed_mps * 1000.0f);
+        distance_mm = (delta_count * (INT)WHEEL_PERIMETER_MM) / (INT)PULSES_PER_REV;
+        speed_mmps = (distance_mm * (INT)TX_TIMER_TICKS_PER_SECOND) / (INT)delta_ticks;
 
         (void)ModuleRequest(SPEED_SENSOR_MODULE_REQ_PUBLISH_SPEED_MMPS, (ALIGN_TYPE)speed_mmps, 0u, 0u);
 
-        gear = DetermineGear(speed_mps, pwm_value);
+        gear = DetermineGear(speed_mmps, pwm_value);
         (void)ModuleRequest(SPEED_SENSOR_MODULE_REQ_PUBLISH_GEAR, (ALIGN_TYPE)gear, 0u, 0u);
     }
 }

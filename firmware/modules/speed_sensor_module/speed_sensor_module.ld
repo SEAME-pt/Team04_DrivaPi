@@ -75,7 +75,12 @@ SECTIONS
     __heap_end__ = .;
   } > RAM
 
-  __code_start__ = ADDR(.text);
-  __code_size__ = __FLASH_segment_end__ - __code_start__;
+  /*
+   * ThreadX module manager uses code size from preamble to configure MPU
+   * permissions for the module image in flash. This must cover the entire
+   * flash segment (including preamble/GOT/data_load), not only .text.
+   */
+  __code_start__ = __FLASH_segment_start__;
+  __code_size__ = __FLASH_segment_end__ - __FLASH_segment_start__;
   __data_size__ = __heap_end__ - __RAM_segment_start__;
 }

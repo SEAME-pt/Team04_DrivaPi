@@ -23,9 +23,12 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdio.h>
+#include <string.h>
 #include "sensors.h"
 #include "speed_sensor.h"
 #include "speed_sensor_module_image.h"
+#include "txm_module_port.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -60,6 +63,7 @@ RNDGear_t				g_current_gear;
 float                   g_vehicleSpeed;
 float 					g_current_speed;
 int16_t 				g_current_pwm;
+ULONG                   g_speed_module_last_tick;
 
 /* Module manager runtime memory areas (kernel-side). */
 static UCHAR            g_module_manager_ram[32768];
@@ -74,12 +78,60 @@ static VOID ModuleFaultHandler(TX_THREAD *thread_ptr, TXM_MODULE_INSTANCE *modul
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
+extern TXM_MODULE_MANAGER_MEMORY_FAULT_INFO _txm_module_manager_memory_fault_info;
+
+static VOID ModuleFaultUartPrint(const CHAR *text)
+{
+	if (text == TX_NULL)
+	{
+		return;
+	}
+
+	HAL_UART_Transmit(&huart1, (uint8_t *)text, (uint16_t)strlen(text), HAL_MAX_DELAY);
+}
+
 static VOID ModuleFaultHandler(TX_THREAD *thread_ptr, TXM_MODULE_INSTANCE *module_instance_ptr)
 {
-	const char *fault_msg = "Speed module memory fault\r\n";
-	(void)thread_ptr;
-	(void)module_instance_ptr;
-	HAL_UART_Transmit(&huart1, (uint8_t*)fault_msg, strlen(fault_msg), HAL_MAX_DELAY);
+	CHAR line[160];
+	const CHAR *thread_name = "<null>";
+	const CHAR *module_name = "<null>";
+
+	if ((thread_ptr != TX_NULL) && (thread_ptr->tx_thread_name != TX_NULL))
+	{
+		thread_name = thread_ptr->tx_thread_name;
+	}
+
+	if ((module_instance_ptr != TX_NULL) && (module_instance_ptr->txm_module_instance_name != TX_NULL))
+	{
+		module_name = module_instance_ptr->txm_module_instance_name;
+	}
+
+	ModuleFaultUartPrint("Speed module memory fault [diag-v2]\r\n");
+	(void)snprintf(line, sizeof(line), "Thread=%s Module=%s\r\n", thread_name, module_name);
+	ModuleFaultUartPrint(line);
+
+	(void)snprintf(line, sizeof(line), "Code=%08lX SP=%08lX CTRL=%08lX LR=%08lX XPSR=%08lX\r\n",
+			(ULONG)_txm_module_manager_memory_fault_info.txm_module_manager_memory_fault_info_code_location,
+			_txm_module_manager_memory_fault_info.txm_module_manager_memory_fault_info_sp,
+			_txm_module_manager_memory_fault_info.txm_module_manager_memory_fault_info_control,
+			_txm_module_manager_memory_fault_info.txm_module_manager_memory_fault_info_lr,
+			_txm_module_manager_memory_fault_info.txm_module_manager_memory_fault_info_xpsr);
+	ModuleFaultUartPrint(line);
+
+	(void)snprintf(line, sizeof(line), "SHCSR=%08lX CFSR=%08lX MMFAR=%08lX BFAR=%08lX\r\n",
+			_txm_module_manager_memory_fault_info.txm_module_manager_memory_fault_info_shcsr,
+			_txm_module_manager_memory_fault_info.txm_module_manager_memory_fault_info_cfsr,
+			_txm_module_manager_memory_fault_info.txm_module_manager_memory_fault_info_mmfar,
+			_txm_module_manager_memory_fault_info.txm_module_manager_memory_fault_info_bfar);
+	ModuleFaultUartPrint(line);
+
+	(void)snprintf(line, sizeof(line), "R0=%08lX R1=%08lX R2=%08lX R3=%08lX R12=%08lX\r\n",
+			_txm_module_manager_memory_fault_info.txm_module_manager_memory_fault_info_r0,
+			_txm_module_manager_memory_fault_info.txm_module_manager_memory_fault_info_r1,
+			_txm_module_manager_memory_fault_info.txm_module_manager_memory_fault_info_r2,
+			_txm_module_manager_memory_fault_info.txm_module_manager_memory_fault_info_r3,
+			_txm_module_manager_memory_fault_info.txm_module_manager_memory_fault_info_r12);
+	ModuleFaultUartPrint(line);
 }
 /* USER CODE END 0 */
 
@@ -100,8 +152,9 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
 	g_current_gear = GEAR_NEUTRAL;
 	g_current_speed = 0.0f;
 	g_current_pwm = 0;
+	g_speed_module_last_tick = 0u;
 
-	const char *msg = "\r\n=== DrivaPi ThreadX Init ===\r\n";
+	const char *msg = "\r\n=== DrivaPi ThreadX Init [fw-marker:hb-v2] ===\r\n";
 	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
 
 	/* Initialize module manager so kernel can host ThreadX modules. */

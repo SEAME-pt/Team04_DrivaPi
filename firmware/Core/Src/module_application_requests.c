@@ -13,6 +13,9 @@ UINT _txm_module_manager_application_request(ULONG request_id, ALIGN_TYPE param_
     (void)param_2;
     (void)param_3;
 
+    /* Any successful callback from the module updates liveness heartbeat. */
+    g_speed_module_last_tick = tx_time_get();
+
     switch (request_id)
     {
     case SPEED_SENSOR_MODULE_REQ_GET_ENCODER_COUNT:

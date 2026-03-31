@@ -154,6 +154,7 @@ extern RNDGear_t			g_current_gear;
 extern float				g_vehicleSpeed;
 extern float 				g_current_speed;
 extern int16_t 				g_current_pwm;
+extern ULONG               g_speed_module_last_tick;
 /* USER CODE END 1 */
 
 #ifdef __cplusplus
