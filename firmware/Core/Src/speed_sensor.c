@@ -36,7 +36,7 @@ RNDGear_t DetermineRNDGear(float speed, int16_t pwm_value)
 /**
 * @brief Read wheel speed from the encoder timer.
 *
-* @return float Speed in meters per second (signed based on encoder direction).
+* @return float Speed in meters per second.
 */
 float ReadSpeedSensor(void)
 {
@@ -68,12 +68,6 @@ float ReadSpeedSensor(void)
 	float rotations = (float)delta / (float)PULSES_PER_REV;
 	float distance_m = rotations * WHEEL_PERIMETER_M;
 	float speed_mps = distance_m / dt;
-	
-	// Sign correction: if encoder is wired backwards, invert the speed
-	// Change SPEED_SENSOR_INVERTED in speed_sensor.h if encoder direction is wrong
-	#ifdef SPEED_SENSOR_INVERTED
-	speed_mps = -speed_mps;
-	#endif
 	
 	return speed_mps;
 }

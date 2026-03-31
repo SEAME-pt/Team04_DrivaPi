@@ -46,7 +46,6 @@ void CanRx(ULONG initial_input)
 	t_can_message msg;
 	while (1)
 	{
-//		UartPrint("Banana RRRRRRRRRRRRRRRRRRRXXXXXXXXXXXXXXXXXXXXXX\r\n");
 		tx_mutex_get(&g_canMutex, TX_WAIT_FOREVER);
 		uint8_t received = CanReceive(&msg);
 		tx_mutex_put(&g_canMutex);

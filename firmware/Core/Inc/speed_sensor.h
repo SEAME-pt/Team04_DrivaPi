@@ -21,10 +21,6 @@ extern "C" {
 #define PULSES_PER_REV      30.0f
 #define TIMER_PERIOD        65535
 
-/* Uncomment this line if positive PWM makes the motor go forward 
- * but the speed sensor reads negative values */
-// #define SPEED_SENSOR_INVERTED
-
 #ifndef TX_TIMER_TICKS_PER_SECOND
 #define TX_TIMER_TICKS_PER_SECOND 1000
 #endif
