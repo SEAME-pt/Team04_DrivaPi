@@ -44,7 +44,6 @@ uint8_t CanReceive(t_can_message *msg)
 void CanRx(ULONG initial_input)
 {
 	t_can_message msg;
-
 	while (1)
 	{
 //		UartPrint("Banana RRRRRRRRRRRRRRRRRRRXXXXXXXXXXXXXXXXXXXXXX\r\n");

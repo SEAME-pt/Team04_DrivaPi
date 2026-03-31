@@ -2,7 +2,7 @@
  * init_devices.h
  *
  *  Created on: Feb 13, 2026
- *      Author: hugofslopes
+ *      Author: DrivaPi
  */
 
 #ifndef __INIT_DEVICES_H
