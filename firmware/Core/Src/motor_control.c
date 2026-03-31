@@ -23,7 +23,6 @@ void MotorControlUpdate(MotorControlState *state, float current_speed)
     else if (state->direction == BACKWARD)
         target_direction = -1;
     
-    // Neutral motor if target is zero or target_speed is less than zero
     if (state->target_speed < 1.0f)
     {
         state->pwm_raw = 0;
@@ -45,7 +44,7 @@ void MotorControlUpdate(MotorControlState *state, float current_speed)
     float pwm_test = base_pwm + p_term + (state->integral * state->integral_gain);
     if (pwm_test < 1.0f && pwm_test > 0.0f)
     {
-        state->integral += state->error * 0.1f;  // 0.1s sample time
+        state->integral += state->error * 0.1f;
 
         if (state->integral >= INTEGRAL_LIMIT)
             state->integral = INTEGRAL_LIMIT;
@@ -55,23 +54,17 @@ void MotorControlUpdate(MotorControlState *state, float current_speed)
     
     float i_term = state->integral * state->integral_gain;
     
-    // Total PWM: feedforward + PI correction
     float pwm_normalized = base_pwm + p_term + i_term;
     
-    // Clamp to valid range [0.0, 1.0]
     if (pwm_normalized > 1.0f)
         pwm_normalized = 1.0f;
     if (pwm_normalized < 0.0f)
         pwm_normalized = 0.0f;
-    
-    // Convert to raw PWM (0 to 4095)
+
     int16_t pwm_magnitude = (int16_t)(pwm_normalized * 4095.0f);
-    
-    // Apply deadzone minimum ONLY when starting from stop
+
     if (pwm_magnitude > 0 && pwm_magnitude < (int16_t)PWM_MIN)
         pwm_magnitude = (int16_t)PWM_MIN;
-    
-    // Apply direction to get signed PWM
     state->pwm_raw = pwm_magnitude * target_direction;
     
     tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
