@@ -2,7 +2,7 @@
  * motor_control.h
  *
  *  Created on: Mar 25, 2026
- *      Author: hugofslopes
+ *      Author: TeamDrivaPi
  */
 
 #ifndef INC_MOTOR_CONTROL_H_
@@ -22,10 +22,6 @@ extern "C" {
 /**
  * @struct MotorControlState
  * @brief Hybrid feedforward + PI feedback controller
- * 
- * Strategy:
- * 1. Feedforward: Direct PWM mapping (target/100 * 4095) - handles ~90% of control
- * 2. PI Feedback: Small corrections for disturbances (curves, hills, weight, etc.)
  */
 typedef struct {
 	float       target_speed;      		// desired speed (hm/h)

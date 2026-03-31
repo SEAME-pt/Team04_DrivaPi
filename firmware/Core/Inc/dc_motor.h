@@ -24,6 +24,10 @@ extern "C" {
 #define MOTOR_R_A 1
 #define MOTOR_R_B 2
 
+#define BACKWARD 0
+#define FORWARD 1
+#define BRAKE 2
+
 #ifndef PCA9685_COUNTS
 #define PCA9685_COUNTS 4096u
 #endif

@@ -91,7 +91,6 @@ VOID DcMotor(ULONG initial_input)
 {
 	t_can_message 	msg;
 	ULONG			actual_flags;
-	static uint8_t debug_counter = 0;
 
 	while (1)
 	{
@@ -101,28 +100,15 @@ VOID DcMotor(ULONG initial_input)
 		{
 			// Process all pending CAN messages
 			while (tx_queue_receive(&g_queueSpeedCmd, &msg, TX_NO_WAIT) == TX_SUCCESS)
-			{
-				// Parse as two int32_t values (speed magnitude and direction)
-				int32_t speed_magnitude = 0;
-				g_motorControlState.direction = 0;  // 1 = forward, 0 = backward, 2 = brake
-				
-				memcpy(&speed_magnitude, msg.data, sizeof(int32_t));
-				memcpy(&g_motorControlState.direction, msg.data + sizeof(int32_t), sizeof(int32_t));
-				
-				// Convert to signed speed: positive for forward, negative for backward
-				if (g_motorControlState.direction == 1)
-				{
-					g_motorControlState.target_speed = (float)speed_magnitude;
-				}
-				else if (g_motorControlState.direction == 0) // direction == 0 (backward)
-				{
-					g_motorControlState.target_speed = -(float)speed_magnitude;
-				}
-				
+			{	
+				g_targetSpeed = 0;
+				memcpy(&g_targetSpeed, msg.data, sizeof(int32_t));
+				memcpy(&g_motorControlState.direction, msg.data + sizeof(int32_t), sizeof(int32_t));	
 			}
 		}
+
 		tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
-		if(g_emergencyBrake && g_motorControlState.direction == 1 )
+		if(g_emergencyBrake && g_motorControlState.direction == FORWARD)
 		{
 			tx_mutex_put(&g_emergencyMutex);
 			tx_thread_sleep(10);
@@ -130,11 +116,11 @@ VOID DcMotor(ULONG initial_input)
 		}
 		tx_mutex_put(&g_emergencyMutex);
 
-		if (g_motorControlState.direction == 0)
+		if (g_motorControlState.direction == FORWARD || g_motorControlState.direction == BACKWARD)
 		{
-			MotorControlUpdate(&g_motorControlState, g_currentSpeed);
+			UpdateMotorControl();
 		}
-		else if (g_motorControlState.direction == 2)
+		else
 		{
 			tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
 		    MotorBrake();
