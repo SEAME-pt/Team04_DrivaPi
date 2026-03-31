@@ -60,7 +60,7 @@ float 					g_currentSpeed;
 int16_t 				g_currentPWM;
 MotorControlState		g_motorControlState;
 float					g_targetSpeed;
-unsigned char			trace_buffer[TRACE_BUFFER_SIZE]
+unsigned char			trace_buffer[TRACE_BUFFER_SIZE];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
