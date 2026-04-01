@@ -42,6 +42,7 @@ extern "C" {
 #include "servo_motor.h"
 #include "dc_motor_test.h"
 #include "motor_utils.h"
+#include "motor_control.h"
 #include "sensors.h"
 #include "soft_i2c.h"
 #include "init_devices.h"
@@ -155,10 +156,10 @@ extern TX_MUTEX             g_canMutex;
 extern TX_MUTEX             g_motorMutex;
 extern TX_MUTEX             g_servoMutex;
 extern TX_MUTEX             g_gearMutex;
-extern RNDGear_t			g_current_gear;
+extern RNDGear_t			g_currentGear;
 extern float				g_vehicleSpeed;
-extern float 				g_current_speed;
-extern int16_t 				g_current_pwm;
+extern float 				g_currentSpeed;
+extern int16_t 				g_currentPWM;
 extern unsigned char		trace_buffer[TRACE_BUFFER_SIZE];
 /* USER CODE END 1 */
 

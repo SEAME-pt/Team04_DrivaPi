@@ -24,12 +24,17 @@ extern "C" {
 #define MOTOR_R_A 1
 #define MOTOR_R_B 2
 
+#define BACKWARD 0
+#define FORWARD 1
+#define BRAKE 2
+
 #ifndef PCA9685_COUNTS
 #define PCA9685_COUNTS 4096u
 #endif
 
 void SetMotor(double value);
 void MotorSetPWM(int32_t left_counts, int32_t right_counts);
+void MotorBrake(void);
 void MotorStop(void);
 void MotorForward(double speed);
 void MotorBackward(double speed);

@@ -78,6 +78,10 @@ TSF_Report.html
 *.exe
 *.out
 *.app
+*.d
+*.bin
+*.elf
+*.su
 
 # Qt
 *.pro.user

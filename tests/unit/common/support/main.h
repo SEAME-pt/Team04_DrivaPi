@@ -23,7 +23,7 @@ extern TX_MUTEX g_motorMutex;
 extern TX_MUTEX g_servoMutex;
 extern TX_MUTEX g_gearMutex;
 extern TX_MUTEX g_emergencyMutex;
-extern float g_current_speed;
+extern float g_currentSpeed;
 extern float g_vehicleSpeed;
 extern bool g_emergencyBrake;
 

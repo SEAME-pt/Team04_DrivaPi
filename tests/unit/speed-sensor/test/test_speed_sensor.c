@@ -7,8 +7,8 @@ TX_MUTEX g_speedDataMutex;
 TX_EVENT_FLAGS_GROUP g_eventFlags;
 TX_QUEUE g_queueSpeedCmd;
 TX_QUEUE g_queueSteerCmd;
-float g_current_speed;
-int16_t g_current_pwm;
+float g_currentSpeed;
+int16_t g_currentPWM;
 TX_MUTEX g_gearMutex;
 
 float g_vehicleSpeed = 0.0f;
@@ -21,7 +21,7 @@ TIM_TypeDef fake_tim1_registers;
 /* --- INCLUDE SOURCE FILE DIRECTLY --- */
 #include "../../../firmware/Core/Src/speed_sensor.c"
 
-RNDGear_t g_current_gear;
+RNDGear_t g_currentGear;
 
 /* --- TEST INFRASTRUCTURE --- */
 static jmp_buf test_break_jump;
@@ -459,7 +459,7 @@ void test_SpeedSensor_Thread_Should_LoopTwice(void)
 void test_SpeedSensor_ShouldSendCanGearMessage_WhenGearChanges(void)
 {
     fake_tim1_registers.CNT = 1000;
-    g_current_pwm = 500;
+    g_currentPWM = 500;
 
     HAL_TIM_Base_Stop_ExpectAndReturn(&htim1, HAL_OK);
     HAL_TIM_Base_Start_ExpectAndReturn(&htim1, HAL_OK);

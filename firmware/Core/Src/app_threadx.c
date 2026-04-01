@@ -54,10 +54,12 @@ TX_MUTEX                g_canMutex;
 TX_MUTEX                g_motorMutex;
 TX_MUTEX                g_servoMutex;
 TX_MUTEX             	g_gearMutex;
-RNDGear_t				g_current_gear;
+RNDGear_t				g_currentGear;
 float                   g_vehicleSpeed;
-float 					g_current_speed;
-int16_t 				g_current_pwm;
+float 					g_currentSpeed;
+int16_t 				g_currentPWM;
+MotorControlState		g_motorControlState;
+float					g_targetSpeed;
 unsigned char			trace_buffer[TRACE_BUFFER_SIZE];
 /* USER CODE END PV */
 
@@ -80,9 +82,9 @@ UINT ret = TX_SUCCESS;
   /* USER CODE BEGIN App_ThreadX_Init */
 	g_emergencyBrake = false;
 	g_vehicleSpeed = 0;
-	g_current_gear = GEAR_NEUTRAL;
-	g_current_speed = 0.0f;
-	g_current_pwm = 0;
+	g_currentGear = GEAR_NEUTRAL;
+	g_currentSpeed = 0.0f;
+	g_currentPWM = 0;
 
 	const char *msg = "\r\n=== DrivaPi ThreadX Init ===\r\n";
 	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
@@ -105,7 +107,7 @@ UINT ret = TX_SUCCESS;
 	tx_mutex_create(&g_gearMutex, "Gear Mutex", TX_NO_INHERIT);
 
 	InitAllDevices();
-
+	MotorControlInit(&g_motorControlState);
 	msg = "Initializing threads...\r\n";
 	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
 	ThreadInit();
