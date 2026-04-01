@@ -1,3 +1,10 @@
+/*
+* soft_i2c.c
+*
+*  Created on: Feb 13, 2026
+*      Author: DrivaPi
+*/
+
 #include "soft_i2c.h"
 
 // Short delay to mimic 100kHz speed
@@ -116,11 +123,5 @@ uint8_t Soft_I2C_ReadByte(uint8_t ack)
 	I2C_Delay();
 	HAL_GPIO_WritePin(SCL_PORT, SCL_PIN, GPIO_PIN_RESET);
 	return byte;
-}/*
-* soft_i2c.c
-*
-*  Created on: Feb 13, 2026
-*      Author: hugofslopes
-*/
-
+}
 

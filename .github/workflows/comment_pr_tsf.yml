@@ -124,7 +124,7 @@ jobs:
 
       - name: Update sticky PR comment
         if: steps.pr.outputs.has_pr == 'true'
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@v3
         with:
           number: ${{ steps.pr.outputs.number }}
           header: tsf-validation
