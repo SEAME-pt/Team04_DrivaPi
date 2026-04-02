@@ -1,4 +1,5 @@
 
+
 use std::fs::File;
 use std::io::{Read, ErrorKind};
 use std::os::unix::io::AsRawFd;
@@ -15,15 +16,16 @@ const CAN_INTERFACE: &str = "vcan0";
 
 /* Motor Constants */
 const MAX_MOTOR_SPEED: f64 = 90.0;
-const MIN_MOTOR_SPEED: f64 = -90.0;
 
 const BACKWARD: u8 = 0;
 const FORWARD: u8 = 1;
 const BRAKE: u8 = 2;
 
 /* Servo Constants */
-const MAX_SERVO_ANGLE: f64 = 180.0;
-const MIN_SERVO_ANGLE: f64 = 0.0;
+const MAX_SERVO_ANGLE: f64 = 105.0;
+const MIN_SERVO_ANGLE: f64 = 75.0;
+const MID_SERVO_ANGLE: f64 = 90.0;
+const SERVO_RANGE: f64 = 15.0;  // Distance from center to min/max
 
 /* Gamepad Constants */
 const GAMEPAD_DEVICE: &str = "/dev/input/js0";
@@ -80,7 +82,7 @@ impl Joystick {
         // Set file descriptor to non-blocking mode using fcntl
         let fd = file.as_raw_fd();
         unsafe {
-            use std::os::raw::{c_int, c_long};
+            use std::os::raw::c_int;
             const F_GETFL: c_int = 3;
             const F_SETFL: c_int = 4;
             const O_NONBLOCK: c_int = 2048;
@@ -220,13 +222,10 @@ impl MotorController {
         Ok(Self { socket, motor_id, servo_id })
     }
 
-    fn send_motor_command(&self, speed: f64, direction: u8) -> Result<(), Box<dyn std::error::Error>> {
-        // Clamp and convert to i32
-        let clamp_speed = speed.clamp(MIN_MOTOR_SPEED, MAX_MOTOR_SPEED) as i32;
-
+    fn send_motor_command(&self, speed: u32, direction: u8) -> Result<(), Box<dyn std::error::Error>> {
         // Build CAN frame: [speed][direction] = 5 bytes
 
-        let speed_bytes = clamp_speed.to_le_bytes();
+        let speed_bytes = speed.to_le_bytes();
         let direction_bytes = direction.to_le_bytes();
         let data = [
             speed_bytes[0], speed_bytes[1], speed_bytes[2], speed_bytes[3],
@@ -240,12 +239,9 @@ impl MotorController {
         Ok(())
     }
 
-    fn send_servo_command(&self, angle_deg: f64) -> Result<(), Box<dyn std::error::Error>> {
-        // Clamp and convert to f32
-        let angle = angle_deg.clamp(MIN_SERVO_ANGLE, MAX_SERVO_ANGLE) as f32;
-
+    fn send_servo_command(&self, angle_deg: u32) -> Result<(), Box<dyn std::error::Error>> {
         // Build CAN frame: [angle_f32] = 4 bytes (no padding needed)
-        let angle_bytes = angle.to_le_bytes();
+        let angle_bytes = angle_deg.to_le_bytes();
         let data = [
             angle_bytes[0], angle_bytes[1], angle_bytes[2], angle_bytes[3],
             0,0,0,0,
@@ -259,10 +255,10 @@ impl MotorController {
     }
 
     fn stop_dc_motors(&self) -> Result<(), Box<dyn std::error::Error>> {
-        self.send_motor_command(0.0, BRAKE)
+        self.send_motor_command(0, BRAKE)
     }
     fn stop_servo_motors(&self) -> Result<(), Box<dyn std::error::Error>> {
-        self.send_servo_command(90.0)
+        self.send_servo_command(90)
     }    
 }
 
@@ -277,12 +273,12 @@ fn run_manual_mode(gamepad: &mut Gamepad, controller: &MotorController) -> Resul
     // INIT OF VALUES
     
     // Track previous values to detect changes
-    let mut prev_motor_speed = 0.0;
-    let mut prev_servo_angle = 90.0;
+    let mut prev_motor_speed: u32 = 0;
+    let mut prev_servo_angle:  u32 = 90;
+    let mut direction: u8 = BRAKE;
     
     // Threshold for detecting meaningful changes
-    const MOTOR_THRESHOLD: f64 = 2.0;  // Only send if change > 2 counts
-    const SERVO_THRESHOLD: f64 = 1.0;   // Only send if change > 1 degree
+    const MOTOR_THRESHOLD: u32 = 2;  // Only send if change > 2 counts
 
     let mut cruise_control: bool;
     unsafe {
@@ -320,7 +316,7 @@ fn run_manual_mode(gamepad: &mut Gamepad, controller: &MotorController) -> Resul
     //                  ACTIVATING CRUISE CONTROL
     
         unsafe { 
-            while cruise_control { 
+            while cruise_control && direction != BRAKE{ 
                 gamepad.update();
                 if !gamepad.get_input().button_l3{
                     CRUISE_CONTROL_STATUS = !CRUISE_CONTROL_STATUS;
@@ -334,7 +330,6 @@ fn run_manual_mode(gamepad: &mut Gamepad, controller: &MotorController) -> Resul
     // ================================================================
     //                  CALCULATE SERVO AND DC MOTORS
 
-        let direction: u8;
         if brake{
             direction = BRAKE;
         } else if throttle >= 0.0{
@@ -343,19 +338,20 @@ fn run_manual_mode(gamepad: &mut Gamepad, controller: &MotorController) -> Resul
             direction = BACKWARD;
         }
 
-        let motor_speed;
-        if max_speed{ motor_speed = throttle.abs() * MAX_MOTOR_SPEED; }
-        else { motor_speed = throttle.abs() * MAX_MOTOR_SPEED / 2.0; }
+        let motor_speed: u32;
+        if max_speed{ motor_speed = (throttle.abs() * MAX_MOTOR_SPEED).floor() as u32; }
+        else { motor_speed = (throttle.abs() * MAX_MOTOR_SPEED / 2.0).floor() as u32; }
 
-        let servo_angle = ((steering + 1.0) / 2.0) * MAX_SERVO_ANGLE;
+        // Map steering (-1.0 to 1.0) to servo angle (75 to 105), center at 90
+        let servo_angle = (MID_SERVO_ANGLE + (steering * SERVO_RANGE)).clamp(MIN_SERVO_ANGLE, MAX_SERVO_ANGLE).floor() as u32;
 
     // ================================================================
     
     // ================================================================
-        // Send motor command only if value changed significantly and cruise control is disabled
+    // Send motor command only if value changed significantly and cruise control is disabled
         unsafe {
             if !CRUISE_CONTROL_STATUS {
-                if (motor_speed - prev_motor_speed).abs() > MOTOR_THRESHOLD {
+                if motor_speed != prev_motor_speed {
                     controller.send_motor_command(motor_speed, direction)?;
                     prev_motor_speed = motor_speed;
                     println!("Motor updated: {}\nDirection {}", motor_speed, direction);
@@ -363,15 +359,16 @@ fn run_manual_mode(gamepad: &mut Gamepad, controller: &MotorController) -> Resul
             }
         }
 
+    // ================================================================
         // Send servo command only if value changed significantly
-        if (servo_angle - prev_servo_angle).abs() > SERVO_THRESHOLD {
+        if servo_angle != prev_servo_angle {
             controller.send_servo_command(servo_angle)?;
             prev_servo_angle = servo_angle;
             println!("Servo updated: {:.1}°\n Steering value: {steering}", servo_angle);
         }
 
         // Small delay to avoid busy-waiting
-        thread::sleep(Duration::from_millis(10));
+        thread::sleep(Duration::from_millis(1));
     }
 
     Ok(())
