@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Get PR number and run id
         id: pr
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const prs = context.payload.workflow_run.pull_requests || [];
@@ -35,7 +35,7 @@ jobs:
 
       - name: Download tsf-comment + unit-test-summary + codeql-sarif-filtered artifacts
         if: steps.pr.outputs.has_pr == 'true'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
