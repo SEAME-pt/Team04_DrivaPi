@@ -25,6 +25,10 @@ constexpr uint32_t ID_STM32_BATTERY = 0x200;
 //   [1..4] float battery voltage (LE)
 constexpr uint32_t ID_RPI_BATTERY = 0x210;
 
+// 0x211: 4 bytes:
+//   [0..3] float battery current (LE, amps)
+constexpr uint32_t ID_RPI_BATTERY_CURRENT = 0x211;
+
 // 0x300: 1 byte:
 //   [0] uint8 gear: 0=N, 1=R, 2=D
 constexpr uint32_t ID_GEAR = 0x300;

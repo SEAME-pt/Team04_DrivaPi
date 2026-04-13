@@ -6431,6 +6431,20 @@
 												"type": "sensor",
 												"unit": "percent"
 											},
+											"BatteryLevel": {
+												"datatype": "float",
+												"description": "STM32 low-voltage battery state of charge.",
+												"max": 100,
+												"min": 0,
+												"type": "sensor",
+												"unit": "percent"
+											},
+											"BatteryVoltage": {
+												"datatype": "float",
+												"description": "STM32 low-voltage battery voltage.",
+												"type": "sensor",
+												"unit": "V"
+											},
 											"Utilization": {
 												"children": {
 													"CPU": {
@@ -6553,6 +6567,12 @@
 												"description": "RPi UPS battery voltage.",
 												"type": "sensor",
 												"unit": "V"
+											},
+											"BatteryCurrent": {
+												"datatype": "float",
+												"description": "RPi UPS battery current.",
+												"type": "sensor",
+												"unit": "A"
 											}
 										},
 										"description": "Resources attributes and signals",
