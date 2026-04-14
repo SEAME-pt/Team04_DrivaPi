@@ -17,7 +17,7 @@ FeederConfig ParseArgs(int argc, char** argv)
     // Insecure by default: the databroker and feeder co-locate on the same RPi.
     // Loopback traffic (127.0.0.1) never leaves the device, so TLS adds no meaningful
     // protection here. Pass --tls (+ --ca) when the broker is accessed over the network.
-    config.publisher_options.use_ssl  = false;
+    config.publisher_options.use_ssl  = true; // SSL was added with valid CA certificates - by berestv
     config.can_interface              = "can1";
 
     int positional_count = 0;

@@ -62,7 +62,7 @@ Rectangle {
     }
 
     // Listen for changes in vehicleData.odo (sync with backend changes)
-    Connections {
+/*    Connections {
         target: vehicleData
         enabled: vehicleDataAvailable
         function onOdometerChanged() {
@@ -80,7 +80,7 @@ Rectangle {
             // Update dual battery display
             console.log("[ClusterScreen] RPi Battery changed to:", vehicleData.rpiBattery, "%");
         }
-    }
+    }*/
 
     Timer {
         id: odometerUpdateTimer
