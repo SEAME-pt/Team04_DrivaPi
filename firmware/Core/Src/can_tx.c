@@ -49,6 +49,7 @@ void CraftSpeedMessage(t_can_message *msg, float speed)
 int CanSend(t_can_message* msg)
 {
 	FDCAN_TxHeaderTypeDef tx_header;
+	uint8_t attempt;
 	
 	const uint32_t dlc_map[] = {
 		FDCAN_DLC_BYTES_0,
@@ -71,9 +72,14 @@ int CanSend(t_can_message* msg)
 	tx_header.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
 	tx_header.MessageMarker = 0;
 
-	if (HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &tx_header, (uint8_t*)msg->data) != HAL_OK)
-		return 1;
-	return 0;
+	for (attempt = 0; attempt < 3; ++attempt)
+	{
+		if (HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &tx_header, (uint8_t*)msg->data) == HAL_OK)
+			return 0;
+		tx_thread_sleep(1);
+	}
+	
+	return 1;
 }
 
 /**
@@ -85,19 +91,140 @@ int CanSend(t_can_message* msg)
 VOID CanTx(ULONG initial_input)
 {
 	t_can_message msg;
+	t_can_message batt_msg;
+	t_can_message ina_msg;
+	t_can_message ina_cur_msg;
+	t_can_message hts_msg;
+	uint32_t ina_dbg_count = 0u;
 	ULONG actual_flags;
+	ULONG last_ina_send = tx_time_get();
+	ULONG last_hts_send = tx_time_get();
+	const ULONG ina_send_ticks = 100; /* 1 second @ 100Hz tick */
+	const ULONG hts_send_ticks = 500; /* 5 seconds @ 100Hz tick */
 
 	while (1)
 	{
+		ULONG now = tx_time_get();
 		tx_event_flags_get(&g_eventFlags, FLAG_SENSOR_UPDATE, TX_OR_CLEAR, &actual_flags, TX_NO_WAIT);
 
-		tx_mutex_get(&g_speedDataMutex, TX_WAIT_FOREVER);
-		float speed = g_vehicleSpeed;
-		tx_mutex_put(&g_speedDataMutex);
+		float speed = 0.0f;
+		if (tx_mutex_get(&g_speedDataMutex, MUTEX_WAIT_TICKS) == TX_SUCCESS)
+		{
+			speed = g_vehicleSpeed;
+			tx_mutex_put(&g_speedDataMutex);
+		}
+		else
+		{
+			tx_thread_sleep(1);
+			continue;
+		}
 
-		tx_mutex_get(&g_canMutex, TX_WAIT_FOREVER);
-		CraftSpeedMessage(&msg, speed);
-		tx_mutex_put(&g_canMutex);
+		if (tx_mutex_get(&g_canMutex, 5) == TX_SUCCESS)
+		{
+			CraftSpeedMessage(&msg, speed);
+
+			if ((now - last_ina_send) >= ina_send_ticks)
+			{
+				float stm_voltage = 0.0f;
+				uint8_t stm_percentage = 0xFFu;
+				uint8_t stm_valid = 0u;
+				float voltage = 0.0f;
+				float current = 0.0f;
+				uint8_t percentage = 0xFFu;
+				uint8_t ina_valid = 0u;
+
+				memset(&batt_msg, 0, sizeof(batt_msg));
+				batt_msg.id = CAN_ID_BATTERY_DATA;
+				batt_msg.len = 5;
+
+				memset(&ina_msg, 0, sizeof(ina_msg));
+				ina_msg.id = CAN_ID_INA231_DATA;
+				ina_msg.len = 5;
+
+				memset(&ina_cur_msg, 0, sizeof(ina_cur_msg));
+				ina_cur_msg.id = CAN_ID_INA231_CURRENT;
+				ina_cur_msg.len = 4;
+
+				if (tx_mutex_get(&g_sensorDataMutex, MUTEX_WAIT_TICKS) == TX_SUCCESS)
+				{
+					if (g_battery_data.data_valid)
+					{
+						stm_voltage = g_battery_data.voltage;
+						stm_percentage = g_battery_data.percentage;
+						stm_valid = 1u;
+					}
+					if (g_ina231_data.data_valid)
+					{
+						voltage = g_ina231_data.voltage;
+						current = g_ina231_data.current;
+						percentage = g_ina231_data.percentage;
+						ina_valid = 1u;
+					}
+					tx_mutex_put(&g_sensorDataMutex);
+				}
+
+				if (stm_valid)
+				{
+					batt_msg.data[0] = stm_percentage;
+					memcpy(&batt_msg.data[1], &stm_voltage, 4);
+					(void)CanSend(&batt_msg);
+				}
+
+				if (ina_valid)
+				{
+					uint32_t current_bits = 0u;
+					ina_msg.data[0] = percentage;
+					memcpy(&ina_msg.data[1], &voltage, 4);
+					memcpy(&ina_cur_msg.data[0], &current, 4);
+					memcpy(&current_bits, &current, sizeof(current_bits));
+					(void)CanSend(&ina_msg);
+					(void)CanSend(&ina_cur_msg);
+					ina_dbg_count++;
+					if ((ina_dbg_count % 10u) == 0u)
+					{
+						UartPrintf("[CAN 0x211] bits=0x%08lX bytes=%02X %02X %02X %02X\r\n",
+							(unsigned long)current_bits,
+							(unsigned int)ina_cur_msg.data[0],
+							(unsigned int)ina_cur_msg.data[1],
+							(unsigned int)ina_cur_msg.data[2],
+							(unsigned int)ina_cur_msg.data[3]);
+					}
+				}
+				last_ina_send = now;
+			}
+
+			if ((now - last_hts_send) >= hts_send_ticks)
+			{
+				float temperature = 0.0f;
+				float humidity = 0.0f;
+				uint8_t hts_valid = 0u;
+
+				memset(&hts_msg, 0, sizeof(hts_msg));
+				hts_msg.id = CAN_ID_HTS221_DATA;
+				hts_msg.len = 8;
+
+				if (tx_mutex_get(&g_sensorDataMutex, MUTEX_WAIT_TICKS) == TX_SUCCESS)
+				{
+					if (g_hts221_data.data_valid)
+					{
+						temperature = g_hts221_data.temperature;
+						humidity = g_hts221_data.humidity;
+						hts_valid = 1u;
+					}
+					tx_mutex_put(&g_sensorDataMutex);
+				}
+
+				if (hts_valid)
+				{
+					memcpy(&hts_msg.data[0], &temperature, 4);
+					memcpy(&hts_msg.data[4], &humidity, 4);
+					(void)CanSend(&hts_msg);
+				}
+				last_hts_send = now;
+			}
+
+			tx_mutex_put(&g_canMutex);
+		}
 
 		tx_thread_sleep(20);
 	}
