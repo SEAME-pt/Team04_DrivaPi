@@ -223,9 +223,11 @@ impl MotorController {
         Ok(Self { socket, motor_id, servo_id })
     }
 
-    fn send_motor_command(&self, speed: u32, direction: u8) -> Result<(), Box<dyn std::error::Error>> {
+    fn send_motor_command(&self, speed: u32, mut direction: u8) -> Result<(), Box<dyn std::error::Error>> {
         // Build CAN frame: [speed][direction] = 5 bytes
 
+        if direction == NEUTRAL {direction = FORWARD;} // TEMPORARY
+        
         let speed_bytes = speed.to_le_bytes();
         let direction_bytes = direction.to_le_bytes();
         let data = [
@@ -362,6 +364,9 @@ fn run_manual_mode(gamepad: &mut Gamepad, controller: &MotorController) -> Resul
                     prev_motor_speed = motor_speed;
                     println!("Motor updated: {}\nDirection {}", motor_speed, direction);
                 }
+            }
+            else {
+                
             }
         }
 
