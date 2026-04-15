@@ -1,7 +1,0 @@
-../Core/Src/can_tx.c:13:13:QueueCanMessage	2
-../Core/Src/can_tx.c:23:13:QueueHts221Telemetry	7
-../Core/Src/can_tx.c:67:13:QueueBatteryTelemetry	7
-../Core/Src/can_tx.c:115:6:FloatToUint8	2
-../Core/Src/can_tx.c:130:6:CraftSpeedMessage	1
-../Core/Src/can_tx.c:143:5:CanSend	3
-../Core/Src/can_tx.c:179:6:CanTx	2

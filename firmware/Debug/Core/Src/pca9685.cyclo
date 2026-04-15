@@ -1,9 +1,0 @@
-../Core/Src/pca9685.c:22:26:PCA9685_WriteReg	2
-../Core/Src/pca9685.c:41:26:PCA9685_ReadReg	3
-../Core/Src/pca9685.c:60:19:PCA9685_InitDevice	6
-../Core/Src/pca9685.c:97:19:PCA9685_SetPWM	5
-../Core/Src/pca9685.c:140:19:PCA9685_SetFrequency	8
-../Core/Src/pca9685.c:186:19:PCA9685_Sleep	1
-../Core/Src/pca9685.c:199:26:I2C_BusRecovery	4
-../Core/Src/pca9685.c:222:26:I2C_SafeProbe	3
-../Core/Src/pca9685.c:237:6:PCA9685_InitAllDevices	9

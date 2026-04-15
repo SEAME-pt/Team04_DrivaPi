@@ -1,2 +1,0 @@
-../Core/Src/dc_motor.c:18:6:MotorSetPWM	32	static
-../Core/Src/dc_motor.c:76:6:DcMotor	56	static

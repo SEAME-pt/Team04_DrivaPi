@@ -1,4 +1,0 @@
-../Core/Src/app_threadx.c:123:13:ModuleFaultUartPrint	2
-../Core/Src/app_threadx.c:133:13:ModuleFaultHandler	5
-../Core/Src/app_threadx.c:183:6:App_ThreadX_Init	21
-../Core/Src/app_threadx.c:401:6:MX_ThreadX_Init	1

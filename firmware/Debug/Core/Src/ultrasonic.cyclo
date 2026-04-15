@@ -1,3 +1,0 @@
-../Core/Src/ultrasonic.c:3:19:UltrasonicModuleInit	6
-../Core/Src/ultrasonic.c:44:19:UltrasonicReadRangeCm	4
-../Core/Src/ultrasonic.c:89:6:UltrasonicEntry	29

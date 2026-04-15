@@ -1,4 +1,0 @@
-../Core/Src/app_threadx.c:123:13:ModuleFaultUartPrint	16	static
-../Core/Src/app_threadx.c:133:13:ModuleFaultHandler	208	static
-../Core/Src/app_threadx.c:183:6:App_ThreadX_Init	40	static
-../Core/Src/app_threadx.c:401:6:MX_ThreadX_Init	8	static

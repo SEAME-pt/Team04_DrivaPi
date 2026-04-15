@@ -1,6 +1,0 @@
-../Core/Src/soft_i2c.c:7:13:I2C_Delay	16	static,ignoring_inline_asm
-../Core/Src/soft_i2c.c:18:6:Soft_I2C_Init	8	static
-../Core/Src/soft_i2c.c:29:6:Soft_I2C_Start	8	static
-../Core/Src/soft_i2c.c:41:6:Soft_I2C_Stop	8	static
-../Core/Src/soft_i2c.c:57:9:Soft_I2C_WriteByte	24	static
-../Core/Src/soft_i2c.c:94:9:Soft_I2C_ReadByte	24	static

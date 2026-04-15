@@ -1,2 +1,0 @@
-../Middlewares/ST/threadx/ports_module/cortex_m33/gnu/module_manager/src/txm_module_manager_mm_register_setup.c:60:7:_txm_module_manager_mm_register_setup	32	static
-../Middlewares/ST/threadx/ports_module/cortex_m33/gnu/module_manager/src/txm_module_manager_mm_register_setup.c:155:6:_txm_module_manager_inside_data_check	40	static
