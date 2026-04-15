@@ -1,3 +1,8 @@
+/**
+ * @file health_module.c
+ * @brief ThreadX module that monitors freshness of inter-module data and reports health logs.
+ */
+
 #include "tx_api.h"
 #include "health_module_api.h"
 
@@ -6,11 +11,26 @@
 
 extern UINT txm_module_application_request(ULONG request, ULONG p1, ULONG p2, ULONG p3);
 
+/**
+ * @brief Sends an application request from the health module to the module manager.
+ * @param request Request identifier defined in the health module API.
+ * @param p1 First request argument.
+ * @param p2 Second request argument.
+ * @param p3 Third request argument.
+ * @return Module manager request status/result value.
+ */
 static UINT ModuleRequest(ULONG request, ULONG p1, ULONG p2, ULONG p3)
 {
     return txm_module_application_request(request, p1, p2, p3);
 }
 
+/**
+ * @brief Logs a health status line based on a data age threshold.
+ * @param ok_line Message emitted when the data source is fresh.
+ * @param stale_line Message emitted when the data source is stale.
+ * @param age_ticks Age of the monitored data in scheduler ticks.
+ * @return None.
+ */
 static VOID HealthLogLine(const char *ok_line, const char *stale_line, ULONG age_ticks)
 {
     if (age_ticks > HEALTH_STALE_THRESHOLD_TICKS)
@@ -19,6 +39,11 @@ static VOID HealthLogLine(const char *ok_line, const char *stale_line, ULONG age
         (void)ModuleRequest(HEALTH_MODULE_REQ_DEBUG_LOG, (ULONG)ok_line, 0u, 0u);
 }
 
+/**
+ * @brief Main entry point for the health module execution loop.
+ * @param id ThreadX module instance identifier (unused by this module).
+ * @return None.
+ */
 void health_module_start(ULONG id)
 {
     (void)id;

@@ -1,3 +1,8 @@
+/**
+ * @file ultrasonic_module.c
+ * @brief ThreadX module that evaluates obstacle risk and controls emergency braking behavior.
+ */
+
 #include "txm_module.h"
 #include "ultrasonic_module_api.h"
 
@@ -8,11 +13,24 @@
 #define ULTRASONIC_MIN_TTC_BACKSPIN_MS        200u
 #define ULTRASONIC_DT_SECONDS                 0.057f
 
+/**
+ * @brief Sends an application request from the ultrasonic module to the module manager.
+ * @param request Request identifier defined in the ultrasonic module API.
+ * @param p1 First request argument.
+ * @param p2 Second request argument.
+ * @param p3 Third request argument.
+ * @return Module manager request status/result value.
+ */
 static UINT ModuleRequest(ULONG request, ALIGN_TYPE p1, ALIGN_TYPE p2, ALIGN_TYPE p3)
 {
     return txm_module_application_request(request, p1, p2, p3);
 }
 
+/**
+ * @brief Main entry point for the ultrasonic module execution loop.
+ * @param id ThreadX module instance identifier (unused by this module).
+ * @return None.
+ */
 void ultrasonic_module_start(ULONG id)
 {
     static INT last_distance_cm = -1;

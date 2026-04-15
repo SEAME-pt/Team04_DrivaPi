@@ -1,3 +1,8 @@
+/**
+ * @file speed_sensor_module.c
+ * @brief ThreadX module that computes speed and gear from encoder and PWM data.
+ */
+
 #include "txm_module.h"
 #include "speed_sensor_module_api.h"
 
@@ -7,11 +12,25 @@
 
 #define RND_DEADZONE_MMPS          200L
 
+/**
+ * @brief Sends an application request from the speed sensor module to the module manager.
+ * @param request Request identifier defined in the speed sensor module API.
+ * @param p1 First request argument.
+ * @param p2 Second request argument.
+ * @param p3 Third request argument.
+ * @return Module manager request status/result value.
+ */
 static UINT ModuleRequest(ULONG request, ALIGN_TYPE p1, ALIGN_TYPE p2, ALIGN_TYPE p3)
 {
     return txm_module_application_request(request, p1, p2, p3);
 }
 
+/**
+ * @brief Determines the current gear based on measured speed and motor command sign.
+ * @param speed_mmps Current wheel speed in millimeters per second.
+ * @param pwm_value Current PWM command sign/magnitude.
+ * @return Gear value encoded as SPEED_SENSOR_MODULE_GEAR_*.
+ */
 static UINT DetermineGear(INT speed_mmps, INT pwm_value)
 {
     if (speed_mmps > (INT)RND_DEADZONE_MMPS)
@@ -33,6 +52,11 @@ static UINT DetermineGear(INT speed_mmps, INT pwm_value)
     return SPEED_SENSOR_MODULE_GEAR_NEUTRAL;
 }
 
+/**
+ * @brief Main entry point for the speed sensor module execution loop.
+ * @param id ThreadX module instance identifier (unused by this module).
+ * @return None.
+ */
 void speed_sensor_module_start(ULONG id)
 {
     static ULONG last_ticks = 0u;

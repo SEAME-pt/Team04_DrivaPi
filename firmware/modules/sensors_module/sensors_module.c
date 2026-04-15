@@ -1,14 +1,32 @@
+/**
+ * @file sensors_module.c
+ * @brief ThreadX module that reads and publishes environmental and battery sensor data.
+ */
+
 #include "txm_module.h"
 #include "sensors_module_api.h"
 
 #define SENSORS_SAMPLE_PERIOD_TICKS      1000u
 #define SENSORS_HEARTBEAT_INTERVAL_TICKS 3000u
 
+/**
+ * @brief Sends an application request from the sensors module to the module manager.
+ * @param request Request identifier defined in the sensors module API.
+ * @param p1 First request argument.
+ * @param p2 Second request argument.
+ * @param p3 Third request argument.
+ * @return Module manager request status/result value.
+ */
 static UINT ModuleRequest(ULONG request, ALIGN_TYPE p1, ALIGN_TYPE p2, ALIGN_TYPE p3)
 {
     return txm_module_application_request(request, p1, p2, p3);
 }
 
+/**
+ * @brief Main entry point for the sensors module execution loop.
+ * @param id ThreadX module instance identifier (unused by this module).
+ * @return None.
+ */
 void sensors_module_start(ULONG id)
 {
     static INT last_temp_x100 = 0;
