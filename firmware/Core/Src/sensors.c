@@ -115,6 +115,40 @@ HAL_StatusTypeDef HTS221_ReadBoth(I2C_HandleTypeDef *hi2c, float *temperature, f
 	return HAL_OK;
 }
 
+UINT SensorsGetHts221Data(HTS221_Data_t *data)
+{
+	if (data == NULL)
+	{
+		return TX_PTR_ERROR;
+	}
+
+	if (tx_mutex_get(&g_sensorDataMutex, TX_WAIT_FOREVER) != TX_SUCCESS)
+	{
+		return TX_MUTEX_ERROR;
+	}
+
+	*data = g_hts221_data;
+	tx_mutex_put(&g_sensorDataMutex);
+	return TX_SUCCESS;
+}
+
+UINT SensorsGetBatteryData(Battery_Data_t *data)
+{
+	if (data == NULL)
+	{
+		return TX_PTR_ERROR;
+	}
+
+	if (tx_mutex_get(&g_sensorDataMutex, TX_WAIT_FOREVER) != TX_SUCCESS)
+	{
+		return TX_MUTEX_ERROR;
+	}
+
+	*data = g_battery_data;
+	tx_mutex_put(&g_sensorDataMutex);
+	return TX_SUCCESS;
+}
+
 /**
  * @brief Thread entry that samples HTS221 and publishes data.
  *
@@ -124,15 +158,10 @@ void SensorHTS221Thread(ULONG initial_input)
 {
 	float temp, hum;
 	HAL_StatusTypeDef	status;
-	static int16_t		last_temp_int = -99;
-	static int16_t		last_hum_int = -99;
-	static ULONG		last_send_time = 0;
-	static const ULONG	HEARTBEAT_INTERVAL = 3000;
 	
 	(void)initial_input;
 	UartPrint("HTS221 Thread: Started\r\n");
 	tx_thread_sleep(100);
-	last_send_time = tx_time_get();
 	
 	while (1)
 	{
@@ -147,24 +176,7 @@ void SensorHTS221Thread(ULONG initial_input)
 				g_hts221_data.data_valid = 1;
 				tx_mutex_put(&g_sensorDataMutex);
 			}
-			int16_t temp_int = (int16_t)temp;
-			int16_t hum_int = (int16_t)hum;
-			ULONG current_time = tx_time_get();
-
-			if (temp_int != last_temp_int || hum_int != last_hum_int || 
-				(current_time - last_send_time) >= HEARTBEAT_INTERVAL)
-			{
-				t_can_message msg;
-				memset(&msg, 0, sizeof(msg));
-				msg.id = CAN_ID_HTS221_DATA;
-				msg.len = 8;
-				memcpy(&msg.data[0], &temp, 4);
-				memcpy(&msg.data[4], &hum, 4);
-				CanSend(&msg);
-				last_temp_int = temp_int;
-				last_hum_int = hum_int;
-				last_send_time = current_time;
-			}  
+			tx_event_flags_set(&g_eventFlags, FLAG_SENSOR_UPDATE, TX_OR);
 		}
 		else
 		{
@@ -174,6 +186,7 @@ void SensorHTS221Thread(ULONG initial_input)
 				g_hts221_data.data_valid = 0;
 				tx_mutex_put(&g_sensorDataMutex);
 			}
+			tx_event_flags_set(&g_eventFlags, FLAG_SENSOR_UPDATE, TX_OR);
 		}
 		tx_thread_sleep(1000);
 	}
@@ -307,8 +320,6 @@ void SensorBatteryThread(ULONG initial_input)
 	uint8_t 			percentage;
 	HAL_StatusTypeDef 	status;
 	uint32_t			error_count = 0;
-	static uint8_t 		last_percentage = 0xFF;
-	static float 		last_voltage = -1.0f;
 	
 	(void)initial_input;
 	UartPrint("Battery Thread: Started\r\n");
@@ -327,19 +338,7 @@ void SensorBatteryThread(ULONG initial_input)
 				g_battery_data.data_valid = 1;
 				tx_mutex_put(&g_sensorDataMutex);
 			}
-			if (percentage != last_percentage ||
-				fabsf(voltage - last_voltage) > BATTERY_VOLTAGE_EPSILON)
-			{
-				t_can_message msg;
-				memset(&msg, 0, sizeof(msg));
-				msg.id = CAN_ID_BATTERY_DATA;
-				msg.len = 5;
-				msg.data[0] = percentage;
-				memcpy(&msg.data[1], &voltage, 4);
-				CanSend(&msg);
-				last_percentage = percentage;
-				last_voltage = voltage;
-			}
+			tx_event_flags_set(&g_eventFlags, FLAG_SENSOR_UPDATE, TX_OR);
 		}
 		else
 		{
@@ -352,6 +351,7 @@ void SensorBatteryThread(ULONG initial_input)
 					g_battery_data.data_valid = 0;
 					tx_mutex_put(&g_sensorDataMutex);
 				}
+				tx_event_flags_set(&g_eventFlags, FLAG_SENSOR_UPDATE, TX_OR);
 			}
 		}
 		tx_thread_sleep(1000);

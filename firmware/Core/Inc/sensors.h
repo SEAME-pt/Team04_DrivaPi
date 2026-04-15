@@ -115,6 +115,9 @@ HAL_StatusTypeDef	HTS221_ReadBoth(I2C_HandleTypeDef *hi2c, float *temperature, f
 HAL_StatusTypeDef	Battery_Init(I2C_HandleTypeDef *hi2c);
 HAL_StatusTypeDef	Battery_Read(I2C_HandleTypeDef *hi2c, float *voltage, uint8_t *percentage);
 
+UINT                SensorsGetHts221Data(HTS221_Data_t *data);
+UINT                SensorsGetBatteryData(Battery_Data_t *data);
+
 void 				SensorHTS221Thread(ULONG initial_input);
 void				SensorBatteryThread(ULONG initial_input);
 

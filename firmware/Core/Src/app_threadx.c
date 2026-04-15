@@ -28,6 +28,7 @@
 #include "sensors.h"
 #include "speed_sensor.h"
 #include "speed_sensor_module_image.h"
+#include "sensors_module_image.h"
 #include "txm_module_port.h"
 /* USER CODE END Includes */
 
@@ -52,6 +53,7 @@ bool					g_emergencyBrake;
 thread_t				g_threads[9];
 TX_QUEUE                g_queueSpeedCmd;
 TX_QUEUE                g_queueSteerCmd;
+TX_QUEUE                g_queueCanTx;
 TX_EVENT_FLAGS_GROUP    g_eventFlags;
 TX_MUTEX                g_speedDataMutex;
 TX_MUTEX                g_emergencyMutex;
@@ -69,6 +71,11 @@ ULONG                   g_speed_module_last_tick;
 static UCHAR            g_module_manager_ram[32768];
 static UCHAR            g_module_manager_object_pool[16384];
 static TXM_MODULE_INSTANCE g_speed_sensor_module;
+static TXM_MODULE_INSTANCE g_sensors_module;
+
+/* Default empty sensors module image, overridden by generated image source when present. */
+__attribute__((weak, aligned(32))) const UCHAR g_sensors_module_image[] = {0u};
+__attribute__((weak)) const ULONG g_sensors_module_image_size = 0u;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -182,6 +189,10 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
 	memory_ptr, QUEUE_SIZE * sizeof(t_can_message));
 	memory_ptr += QUEUE_SIZE * sizeof(t_can_message);
 
+	tx_queue_create(&g_queueCanTx, "CAN TX Queue", sizeof(t_can_message)/sizeof(ULONG),
+	memory_ptr, QUEUE_SIZE * sizeof(t_can_message));
+	memory_ptr += QUEUE_SIZE * sizeof(t_can_message);
+
 	tx_event_flags_create(&g_eventFlags, "System Events");
 
 	tx_mutex_create(&g_speedDataMutex, "Speed Data Mutex", TX_NO_INHERIT);
@@ -220,6 +231,29 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
 	HAL_UART_Transmit(&huart1, (uint8_t*)"Speed module started\r\n", 22, HAL_MAX_DELAY);
 
 	InitAllDevices();
+
+	if (g_sensors_module_image_size == 0u)
+	{
+		HAL_UART_Transmit(&huart1, (uint8_t*)"Sensors module image missing\r\n", 30, HAL_MAX_DELAY);
+		return TX_PTR_ERROR;
+	}
+
+	ret = txm_module_manager_in_place_load(&g_sensors_module,
+			(CHAR *)"sensors_module",
+			(VOID *)g_sensors_module_image);
+	if (ret != TX_SUCCESS)
+	{
+		HAL_UART_Transmit(&huart1, (uint8_t*)"Sensors module load failed\r\n", 29, HAL_MAX_DELAY);
+		return ret;
+	}
+
+	ret = txm_module_manager_start(&g_sensors_module);
+	if (ret != TX_SUCCESS)
+	{
+		HAL_UART_Transmit(&huart1, (uint8_t*)"Sensors module start failed\r\n", 30, HAL_MAX_DELAY);
+		return ret;
+	}
+	HAL_UART_Transmit(&huart1, (uint8_t*)"Sensors module started\r\n", 24, HAL_MAX_DELAY);
 
 	msg = "Initializing threads...\r\n";
 	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);

@@ -143,6 +143,7 @@ extern bool					g_emergencyBrake;
 extern thread_t				g_threads[9];
 extern TX_QUEUE             g_queueSpeedCmd;
 extern TX_QUEUE             g_queueSteerCmd;
+extern TX_QUEUE             g_queueCanTx;
 extern TX_EVENT_FLAGS_GROUP	g_eventFlags;
 extern TX_MUTEX             g_speedDataMutex;
 extern TX_MUTEX             g_emergencyMutex;
