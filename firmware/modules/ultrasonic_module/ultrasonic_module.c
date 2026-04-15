@@ -61,50 +61,32 @@ void ultrasonic_module_start(ULONG id)
 
         delta_cm = last_distance_cm - distance_cm;
         if (delta_cm > 1 || delta_cm < -1)
-        {
             velocity_cm_s = (float)delta_cm / ULTRASONIC_DT_SECONDS;
-        }
         else
-        {
             velocity_cm_s = 0.0f;
-        }
 
         if (velocity_cm_s > 10.0f)
-        {
             ttc_ms = ((float)distance_cm / velocity_cm_s) * 1000.0f;
-        }
         else
-        {
             ttc_ms = 9999.0f;
-        }
-
+        
         if ((gear != ULTRASONIC_MODULE_GEAR_REVERSE) && ((ttc_ms < (float)ULTRASONIC_TTC_THRESHOLD_MS) || (distance_cm < (INT)ULTRASONIC_BRAKE_THRESHOLD_CM)))
         {
             (void)ModuleRequest(ULTRASONIC_MODULE_REQ_SET_EMERGENCY_BRAKE, 0u, 0u, 0u);
 
             if ((ttc_ms < (float)ULTRASONIC_TTC_THRESHOLD_MS) && (ttc_ms >= (float)ULTRASONIC_MIN_TTC_BACKSPIN_MS))
-            {
                 (void)ModuleRequest(ULTRASONIC_MODULE_REQ_MOTOR_STOP, 0u, 0u, 0u);
-            }
             else if ((ttc_ms < (float)ULTRASONIC_MIN_TTC_BACKSPIN_MS) && (distance_cm > (INT)ULTRASONIC_BRAKE_THRESHOLD_CM) && (speed_mmps >= 200) && (gear != ULTRASONIC_MODULE_GEAR_REVERSE))
-            {
                 (void)ModuleRequest(ULTRASONIC_MODULE_REQ_MOTOR_BACKSPIN, 0u, 0u, 0u);
-            }
             else if ((distance_cm <= (INT)ULTRASONIC_BRAKE_THRESHOLD_CM) && (gear != ULTRASONIC_MODULE_GEAR_REVERSE))
-            {
                 (void)ModuleRequest(ULTRASONIC_MODULE_REQ_MOTOR_STOP, 0u, 0u, 0u);
-            }
         }
         else if ((ttc_ms > (float)ULTRASONIC_TTC_THRESHOLD_MS) && (distance_cm > (INT)ULTRASONIC_BRAKE_THRESHOLD_CM))
-        {
             (void)ModuleRequest(ULTRASONIC_MODULE_REQ_CLEAR_EMERGENCY_BRAKE, 0u, 0u, 0u);
-        }
 
         last_distance_cm = distance_cm;
 
         if ((now_tick - last_publish_tick) >= ULTRASONIC_HEARTBEAT_TICKS)
-        {
             last_publish_tick = now_tick;
-        }
     }
 }
