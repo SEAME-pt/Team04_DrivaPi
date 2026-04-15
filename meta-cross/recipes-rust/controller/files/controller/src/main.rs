@@ -20,6 +20,7 @@ const MAX_MOTOR_SPEED: f64 = 90.0;
 const BACKWARD: u8 = 0;
 const FORWARD: u8 = 1;
 const BRAKE: u8 = 2;
+const NEUTRAL: u8 = 3;
 
 /* Servo Constants */
 const MAX_SERVO_ANGLE: f64 = 105.0;
@@ -313,10 +314,23 @@ fn run_manual_mode(gamepad: &mut Gamepad, controller: &MotorController) -> Resul
         cruise_control = input.button_l3;
 
     // ================================================================
+    //                  DEFINING DIRECTION
+
+        if brake{
+            direction = BRAKE;
+        } else if throttle > 0.0{
+            direction = FORWARD;
+        } else if throttle < 0.0{
+            direction = BACKWARD;
+        } else {
+            direction = NEUTRAL;
+        }
+
+    // ================================================================
     //                  ACTIVATING CRUISE CONTROL
     
-        unsafe { 
-            while cruise_control && direction != BRAKE{ 
+        unsafe {
+            while cruise_control && (direction == FORWARD || CRUISE_CONTROL_STATUS){ 
                 gamepad.update();
                 if !gamepad.get_input().button_l3{
                     CRUISE_CONTROL_STATUS = !CRUISE_CONTROL_STATUS;
@@ -329,14 +343,6 @@ fn run_manual_mode(gamepad: &mut Gamepad, controller: &MotorController) -> Resul
 
     // ================================================================
     //                  CALCULATE SERVO AND DC MOTORS
-
-        if brake{
-            direction = BRAKE;
-        } else if throttle >= 0.0{
-            direction = FORWARD;
-        } else {
-            direction = BACKWARD;
-        }
 
         let motor_speed: u32;
         if max_speed{ motor_speed = (throttle.abs() * MAX_MOTOR_SPEED).floor() as u32; }
