@@ -45,10 +45,8 @@ void sensors_module_start(ULONG id)
         {
             (void)ModuleRequest(SENSORS_MODULE_REQ_SET_HTS221_INVALID, 0u, 0u, 0u);
         }
-        else if ((hts_initialized == 0u) ||
-                 (temp_x100 != last_temp_x100) ||
-                 (hum_x100 != last_hum_x100) ||
-                 ((now - last_hts_publish_tick) >= SENSORS_HEARTBEAT_INTERVAL_TICKS))
+        else if ((hts_initialized == 0u) || (temp_x100 != last_temp_x100) ||
+        (hum_x100 != last_hum_x100) || (now - last_hts_publish_tick) >= SENSORS_HEARTBEAT_INTERVAL_TICKS)
         {
             (void)ModuleRequest(SENSORS_MODULE_REQ_PUBLISH_HTS221,
                                 (ALIGN_TYPE)temp_x100,
@@ -68,10 +66,8 @@ void sensors_module_start(ULONG id)
         {
             (void)ModuleRequest(SENSORS_MODULE_REQ_SET_BATTERY_INVALID, 0u, 0u, 0u);
         }
-        else if ((batt_initialized == 0u) ||
-                 (batt_mv != last_batt_mv) ||
-                 (batt_pct != last_batt_pct) ||
-                 ((now - last_batt_publish_tick) >= SENSORS_HEARTBEAT_INTERVAL_TICKS))
+        else if ((batt_initialized == 0u) || (batt_mv != last_batt_mv) ||
+        (batt_pct != last_batt_pct) || ((now - last_batt_publish_tick) >= SENSORS_HEARTBEAT_INTERVAL_TICKS))
         {
             (void)ModuleRequest(SENSORS_MODULE_REQ_PUBLISH_BATTERY,
                                 (ALIGN_TYPE)batt_mv,

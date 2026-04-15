@@ -12,13 +12,9 @@ static UINT ModuleRequest(ULONG request, ALIGN_TYPE p1, ALIGN_TYPE p2, ALIGN_TYP
 static VOID HealthLogLine(const CHAR *ok_line, const CHAR *stale_line, ULONG age_ticks)
 {
     if (age_ticks > HEALTH_STALE_THRESHOLD_TICKS)
-    {
         (void)ModuleRequest(HEALTH_MODULE_REQ_DEBUG_LOG, (ALIGN_TYPE)stale_line, 0u, 0u);
-    }
     else
-    {
         (void)ModuleRequest(HEALTH_MODULE_REQ_DEBUG_LOG, (ALIGN_TYPE)ok_line, 0u, 0u);
-    }
 }
 
 void health_module_start(ULONG id)
