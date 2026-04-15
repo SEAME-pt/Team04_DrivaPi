@@ -17,25 +17,17 @@ static UINT DetermineGear(INT speed_mmps, INT pwm_value)
     if (speed_mmps > (INT)RND_DEADZONE_MMPS)
     {
         if (pwm_value > 0)
-        {
             return SPEED_SENSOR_MODULE_GEAR_DRIVE;
-        }
         if (pwm_value < 0)
-        {
             return SPEED_SENSOR_MODULE_GEAR_REVERSE;
-        }
     }
 
     if (speed_mmps < (INT)(-RND_DEADZONE_MMPS))
     {
         if (pwm_value > 0)
-        {
             return SPEED_SENSOR_MODULE_GEAR_DRIVE;
-        }
         if (pwm_value < 0)
-        {
             return SPEED_SENSOR_MODULE_GEAR_REVERSE;
-        }
     }
 
     return SPEED_SENSOR_MODULE_GEAR_NEUTRAL;
@@ -49,17 +41,17 @@ void speed_sensor_module_start(ULONG id)
 
     TX_PARAMETER_NOT_USED(id);
 
+        ULONG   current_ticks;
+        ULONG   current_count;
+        INT     pwm_value;
+        INT     delta_count;
+        ULONG   delta_ticks;
+        INT     speed_mmps;
+        UINT    gear;
+        INT     distance_mm;
+
     while (1)
     {
-        ULONG current_ticks;
-        ULONG current_count;
-        INT pwm_value;
-        INT delta_count;
-        ULONG delta_ticks;
-        INT speed_mmps;
-        UINT gear;
-        INT distance_mm;
-
         tx_thread_sleep(50u);
 
         current_count = (ULONG)ModuleRequest(SPEED_SENSOR_MODULE_REQ_GET_ENCODER_COUNT, 0u, 0u, 0u);
@@ -79,19 +71,13 @@ void speed_sensor_module_start(ULONG id)
 
         delta_ticks = current_ticks - last_ticks;
         if (delta_ticks == 0u)
-        {
             continue;
-        }
 
         delta_count = (INT)current_count - (INT)last_count;
         if (delta_count > (INT)(TIMER_PERIOD / 2L))
-        {
             delta_count -= (INT)(TIMER_PERIOD + 1L);
-        }
         else if (delta_count < (INT)(-(TIMER_PERIOD / 2L)))
-        {
             delta_count += (INT)(TIMER_PERIOD + 1L);
-        }
 
         last_count = current_count;
         last_ticks = current_ticks;

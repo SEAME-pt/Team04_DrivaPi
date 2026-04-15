@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
-MODULE_DIR="$ROOT_DIR/firmware/modules/speed_sensor_module"
+MODULE_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$MODULE_DIR/../../.." && pwd)"
 BUILD_DIR="$MODULE_DIR/build"
 OUT_C="$ROOT_DIR/firmware/Core/Src/speed_sensor_module_image.c"
 
