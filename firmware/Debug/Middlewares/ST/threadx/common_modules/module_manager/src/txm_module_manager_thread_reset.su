@@ -1,0 +1,1 @@
+../Middlewares/ST/threadx/common_modules/module_manager/src/txm_module_manager_thread_reset.c:65:7:_txm_module_manager_thread_reset	64	static,ignoring_inline_asm

@@ -1,0 +1,11 @@
+../Core/Src/sensors.c:25:26:HTS221_WriteReg	40	static
+../Core/Src/sensors.c:37:26:HTS221_ReadCalibration	56	static
+../Core/Src/sensors.c:66:19:HTS221_Init	16	static
+../Core/Src/sensors.c:91:19:HTS221_ReadBoth	64	static
+../Core/Src/sensors.c:118:6:SensorsGetHts221Data	24	static
+../Core/Src/sensors.c:135:6:SensorsGetBatteryData	24	static
+../Core/Src/sensors.c:157:6:SensorHTS221Thread	32	static
+../Core/Src/sensors.c:198:6:SensorsInit	8	static
+../Core/Src/sensors.c:215:19:Battery_Init	48	static
+../Core/Src/sensors.c:255:19:Battery_Read	64	static
+../Core/Src/sensors.c:317:6:SensorBatteryThread	32	static

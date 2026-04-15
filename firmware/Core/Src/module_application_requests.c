@@ -292,7 +292,7 @@ UINT _txm_module_manager_application_request(ULONG request_id, ALIGN_TYPE param_
 
     case ULTRASONIC_MODULE_REQ_INIT:
         TouchHeartbeat(&g_ultrasonic_module_last_tick);
-        return (UltrasonicModuleInit() == HAL_OK) ? TX_SUCCESS : TX_ERROR;
+        return (UltrasonicModuleInit() == HAL_OK) ? TX_SUCCESS : TX_PTR_ERROR;
 
     case ULTRASONIC_MODULE_REQ_GET_TICKS:
         TouchHeartbeat(&g_ultrasonic_module_last_tick);

@@ -1,0 +1,1 @@
+../Middlewares/ST/threadx/common_modules/module_manager/src/txm_module_manager_semaphore_notify_trampoline.c:63:7:_txm_module_manager_semaphore_notify_trampoline	96	static,ignoring_inline_asm

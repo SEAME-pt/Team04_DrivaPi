@@ -1,10 +1,12 @@
 #include <stdint.h>
-#include "txm_module.h"
+#include "tx_api.h"
 #include "dc_motor_module_api.h"
 
 #define DC_MOTOR_SAMPLE_PERIOD_TICKS 20u
 
-static UINT ModuleRequest(ULONG request, ALIGN_TYPE p1, ALIGN_TYPE p2, ALIGN_TYPE p3)
+extern UINT txm_module_application_request(ULONG request, ULONG p1, ULONG p2, ULONG p3);
+
+static UINT ModuleRequest(ULONG request, ULONG p1, ULONG p2, ULONG p3)
 {
     return txm_module_application_request(request, p1, p2, p3);
 }
@@ -16,7 +18,7 @@ void dc_motor_module_start(ULONG id)
     static int32_t  last_right_counts = 0;
     static UINT     initialized = 0u;
 
-    TX_PARAMETER_NOT_USED(id);
+    (void)id;
     (void)ModuleRequest(DC_MOTOR_MODULE_REQ_DEBUG_LOG, DC_MOTOR_MODULE_LOG_RUNNING, 0u, 0u);
     ULONG   command_tick;
     int32_t left_counts;
@@ -36,8 +38,8 @@ void dc_motor_module_start(ULONG id)
         left_counts = (int32_t)ModuleRequest(DC_MOTOR_MODULE_REQ_GET_LEFT_COUNTS, 0u, 0u, 0u);
         right_counts = (int32_t)ModuleRequest(DC_MOTOR_MODULE_REQ_GET_RIGHT_COUNTS, 0u, 0u, 0u);
 
-        (void)ModuleRequest(DC_MOTOR_MODULE_REQ_APPLY_PWM,(ALIGN_TYPE)left_counts,
-        (ALIGN_TYPE)right_counts, 0u);
+        (void)ModuleRequest(DC_MOTOR_MODULE_REQ_APPLY_PWM, (ULONG)left_counts,
+            (ULONG)right_counts, 0u);
 
         last_command_tick = command_tick;
         last_left_counts = left_counts;

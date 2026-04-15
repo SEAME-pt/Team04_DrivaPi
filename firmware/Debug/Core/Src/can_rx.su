@@ -1,0 +1,2 @@
+../Core/Src/can_rx.c:20:9:CanReceive	64	static
+../Core/Src/can_rx.c:44:6:CanRx	40	static

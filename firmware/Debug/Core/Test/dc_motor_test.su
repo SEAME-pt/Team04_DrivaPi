@@ -1,0 +1,6 @@
+../Core/Test/dc_motor_test.c:17:6:MotorTestHigh	16	static
+../Core/Test/dc_motor_test.c:49:6:MotorStop	8	static
+../Core/Test/dc_motor_test.c:65:6:MotorForward	24	static
+../Core/Test/dc_motor_test.c:84:6:MotorBackward	24	static
+../Core/Test/dc_motor_test.c:103:6:MotorLeft	24	static
+../Core/Test/dc_motor_test.c:122:6:MotorRight	24	static

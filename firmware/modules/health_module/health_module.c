@@ -1,25 +1,27 @@
-#include "txm_module.h"
+#include "tx_api.h"
 #include "health_module_api.h"
 
 #define HEALTH_SAMPLE_PERIOD_TICKS       1000u
 #define HEALTH_STALE_THRESHOLD_TICKS     2000u
 
-static UINT ModuleRequest(ULONG request, ALIGN_TYPE p1, ALIGN_TYPE p2, ALIGN_TYPE p3)
+extern UINT txm_module_application_request(ULONG request, ULONG p1, ULONG p2, ULONG p3);
+
+static UINT ModuleRequest(ULONG request, ULONG p1, ULONG p2, ULONG p3)
 {
     return txm_module_application_request(request, p1, p2, p3);
 }
 
-static VOID HealthLogLine(const CHAR *ok_line, const CHAR *stale_line, ULONG age_ticks)
+static VOID HealthLogLine(const char *ok_line, const char *stale_line, ULONG age_ticks)
 {
     if (age_ticks > HEALTH_STALE_THRESHOLD_TICKS)
-        (void)ModuleRequest(HEALTH_MODULE_REQ_DEBUG_LOG, (ALIGN_TYPE)stale_line, 0u, 0u);
+        (void)ModuleRequest(HEALTH_MODULE_REQ_DEBUG_LOG, (ULONG)stale_line, 0u, 0u);
     else
-        (void)ModuleRequest(HEALTH_MODULE_REQ_DEBUG_LOG, (ALIGN_TYPE)ok_line, 0u, 0u);
+        (void)ModuleRequest(HEALTH_MODULE_REQ_DEBUG_LOG, (ULONG)ok_line, 0u, 0u);
 }
 
 void health_module_start(ULONG id)
 {
-    TX_PARAMETER_NOT_USED(id);
+    (void)id;
     (void)ModuleRequest(HEALTH_MODULE_REQ_DEBUG_LOG, HEALTH_MODULE_LOG_RUNNING, 0u, 0u);
 
     while (1)

@@ -1,0 +1,7 @@
+../Core/Src/can_tx.c:13:13:QueueCanMessage	16	static
+../Core/Src/can_tx.c:23:13:QueueHts221Telemetry	56	static
+../Core/Src/can_tx.c:67:13:QueueBatteryTelemetry	48	static
+../Core/Src/can_tx.c:115:6:FloatToUint8	56	static
+../Core/Src/can_tx.c:130:6:CraftSpeedMessage	16	static
+../Core/Src/can_tx.c:143:5:CanSend	96	static
+../Core/Src/can_tx.c:179:6:CanTx	48	static

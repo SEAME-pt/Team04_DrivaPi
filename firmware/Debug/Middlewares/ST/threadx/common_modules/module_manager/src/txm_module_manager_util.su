@@ -1,0 +1,7 @@
+../Middlewares/ST/threadx/common_modules/module_manager/src/txm_module_manager_util.c:68:7:_txm_module_manager_object_memory_check	24	static
+../Middlewares/ST/threadx/common_modules/module_manager/src/txm_module_manager_util.c:141:7:_txm_module_manager_created_object_check	24	static
+../Middlewares/ST/threadx/common_modules/module_manager/src/txm_module_manager_util.c:214:7:_txm_module_manager_object_size_check	24	static
+../Middlewares/ST/threadx/common_modules/module_manager/src/txm_module_manager_util.c:273:7:_txm_module_manager_object_name_compare	32	static
+../Middlewares/ST/threadx/common_modules/module_manager/src/txm_module_manager_util.c:373:9:_txm_module_manager_param_check_object_for_creation	24	static
+../Middlewares/ST/threadx/common_modules/module_manager/src/txm_module_manager_util.c:453:9:_txm_module_manager_param_check_object_for_use	24	static
+../Middlewares/ST/threadx/common_modules/module_manager/src/txm_module_manager_util.c:528:7:_txm_module_manager_util_code_allocation_size_and_alignment_get	48	static

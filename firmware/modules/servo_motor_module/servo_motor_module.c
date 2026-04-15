@@ -1,10 +1,12 @@
 #include <stdint.h>
-#include "txm_module.h"
+#include "tx_api.h"
 #include "servo_motor_module_api.h"
 
 #define SERVO_MOTOR_SAMPLE_PERIOD_TICKS 20u
 
-static UINT ModuleRequest(ULONG request, ALIGN_TYPE p1, ALIGN_TYPE p2, ALIGN_TYPE p3)
+extern UINT txm_module_application_request(ULONG request, ULONG p1, ULONG p2, ULONG p3);
+
+static UINT ModuleRequest(ULONG request, ULONG p1, ULONG p2, ULONG p3)
 {
     return txm_module_application_request(request, p1, p2, p3);
 }
@@ -15,7 +17,7 @@ void servo_motor_module_start(ULONG id)
     static uint16_t    last_angle_deg = 0u;
     static UINT        initialized = 0u;
 
-    TX_PARAMETER_NOT_USED(id);
+    (void)id;
     (void)ModuleRequest(SERVO_MOTOR_MODULE_REQ_DEBUG_LOG, SERVO_MOTOR_MODULE_LOG_RUNNING, 0u, 0u);
 
     ULONG       command_tick;
@@ -33,7 +35,7 @@ void servo_motor_module_start(ULONG id)
             continue;
 
         angle_deg = (uint16_t)ModuleRequest(SERVO_MOTOR_MODULE_REQ_GET_ANGLE_DEG, 0u, 0u, 0u);
-        (void)ModuleRequest(SERVO_MOTOR_MODULE_REQ_APPLY_ANGLE, (ALIGN_TYPE)angle_deg, 0u, 0u);
+        (void)ModuleRequest(SERVO_MOTOR_MODULE_REQ_APPLY_ANGLE, (ULONG)angle_deg, 0u, 0u);
 
         last_command_tick = command_tick;
         last_angle_deg = angle_deg;

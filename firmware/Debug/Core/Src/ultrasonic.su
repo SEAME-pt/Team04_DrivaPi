@@ -1,0 +1,3 @@
+../Core/Src/ultrasonic.c:3:19:UltrasonicModuleInit	16	static
+../Core/Src/ultrasonic.c:44:19:UltrasonicReadRangeCm	24	static
+../Core/Src/ultrasonic.c:89:6:UltrasonicEntry	136	static

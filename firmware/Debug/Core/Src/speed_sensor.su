@@ -1,0 +1,3 @@
+../Core/Src/speed_sensor.c:20:11:DetermineRNDGear	16	static
+../Core/Src/speed_sensor.c:41:7:ReadSpeedSensor	40	static
+../Core/Src/speed_sensor.c:80:6:SpeedSensor	48	static
