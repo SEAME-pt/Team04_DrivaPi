@@ -20,15 +20,22 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "app_threadx.h"
+#include "tx_api.h"
+#include "txm_module.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include "sensors.h"
 #include "speed_sensor.h"
 #include "speed_sensor_module_image.h"
 #include "sensors_module_image.h"
+#include "ultrasonic_module_image.h"
+#include "dc_motor_module_image.h"
+#include "servo_motor_module_image.h"
+#include "health_module_image.h"
 #include "txm_module_port.h"
 /* USER CODE END Includes */
 
@@ -66,16 +73,42 @@ float                   g_vehicleSpeed;
 float 					g_current_speed;
 int16_t 				g_current_pwm;
 ULONG                   g_speed_module_last_tick;
+ULONG                   g_sensors_module_last_tick;
+ULONG                   g_ultrasonic_module_last_tick;
+ULONG                   g_dc_motor_module_last_tick;
+ULONG                   g_servo_module_last_tick;
+ULONG                   g_health_module_last_tick;
+
+ULONG                   g_latest_speed_command_tick;
+int32_t                 g_latest_speed_command_left;
+int32_t                 g_latest_speed_command_right;
+UINT                    g_latest_speed_command_valid;
+
+ULONG                   g_latest_servo_command_tick;
+uint16_t                g_latest_servo_command_angle;
+UINT                    g_latest_servo_command_valid;
 
 /* Module manager runtime memory areas (kernel-side). */
 static UCHAR            g_module_manager_ram[32768];
 static UCHAR            g_module_manager_object_pool[16384];
 static TXM_MODULE_INSTANCE g_speed_sensor_module;
 static TXM_MODULE_INSTANCE g_sensors_module;
+static TXM_MODULE_INSTANCE g_ultrasonic_module;
+static TXM_MODULE_INSTANCE g_dc_motor_module;
+static TXM_MODULE_INSTANCE g_servo_module;
+static TXM_MODULE_INSTANCE g_health_module;
 
 /* Default empty sensors module image, overridden by generated image source when present. */
 __attribute__((weak, aligned(32))) const UCHAR g_sensors_module_image[] = {0u};
 __attribute__((weak)) const ULONG g_sensors_module_image_size = 0u;
+__attribute__((weak, aligned(32))) const UCHAR g_ultrasonic_module_image[] = {0u};
+__attribute__((weak)) const ULONG g_ultrasonic_module_image_size = 0u;
+__attribute__((weak, aligned(32))) const UCHAR g_dc_motor_module_image[] = {0u};
+__attribute__((weak)) const ULONG g_dc_motor_module_image_size = 0u;
+__attribute__((weak, aligned(32))) const UCHAR g_servo_motor_module_image[] = {0u};
+__attribute__((weak)) const ULONG g_servo_motor_module_image_size = 0u;
+__attribute__((weak, aligned(32))) const UCHAR g_health_module_image[] = {0u};
+__attribute__((weak)) const ULONG g_health_module_image_size = 0u;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -160,6 +193,18 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
 	g_current_speed = 0.0f;
 	g_current_pwm = 0;
 	g_speed_module_last_tick = 0u;
+	g_sensors_module_last_tick = 0u;
+	g_ultrasonic_module_last_tick = 0u;
+	g_dc_motor_module_last_tick = 0u;
+	g_servo_module_last_tick = 0u;
+	g_health_module_last_tick = 0u;
+	g_latest_speed_command_tick = 0u;
+	g_latest_speed_command_left = 0;
+	g_latest_speed_command_right = 0;
+	g_latest_speed_command_valid = 0u;
+	g_latest_servo_command_tick = 0u;
+	g_latest_servo_command_angle = 0u;
+	g_latest_servo_command_valid = 0u;
 
 	const char *msg = "\r\n=== DrivaPi ThreadX Init [fw-marker:hb-v2] ===\r\n";
 	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
@@ -254,6 +299,90 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
 		return ret;
 	}
 	HAL_UART_Transmit(&huart1, (uint8_t*)"Sensors module started\r\n", 24, HAL_MAX_DELAY);
+
+	if (g_ultrasonic_module_image_size == 0u)
+	{
+		HAL_UART_Transmit(&huart1, (uint8_t*)"Ultrasonic module image missing\r\n", 34, HAL_MAX_DELAY);
+		return TX_PTR_ERROR;
+	}
+	ret = txm_module_manager_in_place_load(&g_ultrasonic_module,
+			(CHAR *)"ultrasonic_module",
+			(VOID *)g_ultrasonic_module_image);
+	if (ret != TX_SUCCESS)
+	{
+		HAL_UART_Transmit(&huart1, (uint8_t*)"Ultrasonic module load failed\r\n", 32, HAL_MAX_DELAY);
+		return ret;
+	}
+	ret = txm_module_manager_start(&g_ultrasonic_module);
+	if (ret != TX_SUCCESS)
+	{
+		HAL_UART_Transmit(&huart1, (uint8_t*)"Ultrasonic module start failed\r\n", 33, HAL_MAX_DELAY);
+		return ret;
+	}
+	HAL_UART_Transmit(&huart1, (uint8_t*)"Ultrasonic module started\r\n", 28, HAL_MAX_DELAY);
+
+	if (g_dc_motor_module_image_size == 0u)
+	{
+		HAL_UART_Transmit(&huart1, (uint8_t*)"DC motor module image missing\r\n", 32, HAL_MAX_DELAY);
+		return TX_PTR_ERROR;
+	}
+	ret = txm_module_manager_in_place_load(&g_dc_motor_module,
+			(CHAR *)"dc_motor_module",
+			(VOID *)g_dc_motor_module_image);
+	if (ret != TX_SUCCESS)
+	{
+		HAL_UART_Transmit(&huart1, (uint8_t*)"DC motor module load failed\r\n", 30, HAL_MAX_DELAY);
+		return ret;
+	}
+	ret = txm_module_manager_start(&g_dc_motor_module);
+	if (ret != TX_SUCCESS)
+	{
+		HAL_UART_Transmit(&huart1, (uint8_t*)"DC motor module start failed\r\n", 31, HAL_MAX_DELAY);
+		return ret;
+	}
+	HAL_UART_Transmit(&huart1, (uint8_t*)"DC motor module started\r\n", 26, HAL_MAX_DELAY);
+
+	if (g_servo_motor_module_image_size == 0u)
+	{
+		HAL_UART_Transmit(&huart1, (uint8_t*)"Servo module image missing\r\n", 29, HAL_MAX_DELAY);
+		return TX_PTR_ERROR;
+	}
+	ret = txm_module_manager_in_place_load(&g_servo_module,
+			(CHAR *)"servo_motor_module",
+			(VOID *)g_servo_motor_module_image);
+	if (ret != TX_SUCCESS)
+	{
+		HAL_UART_Transmit(&huart1, (uint8_t*)"Servo module load failed\r\n", 27, HAL_MAX_DELAY);
+		return ret;
+	}
+	ret = txm_module_manager_start(&g_servo_module);
+	if (ret != TX_SUCCESS)
+	{
+		HAL_UART_Transmit(&huart1, (uint8_t*)"Servo module start failed\r\n", 28, HAL_MAX_DELAY);
+		return ret;
+	}
+	HAL_UART_Transmit(&huart1, (uint8_t*)"Servo module started\r\n", 23, HAL_MAX_DELAY);
+
+	if (g_health_module_image_size == 0u)
+	{
+		HAL_UART_Transmit(&huart1, (uint8_t*)"Health module image missing\r\n", 30, HAL_MAX_DELAY);
+		return TX_PTR_ERROR;
+	}
+	ret = txm_module_manager_in_place_load(&g_health_module,
+			(CHAR *)"health_module",
+			(VOID *)g_health_module_image);
+	if (ret != TX_SUCCESS)
+	{
+		HAL_UART_Transmit(&huart1, (uint8_t*)"Health module load failed\r\n", 28, HAL_MAX_DELAY);
+		return ret;
+	}
+	ret = txm_module_manager_start(&g_health_module);
+	if (ret != TX_SUCCESS)
+	{
+		HAL_UART_Transmit(&huart1, (uint8_t*)"Health module start failed\r\n", 29, HAL_MAX_DELAY);
+		return ret;
+	}
+	HAL_UART_Transmit(&huart1, (uint8_t*)"Health module started\r\n", 24, HAL_MAX_DELAY);
 
 	msg = "Initializing threads...\r\n";
 	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);

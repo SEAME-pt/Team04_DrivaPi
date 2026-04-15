@@ -156,6 +156,20 @@ extern float				g_vehicleSpeed;
 extern float 				g_current_speed;
 extern int16_t 				g_current_pwm;
 extern ULONG               g_speed_module_last_tick;
+extern ULONG               g_sensors_module_last_tick;
+extern ULONG               g_ultrasonic_module_last_tick;
+extern ULONG               g_dc_motor_module_last_tick;
+extern ULONG               g_servo_module_last_tick;
+extern ULONG               g_health_module_last_tick;
+
+extern ULONG               g_latest_speed_command_tick;
+extern int32_t             g_latest_speed_command_left;
+extern int32_t             g_latest_speed_command_right;
+extern UINT                g_latest_speed_command_valid;
+
+extern ULONG               g_latest_servo_command_tick;
+extern uint16_t            g_latest_servo_command_angle;
+extern UINT                g_latest_servo_command_valid;
 /* USER CODE END 1 */
 
 #ifdef __cplusplus

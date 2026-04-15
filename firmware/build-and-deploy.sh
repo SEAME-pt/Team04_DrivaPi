@@ -3,16 +3,20 @@ set -euo pipefail
 
 # ==============================================================================
 # DrivaPi Firmware Build & Deploy Script
-# Compiles the ThreadX speed and sensors modules and main firmware, then flashes to STM32
+# Compiles ThreadX modules and main firmware, then flashes to STM32
 # ==============================================================================
 
 FIRMWARE_DIR="$(cd "$(dirname "$0")" && pwd)"
 MODULE_DIR="$FIRMWARE_DIR/modules/speed_sensor_module"
 SENSORS_MODULE_DIR="$FIRMWARE_DIR/modules/sensors_module"
+ULTRASONIC_MODULE_DIR="$FIRMWARE_DIR/modules/ultrasonic_module"
+DC_MOTOR_MODULE_DIR="$FIRMWARE_DIR/modules/dc_motor_module"
+SERVO_MOTOR_MODULE_DIR="$FIRMWARE_DIR/modules/servo_motor_module"
+HEALTH_MODULE_DIR="$FIRMWARE_DIR/modules/health_module"
 DEBUG_DIR="$FIRMWARE_DIR/Debug"
 
 # ==============================================================================
-# Build Speed Sensor Module
+# Build ThreadX Modules
 # ==============================================================================
 function build_module() {
     echo "=================================="
@@ -26,6 +30,22 @@ function build_module() {
     "$SENSORS_MODULE_DIR/build-sensors-module.sh"
     SENSORS_MODULE_SIZE=$(stat -f%z "$SENSORS_MODULE_DIR/build/sensors_module.bin" 2>/dev/null || stat -c%s "$SENSORS_MODULE_DIR/build/sensors_module.bin")
     echo "✓ Sensors module built: $SENSORS_MODULE_SIZE bytes"
+
+    "$ULTRASONIC_MODULE_DIR/build-ultrasonic-module.sh"
+    ULTRASONIC_MODULE_SIZE=$(stat -f%z "$ULTRASONIC_MODULE_DIR/build/ultrasonic_module.bin" 2>/dev/null || stat -c%s "$ULTRASONIC_MODULE_DIR/build/ultrasonic_module.bin")
+    echo "✓ Ultrasonic module built: $ULTRASONIC_MODULE_SIZE bytes"
+
+    "$DC_MOTOR_MODULE_DIR/build-dc-motor-module.sh"
+    DC_MOTOR_MODULE_SIZE=$(stat -f%z "$DC_MOTOR_MODULE_DIR/build/dc_motor_module.bin" 2>/dev/null || stat -c%s "$DC_MOTOR_MODULE_DIR/build/dc_motor_module.bin")
+    echo "✓ DC motor module built: $DC_MOTOR_MODULE_SIZE bytes"
+
+    "$SERVO_MOTOR_MODULE_DIR/build-servo-motor-module.sh"
+    SERVO_MOTOR_MODULE_SIZE=$(stat -f%z "$SERVO_MOTOR_MODULE_DIR/build/servo_motor_module.bin" 2>/dev/null || stat -c%s "$SERVO_MOTOR_MODULE_DIR/build/servo_motor_module.bin")
+    echo "✓ Servo motor module built: $SERVO_MOTOR_MODULE_SIZE bytes"
+
+    "$HEALTH_MODULE_DIR/build-health-module.sh"
+    HEALTH_MODULE_SIZE=$(stat -f%z "$HEALTH_MODULE_DIR/build/health_module.bin" 2>/dev/null || stat -c%s "$HEALTH_MODULE_DIR/build/health_module.bin")
+    echo "✓ Health module built: $HEALTH_MODULE_SIZE bytes"
 }
 
 # ==============================================================================
@@ -82,6 +102,10 @@ function clean_modules() {
     echo "Cleaning module build artifacts..."
     rm -rf "$MODULE_DIR/build"
     rm -rf "$SENSORS_MODULE_DIR/build"
+    rm -rf "$ULTRASONIC_MODULE_DIR/build"
+    rm -rf "$DC_MOTOR_MODULE_DIR/build"
+    rm -rf "$SERVO_MOTOR_MODULE_DIR/build"
+    rm -rf "$HEALTH_MODULE_DIR/build"
     echo "✓ Module clean complete!"
 }
 
@@ -109,7 +133,7 @@ DrivaPi Firmware Build & Deploy Script
 Usage: $0 {build|flash|deploy|clean}
 
 Commands:
-    build   - Compile speed + sensors modules and main firmware
+        build   - Compile all modules and main firmware
   flash   - Flash existing firmware to STM32
   deploy  - Build then flash to STM32
     clean   - Remove all build artifacts (modules + firmware)

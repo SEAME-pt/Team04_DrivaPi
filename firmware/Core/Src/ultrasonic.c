@@ -1,5 +1,86 @@
 #include "ultrasonic.h"
 
+HAL_StatusTypeDef UltrasonicModuleInit(void)
+{
+	uint8_t	verify_range = 0;
+	int	config_attempts = 0;
+
+	Soft_I2C_Init();
+	tx_thread_sleep(10);
+
+	while (verify_range != 0x46 && config_attempts < 10)
+	{
+		config_attempts++;
+		Soft_I2C_Start();
+		if (Soft_I2C_WriteByte(SRF08_ADDR) == 1)
+		{
+			Soft_I2C_WriteByte(0x02);
+			Soft_I2C_WriteByte(0x46);
+		}
+		Soft_I2C_Stop();
+		tx_thread_sleep(5);
+
+		Soft_I2C_Start();
+		if (Soft_I2C_WriteByte(SRF08_ADDR) == 1)
+		{
+			Soft_I2C_WriteByte(0x02);
+			Soft_I2C_Stop();
+			Soft_I2C_Start();
+			Soft_I2C_WriteByte(SRF08_ADDR | 1);
+			verify_range = Soft_I2C_ReadByte(0);
+		}
+		Soft_I2C_Stop();
+		tx_thread_sleep(5);
+	}
+
+	if (verify_range == 0x46)
+	{
+		return HAL_OK;
+	}
+
+	return HAL_ERROR;
+}
+
+HAL_StatusTypeDef UltrasonicReadRangeCm(int16_t *range_cm)
+{
+	uint8_t high_byte, low_byte;
+
+	if (range_cm == NULL)
+	{
+		return HAL_ERROR;
+	}
+
+	Soft_I2C_Start();
+	if (Soft_I2C_WriteByte(SRF08_ADDR) == 0)
+	{
+		Soft_I2C_Stop();
+		return HAL_ERROR;
+	}
+	Soft_I2C_WriteByte(CMD_REG);
+	Soft_I2C_WriteByte(CMD_CENTIMETERS);
+	Soft_I2C_Stop();
+
+	tx_thread_sleep(6);
+
+	Soft_I2C_Start();
+	if (Soft_I2C_WriteByte(SRF08_ADDR) == 0)
+	{
+		Soft_I2C_Stop();
+		return HAL_ERROR;
+	}
+	Soft_I2C_WriteByte(RANGE_REG);
+	Soft_I2C_Stop();
+
+	Soft_I2C_Start();
+	Soft_I2C_WriteByte(SRF08_ADDR | 1);
+	high_byte = Soft_I2C_ReadByte(1);
+	low_byte = Soft_I2C_ReadByte(0);
+	Soft_I2C_Stop();
+
+	*range_cm = (int16_t)((high_byte << 8) | low_byte);
+	return HAL_OK;
+}
+
 /**
  * @brief Ultrasonic sensor thread entry using SRF08 over soft I2C.
  *

@@ -15,5 +15,10 @@
 #define DT_SECONDS          0.057f
 #define BACKSPIN_THRESHOLD	70
 
+#define ULTRASONIC_INVALID_SAMPLE  0x7FFFFFFFu
+
+HAL_StatusTypeDef UltrasonicModuleInit(void);
+HAL_StatusTypeDef UltrasonicReadRangeCm(int16_t *range_cm);
+
 
 #endif /* __ULTRASONIC_H */
