@@ -14,10 +14,9 @@ FeederConfig ParseArgs(int argc, char** argv)
 {
     FeederConfig config;
     config.publisher_options.address  = "localhost:55555";
-    // Insecure by default: the databroker and feeder co-locate on the same RPi.
-    // Loopback traffic (127.0.0.1) never leaves the device, so TLS adds no meaningful
-    // protection here. Pass --tls (+ --ca) when the broker is accessed over the network.
-    config.publisher_options.use_ssl  = false;
+    // TLS by default in production images.
+    config.publisher_options.use_ssl  = true;
+    config.publisher_options.root_ca_path = "/etc/kuksa/server.crt";
     config.can_interface              = "can1";
 
     int positional_count = 0;
@@ -109,7 +108,7 @@ void PrintUsage(const std::string& program_name)
               << "  can_interface     CAN interface name (default: can1)\n"
               << "  kuksa_address     KUKSA databroker host:port (default: localhost:55555)\n"
               << "\nOptions:\n"
-              << "  --insecure        Use insecure channel (default)\n"
+              << "  --insecure        Use insecure channel\n"
               << "  --tls             Use TLS encrypted channel\n"
               << "  --ca <path>       Root CA certificate path (for TLS)\n"
               << "  --cert <path>     Client certificate path (for mTLS)\n"
@@ -120,7 +119,7 @@ void PrintUsage(const std::string& program_name)
               << "  --help, -h        Show this help message\n"
               << "\nExamples:\n"
               << "  " << program_name << " can1 localhost:55555\n"
-              << "  " << program_name << " --tls --ca ca.crt --cert client.crt --key client.key\n"
+              << "  " << program_name << " --tls --ca /etc/kuksa/server.crt\n"
               << "  " << program_name << " --can-if can0 --address databroker.local:55555 --tls\n"
               << std::endl;
 }
