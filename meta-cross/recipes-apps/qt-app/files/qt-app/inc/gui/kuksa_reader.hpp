@@ -21,8 +21,8 @@ namespace kuksa {
 
 struct KuksaOptions {
     QString address{"localhost:55555"};
-    bool useSsl{true};
-    QString rootCaPath{"/etc/kuksa/server.crt"};
+    bool useSsl{false};
+    QString rootCaPath{};
     QString clientCertPath{};
     QString clientKeyPath{};
     QString token{};
