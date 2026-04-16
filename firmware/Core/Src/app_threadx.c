@@ -21,6 +21,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "app_threadx.h"
 
+#define UART_BOOT_TIMEOUT_MS 20u
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "sensors.h"
@@ -44,7 +46,7 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
 bool					g_emergencyBrake;
-thread_t				g_threads[9];
+thread_t				g_threads[10];
 TX_QUEUE                g_queueSpeedCmd;
 TX_QUEUE                g_queueSteerCmd;
 TX_EVENT_FLAGS_GROUP    g_eventFlags;
@@ -54,12 +56,10 @@ TX_MUTEX                g_canMutex;
 TX_MUTEX                g_motorMutex;
 TX_MUTEX                g_servoMutex;
 TX_MUTEX             	g_gearMutex;
-RNDGear_t				g_currentGear;
+RNDGear_t				g_current_gear;
 float                   g_vehicleSpeed;
-float 					g_currentSpeed;
-int16_t 				g_currentPWM;
-MotorControlState		g_motorControlState;
-float					g_targetSpeed;
+float 					g_current_speed;
+int16_t 				g_current_pwm;
 unsigned char			trace_buffer[TRACE_BUFFER_SIZE];
 /* USER CODE END PV */
 
@@ -82,12 +82,51 @@ UINT ret = TX_SUCCESS;
   /* USER CODE BEGIN App_ThreadX_Init */
 	g_emergencyBrake = false;
 	g_vehicleSpeed = 0;
-	g_currentGear = GEAR_NEUTRAL;
-	g_currentSpeed = 0.0f;
-	g_currentPWM = 0;
+	g_current_gear = GEAR_NEUTRAL;
+	g_current_speed = 0.0f;
+	g_current_pwm = 0;
 
 	const char *msg = "\r\n=== DrivaPi ThreadX Init ===\r\n";
-	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+	(void)HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), UART_BOOT_TIMEOUT_MS);
+	{
+		uint8_t saw_flag = 0u;
+		if (__HAL_RCC_GET_FLAG(RCC_FLAG_WWDGRST))
+		{
+			msg = "[RESET] WWDG reset\r\n";
+			(void)HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), UART_BOOT_TIMEOUT_MS);
+			saw_flag = 1u;
+		}
+		if (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST))
+		{
+			msg = "[RESET] IWDG reset\r\n";
+			(void)HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), UART_BOOT_TIMEOUT_MS);
+			saw_flag = 1u;
+		}
+		if (__HAL_RCC_GET_FLAG(RCC_FLAG_SFTRST))
+		{
+			msg = "[RESET] Software reset\r\n";
+			(void)HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), UART_BOOT_TIMEOUT_MS);
+			saw_flag = 1u;
+		}
+		if (__HAL_RCC_GET_FLAG(RCC_FLAG_BORRST))
+		{
+			msg = "[RESET] BOR/POR reset\r\n";
+			(void)HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), UART_BOOT_TIMEOUT_MS);
+			saw_flag = 1u;
+		}
+		if (__HAL_RCC_GET_FLAG(RCC_FLAG_PINRST))
+		{
+			msg = "[RESET] Pin reset\r\n";
+			(void)HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), UART_BOOT_TIMEOUT_MS);
+			saw_flag = 1u;
+		}
+		if (!saw_flag)
+		{
+			msg = "[RESET] No reset flag set\r\n";
+			(void)HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), UART_BOOT_TIMEOUT_MS);
+		}
+		__HAL_RCC_CLEAR_RESET_FLAGS();
+	}
 
 	tx_queue_create(&g_queueSpeedCmd, "Speed Queue", sizeof(t_can_message)/sizeof(ULONG),
 	memory_ptr, QUEUE_SIZE * sizeof(t_can_message));
@@ -99,17 +138,17 @@ UINT ret = TX_SUCCESS;
 
 	tx_event_flags_create(&g_eventFlags, "System Events");
 
-	tx_mutex_create(&g_speedDataMutex, "Speed Data Mutex", TX_NO_INHERIT);
-	tx_mutex_create(&g_emergencyMutex, "Emergency Mutex", TX_NO_INHERIT);
-	tx_mutex_create(&g_canMutex, "CAN Mutex", TX_NO_INHERIT);
-	tx_mutex_create(&g_motorMutex, "Motor Mutex", TX_NO_INHERIT);
-	tx_mutex_create(&g_servoMutex, "Servo Mutex", TX_NO_INHERIT);
-	tx_mutex_create(&g_gearMutex, "Gear Mutex", TX_NO_INHERIT);
+	tx_mutex_create(&g_speedDataMutex, "Speed Data Mutex", TX_INHERIT);
+	tx_mutex_create(&g_emergencyMutex, "Emergency Mutex", TX_INHERIT);
+	tx_mutex_create(&g_canMutex, "CAN Mutex", TX_INHERIT);
+	tx_mutex_create(&g_motorMutex, "Motor Mutex", TX_INHERIT);
+	tx_mutex_create(&g_servoMutex, "Servo Mutex", TX_INHERIT);
+	tx_mutex_create(&g_gearMutex, "Gear Mutex", TX_INHERIT);
 
 	InitAllDevices();
-	MotorControlInit(&g_motorControlState);
+
 	msg = "Initializing threads...\r\n";
-	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+	(void)HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), UART_BOOT_TIMEOUT_MS);
 	ThreadInit();
 
   /* USER CODE END App_ThreadX_Init */

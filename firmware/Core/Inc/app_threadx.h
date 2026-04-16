@@ -42,7 +42,6 @@ extern "C" {
 #include "servo_motor.h"
 #include "dc_motor_test.h"
 #include "motor_utils.h"
-#include "motor_control.h"
 #include "sensors.h"
 #include "soft_i2c.h"
 #include "init_devices.h"
@@ -71,11 +70,12 @@ typedef enum threads_s
 	sensor_hts221_e,
 	sensor_battery_e,
 	ultrasonic_sensor_e,
+	sensor_ina231_e,
 }	t_e_threads;
 
 typedef struct can_message_s
 {
-    uint32_t id;	
+    uint32_t id;
     uint8_t  data[8];
     uint8_t  len;
 } t_can_message;
@@ -96,12 +96,16 @@ typedef struct can_message_s
 #define FLAG_EMERGENCY_STOP (1 << 3)
 #define THREAD_STACK_SIZE	1024
 #define QUEUE_SIZE         	10
+#define MUTEX_WAIT_TICKS      20u
 #define CMD_SPEED           44u
 #define CMD_STEERING        45u
 
 #define CAN_ID_BATTERY_DATA        0x200  /* Battery percentage + voltage (512) */
 #define CAN_ID_HTS221_DATA         0x400  /* HTS221 Temperature + Humidity (1024) */
 #define CAN_ID_RND_GEAR            0x300  /* RND gear state (768) */
+#define CAN_ID_INA231_DATA         0x210  /* RPi battery: percentage + voltage (528) */
+#define CAN_ID_INA231_CURRENT      0x211  /* INA231 current: float amps (529) */
+#define CAN_ID_SYSTEM_WATCHDOG     0x7E0  /* System heartbeat for scheduler liveness */
 
 /* RND Gear States */
 typedef enum {
@@ -138,6 +142,7 @@ VOID	CanTx(ULONG initial_input);
 VOID	SpeedSensor(ULONG initial_input);
 VOID	SensorHTS221Thread(ULONG initial_input);
 VOID	SensorBatteryThread(ULONG initial_input);
+VOID	SensorINA231Thread(ULONG initial_input);
 void	ThreadInit(void);
 void	UltrasonicEntry(ULONG initial_input);
 int		CanSend(t_can_message* msg);
@@ -146,7 +151,7 @@ extern void sysview_register_thread(TX_THREAD *thread);
 
 /* USER CODE BEGIN 1 */
 extern bool					g_emergencyBrake;
-extern thread_t				g_threads[9];
+extern thread_t				g_threads[10];
 extern TX_QUEUE             g_queueSpeedCmd;
 extern TX_QUEUE             g_queueSteerCmd;
 extern TX_EVENT_FLAGS_GROUP	g_eventFlags;
@@ -156,10 +161,10 @@ extern TX_MUTEX             g_canMutex;
 extern TX_MUTEX             g_motorMutex;
 extern TX_MUTEX             g_servoMutex;
 extern TX_MUTEX             g_gearMutex;
-extern RNDGear_t			g_currentGear;
+extern RNDGear_t			g_current_gear;
 extern float				g_vehicleSpeed;
-extern float 				g_currentSpeed;
-extern int16_t 				g_currentPWM;
+extern float 				g_current_speed;
+extern int16_t 				g_current_pwm;
 extern unsigned char		trace_buffer[TRACE_BUFFER_SIZE];
 /* USER CODE END 1 */
 
