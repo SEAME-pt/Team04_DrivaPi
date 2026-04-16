@@ -357,8 +357,10 @@ fn run_manual_mode(
         };
 
         if input.button_l3 && !prev_cruise_button {
-            cruise_control_enabled = !cruise_control_enabled;
             if cruise_control_enabled {
+                cruise_control_enabled = false;
+            } else if direction == FORWARD {
+                cruise_control_enabled = true;
                 cruise_speed = prev_motor_speed;
                 cruise_direction = direction;
             }
