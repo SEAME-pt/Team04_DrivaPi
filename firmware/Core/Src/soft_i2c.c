@@ -81,9 +81,8 @@ uint8_t Soft_I2C_WriteByte(uint8_t byte)
 	I2C_Delay();
 	HAL_GPIO_WritePin(SCL_PORT, SCL_PIN, GPIO_PIN_SET);
 	I2C_Delay();
-	HAL_GPIO_WritePin(SCL_PORT, SCL_PIN, GPIO_PIN_RESET);
 
-	// Read SDA. If LOW, Slave is ACK-ing. If HIGH, Slave is ignoring us.
+	// Read SDA while SCL is high. If LOW, slave is ACK-ing.
 	uint8_t ack = (HAL_GPIO_ReadPin(SDA_PORT, SDA_PIN) == GPIO_PIN_RESET) ? 1 : 0;
 
 	HAL_GPIO_WritePin(SCL_PORT, SCL_PIN, GPIO_PIN_RESET); // Clock Low

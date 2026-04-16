@@ -236,40 +236,43 @@ static HAL_StatusTypeDef I2C_SafeProbe(I2C_HandleTypeDef *hi2c, uint16_t dev_add
 
 void PCA9685_InitAllDevices(void)
 {
-	I2C_HandleTypeDef* buses[] = { &hi2c2, &hi2c3 };
-	const char* bus_names[] = { "I2C2", "I2C3" };
+	UartPrint("PCA9685: init start\r\n");
+	/*
+	 * Avoid full-bus probing at startup: writing PCA registers to non-PCA devices
+	 * can stall I2C or reset external peripherals.
+	 */
+	const uint8_t expected_addrs[] = { 0x40u, 0x60u };
+	I2C_HandleTypeDef* bus = &hi2c3;
 
-	for (size_t b = 0; b < sizeof(buses)/sizeof(buses[0]); ++b) 
+	if (bus->Instance == NULL)
 	{
-		I2C_HandleTypeDef* bus = buses[b];
-		if (bus->Instance == NULL)
-			continue;
-			
-		if (I2C_BusRecovery(bus) != HAL_OK)
-		{
-			UartPrintf("Warning: %s recovery failed\r\n", bus_names[b]);
-			continue;
-		}
-		
-		for (uint8_t addr = 1; addr < 128; ++addr) 
-		{
-			uint16_t dev_addr = (uint16_t)(addr << 1);
-			if (addr == 0x5F)
-				continue;
-			
-			if (I2C_SafeProbe(bus, dev_addr) == HAL_OK)
-			{
-				uint8_t v;
-				if (PCA9685_ReadReg(bus, addr, LED0_ON_L, &v) == HAL_OK)
-				{
-					char name_buffer[32];
-					snprintf(name_buffer, sizeof(name_buffer), "PCA9685@0x%02X", addr);
-					HAL_StatusTypeDef st = PCA9685_InitDevice(bus, addr, name_buffer);
-					if (st != HAL_OK)
-						UartPrintf("PCA9685 init failed at 0x%02X (status %d)\r\n", addr, st);
-				}
-			}
-		}
+		UartPrint("PCA9685: I2C3 not available\r\n");
+		MotorStop();
+		return;
 	}
+
+	if (I2C_BusRecovery(bus) != HAL_OK)
+	{
+		UartPrint("PCA9685: I2C3 recovery failed\r\n");
+		MotorStop();
+		return;
+	}
+
+	for (size_t i = 0; i < sizeof(expected_addrs) / sizeof(expected_addrs[0]); ++i)
+	{
+		uint8_t addr = expected_addrs[i];
+		uint16_t dev_addr = (uint16_t)(addr << 1);
+		if (I2C_SafeProbe(bus, dev_addr) != HAL_OK)
+		{
+			UartPrintf("PCA9685: device 0x%02X not responding\r\n", addr);
+			continue;
+		}
+
+		HAL_StatusTypeDef st = PCA9685_InitDevice(bus, addr, "PCA9685");
+		if (st != HAL_OK)
+			UartPrintf("PCA9685 init failed at 0x%02X (status %d)\r\n", addr, st);
+	}
+
 	MotorStop();
+	UartPrint("PCA9685: init end\r\n");
 }

@@ -8,31 +8,28 @@
 
 #include "app_threadx.h"
 
+#define UART_BOOT_INIT_TIMEOUT_MS 20u
+
 /**
  * @brief Initialize all onboard I2C devices and sensors.
  */
 void InitAllDevices(void)
 {
 	const char *msg = "Initializing PCA9685 devices...\r\n";
-	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), UART_BOOT_INIT_TIMEOUT_MS);
+	msg = "[BOOT] Before PCA init\r\n";
+	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), UART_BOOT_INIT_TIMEOUT_MS);
 	PCA9685_InitAllDevices();
+	msg = "[BOOT] After PCA init\r\n";
+	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), UART_BOOT_INIT_TIMEOUT_MS);
 
-	if (Battery_Init(&hi2c3) == HAL_OK)
-	{
-		msg = "Battery: Initialized successfully\r\n";
-		HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
-	}
-	else
-	{
-		msg = "Battery: Initialization failed!\r\n";
-		HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
-	}
+	/* Battery_Init removed - now done in SensorBatteryThread after ThreadX starts */
+	/* This avoids blocking HAL_Delay calls before scheduler is running */
 
-	if (HTS221_Init(&hi2c2) != HAL_OK)
-	{
-		msg = "HTS221: Initialization failed!\r\n";
-		HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
-	}
+	msg = "[BOOT] HTS init deferred to thread\r\n";
+	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), UART_BOOT_INIT_TIMEOUT_MS);
 
+	msg = "[BOOT] Before SensorsInit\r\n";
+	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), UART_BOOT_INIT_TIMEOUT_MS);
 	SensorsInit();
 }

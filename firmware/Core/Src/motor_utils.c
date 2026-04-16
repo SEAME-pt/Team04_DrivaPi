@@ -7,6 +7,8 @@
 
 #include "../Inc/motor_utils.h"
 
+#define UART_LOG_TIMEOUT_MS 20u
+
 /**
  * @brief Send a formatted string over UART1.
  *
@@ -20,7 +22,7 @@ void UartPrintf(const char* format, ...)
 	va_start(args, format);
 	vsnprintf(buffer, sizeof(buffer), format, args);
 	va_end(args);
-	HAL_UART_Transmit(&huart1, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
+	(void)HAL_UART_Transmit(&huart1, (uint8_t*)buffer, strlen(buffer), UART_LOG_TIMEOUT_MS);
 }
 
 /**
@@ -30,7 +32,7 @@ void UartPrintf(const char* format, ...)
  */
 void UartPrint(const char* msg)
 {
-	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+	(void)HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), UART_LOG_TIMEOUT_MS);
 }
 
 /**
