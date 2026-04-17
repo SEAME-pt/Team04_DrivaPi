@@ -24,6 +24,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "modules.h"
 
 /* USER CODE END Includes */
 
@@ -138,6 +139,11 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
 	tx_mutex_create(&g_motorMutex, "Motor Mutex", TX_NO_INHERIT);
 	tx_mutex_create(&g_servoMutex, "Servo Mutex", TX_NO_INHERIT);
 	tx_mutex_create(&g_gearMutex, "Gear Mutex", TX_NO_INHERIT);
+
+	/* Avoid lazy FPU context stacking faults in module start paths. */
+#if defined(__FPU_PRESENT) && (__FPU_PRESENT == 1U) && defined(__FPU_USED) && (__FPU_USED == 1U)
+	FPU->FPCCR &= ~(FPU_FPCCR_LSPEN_Msk | FPU_FPCCR_ASPEN_Msk);
+#endif
 
 	ret = ModulesInit();
 	if (ret != TX_SUCCESS)

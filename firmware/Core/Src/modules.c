@@ -5,8 +5,8 @@
 /* Module manager runtime memory areas (kernel-side).
  * Multiple modules each reserve stacks + data from this pool, so keep headroom.
  */
-static UCHAR g_module_manager_ram[131072];
-static UCHAR g_module_manager_object_pool[65536];
+static UCHAR g_module_manager_ram[262144];
+static UCHAR g_module_manager_object_pool[98304];
 static TXM_MODULE_INSTANCE g_speed_sensor_module;
 static TXM_MODULE_INSTANCE g_sensors_module;
 static TXM_MODULE_INSTANCE g_ultrasonic_module;
