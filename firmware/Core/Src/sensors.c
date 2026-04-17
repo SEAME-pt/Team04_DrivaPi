@@ -44,7 +44,6 @@ static HTS221_Calibration_t calib_data;
 /* ============================================================================
  * Private Function Prototypes
  * ============================================================================ */
-static HAL_StatusTypeDef SensorI2cProbeAddress(I2C_HandleTypeDef *hi2c, uint8_t dev_addr_7bit);
 static HAL_StatusTypeDef SensorI2cMemRead(I2C_HandleTypeDef *hi2c, uint16_t dev_addr, uint16_t mem_addr, uint8_t *buf, uint16_t len);
 static HAL_StatusTypeDef SensorI2cMemWrite(I2C_HandleTypeDef *hi2c, uint16_t dev_addr, uint16_t mem_addr, const uint8_t *buf, uint16_t len);
 
@@ -53,7 +52,6 @@ static HAL_StatusTypeDef ExpansionBattery_Read(I2C_HandleTypeDef *hi2c, float *v
 
 static HAL_StatusTypeDef INA231_WriteRegister(I2C_HandleTypeDef *hi2c, uint8_t reg, uint16_t value);
 static HAL_StatusTypeDef INA231_ReadRegister(I2C_HandleTypeDef *hi2c, uint8_t dev_addr_7bit, uint8_t reg, uint16_t *value);
-static HAL_StatusTypeDef INA231_Configure(I2C_HandleTypeDef *hi2c, uint8_t dev_addr_7bit);
 
 static HAL_StatusTypeDef HTS221_WriteReg(I2C_HandleTypeDef *hi2c, uint8_t reg, uint8_t data);
 static HAL_StatusTypeDef HTS221_ReadCalibration(I2C_HandleTypeDef *hi2c);
@@ -79,36 +77,6 @@ void SensorsInit(void)
 /* ============================================================================
  * I2C Abstraction Layer (Thread-Safe)
  * ============================================================================ */
-
-/**
- * @brief  Probe I2C address securely.
- * @param  hi2c I2C handle
- * @param  dev_addr_7bit 7-bit device address
- * @return HAL_StatusTypeDef 
- */
-static HAL_StatusTypeDef SensorI2cProbeAddress(I2C_HandleTypeDef *hi2c, uint8_t dev_addr_7bit)
-{
-    HAL_StatusTypeDef status;
-    TX_THREAD *thread = tx_thread_identify();
-    if (hi2c == NULL || hi2c->Instance == NULL)
-    {
-        UartPrint("[I2C GUARD] probe null handle\r\n");
-        return HAL_ERROR;
-    }
-
-    if (thread)
-    {
-        if (tx_mutex_get(&g_i2cMutex, SENSOR_I2C_MUTEX_TIMEOUT_TICKS) != TX_SUCCESS)
-            return HAL_BUSY;
-    }
-
-    status = HAL_I2C_IsDeviceReady(hi2c, (uint16_t)(dev_addr_7bit << 1), 1, SENSOR_I2C_TIMEOUT_MS);
-
-    if (thread)
-        tx_mutex_put(&g_i2cMutex);
-
-    return status;
-}
 
 /**
  * @brief  Read from I2C memory securely.
@@ -402,44 +370,6 @@ static HAL_StatusTypeDef INA231_ReadRegister(I2C_HandleTypeDef *hi2c, uint8_t de
         return status;
 
     *value = (uint16_t)((buf[0] << 8) | buf[1]);
-    return HAL_OK;
-}
-
-/**
- * @brief  Configure INA231 logic.
- * @param  hi2c I2C handle
- * @param  dev_addr_7bit Target device address
- * @return HAL_StatusTypeDef 
- */
-static HAL_StatusTypeDef INA231_Configure(I2C_HandleTypeDef *hi2c, uint8_t dev_addr_7bit)
-{
-    uint8_t prev_addr = g_ina231_addr_7bit;
-    uint16_t readback = 0u;
-    HAL_StatusTypeDef status;
-
-    g_ina231_addr_7bit = dev_addr_7bit;
-
-    status = INA231_WriteRegister(hi2c, INA219_REG_CONFIG, 0x4127); /* Replace with correct INA231 config if defined */
-    if (status != HAL_OK)
-    {
-        g_ina231_addr_7bit = prev_addr;
-        return status;
-    }
-
-    status = INA231_WriteRegister(hi2c, INA219_REG_CALIBRATION, 0x0A00); /* Replace with correct INA231 calib if defined */
-    if (status != HAL_OK)
-    {
-        g_ina231_addr_7bit = prev_addr;
-        return status;
-    }
-
-    status = INA231_ReadRegister(hi2c, dev_addr_7bit, INA219_REG_CONFIG, &readback);
-    if (status != HAL_OK || readback != 0x4127)
-    {
-        g_ina231_addr_7bit = prev_addr;
-        return HAL_ERROR;
-    }
-
     return HAL_OK;
 }
 
