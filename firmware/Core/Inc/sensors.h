@@ -16,6 +16,8 @@ extern "C" {
 #include "stm32u5xx_hal.h"
 #include "tx_api.h"
 #include "app_threadx.h"
+#include <string.h>
+#include <math.h>
 
 /* Exported types ------------------------------------------------------------*/
 /* HTS221 sensor data structure */
