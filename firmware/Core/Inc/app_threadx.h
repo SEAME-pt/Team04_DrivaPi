@@ -42,6 +42,7 @@ extern "C" {
 #include "servo_motor.h"
 #include "dc_motor_test.h"
 #include "motor_utils.h"
+#include "motor_control.h"
 #include "sensors.h"
 #include "soft_i2c.h"
 #include "init_devices.h"
@@ -70,12 +71,11 @@ typedef enum threads_s
 	sensor_hts221_e,
 	sensor_battery_e,
 	ultrasonic_sensor_e,
-	sensor_ina231_e,
 }	t_e_threads;
 
 typedef struct can_message_s
 {
-    uint32_t id;
+    uint32_t id;	
     uint8_t  data[8];
     uint8_t  len;
 } t_can_message;
@@ -96,7 +96,7 @@ typedef struct can_message_s
 #define FLAG_EMERGENCY_STOP (1 << 3)
 #define THREAD_STACK_SIZE	1024
 #define QUEUE_SIZE         	10
-#define MUTEX_WAIT_TICKS      20u
+#define MUTEX_WAIT_TICKS    20u
 #define CMD_SPEED           44u
 #define CMD_STEERING        45u
 
@@ -161,10 +161,10 @@ extern TX_MUTEX             g_canMutex;
 extern TX_MUTEX             g_motorMutex;
 extern TX_MUTEX             g_servoMutex;
 extern TX_MUTEX             g_gearMutex;
-extern RNDGear_t			g_current_gear;
+extern RNDGear_t			g_currentGear;
 extern float				g_vehicleSpeed;
-extern float 				g_current_speed;
-extern int16_t 				g_current_pwm;
+extern float 				g_currentSpeed;
+extern int16_t 				g_currentPWM;
 extern unsigned char		trace_buffer[TRACE_BUFFER_SIZE];
 /* USER CODE END 1 */
 
