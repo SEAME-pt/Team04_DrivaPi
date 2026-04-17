@@ -108,6 +108,7 @@ typedef struct can_message_s
 #define CAN_ID_SYSTEM_WATCHDOG     0x7E0  /* System heartbeat for scheduler liveness */
 
 #define UART_BOOT_TIMEOUT_MS 20u
+#define UART_INIT_TIMEOUT_MS 20u
 
 /* RND Gear States */
 typedef enum {
