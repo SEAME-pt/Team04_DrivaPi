@@ -70,6 +70,9 @@ extern "C" {
 
 #define BATTERY_VOLTAGE_EPSILON 0.01f
 
+/* INA231 I2C Address */
+#define INA231_I2C_ADDRESS     0x40
+
 /* Exported types ------------------------------------------------------------*/
 /* HTS221 sensor data structure */
 typedef struct
@@ -102,11 +105,23 @@ typedef struct
     uint16_t    T1_degC;
 } HTS221_Calibration_t;
 
+/* INA231 specific sensor data structure */
+typedef struct
+{
+    float       voltage;
+    float       current;
+    float       power;
+    uint8_t     percentage;
+    uint32_t    timestamp;
+    uint8_t     data_valid;
+} INA231_Data_t;
+
 /* Global sensor data declarations -------------------------------------------*/
 extern TX_MUTEX             g_sensorDataMutex;
 extern HTS221_Data_t        g_hts221_data;
 extern Battery_Data_t       g_battery_data;
 extern I2C_HandleTypeDef    hi2c2;
+extern INA231_Data_t        g_ina231_data;
 
 /* Exported functions --------------------------------------------------------*/
 void                SensorsInit(void);
