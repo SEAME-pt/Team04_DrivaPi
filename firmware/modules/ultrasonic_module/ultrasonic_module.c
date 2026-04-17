@@ -33,7 +33,8 @@ static UINT ModuleRequest(ULONG request, ALIGN_TYPE p1, ALIGN_TYPE p2, ALIGN_TYP
  */
 void ultrasonic_module_start(ULONG id)
 {
-    static INT last_distance_cm = -1;
+    static INT last_distance_cm = 0;
+    static UINT distance_initialized = 0u;
     static ULONG last_publish_tick = 0u;
     static UINT init_done = 0u;
 
@@ -70,10 +71,11 @@ void ultrasonic_module_start(ULONG id)
             continue;
         }
 
-        if (last_distance_cm < 0)
+        if (distance_initialized == 0u)
         {
             last_distance_cm = distance_cm;
             last_publish_tick = now_tick;
+            distance_initialized = 1u;
             continue;
         }
 

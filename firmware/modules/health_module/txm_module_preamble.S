@@ -19,10 +19,10 @@ __txm_module_preamble:
     .dc.l      health_module_start - . - 0
     .dc.l      0
     .dc.l      6
-    .dc.l      4096
+    .dc.l      8192
     .dc.l      _txm_module_callback_request_thread_entry - . - 0
     .dc.l      6
-    .dc.l      2048
+    .dc.l      4096
     .dc.l      __code_size__
     .dc.l      __data_size__
     .dc.l      0

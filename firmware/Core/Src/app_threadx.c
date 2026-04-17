@@ -88,9 +88,11 @@ ULONG                   g_latest_servo_command_tick;
 uint16_t                g_latest_servo_command_angle;
 UINT                    g_latest_servo_command_valid;
 
-/* Module manager runtime memory areas (kernel-side). */
-static UCHAR            g_module_manager_ram[32768];
-static UCHAR            g_module_manager_object_pool[16384];
+/* Module manager runtime memory areas (kernel-side).
+ * Multiple modules each reserve stacks + data from this pool, so keep headroom.
+ */
+static UCHAR            g_module_manager_ram[131072];
+static UCHAR            g_module_manager_object_pool[65536];
 static TXM_MODULE_INSTANCE g_speed_sensor_module;
 static TXM_MODULE_INSTANCE g_sensors_module;
 static TXM_MODULE_INSTANCE g_ultrasonic_module;
@@ -146,7 +148,7 @@ static VOID ModuleFaultHandler(TX_THREAD *thread_ptr, TXM_MODULE_INSTANCE *modul
 		module_name = module_instance_ptr->txm_module_instance_name;
 	}
 
-	ModuleFaultUartPrint("Speed module memory fault [diag-v2]\r\n");
+	ModuleFaultUartPrint("Module memory fault [diag-v2]\r\n");
 	(void)snprintf(line, sizeof(line), "Thread=%s Module=%s\r\n", thread_name, module_name);
 	ModuleFaultUartPrint(line);
 
