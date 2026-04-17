@@ -145,7 +145,6 @@ VOID	CanTx(ULONG initial_input);
 VOID	SpeedSensor(ULONG initial_input);
 VOID	SensorHTS221Thread(ULONG initial_input);
 VOID	SensorBatteryThread(ULONG initial_input);
-VOID	SensorINA231Thread(ULONG initial_input);
 void	ThreadInit(void);
 void	UltrasonicEntry(ULONG initial_input);
 int		CanSend(t_can_message* msg);
@@ -154,7 +153,7 @@ extern void sysview_register_thread(TX_THREAD *thread);
 
 /* USER CODE BEGIN 1 */
 extern bool					g_emergencyBrake;
-extern thread_t				g_threads[10];
+extern thread_t				g_threads[9];
 extern TX_QUEUE             g_queueSpeedCmd;
 extern TX_QUEUE             g_queueSteerCmd;
 extern TX_EVENT_FLAGS_GROUP	g_eventFlags;
