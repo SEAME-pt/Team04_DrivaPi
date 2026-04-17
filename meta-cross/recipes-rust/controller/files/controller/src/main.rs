@@ -321,6 +321,7 @@ fn run_manual_mode(
 
     let mut prev_motor_speed: u32 = 0;
     let mut prev_servo_angle: u32 = 90;
+    let mut prev_d_pad = false;
     let mut cruise_control_enabled = false;
     let mut prev_cruise_button = false;
     let mut cruise_direction: u8 = NEUTRAL;
@@ -345,6 +346,7 @@ fn run_manual_mode(
         let throttle = input.analog_stick_left.y;
         let max_speed = input.button_r2;
         let brake = input.button_l2;
+        let d_pad: bool = input.d_pad.y as i8 != 0;
 
         let direction = if brake {
             BRAKE
@@ -356,6 +358,14 @@ fn run_manual_mode(
             NEUTRAL
         };
 
+        if cruise_control_enabled {
+            if d_pad && !prev_d_pad {
+                if input.d_pad.y < 0.0 && prev_motor_speed > 5{ cruise_speed -= 5; }
+                else if input.d_pad.y > 0.0 && prev_motor_speed < 85{ cruise_speed += 5; }
+            }
+            prev_d_pad = d_pad;
+        }
+        
         if input.button_l3 && !prev_cruise_button {
             if cruise_control_enabled {
                 cruise_control_enabled = false;
