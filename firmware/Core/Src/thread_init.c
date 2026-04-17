@@ -122,3 +122,4 @@ void ThreadInit(void)
 	for (uint8_t idx = supervisor_e; idx <= ultrasonic_sensor_e; idx++)
 		sysview_register_thread(&g_threads[idx].thread_ptr);
 }
+
