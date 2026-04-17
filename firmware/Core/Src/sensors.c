@@ -50,9 +50,6 @@ static HAL_StatusTypeDef SensorI2cMemWrite(I2C_HandleTypeDef *hi2c, uint16_t dev
 static uint8_t           BatteryPercentFrom2SVoltage(float voltage_v);
 static HAL_StatusTypeDef ExpansionBattery_Read(I2C_HandleTypeDef *hi2c, float *voltage, uint8_t *percentage);
 
-static HAL_StatusTypeDef INA231_WriteRegister(I2C_HandleTypeDef *hi2c, uint8_t reg, uint16_t value);
-static HAL_StatusTypeDef INA231_ReadRegister(I2C_HandleTypeDef *hi2c, uint8_t dev_addr_7bit, uint8_t reg, uint16_t *value);
-
 static HAL_StatusTypeDef HTS221_WriteReg(I2C_HandleTypeDef *hi2c, uint8_t reg, uint8_t data);
 static HAL_StatusTypeDef HTS221_ReadCalibration(I2C_HandleTypeDef *hi2c);
 
@@ -313,64 +310,6 @@ static uint8_t BatteryPercentFrom2SVoltage(float voltage_v)
     if (pct < 0.0f) pct = 0.0f;
     if (pct > 100.0f) pct = 100.0f;
     return (uint8_t)(pct + 0.5f);
-}
-
-/**
- * @brief  Write register for INA231.
- * @param  hi2c I2C handle
- * @param  reg Register address
- * @param  value 16-bit payload
- * @return HAL_StatusTypeDef 
- */
-static HAL_StatusTypeDef INA231_WriteRegister(I2C_HandleTypeDef *hi2c, uint8_t reg, uint16_t value)
-{
-    uint8_t data[2];
-    HAL_StatusTypeDef status;
-
-    data[0] = (uint8_t)((value >> 8) & 0xFF);   // MSB
-    data[1] = (uint8_t)(value & 0xFF);          // LSB
-
-    /* Use detected INA231 address shifted to 8-bit */
-    status = SensorI2cMemWrite(hi2c,
-                               (uint16_t)(g_ina231_addr_7bit << 1),
-                               reg,
-                               data,
-                               2);
-
-    if (status != HAL_OK)
-    {
-        uint32_t hal_err = HAL_I2C_GetError(hi2c);
-        UartPrintf("Battery: INA231 write reg 0x%02X failed status=%d err=0x%08lX\r\n",
-                   reg,
-                   status,
-                   (unsigned long)hal_err);
-    }
-
-    return status;
-}
-
-/**
- * @brief  Read register from INA231.
- * @param  hi2c I2C handle
- * @param  dev_addr_7bit Target device address
- * @param  reg Register address
- * @param  value Output pointer for payload
- * @return HAL_StatusTypeDef 
- */
-static HAL_StatusTypeDef INA231_ReadRegister(I2C_HandleTypeDef *hi2c, uint8_t dev_addr_7bit, uint8_t reg, uint16_t *value)
-{
-    uint8_t buf[2];
-    HAL_StatusTypeDef status;
-
-    if (value == NULL)
-        return HAL_ERROR;
-
-    status = SensorI2cMemRead(hi2c, (uint16_t)(dev_addr_7bit << 1), reg, buf, 2);
-    if (status != HAL_OK)
-        return status;
-
-    *value = (uint16_t)((buf[0] << 8) | buf[1]);
-    return HAL_OK;
 }
 
 /**
