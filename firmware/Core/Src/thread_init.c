@@ -10,8 +10,6 @@
 
 #include "app_threadx.h"
 
-#define UART_INIT_TIMEOUT_MS 20u
-
 /**
  * @brief  Function that implements the kernel's initialization.
  * @param  None
@@ -42,7 +40,6 @@ void ThreadInit(void)
 		HAL_UART_Transmit(&huart1, (uint8_t *)err_msg, strlen(err_msg), UART_INIT_TIMEOUT_MS);
 
 	// SRF08 ULTRASONIC SENSOR THREAD
-	// Safe to enable - thread handles sensor absence gracefully
 	if (tx_thread_create(&g_threads[ultrasonic_sensor_e].thread_ptr, "ultrasonicS_thread", UltrasonicEntry, 0, g_threads[ultrasonic_sensor_e].thread_Stack, THREAD_STACK_SIZE,
 	1, 1, TX_NO_TIME_SLICE, TX_AUTO_START) != TX_SUCCESS)
 		status = TX_THREAD_ERROR;
@@ -122,10 +119,6 @@ void ThreadInit(void)
 		HAL_UART_Transmit(&huart1, (uint8_t *)err_msg, strlen(err_msg), UART_INIT_TIMEOUT_MS);
 	}
 
-	// Dedicated INA231 thread is intentionally disabled.
-	// INA231 telemetry is acquired in SensorBatteryThread together with battery data.
-
-	// Register all threads with SystemView
 	for (uint8_t idx = supervisor_e; idx <= ultrasonic_sensor_e; idx++)
 		sysview_register_thread(&g_threads[idx].thread_ptr);
 }
