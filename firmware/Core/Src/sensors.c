@@ -765,12 +765,3 @@ void SensorBatteryThread(ULONG initial_input)
     }
 }
 
-/**
- * @brief Thread entry for sleeping INA231
- * @param initial_input Thread argument
- */
-void SensorINA231Thread(ULONG initial_input)
-{
-    (void)initial_input;
-    while (1) { tx_thread_sleep(TX_WAIT_FOREVER); }
-}
