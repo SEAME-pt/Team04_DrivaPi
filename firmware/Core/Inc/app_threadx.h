@@ -107,6 +107,8 @@ typedef struct can_message_s
 #define CAN_ID_INA231_CURRENT      0x211  /* INA231 current: float amps (529) */
 #define CAN_ID_SYSTEM_WATCHDOG     0x7E0  /* System heartbeat for scheduler liveness */
 
+#define UART_BOOT_TIMEOUT_MS 20u
+
 /* RND Gear States */
 typedef enum {
     GEAR_NEUTRAL = 0,   /* 'N' - Neutral */
