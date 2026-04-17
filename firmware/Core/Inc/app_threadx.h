@@ -35,6 +35,7 @@ extern "C" {
 #include <stdint.h>
 #include <math.h>
 #include <stdbool.h>
+#include "modules.h"
 #include <stdlib.h>
 #include "main.h"
 #include "pca9685.h"

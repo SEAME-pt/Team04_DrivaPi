@@ -8,6 +8,7 @@
 "./Core/Src/init_devices.o"
 "./Core/Src/main.o"
 "./Core/Src/module_application_requests.o"
+"./Core/Src/modules.o"
 "./Core/Src/motor_utils.o"
 "./Core/Src/pca9685.o"
 "./Core/Src/sensors.o"
