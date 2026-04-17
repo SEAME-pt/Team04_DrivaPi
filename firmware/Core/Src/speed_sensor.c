@@ -68,6 +68,7 @@ float ReadSpeedSensor(void)
 	float rotations = (float)delta / (float)PULSES_PER_REV;
 	float distance_m = rotations * WHEEL_PERIMETER_M;
 	float speed_mps = distance_m / dt;
+	
 	return speed_mps;
 }
 
@@ -89,30 +90,15 @@ VOID SpeedSensor(ULONG initial_input)
 		tx_thread_sleep(50);
 		float current_speed = ReadSpeedSensor();
 
-		if (tx_mutex_get(&g_speedDataMutex, MUTEX_WAIT_TICKS) == TX_SUCCESS)
-		{
-			g_vehicleSpeed = current_speed;
-			g_current_speed = current_speed;
-			tx_mutex_put(&g_speedDataMutex);
-		}
-		else
-		{
-			tx_thread_sleep(1);
-			continue;
-		}
+		tx_mutex_get(&g_speedDataMutex, TX_WAIT_FOREVER);
+		g_vehicleSpeed = current_speed;
+		g_currentSpeed = current_speed;
+		tx_mutex_put(&g_speedDataMutex);
 
-		RNDGear_t current_gear = GEAR_NEUTRAL;
-		if (tx_mutex_get(&g_gearMutex, MUTEX_WAIT_TICKS) == TX_SUCCESS)
-		{
-			g_current_gear = DetermineRNDGear(current_speed, g_current_pwm);
-			current_gear = g_current_gear;
-			tx_mutex_put(&g_gearMutex);
-		}
-		else
-		{
-			tx_thread_sleep(1);
-			continue;
-		}
+		tx_mutex_get(&g_gearMutex, TX_WAIT_FOREVER);
+		g_currentGear = DetermineRNDGear(current_speed, g_currentPWM);
+		RNDGear_t current_gear = g_currentGear;
+		tx_mutex_put(&g_gearMutex);
 
 		if (current_gear != last_gear)
 		{
@@ -121,11 +107,7 @@ VOID SpeedSensor(ULONG initial_input)
 			can_msg.id = CAN_ID_RND_GEAR;
 			can_msg.len = 1;
 			can_msg.data[0] = (uint8_t)current_gear;
-			if (tx_mutex_get(&g_canMutex, 5) == TX_SUCCESS)
-			{
-				CanSend(&can_msg);
-				tx_mutex_put(&g_canMutex);
-			}
+			CanSend(&can_msg);
 			last_gear = current_gear;
 		}
 		tx_event_flags_set(&g_eventFlags, FLAG_SENSOR_UPDATE, TX_OR);
