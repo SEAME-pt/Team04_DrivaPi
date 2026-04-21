@@ -262,10 +262,6 @@ impl MotorController {
             angle_bytes[1],
             angle_bytes[2],
             angle_bytes[3],
-            0,
-            0,
-            0,
-            0,
         ];
 
         let frame =
