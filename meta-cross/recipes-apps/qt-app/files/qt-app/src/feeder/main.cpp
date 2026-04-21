@@ -15,6 +15,22 @@
 #include <iostream>
 #include <linux/can.h>
 
+// --- O(1) CAN Dispatch Table ---
+// Blueprint for the handler functions. They all take a frame and the publisher.
+using CanHandlerFunc = void (*)(const can_frame&, feeder::Publisher&);
+
+// Flat array for standard 11-bit CAN IDs (0x000 to 0x7FF). Initialized to null.
+CanHandlerFunc dispatchTable[2048] = {nullptr};
+
+// Map the specific hardware IDs to their memory addresses.
+void InitDispatchTable() {
+    dispatchTable[can::ID_SPEED]         = handlers::HandleSpeed;
+    dispatchTable[can::ID_STM32_BATTERY] = handlers::HandleStm32Battery;
+    dispatchTable[can::ID_RPI_BATTERY]   = handlers::HandleRpiBattery;
+    dispatchTable[can::ID_GEAR]          = handlers::HandleGear;
+    dispatchTable[can::ID_ENV]           = handlers::HandleEnv;
+}
+
 int main(int argc, char** argv)
 {
     // --- 1. Parse CLI arguments ---
@@ -43,6 +59,8 @@ int main(int argc, char** argv)
         feeder::InstallSignalHandlers();
         std::cout << "[Feeder] Running. Press Ctrl+C to stop." << std::endl;
 
+        InitDispatchTable();
+
         // --- 5. Main read-dispatch loop ---
         while (!feeder::g_stopRequested.load()) {
             can_frame frame;
@@ -68,26 +86,10 @@ int main(int argc, char** argv)
                                         ? (frame.can_id & CAN_EFF_MASK)
                                         : (frame.can_id & CAN_SFF_MASK);
 
-            // Dispatch frame to appropriate handler
-            switch (can_id) {
-                case can::ID_SPEED:
-                    handlers::HandleSpeed(frame, publisher);
-                    break;
-                case can::ID_STM32_BATTERY:
-                    handlers::HandleStm32Battery(frame, publisher);
-                    break;
-                case can::ID_RPI_BATTERY:
-                    handlers::HandleRpiBattery(frame, publisher);
-                    break;
-                case can::ID_GEAR:
-                    handlers::HandleGear(frame, publisher);
-                    break;
-                case can::ID_ENV:
-                    handlers::HandleEnv(frame, publisher);
-                    break;
-                default:
-                    // Ignore unknown CAN IDs silently
-                    break;
+            // O(1) Dispatch: Instantly jump to the handler function.
+            // Strict boundary check prevents segfaults if a 29-bit EFF frame leaks through.
+            if (can_id < 2048 && dispatchTable[can_id]) {
+                dispatchTable[can_id](frame, publisher);
             }
         }
 
