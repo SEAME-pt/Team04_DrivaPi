@@ -10,7 +10,7 @@ use std::{sync::mpsc, thread, time::Duration};
 /* CAN Protocol Constants */
 const CAN_ID_MOTOR: u16 = 44;
 const CAN_ID_SERVO: u16 = 45;
-const CAN_INTERFACE: &str = "vcan0";
+const CAN_INTERFACE: &str = "can1";
 
 /* Motor Constants */
 const MAX_MOTOR_SPEED: f64 = 90.0;
