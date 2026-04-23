@@ -52,11 +52,6 @@ void CanRx(ULONG initial_input)
 			received = CanReceive(&msg);
 			tx_mutex_put(&g_canMutex);
 		}
-		else
-		{
-			tx_thread_sleep(1);
-			continue;
-		}
 
 		if (received)
 		{
