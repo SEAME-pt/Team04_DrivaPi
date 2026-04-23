@@ -15,10 +15,11 @@ const CAN_INTERFACE: &str = "can1";
 /* Motor Constants */
 const MAX_MOTOR_SPEED: f64 = 90.0;
 
-const BACKWARD: u8 = 0;
+/* Direction Constants */
+const NEUTRAL: u8 = 0;
 const FORWARD: u8 = 1;
-const BRAKE: u8 = 2;
-const NEUTRAL: u8 = 3;
+const BACKWARD: u8 = 2;
+const BRAKE: u8 = 3;
 
 /* Servo Constants */
 const MAX_SERVO_ANGLE: f64 = 105.0;
@@ -39,6 +40,11 @@ pub struct Vector2f {
     y: f64,
 }
 
+
+
+/* Gamepad Input Struct 
+    -> Struct serves the point of storing the values for each button in the GamePad
+*/
 #[derive(Default, Debug, Clone, Copy)]
 pub struct GamepadInput {
     analog_stick_left: Vector2f,
@@ -59,6 +65,10 @@ pub struct GamepadInput {
     button_r3: bool,
 }
 
+
+/* JoyStick Struct
+    -> Struct to store the addresses for each button in the GamePad 
+*/
 pub struct Joystick {
     axis_states: HashMap<u8, f64>,
     button_states: HashMap<u8, bool>,
@@ -76,7 +86,12 @@ impl Joystick {
 
         let file = File::open(dev_fn)?;
 
-        // Set file descriptor to non-blocking mode using fcntl
+    //================================================================================================
+    //================================================================================================
+        /* 
+            Unsafe code block, because we are using `C` function fcntl
+            Set file descriptor to non-blocking mode using fcntl
+        */
         let fd = file.as_raw_fd();
         unsafe {
             use std::os::raw::c_int;
@@ -91,6 +106,8 @@ impl Joystick {
             let flags = fcntl(fd, F_GETFL, 0);
             fcntl(fd, F_SETFL, flags | O_NONBLOCK);
         }
+    //================================================================================================
+    //================================================================================================
 
         Ok(Self {
             axis_states: HashMap::new(),
@@ -274,7 +291,7 @@ impl MotorController {
     fn stop_dc_motors(&self) -> Result<(), Box<dyn std::error::Error>> {
         self.send_motor_command(0, BRAKE)
     }
-    fn stop_servo_motors(&self) -> Result<(), Box<dyn std::error::Error>> {
+    fn reset_servo_motors(&self) -> Result<(), Box<dyn std::error::Error>> {
         self.send_servo_command(90)
     }
 }
@@ -309,41 +326,75 @@ fn recv_latest_input(
     Some(latest)
 }
 
+
+/*
+    MANUAL MODE
+    also known as MANUEL MODE
+*/
 fn run_manual_mode(
     input_rx: &mpsc::Receiver<GamepadInput>,
     controller: &MotorController,
 ) -> Result<(), Box<dyn std::error::Error>> {
     println!("MANUEL MODE - Press B to exit");
-
+// =================================================================================
+//                              INIT HELPER VARIABLES
+    // previous values
     let mut prev_motor_speed: u32 = 0;
     let mut prev_servo_angle: u32 = 90;
     let mut prev_d_pad = false;
-    let mut cruise_control_enabled = false;
     let mut prev_cruise_button = false;
+    let mut prev_direction = NEUTRAL;
+
+    // cruise control variables
+    let mut cruise_control_enabled = false;
     let mut cruise_direction: u8 = NEUTRAL;
     let mut cruise_speed: u32 = 0;
+    
+// =================================================================================
 
     loop {
+
+    // =================================================================================
+    //                          GAMEPAD INPUT THREAD
+    
         let Some(input) = recv_latest_input(input_rx, Duration::from_millis(25)) else {
             eprintln!("Gamepad input thread disconnected");
             controller.stop_dc_motors()?;
-            controller.stop_servo_motors()?;
+            controller.reset_servo_motors()?;
             break;
         };
 
+    // =================================================================================
+    
+
+    // =================================================================================
+    //                          EXITING MANUEL MODE
+    
         if input.button_b {
             println!("Exiting MANUEL mode");
             controller.stop_dc_motors()?;
-            controller.stop_servo_motors()?;
+            controller.reset_servo_motors()?;
             break;
         }
 
+    // =================================================================================
+    
+
+    // =================================================================================
+    //                          GAMEPAD INPUT VARIABLES
+    
         let steering = input.analog_stick_right.x;
         let throttle = input.analog_stick_left.y;
         let max_speed = input.button_r2;
         let brake = input.button_l2;
         let d_pad: bool = input.d_pad.y as i8 != 0;
 
+    // =================================================================================
+    
+    
+    // =================================================================================
+    //                          DEFINING DIRECTION
+    
         let direction = if brake {
             BRAKE
         } else if throttle > 0.0 {
@@ -354,14 +405,24 @@ fn run_manual_mode(
             NEUTRAL
         };
 
+    // =================================================================================
+
+
+    // =================================================================================
+    //                          CHANGING CRUISE CONTROL SPEED VALUE
         if cruise_control_enabled {
             if d_pad && !prev_d_pad {
-                if input.d_pad.y < 0.0 && prev_motor_speed > 5{ cruise_speed -= 5; }
-                else if input.d_pad.y > 0.0 && prev_motor_speed < 85{ cruise_speed += 5; }
+                if input.d_pad.y < 0.0 && cruise_speed > 5{ cruise_speed -= 5; }
+                else if input.d_pad.y > 0.0 && cruise_speed < 85{ cruise_speed += 5; }
             }
             prev_d_pad = d_pad;
         }
         
+    // =================================================================================
+
+    
+    // =================================================================================
+    //                          ACTIVATING CRUISE CONTROL
         if input.button_l3 && !prev_cruise_button {
             if cruise_control_enabled {
                 cruise_control_enabled = false;
@@ -373,39 +434,44 @@ fn run_manual_mode(
         }
         prev_cruise_button = input.button_l3;
 
-        let motor_speed = if max_speed {
+    // =================================================================================
+
+    
+    // =================================================================================
+    //                      DEFINING SPEED AND ANGLES
+    
+        let joystick_motor_speed = if max_speed {
             (throttle.abs() * MAX_MOTOR_SPEED).floor() as u32
         } else {
             (throttle.abs() * MAX_MOTOR_SPEED / 2.0).floor() as u32
         };
 
-        let (effective_motor_speed, effective_direction) = if cruise_control_enabled {
+        let (final_motor_speed, final_direction) = if cruise_control_enabled {
             (cruise_speed, cruise_direction)
         } else {
-            (motor_speed, direction)
+            (joystick_motor_speed, direction)
         };
 
         let servo_angle = (MID_SERVO_ANGLE + (steering * SERVO_RANGE))
             .clamp(MIN_SERVO_ANGLE, MAX_SERVO_ANGLE)
             .floor() as u32;
 
-        if effective_motor_speed != prev_motor_speed {
-            controller.send_motor_command(effective_motor_speed, effective_direction)?;
-            prev_motor_speed = effective_motor_speed;
-            println!(
-                "Motor updated: {}\nDirection {}",
-                effective_motor_speed, effective_direction
-            );
-        }
+    // =================================================================================
+
+    
+    // =================================================================================
+    //                          SENDING VALUES THROUGH CAN
+        controller.send_motor_command(final_motor_speed, final_direction)?;
+        prev_motor_speed = final_motor_speed;
+        println!("Motor updated: {}\nDirection {}", final_motor_speed, final_direction);
 
         if servo_angle != prev_servo_angle {
             controller.send_servo_command(servo_angle)?;
             prev_servo_angle = servo_angle;
-            println!(
-                "Servo updated: {:.1}°\n Steering value: {steering}",
-                servo_angle
-            );
+            println!("Servo updated: {:.1}°\n Steering value: {steering}", servo_angle);
         }
+        
+    // =================================================================================
     }
 
     Ok(())
@@ -429,7 +495,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         if input.button_select {
             println!("Shutting down...");
             controller.stop_dc_motors()?;
-            controller.stop_servo_motors()?;
+            controller.reset_servo_motors()?;
             break;
         }
 
