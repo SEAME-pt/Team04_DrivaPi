@@ -116,6 +116,9 @@ int AppController::run(QGuiApplication& app)
         QObject::connect(kuksaReader, &kuksa::KuksaReader::rpiBatteryVoltageReceived,
                          vehicleData.get(), &VehicleData::setRpiBatteryVoltage,
                          Qt::QueuedConnection);
+        QObject::connect(kuksaReader, &kuksa::KuksaReader::rpiBatteryCurrentReceived,
+                 vehicleData.get(), &VehicleData::setRpiBatteryCurrent,
+                 Qt::QueuedConnection);
 
         // CurrentGear only (no SelectedGear in VSS v4 for this use case)
         QObject::connect(kuksaReader, &kuksa::KuksaReader::currentGearReceived,
