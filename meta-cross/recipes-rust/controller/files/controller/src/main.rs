@@ -15,10 +15,15 @@ const CAN_INTERFACE: &str = "can1";
 /* Motor Constants */
 const MAX_MOTOR_SPEED: f64 = 90.0;
 
+/* Cruise Control Constants */
+const MIN_CRUISE: u32 = 1;
+const MAX_CRUISE: u32 = 90;
+const STEP_CRUISE: u32 = 5;
+
 /* Direction Constants */
 const NEUTRAL: u8 = 0;
 const FORWARD: u8 = 1;
-const BACKWARD: u8 = 2;
+const REVERSE: u8 = 2;
 const BRAKE: u8 = 3;
 
 /* Servo Constants */
@@ -246,13 +251,9 @@ impl MotorController {
     fn send_motor_command(
         &self,
         speed: u32,
-        mut direction: u8,
+        direction: u8,
     ) -> Result<(), Box<dyn std::error::Error>> {
         // Build CAN frame: [speed][direction] = 5 bytes
-
-        if direction == NEUTRAL {
-            direction = FORWARD;
-        } // TEMPORARY
 
         let speed_bytes = speed.to_le_bytes();
         let direction_bytes = direction.to_le_bytes();
@@ -400,7 +401,7 @@ fn run_manual_mode(
         } else if throttle > 0.0 {
             FORWARD
         } else if throttle < 0.0 {
-            BACKWARD
+            REVERSE
         } else {
             NEUTRAL
         };
@@ -410,19 +411,25 @@ fn run_manual_mode(
 
     // =================================================================================
     //                          CHANGING CRUISE CONTROL SPEED VALUE
+    
         if cruise_control_enabled {
             if d_pad && !prev_d_pad {
-                if input.d_pad.y < 0.0 && cruise_speed > 5{ cruise_speed -= 5; }
-                else if input.d_pad.y > 0.0 && cruise_speed < 85{ cruise_speed += 5; }
+                if input.d_pad.y < 0.0 {
+                    cruise_speed = cruise_speed.saturating_sub(STEP_CRUISE).max(MIN_CRUISE);
+                }
+                else if input.d_pad.y > 0.0 {
+                    cruise_speed = cruise_speed.saturating_add(STEP_CRUISE).min(MAX_CRUISE);
+                }
             }
-            prev_d_pad = d_pad;
         }
+        prev_d_pad = d_pad;
         
     // =================================================================================
 
     
     // =================================================================================
     //                          ACTIVATING CRUISE CONTROL
+    
         if input.button_l3 && !prev_cruise_button {
             if cruise_control_enabled {
                 cruise_control_enabled = false;
@@ -432,6 +439,7 @@ fn run_manual_mode(
                 cruise_direction = direction;
             }
         }
+        if direction == BRAKE || direction == REVERSE { cruise_control_enabled = false; }
         prev_cruise_button = input.button_l3;
 
     // =================================================================================
@@ -461,9 +469,13 @@ fn run_manual_mode(
     
     // =================================================================================
     //                          SENDING VALUES THROUGH CAN
-        controller.send_motor_command(final_motor_speed, final_direction)?;
-        prev_motor_speed = final_motor_speed;
-        println!("Motor updated: {}\nDirection {}", final_motor_speed, final_direction);
+
+        if final_motor_speed != prev_motor_speed || final_direction != prev_direction {
+            controller.send_motor_command(final_motor_speed, final_direction)?;
+            prev_motor_speed = final_motor_speed;
+            prev_direction = final_direction;
+            println!("Motor updated: {}\nDirection {}", final_motor_speed, final_direction);
+        }
 
         if servo_angle != prev_servo_angle {
             controller.send_servo_command(servo_angle)?;
