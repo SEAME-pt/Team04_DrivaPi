@@ -34,6 +34,17 @@ static HAL_StatusTypeDef HTS221WriteReg(I2C_HandleTypeDef *hi2c, uint8_t reg, ui
 static HAL_StatusTypeDef HTS221ReadCalibration(I2C_HandleTypeDef *hi2c);
 
 /* ============================================================================
+ * Global variables declaration
+ * ============================================================================ */
+
+TX_MUTEX             g_sensorDataMutex;
+HTS221_Data_t        g_hts221Data;
+Battery_Data_t       g_batteryData;
+I2C_HandleTypeDef    g_hi2c2;
+INA231_Data_t        g_ina231Data;
+TX_MUTEX             g_i2cMutex;
+
+/* ============================================================================
  * Initialization
  * ============================================================================ */
 
