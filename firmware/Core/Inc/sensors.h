@@ -118,24 +118,24 @@ typedef struct
 
 /* Global sensor data declarations -------------------------------------------*/
 extern TX_MUTEX             g_sensorDataMutex;
-extern HTS221_Data_t        g_hts221_data;
-extern Battery_Data_t       g_battery_data;
-extern I2C_HandleTypeDef    hi2c2;
-extern INA231_Data_t        g_ina231_data;
+extern HTS221_Data_t        g_hts221Data;
+extern Battery_Data_t       g_batteryData;
+extern I2C_HandleTypeDef    g_hi2c2;
+extern INA231_Data_t        g_ina231Data;
 
 /* Exported functions --------------------------------------------------------*/
 void                SensorsInit(void);
 
-HAL_StatusTypeDef   HTS221_Init(I2C_HandleTypeDef *hi2c);
-HAL_StatusTypeDef   HTS221_ReadBoth(I2C_HandleTypeDef *hi2c, float *temperature, float *humidity);
+HAL_StatusTypeDef   Hts221Init(I2C_HandleTypeDef *hi2c);
+HAL_StatusTypeDef   Hts221ReadBoth(I2C_HandleTypeDef *hi2c, float *temperature, float *humidity);
 
-HAL_StatusTypeDef   Battery_Init(I2C_HandleTypeDef *hi2c);
-HAL_StatusTypeDef   Battery_Read(I2C_HandleTypeDef *hi2c, float *voltage, uint8_t *percentage);
-HAL_StatusTypeDef   Battery_ReadCurrent(I2C_HandleTypeDef *hi2c, float *current);
+HAL_StatusTypeDef   BatteryInit(I2C_HandleTypeDef *hi2c);
+HAL_StatusTypeDef   BatteryRead(I2C_HandleTypeDef *hi2c, float *voltage, uint8_t *percentage);
+HAL_StatusTypeDef   BatteryReadCurrent(I2C_HandleTypeDef *hi2c, float *current);
 
-void                SensorHTS221Thread(ULONG initial_input);
+void                SensorHts221Thread(ULONG initial_input);
 void                SensorBatteryThread(ULONG initial_input);
-void                SensorINA231Thread(ULONG initial_input);
+void                SensorIna231Thread(ULONG initial_input);
 
 #ifdef __cplusplus
 }
