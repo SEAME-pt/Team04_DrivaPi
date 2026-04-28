@@ -480,75 +480,75 @@ HAL_StatusTypeDef Battery_ReadCurrent(I2C_HandleTypeDef *hi2c, float *current)
 void SensorHTS221Thread(ULONG initial_input)
 {
     float temp, hum;
-    float last_temp = 0.0f, last_hum = 0.0f;
-    HAL_StatusTypeDef   status;
-    HAL_StatusTypeDef   init_status;
-    static int16_t      last_temp_int = -99;
-    static int16_t      last_hum_int = -99;
-    static ULONG        last_send_time = 0;
-    static const ULONG  HEARTBEAT_INTERVAL = 500; /* 5 seconds @ 100Hz tick */
-    static const ULONG  HTS_STALE_TIMEOUT_TICKS = 1000; /* 10 seconds without valid read => stale */
+    HAL_StatusTypeDef status;
+    static int16_t last_temp_int = -99;
+    static int16_t last_hum_int = -99;
+    static ULONG last_send_time = 0;
+    static const ULONG HEARTBEAT_INTERVAL = 500;
+    static const ULONG HTS_STALE_TIMEOUT_TICKS = 1000;
     static const uint8_t HTS_REINIT_THRESHOLD = 5;
-    uint32_t            init_attempts = 0;
-    uint8_t             consecutive_failures = 0;
-    bool                hts_ready = false;
-    bool                have_sample = false;
-    ULONG               last_hts_ok_time = 0;
+
+    uint32_t init_attempts = 0;
+    uint8_t consecutive_failures = 0;
+    bool hts_ready = false;
+    ULONG last_hts_ok_time = 0;
 
     (void)initial_input;
     UartPrint("HTS221 Thread: Started\r\n");
     tx_thread_sleep(100);
 
-    while (!g_batteryPowerReady)
-    {
+    /* Aguarda que o barramento de potência esteja ativo */
+    while (!g_batteryPowerReady) {
         tx_thread_sleep(50);
-    }
-
-    while (!hts_ready)
-    {
-        init_status = Hts221Init(&hi2c2);
-        if (init_status == HAL_OK)
-        {
-            hts_ready = true;
-            last_send_time = tx_time_get();
-            last_hts_ok_time = last_send_time;
-            break;
-        }
-
-        init_attempts++;
-        if (init_attempts == 1 || (init_attempts % 10) == 0)
-        {
-            UartPrintf("HTS221: init retry %lu failed\r\n", (unsigned long)init_attempts);
-        }
-        tx_thread_sleep(500);
     }
 
     while (1)
     {
         ULONG current_time = tx_time_get();
 
+        /* --- Lógica de (Re)Inicialização Consolidada --- */
+        if (!hts_ready)
+        {
+            if (Hts221Init(&hi2c2) == HAL_OK)
+            {
+                hts_ready = true;
+                consecutive_failures = 0;
+                last_hts_ok_time = current_time;
+                last_send_time = current_time;
+            }
+            else
+            {
+                init_attempts++;
+                if (init_attempts == 1 || (init_attempts % 10) == 0) {
+                    UartPrintf("HTS221: Init/Retry %lu failed\r\n", (unsigned long)init_attempts);
+                }
+                tx_thread_sleep(500);
+                continue; /* Tenta novamente no próximo ciclo */
+            }
+        }
+
+        /* --- Leitura de Dados --- */
         status = HTS221_ReadBoth(&hi2c2, &temp, &hum);
+
         if (status == HAL_OK)
         {
             consecutive_failures = 0;
-            last_temp = temp;
-            last_hum = hum;
-            have_sample = true;
             last_hts_ok_time = current_time;
-            if (tx_mutex_get(&g_sensorDataMutex, 100) == TX_SUCCESS)
+
+            if (tx_mutex_get(&g_sensorDataMutex, 10) == TX_SUCCESS)
             {
-                g_hts221Data.temperature = last_temp;
-                g_hts221Data.humidity = last_hum;
+                g_hts221Data.temperature = temp;
+                g_hts221Data.humidity = hum;
                 g_hts221Data.timestamp = current_time;
                 g_hts221Data.data_valid = 1;
                 tx_mutex_put(&g_sensorDataMutex);
             }
+
+            /* Lógica de Heartbeat / Envio por variação */
             int16_t temp_int = (int16_t)temp;
             int16_t hum_int = (int16_t)hum;
-
             if (temp_int != last_temp_int || hum_int != last_hum_int || (current_time - last_send_time) >= HEARTBEAT_INTERVAL)
             {
-                /* Expected application integration using CanSend */
                 last_temp_int = temp_int;
                 last_hum_int = hum_int;
                 last_send_time = current_time;
@@ -556,64 +556,32 @@ void SensorHTS221Thread(ULONG initial_input)
         }
         else
         {
-            bool hts_stale = ((current_time - last_hts_ok_time) >= HTS_STALE_TIMEOUT_TICKS);
+            /* --- Gestão de Erros de Leitura --- */
+            consecutive_failures++;
 
-            if (hts_stale)
+            // Verifica se os dados ficaram obsoletos (stale)
+            if ((current_time - last_hts_ok_time) >= HTS_STALE_TIMEOUT_TICKS)
             {
-                last_temp = 0.0f;
-                last_hum = 0.0f;
-
-                if (tx_mutex_get(&g_sensorDataMutex, 100) == TX_SUCCESS)
-                {
-                    g_hts221Data.temperature = 0.0f;
-                    g_hts221Data.humidity = 0.0f;
-                    g_hts221Data.timestamp = current_time;
+                if (tx_mutex_get(&g_sensorDataMutex, 10) == TX_SUCCESS) {
                     g_hts221Data.data_valid = 0;
                     tx_mutex_put(&g_sensorDataMutex);
                 }
             }
 
-            if (have_sample && (current_time - last_send_time) >= HEARTBEAT_INTERVAL)
+            if (consecutive_failures >= HTS_REINIT_THRESHOLD)
             {
-                last_send_time = current_time;
-            }
-
-            consecutive_failures++;
-            if (consecutive_failures < HTS_REINIT_THRESHOLD)
-            {
-                if (consecutive_failures == 1 || consecutive_failures == HTS_REINIT_THRESHOLD - 1)
-                {
-                    UartPrintf("HTS221: read failed (%u/%u)\r\n",
-                               (unsigned int)consecutive_failures,
-                               (unsigned int)HTS_REINIT_THRESHOLD);
-                }
-                tx_thread_sleep(100);
-                continue;
-            }
-
-            consecutive_failures = 0;
-            hts_ready = false;
-            tx_thread_sleep(500);
-
-            while (!hts_ready)
-            {
-                init_status = Hts221Init(&hi2c2);
-                if (init_status == HAL_OK)
-                {
-                    hts_ready = true;
-                    last_send_time = tx_time_get();
-                    break;
-                }
-
-                init_attempts++;
-                if (init_attempts == 1 || (init_attempts % 10) == 0)
-                {
-                    UartPrintf("HTS221: reinit retry %lu failed\r\n", (unsigned long)init_attempts);
-                }
+                UartPrintf("HTS221: Max failures reached (%u). Resetting driver...\r\n", consecutive_failures);
+                hts_ready = false; // Força re-inicialização no topo do próximo loop
                 tx_thread_sleep(500);
             }
+            else
+            {
+                tx_thread_sleep(100);
+            }
+            continue;
         }
-        tx_thread_sleep(100);
+
+        tx_thread_sleep(100); // Sampling rate (~10Hz)
     }
 }
 
