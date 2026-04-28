@@ -228,7 +228,7 @@ HAL_StatusTypeDef Hts221Init(I2C_HandleTypeDef *hi2c)
  * @param  humidity Output float reference
  * @return HAL_StatusTypeDef
  */
-HAL_StatusTypeDef HTS221_ReadBoth(I2C_HandleTypeDef *hi2c, float *temperature, float *humidity)
+HAL_StatusTypeDef HTS221ReadBoth(I2C_HandleTypeDef *hi2c, float *temperature, float *humidity)
 {
     if (hi2c == NULL || hi2c->Instance == NULL || temperature == NULL || humidity == NULL)
     {
@@ -468,11 +468,9 @@ HAL_StatusTypeDef Battery_ReadCurrent(I2C_HandleTypeDef *hi2c, float *current)
     return HAL_OK;
 }
 
-
 /* ============================================================================
  * Thread Definitions
  * ============================================================================ */
-
 /**
  * @brief Thread entry for HTS221 lifecycle and sampling.
  * @param initial_input Thread argument
@@ -497,7 +495,6 @@ void SensorHTS221Thread(ULONG initial_input)
     UartPrint("HTS221 Thread: Started\r\n");
     tx_thread_sleep(100);
 
-    /* Aguarda que o barramento de potência esteja ativo */
     while (!g_batteryPowerReady) {
         tx_thread_sleep(50);
     }
@@ -506,7 +503,6 @@ void SensorHTS221Thread(ULONG initial_input)
     {
         ULONG current_time = tx_time_get();
 
-        /* --- Lógica de (Re)Inicialização Consolidada --- */
         if (!hts_ready)
         {
             if (Hts221Init(&hi2c2) == HAL_OK)
@@ -523,12 +519,11 @@ void SensorHTS221Thread(ULONG initial_input)
                     UartPrintf("HTS221: Init/Retry %lu failed\r\n", (unsigned long)init_attempts);
                 }
                 tx_thread_sleep(500);
-                continue; /* Tenta novamente no próximo ciclo */
+                continue;
             }
         }
 
-        /* --- Leitura de Dados --- */
-        status = HTS221_ReadBoth(&hi2c2, &temp, &hum);
+        status = HTS221ReadBoth(&hi2c2, &temp, &hum);
 
         if (status == HAL_OK)
         {
@@ -544,7 +539,6 @@ void SensorHTS221Thread(ULONG initial_input)
                 tx_mutex_put(&g_sensorDataMutex);
             }
 
-            /* Lógica de Heartbeat / Envio por variação */
             int16_t temp_int = (int16_t)temp;
             int16_t hum_int = (int16_t)hum;
             if (temp_int != last_temp_int || hum_int != last_hum_int || (current_time - last_send_time) >= HEARTBEAT_INTERVAL)
@@ -556,10 +550,8 @@ void SensorHTS221Thread(ULONG initial_input)
         }
         else
         {
-            /* --- Gestão de Erros de Leitura --- */
             consecutive_failures++;
 
-            // Verifica se os dados ficaram obsoletos (stale)
             if ((current_time - last_hts_ok_time) >= HTS_STALE_TIMEOUT_TICKS)
             {
                 if (tx_mutex_get(&g_sensorDataMutex, 10) == TX_SUCCESS) {
@@ -571,7 +563,7 @@ void SensorHTS221Thread(ULONG initial_input)
             if (consecutive_failures >= HTS_REINIT_THRESHOLD)
             {
                 UartPrintf("HTS221: Max failures reached (%u). Resetting driver...\r\n", consecutive_failures);
-                hts_ready = false; // Força re-inicialização no topo do próximo loop
+                hts_ready = false;
                 tx_thread_sleep(500);
             }
             else
@@ -581,7 +573,7 @@ void SensorHTS221Thread(ULONG initial_input)
             continue;
         }
 
-        tx_thread_sleep(100); // Sampling rate (~10Hz)
+        tx_thread_sleep(100);
     }
 }
 
@@ -658,9 +650,7 @@ void SensorBatteryThread(ULONG initial_input)
         loop_count++;
         if ((loop_count % 250u) == 0u)
         {
-            UartPrintf("[BATTERY LOOP] alive=%lu tick=%lu\r\n",
-                       (unsigned long)loop_count,
-                       (unsigned long)current_time);
+            UartPrintf("[BATTERY LOOP] alive=%lu tick=%lu\r\n", (unsigned long)loop_count, (unsigned long)current_time);
         }
 
         (void)last_send_time;
