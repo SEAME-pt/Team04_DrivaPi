@@ -44,9 +44,9 @@ void SensorsInit(void)
 {
     tx_mutex_create(&g_i2cMutex, "I2C Mutex", TX_INHERIT);
     tx_mutex_create(&g_sensorDataMutex, "Sensor Data Mutex", TX_INHERIT);
-    memset(&g_hts221_data, 0, sizeof(HTS221_Data_t));
-    memset(&g_battery_data, 0, sizeof(Battery_Data_t));
-    memset(&g_ina231_data, 0, sizeof(INA231_Data_t));
+    memset(&g_hts221Data, 0, sizeof(HTS221_Data_t));
+    memset(&g_batteryData, 0, sizeof(Battery_Data_t));
+    memset(&g_ina231Data, 0, sizeof(INA231_Data_t));
 }
 
 
