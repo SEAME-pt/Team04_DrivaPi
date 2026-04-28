@@ -17,7 +17,7 @@ void InitAllDevices(void)
 	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
 	PCA9685_InitAllDevices();
 
-	if (Battery_Init(&hi2c3) == HAL_OK)
+	if (BatteryInit(&hi2c3) == HAL_OK)
 	{
 		msg = "Battery: Initialized successfully\r\n";
 		HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
@@ -28,7 +28,7 @@ void InitAllDevices(void)
 		HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
 	}
 
-	if (HTS221_Init(&hi2c2) != HAL_OK)
+	if (HTS221Init(&hi2c2) != HAL_OK)
 	{
 		msg = "HTS221: Initialization failed!\r\n";
 		HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
