@@ -120,7 +120,7 @@ HTS221_Data_t        g_hts221Data;
 Battery_Data_t       g_batteryData;
 I2C_HandleTypeDef    g_hi2c2;
 INA231_Data_t        g_ina231Data;
-TX_MUTEX                    g_i2cMutex; 
+TX_MUTEX             g_i2cMutex; 
 
 /* Exported functions --------------------------------------------------------*/
 void                SensorsInit(void);
