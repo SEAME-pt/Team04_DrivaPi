@@ -115,11 +115,12 @@ typedef struct
 } INA231_Data_t;
 
 /* Global sensor data declarations -------------------------------------------*/
-extern TX_MUTEX             g_sensorDataMutex;
-extern HTS221_Data_t        g_hts221Data;
-extern Battery_Data_t       g_batteryData;
-extern I2C_HandleTypeDef    g_hi2c2;
-extern INA231_Data_t        g_ina231Data;
+TX_MUTEX             g_sensorDataMutex;
+HTS221_Data_t        g_hts221Data;
+Battery_Data_t       g_batteryData;
+I2C_HandleTypeDef    g_hi2c2;
+INA231_Data_t        g_ina231Data;
+TX_MUTEX                    g_i2cMutex; 
 
 /* Exported functions --------------------------------------------------------*/
 void                SensorsInit(void);
@@ -134,6 +135,10 @@ HAL_StatusTypeDef   BatteryReadCurrent(I2C_HandleTypeDef *hi2c, float *current);
 void                SensorHts221Thread(ULONG initial_input);
 void                SensorBatteryThread(ULONG initial_input);
 void                SensorIna231Thread(ULONG initial_input);
+
+extern void UartPrint(const char* msg);
+extern void UartPrintf(const char* format, ...);
+extern void SoftwareDelay(uint32_t ms);
 
 #ifdef __cplusplus
 }
