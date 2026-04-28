@@ -28,7 +28,7 @@ void InitAllDevices(void)
 		HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
 	}
 
-	if (HTS221Init(&hi2c2) != HAL_OK)
+	if (Hts221Init(&hi2c2) != HAL_OK)
 	{
 		msg = "HTS221: Initialization failed!\r\n";
 		HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
