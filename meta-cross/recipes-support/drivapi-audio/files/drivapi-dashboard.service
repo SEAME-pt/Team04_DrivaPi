@@ -17,7 +17,7 @@ ExecStartPre=/bin/sh -c 'for i in $(seq 1 10); do [ -S /run/pipewire/pulse/nativ
 ExecStartPre=/usr/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 1.0
 ExecStartPre=/usr/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ 0
 
-ExecStart=/usr/bin/myqtapp
+ExecStart=/usr/bin/myqtapp --kuksa-tls --kuksa-ca /etc/kuksa/server.crt
 Restart=on-failure
 RestartSec=2
 
