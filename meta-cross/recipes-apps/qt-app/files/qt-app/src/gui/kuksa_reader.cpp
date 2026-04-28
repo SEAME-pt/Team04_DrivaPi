@@ -123,11 +123,7 @@ void KuksaReader::start()
     // Required paths (guaranteed by kuksa_feeder — must exist in the databroker VSS).
     const std::vector<std::string> requiredPaths = {
         PATH_SPEED,
-        PATH_BATTERY_PERCENT,
-        PATH_BATTERY_VOLT,
         PATH_CURRENT_GEAR,
-        PATH_RPI_BATTERY_VOLTAGE,
-        PATH_RPI_BATTERY_CURRENT
     };
     // Optional paths (custom VSS extensions — may not be registered in every deployment).
     const std::vector<std::string> allPaths = {
