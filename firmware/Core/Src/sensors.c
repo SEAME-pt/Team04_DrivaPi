@@ -7,8 +7,6 @@
  */
 
 #include "sensors.h"
-#include <string.h>
-#include <math.h>
 
 /* ============================================================================
  * External Fallbacks
