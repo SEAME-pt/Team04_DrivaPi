@@ -9,6 +9,31 @@
 #include "sensors.h"
 
 /* ============================================================================
+ * Private Constants
+ * ============================================================================ */
+static const ULONG SENSOR_I2C_MUTEX_TIMEOUT_TICKS = 50;
+static const uint32_t SENSOR_I2C_TIMEOUT_MS = 100;
+
+/* ============================================================================
+ * Private Variables
+ * ============================================================================ */
+static volatile bool        g_battery_power_ready = false;
+static uint8_t              g_ina231_addr_7bit = INA231_I2C_ADDRESS;
+static HTS221_Calibration_t calib_data;
+
+/* ============================================================================
+ * Private Function Prototypes
+ * ============================================================================ */
+static HAL_StatusTypeDef SensorI2cMemRead(I2C_HandleTypeDef *hi2c, uint16_t dev_addr, uint16_t mem_addr, uint8_t *buf, uint16_t len);
+static HAL_StatusTypeDef SensorI2cMemWrite(I2C_HandleTypeDef *hi2c, uint16_t dev_addr, uint16_t mem_addr, const uint8_t *buf, uint16_t len);
+
+static uint8_t           BatteryPercentFrom2SVoltage(float voltage_v);
+static HAL_StatusTypeDef ExpansionBattery_Read(I2C_HandleTypeDef *hi2c, float *voltage, uint8_t *percentage);
+
+static HAL_StatusTypeDef HTS221_WriteReg(I2C_HandleTypeDef *hi2c, uint8_t reg, uint8_t data);
+static HAL_StatusTypeDef HTS221_ReadCalibration(I2C_HandleTypeDef *hi2c);
+
+/* ============================================================================
  * Initialization
  * ============================================================================ */
 
