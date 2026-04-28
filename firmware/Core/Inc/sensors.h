@@ -1,7 +1,7 @@
 /*
  ******************************************************************************
- * sensors.h
- * Sensor management - HTS221 temperature/humidity sensor and Battery monitoring
+ * @file           : sensors.h
+ * @brief          : Sensor management - HTS221 temperature/humidity sensor and Battery monitoring
  ******************************************************************************
  */
 
