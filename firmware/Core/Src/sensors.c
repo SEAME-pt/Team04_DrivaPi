@@ -30,19 +30,8 @@ static HAL_StatusTypeDef SensorI2cMemWrite(I2C_HandleTypeDef *hi2c, uint16_t dev
 static uint8_t           BatteryPercentFrom2SVoltage(float voltage_v);
 static HAL_StatusTypeDef ExpansionBattery_Read(I2C_HandleTypeDef *hi2c, float *voltage, uint8_t *percentage);
 
-static HAL_StatusTypeDef HTS221WriteReg(I2C_HandleTypeDef *hi2c, uint8_t reg, uint8_t data);
-static HAL_StatusTypeDef HTS221ReadCalibration(I2C_HandleTypeDef *hi2c);
-
-/* ============================================================================
- * Global variables declaration
- * ============================================================================ */
-
-TX_MUTEX             g_sensorDataMutex;
-HTS221_Data_t        g_hts221Data;
-Battery_Data_t       g_batteryData;
-I2C_HandleTypeDef    g_hi2c2;
-INA231_Data_t        g_ina231Data;
-TX_MUTEX             g_i2cMutex;
+static HAL_StatusTypeDef HTS221_WriteReg(I2C_HandleTypeDef *hi2c, uint8_t reg, uint8_t data);
+static HAL_StatusTypeDef HTS221_ReadCalibration(I2C_HandleTypeDef *hi2c);
 
 /* ============================================================================
  * Initialization
@@ -72,7 +61,7 @@ void SensorsInit(void)
  * @param  mem_addr Internal memory address
  * @param  buf Data buffer
  * @param  len Length
- * @return HAL_StatusTypeDef
+ * @return HAL_StatusTypeDef 
  */
 static HAL_StatusTypeDef SensorI2cMemRead(I2C_HandleTypeDef *hi2c, uint16_t dev_addr, uint16_t mem_addr, uint8_t *buf, uint16_t len)
 {
@@ -117,7 +106,7 @@ static HAL_StatusTypeDef SensorI2cMemRead(I2C_HandleTypeDef *hi2c, uint16_t dev_
  * @param  mem_addr Internal memory address
  * @param  buf Data buffer
  * @param  len Length
- * @return HAL_StatusTypeDef
+ * @return HAL_StatusTypeDef 
  */
 static HAL_StatusTypeDef SensorI2cMemWrite(I2C_HandleTypeDef *hi2c, uint16_t dev_addr, uint16_t mem_addr, const uint8_t *buf, uint16_t len)
 {
@@ -156,9 +145,9 @@ static HAL_StatusTypeDef SensorI2cMemWrite(I2C_HandleTypeDef *hi2c, uint16_t dev
  * @param  hi2c I2C handle
  * @param  reg Register address
  * @param  data Byte to write
- * @return HAL_StatusTypeDef
+ * @return HAL_StatusTypeDef 
  */
-static HAL_StatusTypeDef HTS221WriteReg(I2C_HandleTypeDef *hi2c, uint8_t reg, uint8_t data)
+static HAL_StatusTypeDef HTS221_WriteReg(I2C_HandleTypeDef *hi2c, uint8_t reg, uint8_t data)
 {
     uint16_t addr = HTS221_I2C_ADDRESS << 1;
     return SensorI2cMemWrite(hi2c, addr, reg, &data, 1);
@@ -167,16 +156,16 @@ static HAL_StatusTypeDef HTS221WriteReg(I2C_HandleTypeDef *hi2c, uint8_t reg, ui
 /**
  * @brief  Read calibration data from HTS221.
  * @param  hi2c I2C handle
- * @return HAL_StatusTypeDef
+ * @return HAL_StatusTypeDef 
  */
-static HAL_StatusTypeDef HTS221ReadCalibration(I2C_HandleTypeDef *hi2c)
+static HAL_StatusTypeDef HTS221_ReadCalibration(I2C_HandleTypeDef *hi2c)
 {
     uint8_t t0_msb, t1_msb;
     uint8_t buffer[16];
     uint16_t addr = HTS221_I2C_ADDRESS << 1;
     HAL_StatusTypeDef status = SensorI2cMemRead(hi2c, addr, 0x30 | 0x80, buffer, 16);
 
-    if (status != HAL_OK)
+    if (status != HAL_OK) 
         return HAL_ERROR;
 
     calib_data.H0_rh = buffer[0] >> 1;
@@ -197,7 +186,7 @@ static HAL_StatusTypeDef HTS221ReadCalibration(I2C_HandleTypeDef *hi2c)
 /**
  * @brief  Initialize HTS221 sensor.
  * @param  hi2c I2C handle
- * @return HAL_StatusTypeDef
+ * @return HAL_StatusTypeDef 
  */
 HAL_StatusTypeDef Hts221Init(I2C_HandleTypeDef *hi2c)
 {
@@ -206,12 +195,12 @@ HAL_StatusTypeDef Hts221Init(I2C_HandleTypeDef *hi2c)
         UartPrint("HTS221: init null I2C handle\r\n");
         return HAL_ERROR;
     }
-    if (HTS221WriteReg(hi2c, HTS221_CTRL_REG1, 0x85) != HAL_OK)
+    if (HTS221_WriteReg(hi2c, HTS221_CTRL_REG1, 0x85) != HAL_OK)
     {
         UartPrint("HTS221: Failed to write CTRL_REG1\r\n");
         return HAL_ERROR;
     }
-    if (HTS221ReadCalibration(hi2c) != HAL_OK)
+    if (HTS221_ReadCalibration(hi2c) != HAL_OK)
     {
         UartPrint("HTS221: Failed to read calibration\r\n");
         return HAL_ERROR;
@@ -226,7 +215,7 @@ HAL_StatusTypeDef Hts221Init(I2C_HandleTypeDef *hi2c)
  * @param  hi2c I2C handle
  * @param  temperature Output float reference
  * @param  humidity Output float reference
- * @return HAL_StatusTypeDef
+ * @return HAL_StatusTypeDef 
  */
 HAL_StatusTypeDef HTS221_ReadBoth(I2C_HandleTypeDef *hi2c, float *temperature, float *humidity)
 {
@@ -279,7 +268,7 @@ HAL_StatusTypeDef HTS221_ReadBoth(I2C_HandleTypeDef *hi2c, float *temperature, f
 /**
  * @brief  Calculate 2S battery percentage.
  * @param  voltage_v Input voltage
- * @return uint8_t
+ * @return uint8_t 
  */
 static uint8_t BatteryPercentFrom2SVoltage(float voltage_v)
 {
@@ -305,7 +294,7 @@ static uint8_t BatteryPercentFrom2SVoltage(float voltage_v)
     {
         pct = ((voltage_v - soc_min_v) / (soc_nom_v - soc_min_v)) * 50.0f;
     }
-    if (pct < 0.0f)
+    if (pct < 0.0f) 
     {
         pct = 0.0f;
     }
@@ -319,7 +308,7 @@ static uint8_t BatteryPercentFrom2SVoltage(float voltage_v)
 /**
  * @brief  Initialize Battery monitor functionality.
  * @param  hi2c I2C handle
- * @return HAL_StatusTypeDef
+ * @return HAL_StatusTypeDef 
  */
 HAL_StatusTypeDef BatteryInit(I2C_HandleTypeDef *hi2c)
 {
@@ -339,7 +328,7 @@ HAL_StatusTypeDef BatteryInit(I2C_HandleTypeDef *hi2c)
  * @param  hi2c I2C handle
  * @param  voltage Output pointer
  * @param  percentage Output pointer
- * @return HAL_StatusTypeDef
+ * @return HAL_StatusTypeDef 
  */
 HAL_StatusTypeDef Battery_Read(I2C_HandleTypeDef *hi2c, float *voltage, uint8_t *percentage)
 {
@@ -382,7 +371,7 @@ HAL_StatusTypeDef Battery_Read(I2C_HandleTypeDef *hi2c, float *voltage, uint8_t 
  * @param  hi2c I2C handle
  * @param  voltage Output pointer
  * @param  percentage Output pointer
- * @return HAL_StatusTypeDef
+ * @return HAL_StatusTypeDef 
  */
 static HAL_StatusTypeDef ExpansionBattery_Read(I2C_HandleTypeDef *hi2c, float *voltage, uint8_t *percentage)
 {
@@ -390,7 +379,7 @@ static HAL_StatusTypeDef ExpansionBattery_Read(I2C_HandleTypeDef *hi2c, float *v
     HAL_StatusTypeDef status;
     const uint16_t dev_addr = (uint16_t)(0x41u << 1);
 
-    if (voltage == NULL || percentage == NULL)
+    if (voltage == NULL || percentage == NULL) 
     {
         return HAL_ERROR;
     }
@@ -429,7 +418,7 @@ HAL_StatusTypeDef Battery_ReadCurrent(I2C_HandleTypeDef *hi2c, float *current)
     const float shunt_lsb_v = 2.5e-6f; /* INA231 shunt voltage LSB: 2.5 uV/bit */
     const float shunt_res_ohm = 0.1f;  /* Board shunt resistor: 0.1 ohm */
 
-    if (current == NULL)
+    if (current == NULL) 
     {
         return HAL_ERROR;
     }
@@ -468,11 +457,9 @@ HAL_StatusTypeDef Battery_ReadCurrent(I2C_HandleTypeDef *hi2c, float *current)
     return HAL_OK;
 }
 
-
 /* ============================================================================
  * Thread Definitions
  * ============================================================================ */
-
 /**
  * @brief Thread entry for HTS221 lifecycle and sampling.
  * @param initial_input Thread argument
@@ -480,139 +467,103 @@ HAL_StatusTypeDef Battery_ReadCurrent(I2C_HandleTypeDef *hi2c, float *current)
 void SensorHTS221Thread(ULONG initial_input)
 {
     float temp, hum;
-    float last_temp = 0.0f, last_hum = 0.0f;
-    HAL_StatusTypeDef   status;
-    HAL_StatusTypeDef   init_status;
-    static int16_t      last_temp_int = -99;
-    static int16_t      last_hum_int = -99;
-    static ULONG        last_send_time = 0;
-    static const ULONG  HEARTBEAT_INTERVAL = 500; /* 5 seconds @ 100Hz tick */
-    static const ULONG  HTS_STALE_TIMEOUT_TICKS = 1000; /* 10 seconds without valid read => stale */
+    HAL_StatusTypeDef status;
+    static int16_t last_temp_int = -99;
+    static int16_t last_hum_int = -99;
+    static ULONG last_send_time = 0;
+    static const ULONG HEARTBEAT_INTERVAL = 500;
+    static const ULONG HTS_STALE_TIMEOUT_TICKS = 1000;
     static const uint8_t HTS_REINIT_THRESHOLD = 5;
-    uint32_t            init_attempts = 0;
-    uint8_t             consecutive_failures = 0;
-    bool                hts_ready = false;
-    bool                have_sample = false;
-    ULONG               last_hts_ok_time = 0;
+
+    uint32_t init_attempts = 0;
+    uint8_t consecutive_failures = 0;
+    bool hts_ready = false;
+    ULONG last_hts_ok_time = 0;
 
     (void)initial_input;
     UartPrint("HTS221 Thread: Started\r\n");
     tx_thread_sleep(100);
 
-    while (!g_batteryPowerReady)
-    {
+    while (!g_batteryPowerReady) {
         tx_thread_sleep(50);
     }
 
-    while (!hts_ready)
-    {
-        init_status = Hts221Init(&hi2c2);
-        if (init_status == HAL_OK)
-        {
-            hts_ready = true;
-            last_send_time = tx_time_get();
-            last_hts_ok_time = last_send_time;
-            break;
-        }
-
-        init_attempts++;
-        if (init_attempts == 1 || (init_attempts % 10) == 0)
-        {
-            UartPrintf("HTS221: init retry %lu failed\r\n", (unsigned long)init_attempts);
-        }
-        tx_thread_sleep(500);
-    }
-
-    while (1)
+    while (1) 
     {
         ULONG current_time = tx_time_get();
 
+        if (!hts_ready) 
+        {
+            if (Hts221Init(&hi2c2) == HAL_OK) 
+            {
+                hts_ready = true;
+                consecutive_failures = 0;
+                last_hts_ok_time = current_time;
+                last_send_time = current_time;
+            } 
+            else 
+            {
+                init_attempts++;
+                if (init_attempts == 1 || (init_attempts % 10) == 0) {
+                    UartPrintf("HTS221: Init/Retry %lu failed\r\n", (unsigned long)init_attempts);
+                }
+                tx_thread_sleep(500);
+                continue;
+            }
+        }
+
         status = HTS221_ReadBoth(&hi2c2, &temp, &hum);
-        if (status == HAL_OK)
+
+        if (status == HAL_OK) 
         {
             consecutive_failures = 0;
-            last_temp = temp;
-            last_hum = hum;
-            have_sample = true;
             last_hts_ok_time = current_time;
-            if (tx_mutex_get(&g_sensorDataMutex, 100) == TX_SUCCESS)
+
+            if (tx_mutex_get(&g_sensorDataMutex, 10) == TX_SUCCESS) 
             {
-                g_hts221Data.temperature = last_temp;
-                g_hts221Data.humidity = last_hum;
+                g_hts221Data.temperature = temp;
+                g_hts221Data.humidity = hum;
                 g_hts221Data.timestamp = current_time;
                 g_hts221Data.data_valid = 1;
                 tx_mutex_put(&g_sensorDataMutex);
             }
+
+            /* Lógica de Heartbeat / Envio por variação */
             int16_t temp_int = (int16_t)temp;
             int16_t hum_int = (int16_t)hum;
-
-            if (temp_int != last_temp_int || hum_int != last_hum_int || (current_time - last_send_time) >= HEARTBEAT_INTERVAL)
+            if (temp_int != last_temp_int || hum_int != last_hum_int || (current_time - last_send_time) >= HEARTBEAT_INTERVAL) 
             {
-                /* Expected application integration using CanSend */
                 last_temp_int = temp_int;
                 last_hum_int = hum_int;
                 last_send_time = current_time;
             }
-        }
-        else
+        } 
+        else 
         {
-            bool hts_stale = ((current_time - last_hts_ok_time) >= HTS_STALE_TIMEOUT_TICKS);
-
-            if (hts_stale)
+            consecutive_failures++;
+            
+            if ((current_time - last_hts_ok_time) >= HTS_STALE_TIMEOUT_TICKS) 
             {
-                last_temp = 0.0f;
-                last_hum = 0.0f;
-
-                if (tx_mutex_get(&g_sensorDataMutex, 100) == TX_SUCCESS)
+                if (tx_mutex_get(&g_sensorDataMutex, 10) == TX_SUCCESS)
                 {
-                    g_hts221Data.temperature = 0.0f;
-                    g_hts221Data.humidity = 0.0f;
-                    g_hts221Data.timestamp = current_time;
                     g_hts221Data.data_valid = 0;
                     tx_mutex_put(&g_sensorDataMutex);
                 }
             }
 
-            if (have_sample && (current_time - last_send_time) >= HEARTBEAT_INTERVAL)
+            if (consecutive_failures >= HTS_REINIT_THRESHOLD) 
             {
-                last_send_time = current_time;
-            }
-
-            consecutive_failures++;
-            if (consecutive_failures < HTS_REINIT_THRESHOLD)
-            {
-                if (consecutive_failures == 1 || consecutive_failures == HTS_REINIT_THRESHOLD - 1)
-                {
-                    UartPrintf("HTS221: read failed (%u/%u)\r\n",
-                               (unsigned int)consecutive_failures,
-                               (unsigned int)HTS_REINIT_THRESHOLD);
-                }
-                tx_thread_sleep(100);
-                continue;
-            }
-
-            consecutive_failures = 0;
-            hts_ready = false;
-            tx_thread_sleep(500);
-
-            while (!hts_ready)
-            {
-                init_status = Hts221Init(&hi2c2);
-                if (init_status == HAL_OK)
-                {
-                    hts_ready = true;
-                    last_send_time = tx_time_get();
-                    break;
-                }
-
-                init_attempts++;
-                if (init_attempts == 1 || (init_attempts % 10) == 0)
-                {
-                    UartPrintf("HTS221: reinit retry %lu failed\r\n", (unsigned long)init_attempts);
-                }
+                UartPrintf("HTS221: Max failures reached (%u). Resetting driver...\r\n", consecutive_failures);
+                hts_ready = false; // Força re-inicialização no topo do próximo loop
                 tx_thread_sleep(500);
+            } 
+            else 
+            {
+                tx_thread_sleep(100);
             }
+            continue;
         }
+
         tx_thread_sleep(100);
     }
 }
@@ -625,7 +576,7 @@ void SensorBatteryThread(ULONG initial_input)
 {
     /* hi2c3 required for Expansion Battery */
     extern I2C_HandleTypeDef hi2c3;
-
+    
     float               expansion_voltage;
     float               ina_voltage;
     uint8_t             expansion_percentage;
@@ -651,7 +602,7 @@ void SensorBatteryThread(ULONG initial_input)
     (void)have_ina_sample;
     (void)last_ina_ok_time;
     (void)last_current_sample_time;
-
+    
     UartPrint("Battery Thread: Started\r\n");
     last_send_time = tx_time_get();
     if (last_send_time >= SEND_INTERVAL_TICKS)
@@ -669,12 +620,12 @@ void SensorBatteryThread(ULONG initial_input)
     tx_thread_sleep(200);
 
     /* Initialize INA231 battery monitor on I2C2 (STMod+ connector) at address 0x40 */
-    if (BatteryInit(&hi2c2) != HAL_OK)
+    if (BatteryInit(&hi2c2) != HAL_OK) 
     {
         UartPrint("Battery Thread: Init failed - continuing with reads anyway\r\n");
         g_batteryPowerReady = true;
-    }
-    else
+    } 
+    else 
     {
         UartPrint("Battery Thread: INA231 initialized successfully\r\n");
         g_batteryPowerReady = true;
