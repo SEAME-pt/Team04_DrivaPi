@@ -50,7 +50,7 @@ int CanSend(t_can_message* msg)
 {
 	FDCAN_TxHeaderTypeDef tx_header;
 	uint8_t attempt;
-	
+
 	const uint32_t dlc_map[] = {
 		FDCAN_DLC_BYTES_0,
 		FDCAN_DLC_BYTES_1,
@@ -78,7 +78,7 @@ int CanSend(t_can_message* msg)
 			return 0;
 		tx_thread_sleep(1);
 	}
-	
+
 	return 1;
 }
 
@@ -115,17 +115,17 @@ static void PublishBatteryAndInaData(void)
 
 	if (tx_mutex_get(&g_sensorDataMutex, MUTEX_WAIT_TICKS) == TX_SUCCESS)
 	{
-		if (g_battery_data.data_valid)
+		if (g_batteryData.data_valid)
 		{
-			stm_voltage = g_battery_data.voltage;
-			stm_percentage = g_battery_data.percentage;
+			stm_voltage = g_batteryData.voltage;
+			stm_percentage = g_batteryData.percentage;
 			stm_valid = 1u;
 		}
-		if (g_ina231_data.data_valid)
+		if (g_ina231Data.data_valid)
 		{
-			voltage = g_ina231_data.voltage;
-			current = g_ina231_data.current;
-			percentage = g_ina231_data.percentage;
+			voltage = g_ina231Data.voltage;
+			current = g_ina231Data.current;
+			percentage = g_ina231Data.percentage;
 			ina_valid = 1u;
 		}
 		tx_mutex_put(&g_sensorDataMutex);
@@ -177,10 +177,10 @@ static void PublishHtsData(void)
 
 	if (tx_mutex_get(&g_sensorDataMutex, MUTEX_WAIT_TICKS) == TX_SUCCESS)
 	{
-		if (g_hts221_data.data_valid)
+		if (g_hts221Data.data_valid)
 		{
-			temperature = g_hts221_data.temperature;
-			humidity = g_hts221_data.humidity;
+			temperature = g_hts221Data.temperature;
+			humidity = g_hts221Data.humidity;
 			hts_valid = 1u;
 		}
 		tx_mutex_put(&g_sensorDataMutex);
