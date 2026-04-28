@@ -17,8 +17,8 @@ static const uint32_t SENSOR_I2C_TIMEOUT_MS = 100;
 /* ============================================================================
  * Private Variables
  * ============================================================================ */
-static volatile bool        g_battery_power_ready = false;
-static uint8_t              g_ina231_addr_7bit = INA231_I2C_ADDRESS;
+static volatile bool        g_batteryPowerReady = false;
+static uint8_t              g_ina231Addr7bit = INA231_I2C_ADDRESS;
 static HTS221_Calibration_t calib_data;
 
 /* ============================================================================
@@ -247,8 +247,14 @@ HAL_StatusTypeDef HTS221_ReadBoth(I2C_HandleTypeDef *hi2c, float *temperature, f
                 (float)(calib_data.T1_out - calib_data.T0_out) + calib_data.T0_degC;
     float h_temp = ((float)(h_raw - calib_data.H0_T0_out)) * ((float)(calib_data.H1_rh - calib_data.H0_rh)) /
                 ((float)(calib_data.H1_T0_out - calib_data.H0_T0_out)) + (float)calib_data.H0_rh;
-    if (h_temp < 0.0f) h_temp = 0.0f;
-    if (h_temp > 100.0f) h_temp = 100.0f;
+    if (h_temp < 0.0f)
+    {
+        h_temp = 0.0f;
+    }
+    if (h_temp > 100.0f)
+    {
+        h_temp = 100.0f;
+    }
     *temperature = t_temp;
     *humidity = h_temp;
     return HAL_OK;
@@ -307,7 +313,7 @@ static uint8_t BatteryPercentFrom2SVoltage(float voltage_v)
 HAL_StatusTypeDef Battery_Init(I2C_HandleTypeDef *hi2c)
 {
     UartPrintf("Battery: Initializing INA231 at I2C address 0x%02X (using I2C%d)\r\n",
-               g_ina231_addr_7bit, (hi2c == &hi2c2) ? 2 : 1);
+               g_ina231Addr7bit, (hi2c == &hi2c2) ? 2 : 1);
 
     /* PE13 power is enabled during GPIO init in main.c. */
     tx_thread_sleep(2);
@@ -337,13 +343,13 @@ HAL_StatusTypeDef Battery_Read(I2C_HandleTypeDef *hi2c, float *voltage, uint8_t 
     }
 
     /* Read bus voltage register (0x02) */
-    status = SensorI2cMemRead(hi2c, (uint16_t)(g_ina231_addr_7bit << 1), INA219_REG_BUS_V, buf, 2);
+    status = SensorI2cMemRead(hi2c, (uint16_t)(g_ina231Addr7bit << 1), INA219_REG_BUS_V, buf, 2);
     if (status != HAL_OK)
     {
         read_fail_count++;
         if ((read_fail_count % 25u) == 0u)
         {
-            UartPrintf("[INA READ] bus_v read failed addr=0x%02X err=0x%08lX\r\n", (unsigned int)g_ina231_addr_7bit, (unsigned long)HAL_I2C_GetError(hi2c));
+            UartPrintf("[INA READ] bus_v read failed addr=0x%02X err=0x%08lX\r\n", (unsigned int)g_ina231Addr7bit, (unsigned long)HAL_I2C_GetError(hi2c));
         }
     }
 
@@ -418,7 +424,7 @@ HAL_StatusTypeDef Battery_ReadCurrent(I2C_HandleTypeDef *hi2c, float *current)
     }
 
     /* Read current register (0x04) for diagnostics/comparison only */
-    status = SensorI2cMemRead(hi2c, (uint16_t)(g_ina231_addr_7bit << 1), INA219_REG_CURRENT, buf, 2);
+    status = SensorI2cMemRead(hi2c, (uint16_t)(g_ina231Addr7bit << 1), INA219_REG_CURRENT, buf, 2);
     if (status != HAL_OK)
     {
         buf[0] = 0u;
@@ -426,7 +432,7 @@ HAL_StatusTypeDef Battery_ReadCurrent(I2C_HandleTypeDef *hi2c, float *current)
     }
 
     /* Read shunt register (0x01) and compute current directly: I = Vshunt / Rshunt */
-    shunt_status = SensorI2cMemRead(hi2c, (uint16_t)(g_ina231_addr_7bit << 1), INA219_REG_SHUNT_V, shunt_buf, 2);
+    shunt_status = SensorI2cMemRead(hi2c, (uint16_t)(g_ina231Addr7bit << 1), INA219_REG_SHUNT_V, shunt_buf, 2);
     if (shunt_status != HAL_OK)
     {
         *current = 0.0f;
@@ -520,10 +526,10 @@ void SensorHTS221Thread(ULONG initial_input)
             last_hts_ok_time = current_time;
             if (tx_mutex_get(&g_sensorDataMutex, 100) == TX_SUCCESS)
             {
-                g_hts221_data.temperature = last_temp;
-                g_hts221_data.humidity = last_hum;
-                g_hts221_data.timestamp = current_time;
-                g_hts221_data.data_valid = 1;
+                g_hts221Data.temperature = last_temp;
+                g_hts221Data.humidity = last_hum;
+                g_hts221Data.timestamp = current_time;
+                g_hts221Data.data_valid = 1;
                 tx_mutex_put(&g_sensorDataMutex);
             }
             int16_t temp_int = (int16_t)temp;
@@ -548,10 +554,10 @@ void SensorHTS221Thread(ULONG initial_input)
 
                 if (tx_mutex_get(&g_sensorDataMutex, 100) == TX_SUCCESS)
                 {
-                    g_hts221_data.temperature = 0.0f;
-                    g_hts221_data.humidity = 0.0f;
-                    g_hts221_data.timestamp = current_time;
-                    g_hts221_data.data_valid = 0;
+                    g_hts221Data.temperature = 0.0f;
+                    g_hts221Data.humidity = 0.0f;
+                    g_hts221Data.timestamp = current_time;
+                    g_hts221Data.data_valid = 0;
                     tx_mutex_put(&g_sensorDataMutex);
                 }
             }
@@ -655,12 +661,12 @@ void SensorBatteryThread(ULONG initial_input)
     if (Battery_Init(&hi2c2) != HAL_OK) 
     {
         UartPrint("Battery Thread: Init failed - continuing with reads anyway\r\n");
-        g_battery_power_ready = true;
+        g_batteryPowerReady = true;
     } 
     else 
     {
         UartPrint("Battery Thread: INA231 initialized successfully\r\n");
-        g_battery_power_ready = true;
+        g_batteryPowerReady = true;
     }
 
     /* Wait for first conversion to complete (1024 samples @ 1.1ms = ~1.2 seconds) */
@@ -704,18 +710,18 @@ void SensorBatteryThread(ULONG initial_input)
 
             if (tx_mutex_get(&g_sensorDataMutex, 100) == TX_SUCCESS)
             {
-                g_ina231_data.voltage = last_ina_voltage;
-                g_ina231_data.current = last_current_amps;
-                g_ina231_data.power = 0.0f;
-                g_ina231_data.percentage = last_ina_percentage;
-                g_ina231_data.timestamp = current_time;
-                g_ina231_data.data_valid = 1u;
+                g_ina231Data.voltage = last_ina_voltage;
+                g_ina231Data.current = last_current_amps;
+                g_ina231Data.power = 0.0f;
+                g_ina231Data.percentage = last_ina_percentage;
+                g_ina231Data.timestamp = current_time;
+                g_ina231Data.data_valid = 1u;
                 if (expansion_status == HAL_OK)
                 {
-                    g_battery_data.voltage = expansion_voltage;
-                    g_battery_data.percentage = expansion_percentage;
-                    g_battery_data.timestamp = current_time;
-                    g_battery_data.data_valid = 1u;
+                    g_batteryData.voltage = expansion_voltage;
+                    g_batteryData.percentage = expansion_percentage;
+                    g_batteryData.timestamp = current_time;
+                    g_batteryData.data_valid = 1u;
                 }
                 tx_mutex_put(&g_sensorDataMutex);
             }
@@ -736,8 +742,8 @@ void SensorBatteryThread(ULONG initial_input)
             {
                 if (tx_mutex_get(&g_sensorDataMutex, 100) == TX_SUCCESS)
                 {
-                    g_battery_data.data_valid = 0;
-                    g_ina231_data.data_valid = 0;
+                    g_batteryData.data_valid = 0;
+                    g_ina231Data.data_valid = 0;
                     tx_mutex_put(&g_sensorDataMutex);
                 }
             }
