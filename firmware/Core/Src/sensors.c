@@ -188,7 +188,7 @@ static HAL_StatusTypeDef HTS221_ReadCalibration(I2C_HandleTypeDef *hi2c)
  * @param  hi2c I2C handle
  * @return HAL_StatusTypeDef 
  */
-HAL_StatusTypeDef HTS221_Init(I2C_HandleTypeDef *hi2c)
+HAL_StatusTypeDef Hts221Init(I2C_HandleTypeDef *hi2c)
 {
     if (hi2c == NULL || hi2c->Instance == NULL)
     {
@@ -310,7 +310,7 @@ static uint8_t BatteryPercentFrom2SVoltage(float voltage_v)
  * @param  hi2c I2C handle
  * @return HAL_StatusTypeDef 
  */
-HAL_StatusTypeDef Battery_Init(I2C_HandleTypeDef *hi2c)
+HAL_StatusTypeDef BatteryInit(I2C_HandleTypeDef *hi2c)
 {
     UartPrintf("Battery: Initializing INA231 at I2C address 0x%02X (using I2C%d)\r\n",
                g_ina231Addr7bit, (hi2c == &hi2c2) ? 2 : 1);
@@ -488,14 +488,14 @@ void SensorHTS221Thread(ULONG initial_input)
     UartPrint("HTS221 Thread: Started\r\n");
     tx_thread_sleep(100);
 
-    while (!g_battery_power_ready)
+    while (!g_batteryPowerReady)
     {
         tx_thread_sleep(50);
     }
 
     while (!hts_ready)
     {
-        init_status = HTS221_Init(&hi2c2);
+        init_status = Hts221Init(&hi2c2);
         if (init_status == HAL_OK)
         {
             hts_ready = true;
@@ -586,7 +586,7 @@ void SensorHTS221Thread(ULONG initial_input)
 
             while (!hts_ready)
             {
-                init_status = HTS221_Init(&hi2c2);
+                init_status = Hts221Init(&hi2c2);
                 if (init_status == HAL_OK)
                 {
                     hts_ready = true;
@@ -658,7 +658,7 @@ void SensorBatteryThread(ULONG initial_input)
     tx_thread_sleep(200);
 
     /* Initialize INA231 battery monitor on I2C2 (STMod+ connector) at address 0x40 */
-    if (Battery_Init(&hi2c2) != HAL_OK) 
+    if (BatteryInit(&hi2c2) != HAL_OK) 
     {
         UartPrint("Battery Thread: Init failed - continuing with reads anyway\r\n");
         g_batteryPowerReady = true;
