@@ -13,6 +13,11 @@ This keeps firmware as actuator backend and places path tracking logic in the Ru
 **Scope rule:** In autonomous mode, Stanley is used for **steering only** (lateral control).  
 Speed/throttle must be handled by a separate longitudinal policy/controller.
 
+**Available sensors for this project:**
+- **Camera vision** (primary/only lateral perception source)
+- **Speed sensor** (vehicle speed \(v\))
+- **Ultrasonic** (obstacle safety layer, not lane tracking)
+
 ---
 
 ## 1. Where Stanley Must Run
@@ -37,9 +42,9 @@ Create `rust/controller/src/stanley.rs`:
 ```rust
 #[derive(Debug, Clone, Copy)]
 pub struct VehicleState {
-    pub x: f64,          // meters
-    pub y: f64,          // meters
-    pub yaw_rad: f64,    // vehicle heading (rad)
+    pub x: f64,          // optional global x (if available)
+    pub y: f64,          // optional global y (if available)
+    pub yaw_rad: f64,    // optional global yaw (if available)
     pub speed_mps: f64,  // signed or forward speed
 }
 
@@ -49,6 +54,13 @@ pub struct PathPoint {
     pub y: f64,          // meters
     pub yaw_rad: f64,    // tangent heading at this waypoint
     pub curvature: f64,  // optional, for speed profiling
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct CameraLaneObservation {
+    pub cross_track_error_m: f64,   // camera-derived lateral offset
+    pub heading_error_rad: f64,     // camera-derived lane heading error
+    pub confidence: f64,            // 0.0..1.0 detection confidence
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -65,6 +77,8 @@ pub struct StanleyConfig {
 
 ## 3. Stanley Control Law (Exact)
 
+For this project, compute Stanley using **camera-derived errors** (`cross_track_error_m`, `heading_error_rad`) plus speed sensor input.
+
 At each control tick:
 
 1. Compute **front axle position**:
@@ -74,7 +88,8 @@ x_f = x + wheelbase_m * cos(yaw)
 y_f = y + wheelbase_m * sin(yaw)
 ```
 
-2. Find nearest path point to `(x_f, y_f)` (search from `last_idx` forward window, not full path every tick).
+2. Find nearest path point to `(x_f, y_f)` (search from `last_idx` forward window, not full path every tick).  
+   If operating lane-only (no global map), skip this step and use camera-provided errors directly.
 
 3. Compute errors:
 
@@ -113,7 +128,7 @@ max_step = max_steer_rate * dt
 
 ---
 
-## 4. Integration in `main.rs`
+## 4. Integration in `main.rs` (Camera-Based Autonomous Steering)
 
 Add an autonomous loop, e.g.:
 
@@ -122,11 +137,17 @@ Add an autonomous loop, e.g.:
 
 Per loop iteration:
 
-1. Read latest localization state `(x, y, yaw, v)`
-2. Call `stanley::compute_steering(...)`
-3. Convert steering rad -> servo degrees
-4. Compute target speed from a separate longitudinal policy/controller
-5. Send CAN speed and steering commands
+1. Read latest camera output:
+   - lane center offset -> `cross_track_error_m`
+   - lane direction -> `heading_error_rad`
+   - confidence/valid flag
+2. Read speed sensor value `v`.
+3. Compute Stanley steering:
+   - `delta = heading_error + atan2(k * cross_track_error, v + k_soft)`
+4. Convert steering rad -> servo degrees.
+5. Compute target speed from a separate longitudinal policy/controller.
+6. Send CAN speed and steering commands.
+7. If camera confidence is low/invalid: center steering + safe stop command.
 
 Keep manual mode unchanged and add a mode switch (button or config flag).
 
@@ -202,6 +223,7 @@ Tune in this order:
 Implement the following fail-safes in autonomous mode:
 
 - If localization is stale/invalid: send brake and center steering
+- If camera lane detection is stale/invalid/low-confidence: send brake and center steering
 - If path is empty or finished: send brake and center steering
 - Keep target index monotonic (avoid jumping backwards due to noise)
 - Add small steering deadband near center (reduce servo chatter)
@@ -213,8 +235,10 @@ Implement the following fail-safes in autonomous mode:
 
 You must define:
 
-1. **Path source/format** (CSV or JSON with `x,y,yaw,curvature`)
-2. **Localization source** (vision SLAM / GPS-IMU / fused odometry)
+1. **Camera lane output definition** (how offset and heading are computed, units/sign)
+2. **Path source strategy**:
+   - lane-center from camera each frame (no fixed map), or
+   - pre-defined path fused with camera corrections
 3. **Measured wheelbase**
 4. **Steer-to-servo calibration gain**
 5. **Common steering payload type across Rust + firmware**
@@ -250,7 +274,7 @@ pub fn compute_target_speed(curvature: f64, cte: f64, v_min: f64, v_max: f64) ->
 
 1. Add `stanley.rs` with math helpers and controller core.
 2. Add path loader (`path_io.rs`) and parse waypoints at startup.
-3. Add localization adapter interface (`localization.rs`) returning `VehicleState`.
+3. Add camera adapter interface (`camera_lane.rs`) returning cross-track/heading error + confidence.
 4. Add `run_autonomous_mode()` to `main.rs` at fixed rate.
 5. Reuse existing CAN sender with autonomous speed/steer outputs.
 6. Add logging (idx, cte, heading_error, delta, speed_target).

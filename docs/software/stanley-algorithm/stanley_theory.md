@@ -41,6 +41,16 @@ x_f = x + L \cos(\psi), \quad y_f = y + L \sin(\psi)
 
 where \(L\) is wheelbase.
 
+### Camera-only interpretation for this project
+
+Since your lateral perception is camera-based, the controller can be fed directly with:
+
+- camera-estimated cross-track error \(e_y\)
+- camera-estimated heading error \(e_{\psi}\)
+- speed sensor value \(v\)
+
+In this mode, global \((x,y,\psi)\) can be optional for Stanley computation.
+
 ---
 
 ## 4. Error Definitions
@@ -58,6 +68,13 @@ e_{\psi} = \text{wrapToPi}\left(\psi_{ref} - \psi\right)
 
 Let \(e_y\) be signed lateral distance from front axle to path.  
 Sign is determined by 2D cross product between path tangent and vector from path point to front axle.
+
+For camera lane tracking, \(e_y\) is obtained from lane center offset (image-to-ground conversion), with sign convention:
+
+- \(e_y > 0\): lane center is to one side of vehicle centerline
+- \(e_y < 0\): lane center is to the opposite side
+
+This sign must match steering command convention.
 
 ---
 
@@ -107,6 +124,19 @@ At each control step \(t_k\):
 8. Send steering command to actuator.
 9. Repeat at fixed frequency.
 
+### Camera-based implementation sequence (no extra localization sensor)
+
+At each tick:
+
+1. Detect lane boundaries/centerline from camera frame.
+2. Estimate:
+   - \(e_y\): lateral offset to lane center (meters)
+   - \(e_{\psi}\): angle between vehicle forward axis and lane tangent (rad)
+3. Read speed \(v\) from speed sensor.
+4. Compute Stanley steering \(\delta\).
+5. Apply saturation/rate limit and send steering.
+6. If lane confidence is low: safe fallback (center + slow/stop).
+
 ---
 
 ## 8. Pseudocode (Theory-Level)
@@ -144,6 +174,8 @@ For theoretical correctness in a real system:
 - Ensure **signed cross-track error** is consistent with steering sign convention.
 - Run at fixed control period (deterministic \(dt\)).
 - Keep target index monotonic to avoid oscillation due to nearest-point switching.
+- Calibrate camera geometry (intrinsics/extrinsics) so pixel offset maps consistently to meters.
+- Stabilize lane estimates (temporal filtering) to reduce steering jitter.
 
 ---
 
@@ -184,5 +216,6 @@ So theoretical architecture is:
 - Sensitive to localization and path heading noise.
 - Not optimal like MPC for constraints/look-ahead behavior.
 - Needs proper actuator saturation and rate limiting in practice.
+- With camera-only perception, performance degrades under poor lighting, faded lanes, glare, or occlusions.
 
 Even with these limitations, Stanley remains popular because it is simple, interpretable, and effective.
