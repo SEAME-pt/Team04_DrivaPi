@@ -26,6 +26,7 @@ namespace handlers {
 void HandleSpeed(const can_frame& frame, feeder::Publisher& publisher);
 void HandleStm32Battery(const can_frame& frame, feeder::Publisher& publisher);
 void HandleRpiBattery(const can_frame& frame, feeder::Publisher& publisher);
+void HandleRpiBatteryCurrent(const can_frame& frame, feeder::Publisher& publisher);
 void HandleGear(const can_frame& frame, feeder::Publisher& publisher);
 void HandleEnv(const can_frame& frame, feeder::Publisher& publisher);
 

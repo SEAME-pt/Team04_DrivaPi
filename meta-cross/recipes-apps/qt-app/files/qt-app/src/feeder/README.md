@@ -31,6 +31,7 @@ the loopback interface — no network exposure occurs.
 | `0x200` | same frame | `Vehicle.ControlUnit.STM32.Health.Resources.BatteryVoltage` | V | float |
 | `0x210` | `[0]` uint8 percent, `[1..4]` float LE — V | `Vehicle.ControlUnit.Central.Health.Resources.BatteryLevel` | % | float |
 | `0x210` | same frame | `Vehicle.ControlUnit.Central.Health.Resources.BatteryVoltage` | V | float |
+| `0x211` | `[0..3]` float LE — A | `Vehicle.ControlUnit.Central.Health.Resources.BatteryCurrent` | A | float |
 | `0x300` | `[0]` uint8 — `0`=N, `1`=R, `2`=D | `Vehicle.Powertrain.Transmission.CurrentGear` | — | int32 (`0`/`-1`/`1`) |
 | `0x400` | `[0..3]` float LE — °C, `[4..7]` float LE — % | `Vehicle.ControlUnit.STM32.Health.Resources.Temperature` | °C | float |
 | `0x400` | same frame | `Vehicle.ControlUnit.STM32.Health.Resources.Humidity` | % | float |
@@ -117,6 +118,10 @@ EXTRA_ARGS="--address 127.0.0.1 --port 55555 --vss /etc/kuksa/vss.json --insecur
   "Vehicle.ControlUnit.Central.Health.Resources.BatteryVoltage": {
     "datatype": "float", "type": "sensor", "unit": "V",
     "description": "RPi UPS battery voltage"
+  },
+  "Vehicle.ControlUnit.Central.Health.Resources.BatteryCurrent": {
+    "datatype": "float", "type": "sensor", "unit": "A",
+    "description": "RPi UPS battery current"
   }
 }
 ```

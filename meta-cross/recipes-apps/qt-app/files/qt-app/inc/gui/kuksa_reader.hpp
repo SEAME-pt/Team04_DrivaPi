@@ -50,6 +50,7 @@ signals:
 	// 12V battery from RPi (percent + voltage)
     void rpiBatteryPercentReceived(int percent);
     void rpiBatteryVoltageReceived(double volts);
+    void rpiBatteryCurrentReceived(double amps);
 
     // STM32 internal sensors
     void stm32TemperatureReceived(float tempC);
