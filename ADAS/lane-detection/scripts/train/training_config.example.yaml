@@ -1,0 +1,58 @@
+# YOLO Training Configuration Example
+# Copy this file to training_config.yaml and modify as needed
+# Then run: python solo_train.py --config training_config.yaml
+
+# Model and Data
+# ==============
+weights: yolo11n-seg.pt          # Initial model (auto-downloads if not found)
+data: dataset/data.yaml          # Path to dataset YAML file
+
+# Training Hyperparameters
+# ========================
+epochs: 150                       # Total training epochs
+img-size: 640                     # Input image size (decrease to 320 if VRAM limited)
+batch-size: 16                    # Batch size per GPU (decrease if OOM)
+workers: 4                        # Data loading workers (matches CPU cores)
+
+# Learning Rate Schedule
+# ======================
+lr0: 0.01                         # Initial learning rate
+lrf: 0.01                         # Final learning rate fraction
+
+# Output and Validation
+# =====================
+name: lane_detection_v1           # Experiment name (used for output directory)
+path: ./runs/                     # Base path to save experiments
+val: true                         # Run validation during training
+
+# Model Optimization
+# ==================
+patience: 20                      # Early stopping patience (epochs without improvement)
+optimizer: SGD                    # Optimizer: SGD or Adam
+
+# ============================================
+# USAGE EXAMPLES
+# ============================================
+
+# Example 1: Quick test (small dataset)
+# epochs: 10
+# batch-size: 8
+# img-size: 320
+
+# Example 2: Production training (high accuracy)
+# epochs: 200
+# batch-size: 16
+# img-size: 640
+# patience: 30
+
+# Example 3: Limited VRAM / smaller GPU
+# epochs: 100
+# batch-size: 4
+# img-size: 320
+# workers: 2
+
+# Example 4: Transfer learning (fine-tuning)
+# weights: yolo11n-seg.pt         # Pre-trained model
+# lr0: 0.001                      # Lower learning rate
+# epochs: 50                      # Fewer epochs
+# patience: 15
