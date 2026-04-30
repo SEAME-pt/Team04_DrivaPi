@@ -473,6 +473,23 @@ HAL_StatusTypeDef Battery_ReadCurrent(I2C_HandleTypeDef *hi2c, float *current)
  * ============================================================================ */
 /**
  * @brief Thread entry for HTS221 lifecycle and sampling.
+ * @details
+ * This thread owns the HTS221 sensor interaction and runs continuously.
+ * Its behavior is split into two phases:
+ * - Initialization/recovery: attempts to initialize the HTS221, tracking
+ *   retry attempts and consecutive failures.
+ * - Sampling/publishing: periodically reads temperature/humidity, validates
+ *   freshness, and publishes updates when values change or heartbeat timing
+ *   requires a refresh.
+ *
+ * Internal static state is used to:
+ * - avoid redundant publishes when integer-rounded values are unchanged,
+ * - enforce a heartbeat interval so downstream consumers still receive data,
+ * - detect stale sensor operation and trigger reinitialization after
+ *   repeated read failures or timeout without successful reads.
+ *
+ * Timing and retry thresholds are intentionally centralized in local constants
+ * to keep runtime behavior predictable for embedded scheduling.
  * @param initial_input Thread argument
  */
 void SensorHTS221Thread(ULONG initial_input)
