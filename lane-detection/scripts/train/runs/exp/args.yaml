@@ -1,0 +1,14 @@
+batch_size: 32
+config: null
+data: dataset/data.yaml
+epochs: 2
+img_size: 640
+lr0: null
+lrf: null
+name: exp
+optimizer: SGD
+path: /home/team4/afogonca/Team04_DrivaPi/lane-detection/scripts/train/runs/
+patience: 10
+val: false
+weights: yolo11n-seg.pt
+workers: 4
