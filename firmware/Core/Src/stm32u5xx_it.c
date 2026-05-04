@@ -22,8 +22,10 @@
 #include "stm32u5xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#if DEBUG_DIAGNOSTICS
 #include <stdio.h>
 #include <string.h>
+#endif
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -68,7 +70,9 @@ static void HardFault_DumpContext(uint32_t *stack_ptr);
 /* USER CODE BEGIN 0 */
 static void HardFault_DumpContext(uint32_t *stack_ptr)
 {
+#if DEBUG_DIAGNOSTICS
   char line[192];
+#endif
 
   if (stack_ptr != NULL)
   {
@@ -87,6 +91,7 @@ static void HardFault_DumpContext(uint32_t *stack_ptr)
   g_hardfault_mmfar = SCB->MMFAR;
   g_hardfault_bfar  = SCB->BFAR;
 
+#if DEBUG_DIAGNOSTICS
   (void)snprintf(line, sizeof(line),
                  "\r\n[FAULT] HardFault CFSR=0x%08lX HFSR=0x%08lX MMFAR=0x%08lX BFAR=0x%08lX\r\n",
                  (unsigned long)g_hardfault_cfsr,
@@ -106,6 +111,7 @@ static void HardFault_DumpContext(uint32_t *stack_ptr)
                  (unsigned long)g_hardfault_pc,
                  (unsigned long)g_hardfault_psr);
   (void)HAL_UART_Transmit(&huart1, (uint8_t*)line, (uint16_t)strlen(line), 100);
+#endif
 }
 
 /* USER CODE END 0 */
@@ -180,8 +186,10 @@ void MemManage_Handler(void)
 void BusFault_Handler(void)
 {
   /* USER CODE BEGIN BusFault_IRQn 0 */
+#if DEBUG_DIAGNOSTICS
 	const char msg[] = "\r\n[FAULT] BusFault\r\n";
 	HAL_UART_Transmit(&huart1, (uint8_t*)msg, sizeof(msg) - 1u, 100);
+#endif
 
   /* USER CODE END BusFault_IRQn 0 */
   while (1)
@@ -197,8 +205,10 @@ void BusFault_Handler(void)
 void UsageFault_Handler(void)
 {
   /* USER CODE BEGIN UsageFault_IRQn 0 */
+#if DEBUG_DIAGNOSTICS
 	const char msg[] = "\r\n[FAULT] UsageFault\r\n";
 	HAL_UART_Transmit(&huart1, (uint8_t*)msg, sizeof(msg) - 1u, 100);
+#endif
 
   /* USER CODE END UsageFault_IRQn 0 */
   while (1)

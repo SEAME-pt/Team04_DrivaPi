@@ -189,6 +189,8 @@ void Error_Handler(void);
 #define WRLS_WKUP_W_GPIO_Port GPIOF
 
 /* USER CODE BEGIN Private defines */
+#define DEBUG_DIAGNOSTICS 0u
+
 extern FDCAN_HandleTypeDef hfdcan1;
 extern FDCAN_TxHeaderTypeDef TxHeader;
 /* USER CODE END Private defines */

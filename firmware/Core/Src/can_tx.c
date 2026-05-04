@@ -91,7 +91,9 @@ static void PublishBatteryAndInaData(void)
 	t_can_message batt_msg;
 	t_can_message ina_msg;
 	t_can_message ina_cur_msg;
-	static uint32_t ina_dbg_count = 0u; // Changed to static to persist across calls
+#if DEBUG_DIAGNOSTICS
+	static uint32_t ina_dbg_count = 0u;
+#endif
 
 	float stm_voltage = 0.0f;
 	uint8_t stm_percentage = 0xFFu;
@@ -140,13 +142,16 @@ static void PublishBatteryAndInaData(void)
 
 	if (ina_valid)
 	{
+#if DEBUG_DIAGNOSTICS
 		uint32_t current_bits = 0u;
+#endif
 		ina_msg.data[0] = percentage;
 		memcpy(&ina_msg.data[1], &voltage, 4);
 		memcpy(&ina_cur_msg.data[0], &current, 4);
-		memcpy(&current_bits, &current, sizeof(current_bits));
 		(void)CanSend(&ina_msg);
 		(void)CanSend(&ina_cur_msg);
+#if DEBUG_DIAGNOSTICS
+		memcpy(&current_bits, &current, sizeof(current_bits));
 		ina_dbg_count++;
 		if ((ina_dbg_count % 10u) == 0u)
 		{
@@ -157,6 +162,7 @@ static void PublishBatteryAndInaData(void)
 				(unsigned int)ina_cur_msg.data[2],
 				(unsigned int)ina_cur_msg.data[3]);
 		}
+#endif
 	}
 }
 
@@ -245,6 +251,6 @@ VOID CanTx(ULONG initial_input)
 			tx_mutex_put(&g_canMutex);
 		}
 
-		tx_thread_sleep(20);
+		tx_thread_sleep(100);
 	}
 }
