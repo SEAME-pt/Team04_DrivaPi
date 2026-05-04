@@ -32,11 +32,3 @@ python main.py --config training_config.yaml
 ```
 
 For complete environment setup, dataset preparation, and detailed training instructions, see [solo_train.md](scripts/train/solo_train.md).
-
-## Contributing
-
-Follow the [Team Coding Standards](../../.github/instructions/coding-standards.instructions.md) when contributing to this module.
-
-## License
-
-See [CODE_OF_CONDUCT.md](../../CODE_OF_CONDUCT.md) for project guidelines.
