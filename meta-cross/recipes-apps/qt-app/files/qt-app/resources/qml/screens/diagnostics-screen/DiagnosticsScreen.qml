@@ -47,9 +47,10 @@ Item {
     property bool rpiOnline: !!piHealthReader && piHealthReader.isOnline
     property bool stmOnline: !!vehicleData && (vehicleData.stm32BatteryVoltage > 0 || vehicleData.stm32Battery > 0 || vehicleData.stm32Temperature !== 0 || vehicleData.stm32Humidity !== 0)
 
-    property bool rpiWarn: rpiOnline && (piHealthReader.cpuTemp > 70 || vehicleData.rpiBatteryVoltage < 11.0 || vehicleData.rpiBatteryVoltage > 13.0) || vehicleData.rpiBattery < 20
+    // RPi UPS is a 2S2P pack: valid range is around 6.0V..8.4V
+    property bool rpiWarn: rpiOnline && (vehicleData.rpiBatteryVoltage < 6.0 || vehicleData.rpiBatteryVoltage > 8.4 || vehicleData.rpiBattery < 20)
 
-    property bool stmWarn: stmOnline && (vehicleData.stm32Battery < 20 || vehicleData.stm32BatteryVoltage < 11.0 || vehicleData.stm32BatteryVoltage > 13.0 || vehicleData.stm32Temperature > 60 || vehicleData.stm32Humidity > 85)
+    property bool stmWarn: stmOnline && (vehicleData.stm32Battery < 20 || vehicleData.stm32BatteryVoltage < 11.0 || vehicleData.stm32BatteryVoltage > 13.0)
 
     // ===== Layout =====
     ColumnLayout {
@@ -115,10 +116,25 @@ Item {
 
                 GridLayout {
                     anchors.fill: parent
-                    anchors.margins: 12
+                    anchors.margins: 10
                     columns: 3
-                    rowSpacing: 10
-                    columnSpacing: 10
+                    rowSpacing: 8
+                    columnSpacing: 8
+
+                    MetricTileMini {
+                        label: "SOC"
+                        value: rpiOnline ? fmtInt(vehicleData.rpiBattery, "%") : "--"
+                        warn: rpiOnline && vehicleData.rpiBattery < 20
+                    }
+                    MetricTileMini {
+                        label: "VOLT"
+                        value: rpiOnline ? fmt(vehicleData.rpiBatteryVoltage, 2, "V") : "--"
+                        warn: rpiOnline && (vehicleData.rpiBatteryVoltage < 6.0 || vehicleData.rpiBatteryVoltage > 8.4)
+                    }
+                    MetricTileMini {
+                        label: "CURR"
+                        value: rpiOnline ? fmt(vehicleData.rpiBatteryCurrent, 2, "A") : "--"
+                    }
 
                     MetricTileMini {
                         label: "CPU"
@@ -126,29 +142,13 @@ Item {
                         warn: rpiOnline && piHealthReader.cpuTemp > 70
                     }
                     MetricTileMini {
-                        label: "MEM"
-                        value: rpiOnline ? fmtInt(piHealthReader.memoryPercent, "%") : "--"
-                        warn: rpiOnline && piHealthReader.memoryPercent > 85
-                    }
-                    MetricTileMini {
-                        label: "DISK"
-                        value: rpiOnline ? fmtInt(piHealthReader.diskPercent, "%") : "--"
-                        warn: rpiOnline && piHealthReader.diskPercent > 90
-                    }
-
-                    MetricTileMini {
                         label: "FREQ"
                         value: rpiOnline ? fmtInt(piHealthReader.cpuFreq, "MHz") : "--"
                     }
                     MetricTileMini {
-                        label: "BAT"
-                        value: rpiOnline ? fmtInt(vehicleData.rpiBattery, "%") : "--"
-                        warn: rpiOnline && vehicleData.rpiBattery < 20
-                    }
-                    MetricTileMini {
-                        label: "VOLT"
-                        value: rpiOnline ? fmt(vehicleData.rpiBatteryVoltage, 2, "V") : "--"
-                        warn: rpiOnline && (vehicleData.rpiBatteryVoltage < 11.0 || vehicleData.rpiBatteryVoltage > 13.0)
+                        label: "MEM"
+                        value: rpiOnline ? fmtInt(piHealthReader.memoryPercent, "%") : "--"
+                        warn: rpiOnline && piHealthReader.memoryPercent > 85
                     }
                 }
             }
@@ -171,12 +171,12 @@ Item {
                     columnSpacing: 10
 
                     MetricTileMini {
-                        label: "BATTERY"
+                        label: "SOC"
                         value: stmOnline ? fmtInt(vehicleData.stm32Battery, "%") : "--"
                         warn: stmOnline && vehicleData.stm32Battery < 20
                     }
                     MetricTileMini {
-                        label: "VOLTAGE"
+                        label: "VOLT"
                         value: stmOnline ? fmt(vehicleData.stm32BatteryVoltage, 2, "V") : "--"
                         warn: stmOnline && (vehicleData.stm32BatteryVoltage < 11.0 || vehicleData.stm32BatteryVoltage > 13.0)
                     }
@@ -186,7 +186,7 @@ Item {
                         warn: stmOnline && vehicleData.stm32Temperature > 60
                     }
                     MetricTileMini {
-                        label: "HUMIDITY"
+                        label: "HUM"
                         value: stmOnline ? fmt(vehicleData.stm32Humidity, 0, "%") : "--"
                         warn: stmOnline && vehicleData.stm32Humidity > 85
                     }

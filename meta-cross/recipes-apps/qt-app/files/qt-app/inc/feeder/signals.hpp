@@ -38,4 +38,7 @@ constexpr const char* RPI_BATTERY_SOC =
 constexpr const char* RPI_BATTERY_VOLTAGE =
     "Vehicle.ControlUnit.Central.Health.Resources.BatteryVoltage";  // volts (float)
 
+constexpr const char* RPI_BATTERY_CURRENT =
+    "Vehicle.ControlUnit.Central.Health.Resources.BatteryCurrent";  // amps (float)
+
 } // namespace vss
