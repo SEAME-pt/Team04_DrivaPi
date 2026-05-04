@@ -92,24 +92,9 @@ static void HardFault_DumpContext(uint32_t *stack_ptr)
   g_hardfault_bfar  = SCB->BFAR;
 
 #if DEBUG_DIAGNOSTICS
-  (void)snprintf(line, sizeof(line),
-                 "\r\n[FAULT] HardFault CFSR=0x%08lX HFSR=0x%08lX MMFAR=0x%08lX BFAR=0x%08lX\r\n",
-                 (unsigned long)g_hardfault_cfsr,
-                 (unsigned long)g_hardfault_hfsr,
-                 (unsigned long)g_hardfault_mmfar,
-                 (unsigned long)g_hardfault_bfar);
+  (void)snprintf(line, sizeof(line), "\r\n[FAULT] HardFault CFSR=0x%08lX HFSR=0x%08lX MMFAR=0x%08lX BFAR=0x%08lX\r\n", (unsigned long)g_hardfault_cfsr, (unsigned long)g_hardfault_hfsr, (unsigned long)g_hardfault_mmfar, (unsigned long)g_hardfault_bfar);
   (void)HAL_UART_Transmit(&huart1, (uint8_t*)line, (uint16_t)strlen(line), 100);
-
-  (void)snprintf(line, sizeof(line),
-                 "[FAULT] r0=0x%08lX r1=0x%08lX r2=0x%08lX r3=0x%08lX r12=0x%08lX lr=0x%08lX pc=0x%08lX psr=0x%08lX\r\n",
-                 (unsigned long)g_hardfault_r0,
-                 (unsigned long)g_hardfault_r1,
-                 (unsigned long)g_hardfault_r2,
-                 (unsigned long)g_hardfault_r3,
-                 (unsigned long)g_hardfault_r12,
-                 (unsigned long)g_hardfault_lr,
-                 (unsigned long)g_hardfault_pc,
-                 (unsigned long)g_hardfault_psr);
+  (void)snprintf(line, sizeof(line), "[FAULT] r0=0x%08lX r1=0x%08lX r2=0x%08lX r3=0x%08lX r12=0x%08lX lr=0x%08lX pc=0x%08lX psr=0x%08lX\r\n", (unsigned long)g_hardfault_r0, (unsigned long)g_hardfault_r1, (unsigned long)g_hardfault_r2, (unsigned long)g_hardfault_r3, (unsigned long)g_hardfault_r12, (unsigned long)g_hardfault_lr, (unsigned long)g_hardfault_pc, (unsigned long)g_hardfault_psr);
   (void)HAL_UART_Transmit(&huart1, (uint8_t*)line, (uint16_t)strlen(line), 100);
 #endif
 }
