@@ -155,12 +155,7 @@ static void PublishBatteryAndInaData(void)
 		ina_dbg_count++;
 		if ((ina_dbg_count % 10u) == 0u)
 		{
-			UartPrintf("[CAN 0x211] bits=0x%08lX bytes=%02X %02X %02X %02X\r\n",
-				(unsigned long)current_bits,
-				(unsigned int)ina_cur_msg.data[0],
-				(unsigned int)ina_cur_msg.data[1],
-				(unsigned int)ina_cur_msg.data[2],
-				(unsigned int)ina_cur_msg.data[3]);
+			UartPrintf("[CAN 0x211] bits=0x%08lX bytes=%02X %02X %02X %02X\r\n", (unsigned long)current_bits, (unsigned int)ina_cur_msg.data[0], (unsigned int)ina_cur_msg.data[1], (unsigned int)ina_cur_msg.data[2], (unsigned int)ina_cur_msg.data[3]);
 		}
 #endif
 	}
