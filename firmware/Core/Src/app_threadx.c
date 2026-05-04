@@ -142,7 +142,9 @@ void MX_ThreadX_Init(void)
 
 static void AppThreadX_LogBootDiagnostics(void)
 {
+#if DEBUG_DIAGNOSTICS
 	const char *msg = "\r\n=== DrivaPi ThreadX Init ===\r\n";
+#endif
 	uint8_t saw_flag = 0u;
 
 #if DEBUG_DIAGNOSTICS
