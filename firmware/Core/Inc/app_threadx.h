@@ -96,12 +96,19 @@ typedef struct can_message_s
 #define FLAG_EMERGENCY_STOP (1 << 3)
 #define THREAD_STACK_SIZE	1024
 #define QUEUE_SIZE         	10
+#define MUTEX_WAIT_TICKS    20u
 #define CMD_SPEED           44u
 #define CMD_STEERING        45u
 
 #define CAN_ID_BATTERY_DATA        0x200  /* Battery percentage + voltage (512) */
 #define CAN_ID_HTS221_DATA         0x400  /* HTS221 Temperature + Humidity (1024) */
 #define CAN_ID_RND_GEAR            0x300  /* RND gear state (768) */
+#define CAN_ID_INA231_DATA         0x210  /* RPi battery: percentage + voltage (528) */
+#define CAN_ID_INA231_CURRENT      0x211  /* INA231 current: float amps (529) */
+#define CAN_ID_SYSTEM_WATCHDOG     0x7E0  /* System heartbeat for scheduler liveness */
+
+#define UART_BOOT_TIMEOUT_MS 20u
+#define UART_INIT_TIMEOUT_MS 20u
 
 /* RND Gear States */
 typedef enum {

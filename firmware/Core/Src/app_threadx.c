@@ -65,6 +65,8 @@ unsigned char			trace_buffer[TRACE_BUFFER_SIZE];
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
+static void AppThreadX_LogBootDiagnostics(void);
+static void AppThreadX_LogThreadInitMessage(void);
 
 /* USER CODE END PFP */
 
@@ -85,9 +87,7 @@ UINT ret = TX_SUCCESS;
 	g_currentGear = GEAR_NEUTRAL;
 	g_currentSpeed = 0.0f;
 	g_currentPWM = 0;
-
-	const char *msg = "\r\n=== DrivaPi ThreadX Init ===\r\n";
-	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+	AppThreadX_LogBootDiagnostics();
 
 	tx_queue_create(&g_queueSpeedCmd, "Speed Queue", sizeof(t_can_message)/sizeof(ULONG),
 	memory_ptr, QUEUE_SIZE * sizeof(t_can_message));
@@ -99,17 +99,16 @@ UINT ret = TX_SUCCESS;
 
 	tx_event_flags_create(&g_eventFlags, "System Events");
 
-	tx_mutex_create(&g_speedDataMutex, "Speed Data Mutex", TX_NO_INHERIT);
-	tx_mutex_create(&g_emergencyMutex, "Emergency Mutex", TX_NO_INHERIT);
-	tx_mutex_create(&g_canMutex, "CAN Mutex", TX_NO_INHERIT);
-	tx_mutex_create(&g_motorMutex, "Motor Mutex", TX_NO_INHERIT);
-	tx_mutex_create(&g_servoMutex, "Servo Mutex", TX_NO_INHERIT);
-	tx_mutex_create(&g_gearMutex, "Gear Mutex", TX_NO_INHERIT);
+	tx_mutex_create(&g_speedDataMutex, "Speed Data Mutex", TX_INHERIT);
+	tx_mutex_create(&g_emergencyMutex, "Emergency Mutex", TX_INHERIT);
+	tx_mutex_create(&g_canMutex, "CAN Mutex", TX_INHERIT);
+	tx_mutex_create(&g_motorMutex, "Motor Mutex", TX_INHERIT);
+	tx_mutex_create(&g_servoMutex, "Servo Mutex", TX_INHERIT);
+	tx_mutex_create(&g_gearMutex, "Gear Mutex", TX_INHERIT);
 
 	InitAllDevices();
 	MotorControlInit(&g_motorControlState);
-	msg = "Initializing threads...\r\n";
-	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+	AppThreadX_LogThreadInitMessage();
 	ThreadInit();
 
   /* USER CODE END App_ThreadX_Init */
@@ -125,9 +124,11 @@ UINT ret = TX_SUCCESS;
 void MX_ThreadX_Init(void)
 {
   /* USER CODE BEGIN Before_Kernel_Start */
+#if DEBUG_DIAGNOSTICS
 	tx_trace_enable(trace_buffer, sizeof(trace_buffer), 32);
 	SEGGER_SYSVIEW_Conf();
 	SEGGER_SYSVIEW_Start();
+#endif
   /* USER CODE END Before_Kernel_Start */
 
 	tx_kernel_enter();
@@ -138,4 +139,76 @@ void MX_ThreadX_Init(void)
 }
 
 /* USER CODE BEGIN 1 */
+
+static void AppThreadX_LogBootDiagnostics(void)
+{
+#if DEBUG_DIAGNOSTICS
+	const char *msg = "\r\n=== DrivaPi ThreadX Init ===\r\n";
+#endif
+	uint8_t saw_flag = 0u;
+
+#if DEBUG_DIAGNOSTICS
+	(void)HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), UART_BOOT_TIMEOUT_MS);
+#endif
+
+	if (__HAL_RCC_GET_FLAG(RCC_FLAG_WWDGRST))
+	{
+#if DEBUG_DIAGNOSTICS
+		msg = "[RESET] WWDG reset\r\n";
+		(void)HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), UART_BOOT_TIMEOUT_MS);
+#endif
+		saw_flag = 1u;
+	}
+	if (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST))
+	{
+#if DEBUG_DIAGNOSTICS
+		msg = "[RESET] IWDG reset\r\n";
+		(void)HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), UART_BOOT_TIMEOUT_MS);
+#endif
+		saw_flag = 1u;
+	}
+	if (__HAL_RCC_GET_FLAG(RCC_FLAG_SFTRST))
+	{
+#if DEBUG_DIAGNOSTICS
+		msg = "[RESET] Software reset\r\n";
+		(void)HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), UART_BOOT_TIMEOUT_MS);
+#endif
+		saw_flag = 1u;
+	}
+	if (__HAL_RCC_GET_FLAG(RCC_FLAG_BORRST))
+	{
+#if DEBUG_DIAGNOSTICS
+		msg = "[RESET] BOR/POR reset\r\n";
+		(void)HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), UART_BOOT_TIMEOUT_MS);
+#endif
+		saw_flag = 1u;
+	}
+	if (__HAL_RCC_GET_FLAG(RCC_FLAG_PINRST))
+	{
+#if DEBUG_DIAGNOSTICS
+		msg = "[RESET] Pin reset\r\n";
+		(void)HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), UART_BOOT_TIMEOUT_MS);
+#endif
+		saw_flag = 1u;
+	}
+#if DEBUG_DIAGNOSTICS
+	if (!saw_flag)
+	{
+		msg = "[RESET] No reset flag set\r\n";
+		(void)HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), UART_BOOT_TIMEOUT_MS);
+	}
+#else
+	(void)saw_flag;
+#endif
+	__HAL_RCC_CLEAR_RESET_FLAGS();
+}
+
+static void AppThreadX_LogThreadInitMessage(void)
+{
+#if DEBUG_DIAGNOSTICS
+	const char *msg = "Initializing threads...\r\n";
+	(void)HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), UART_BOOT_TIMEOUT_MS);
+#endif
+}
+
 /* USER CODE END 1 */
