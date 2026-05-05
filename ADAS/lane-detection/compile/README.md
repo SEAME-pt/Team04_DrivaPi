@@ -4,7 +4,9 @@ Build and optimize lane detection models with the Hailo AI Software Suite Docker
 
 ## Overview
 
-This module provides Docker-based tools for:
+This module provides Docker-based tools for compiling and optimizing trained YOLO lane detection models using Hailo's dataflow compiler with GPU acceleration.
+
+### What This Module Does
 
 - **Model Compilation**: Convert trained YOLO models to Hailo-optimized format
 - **GPU Acceleration**: Hardware-accelerated compilation and quantization
@@ -13,62 +15,72 @@ This module provides Docker-based tools for:
 
 ## Quick Start
 
-First-time setup: See [INSTALL.md](INSTALL.md)
+### 1. Setup (First Time Only)
 
-After installation, run the container:
+Install Docker, NVIDIA runtime, and download the Hailo container:
 
 ```bash
-cd hailo8_ai_sw_suite_*_docker
-bash hailo_ai_sw_suite_docker_run.sh
+# See complete installation instructions
+# INSTALL.md covers all setup steps
 ```
+
+See [install.md](install.md) for detailed setup.
+
+### 2. Compile Your Model
+
+```bash
+# See complete compilation workflow
+# compile.md walks through the entire process
+```
+
+See [compile.md](compile.md) for step-by-step compilation guide.
 
 ## Key Features
 
 - **GPU-Accelerated Compilation**: Faster model optimization with NVIDIA GPU
-- **Automatic Hardware Detection**: Scripts detect and configure GPU support
-- **Shared Directory Workflow**: Transfer models between host and container
+- **Automatic Hardware Detection**: Scripts detect and configure GPU support automatically
+- **Shared Directory Workflow**: Easy file transfer between host and container
 - **System Validation**: Automatic requirement checking before execution
+
+## Documentation
+
+- **[install.md](install.md)** - Complete installation and setup guide
+  - Docker installation
+  - NVIDIA Docker runtime setup
+  - Hailo container download and build
+  - Troubleshooting setup issues
+
+- **[compile.md](compile.md)** - Model compilation workflow
+  - Training integration
+  - Model preparation
+  - Compilation process
+  - Optimization techniques
+  - Deployment integration
 
 ## Directory Structure
 
 ```
 compile/
 ├── README.md          # This overview
-├── INSTALL.md         # Detailed installation guide
+├── install.md         # Detailed installation guide
+├── compile.md         # Detailed compilation guide
 ```
 
-## Workflow
+## Workflow Overview
 
-### 1. Train Model (Lane Detection)
-
-```bash
-cd ADAS/lane-detection/scripts/train
-python main.py --config training_config.yaml
-```
-
-### 2. Prepare for Compilation
-
-```bash
-# Copy trained model to shared directory
-cp ADAS/lane-detection/scripts/train/runs/train/*/weights/best.pt \
-   hailo8_ai_sw_suite_*_docker/shared_with_docker/
-```
-
-### 3. Run Compilation in Hailo Container
-
-```bash
-cd hailo8_ai_sw_suite_*_docker
-bash hailo_ai_sw_suite_docker_run.sh
-
-# Inside container:
-cd /local/shared_with_docker
-# Run Hailo compilation tools
-dataflow-compiler --help
-```
+1. **Train** → See [../train/README.md](../train/README.md)
+2. **Install** → See [install.md](install.md)
+3. **Compile** → See [compile.md](compile.md)
+4. **Deploy** → Follow your target hardware deployment guide
 
 ## Next Steps
 
-- **Setup**: See [INSTALL.md](INSTALL.md) for complete installation
-- **Hailo Documentation**: [Hailo AI](https://hailo.ai/)
-- **NVIDIA Docker**: [NVIDIA Docker Docs](https://github.com/NVIDIA/nvidia-docker)
-- **Issues**: Check [INSTALL.md - Troubleshooting](INSTALL.md#troubleshooting)
+- **First time?** Start with [install.md](install.md)
+- **Ready to compile?** Follow [compile.md](compile.md)
+- **Need help?** Check [install.md - Troubleshooting](install.md#troubleshooting)
+
+## Resources
+
+- [Hailo AI Documentation](https://hailo.ai/)
+- [NVIDIA Docker](https://github.com/NVIDIA/nvidia-docker)
+- [Lane Detection Training](../train/README.md)
