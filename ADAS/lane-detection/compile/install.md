@@ -47,36 +47,14 @@ docker --version
 
 ## NVIDIA Docker Runtime
 
-### Install NVIDIA Docker Runtime (GPU Support)
-
-Required for GPU acceleration in containers. The NVIDIA Container Toolkit provides the necessary runtime support.
-
-#### Standard Installation (Recommended)
-
-```bash
-# Ubuntu 22.04 / 24.04
-# Add NVIDIA repository with GPG key (modern method, apt-key is deprecated)
-distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | \
-  sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
-
-curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | \
-  sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
-  sudo tee /etc/apt/sources.list.d/nvidia-docker.list > /dev/null
-
-sudo apt update
-sudo apt install -y nvidia-docker2
-sudo systemctl restart docker
-```
-
 #### Installation from Source
 
 For advanced users or custom builds:
 
 ```bash
 # Clone the repository
-git clone https://github.com/NVIDIA/nvidia-docker.git
-cd nvidia-docker
+git clone https://github.com/NVIDIA/nvidia-container-toolkit.git
+cd nvidia-container-toolkit
 
 # Install dependencies
 sudo apt install -y build-essential
