@@ -18,6 +18,7 @@
 void MotorSetPWM(int32_t left_counts, int32_t right_counts)
 {
 	const uint16_t max = (uint16_t)(PCA9685_COUNTS - 1u);
+	int16_t pwm_value = 0;
 
 	/* Left motor */
 	if (left_counts > 0)
@@ -26,7 +27,7 @@ void MotorSetPWM(int32_t left_counts, int32_t right_counts)
 		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, max);
 		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, 0);
 		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, pwm);
-		g_current_pwm = (int16_t)pwm;
+		pwm_value = (int16_t)pwm;
 	}
 	else if (left_counts < 0)
 	{
@@ -34,14 +35,14 @@ void MotorSetPWM(int32_t left_counts, int32_t right_counts)
 		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, 0);
 		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, max);
 		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, pwm);
-		g_current_pwm = -(int16_t)pwm;
+		pwm_value = -(int16_t)pwm;
 	}
 	else
 	{
 		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, max);
 		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, max);
 		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, max);
-		g_current_pwm = 0;
+		pwm_value = 0;
 	}
 
 	/* Right motor */
@@ -65,6 +66,11 @@ void MotorSetPWM(int32_t left_counts, int32_t right_counts)
 		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, max);
 		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, max);
 	}
+	
+	// Update shared PWM state with mutex protection
+	tx_mutex_get(&g_speedDataMutex, TX_WAIT_FOREVER);
+	g_current_pwm = pwm_value;
+	tx_mutex_put(&g_speedDataMutex);
 }
 
 /**
@@ -110,6 +116,12 @@ VOID DcMotor(ULONG initial_input)
 					tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
 					MotorSetPWM(left_count, right_count);
 					tx_mutex_put(&g_motorMutex);
+					
+					// Update command variables for module to read
+					g_latest_speed_command_tick = tx_time_get();
+					g_latest_speed_command_left = left_count;
+					g_latest_speed_command_right = right_count;
+					g_latest_speed_command_valid = 1u;
 				}
 				else if (msg.len >= 4)
 				{
@@ -119,6 +131,12 @@ VOID DcMotor(ULONG initial_input)
 					tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
 					MotorSetPWM(counts, counts);
 					tx_mutex_put(&g_motorMutex);
+					
+					// Update command variables for module to read
+					g_latest_speed_command_tick = tx_time_get();
+					g_latest_speed_command_left = counts;
+					g_latest_speed_command_right = counts;
+					g_latest_speed_command_valid = 1u;
 				}
 			}
 		}

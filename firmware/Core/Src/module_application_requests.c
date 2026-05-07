@@ -328,12 +328,22 @@ UINT _txm_module_manager_application_request(ULONG request_id, ALIGN_TYPE param_
     }
 
     case ULTRASONIC_MODULE_REQ_GET_CURRENT_SPEED_MMPS:
+    {
         TouchHeartbeat(&g_ultrasonic_module_last_tick);
-        return (UINT)((INT)(g_vehicleSpeed * 1000.0f));
+        tx_mutex_get(&g_speedDataMutex, TX_WAIT_FOREVER);
+        INT speed_mmps = (INT)(g_vehicleSpeed * 1000.0f);
+        tx_mutex_put(&g_speedDataMutex);
+        return (UINT)speed_mmps;
+    }
 
     case ULTRASONIC_MODULE_REQ_GET_CURRENT_GEAR:
+    {
         TouchHeartbeat(&g_ultrasonic_module_last_tick);
-        return (UINT)g_current_gear;
+        tx_mutex_get(&g_gearMutex, TX_WAIT_FOREVER);
+        RNDGear_t gear = g_current_gear;
+        tx_mutex_put(&g_gearMutex);
+        return (UINT)gear;
+    }
 
     case ULTRASONIC_MODULE_REQ_SET_EMERGENCY_BRAKE:
         TouchHeartbeat(&g_ultrasonic_module_last_tick);

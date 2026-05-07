@@ -53,6 +53,11 @@ void ServoMotor(ULONG initial_input)
 			uint16_t angle = (uint16_t)angle_f;
 			SetServoAngle(SERVO_CH, angle);
 			tx_mutex_put(&g_servoMutex);
+			
+			// Update command variables for module to read
+			g_latest_servo_command_tick = tx_time_get();
+			g_latest_servo_command_angle = angle;
+			g_latest_servo_command_valid = 1u;
 		}
 	}
 }
