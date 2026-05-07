@@ -84,8 +84,12 @@ def merge_config_with_args(args, config_dict):
         for key, value in config_dict.items():
             # Only normalize hyphens when it matches a known CLI arg
             cli_key = key.replace("-", "_")
+            print(f"Processing config key: {key} (CLI key: {cli_key}) with value: {value}")
             if not hasattr(args, cli_key):
+                print(f"Loading config value for {key}: {value}")
                 setattr(args, key, value)
+            elif getattr(args, cli_key) is None:
+                setattr(args, cli_key, value)
         print(f"Loaded configuration from config file")
     
     return args

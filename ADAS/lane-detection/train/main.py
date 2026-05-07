@@ -23,10 +23,11 @@ def main():
     
     Loads configuration and starts training process.
     """
-    print("Starting training...")
-    args = get_config()
-    train(args)
-
+    try:
+        args = get_config()
+        train(args)
+    except Exception as e:
+        print(f"Error occurred: {e}")
 
 if __name__ == "__main__":
     main()
