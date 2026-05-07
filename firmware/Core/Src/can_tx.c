@@ -10,6 +10,11 @@
 */
 #include "app_threadx.h"
 
+/**
+ * @brief Queue a CAN message for transmission.
+ * @param msg Pointer to the CAN message structure.
+ * @return TX_SUCCESS on successful queue, TX_PTR_ERROR if msg is NULL.
+ */
 static UINT QueueCanMessage(const t_can_message *msg)
 {
 	if (msg == NULL)
@@ -20,6 +25,11 @@ static UINT QueueCanMessage(const t_can_message *msg)
 	return tx_queue_send(&g_queueCanTx, (VOID *)msg, TX_NO_WAIT);
 }
 
+/**
+ * @brief Queue HTS221 temperature and humidity telemetry for CAN transmission.
+ * @details Caches and sends only when values change or heartbeat interval expires.
+ * @return None.
+ */
 static VOID QueueHts221Telemetry(VOID)
 {
 	HTS221_Data_t data;
@@ -64,6 +74,11 @@ static VOID QueueHts221Telemetry(VOID)
 	}
 }
 
+/**
+ * @brief Queue battery voltage and charge percentage telemetry for CAN transmission.
+ * @details Caches and sends only when values change or heartbeat interval expires.
+ * @return None.
+ */
 static VOID QueueBatteryTelemetry(VOID)
 {
 	Battery_Data_t data;

@@ -1,5 +1,15 @@
+/**
+ * @file ultrasonic.c
+ * @brief Ultrasonic SRF08 sensor driver and emergency braking logic.
+ * @details Implements obstacle detection with time-to-collision calculation.
+ */
+
 #include "ultrasonic.h"
 
+/**
+ * @brief Initialize the SRF08 ultrasonic sensor with range configuration.
+ * @return HAL_OK on successful initialization, HAL_ERROR otherwise.
+ */
 HAL_StatusTypeDef UltrasonicModuleInit(void)
 {
 	uint8_t	verify_range = 0;
@@ -41,6 +51,11 @@ HAL_StatusTypeDef UltrasonicModuleInit(void)
 	return HAL_ERROR;
 }
 
+/**
+ * @brief Read the current distance measurement from SRF08 sensor in centimeters.
+ * @param range_cm Pointer to output the measured distance in centimeters.
+ * @return HAL_OK on success, HAL_ERROR if output pointer is NULL or I2C fails.
+ */
 HAL_StatusTypeDef UltrasonicReadRangeCm(int16_t *range_cm)
 {
 	uint8_t high_byte, low_byte;

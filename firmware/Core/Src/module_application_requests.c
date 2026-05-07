@@ -1,3 +1,9 @@
+/**
+ * @file module_application_requests.c
+ * @brief Application request dispatcher for ThreadX module callbacks.
+ * @details Handles all inter-module communication and kernel-side request processing.
+ */
+
 #include "app_threadx.h"
 #include "speed_sensor_module_api.h"
 #include "sensors_module_api.h"
@@ -11,6 +17,11 @@
 #include "dc_motor.h"
 #include "servo_motor.h"
 
+/**
+ * @brief Update the heartbeat timestamp for a module.
+ * @param tick_ptr Pointer to the module's last activity tick.
+ * @return None.
+ */
 static VOID TouchHeartbeat(ULONG *tick_ptr)
 {
     if (tick_ptr != TX_NULL)
@@ -19,9 +30,14 @@ static VOID TouchHeartbeat(ULONG *tick_ptr)
     }
 }
 
-/*
- * Application-specific request dispatcher used by ThreadX modules.
- * This replaces the default TX_NOT_AVAILABLE stub in middleware.
+/**
+ * @brief Application-specific request dispatcher used by ThreadX modules.
+ * @details This replaces the default TX_NOT_AVAILABLE stub in middleware.
+ * @param request_id Module API request identifier.
+ * @param param_1 First request parameter.
+ * @param param_2 Second request parameter.
+ * @param param_3 Third request parameter.
+ * @return Module-specific status or result value.
  */
 UINT _txm_module_manager_application_request(ULONG request_id, ALIGN_TYPE param_1, ALIGN_TYPE param_2, ALIGN_TYPE param_3)
 {
