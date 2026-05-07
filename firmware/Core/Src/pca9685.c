@@ -130,13 +130,6 @@ HAL_StatusTypeDef PCA9685_SetPWM(uint16_t addr, uint8_t channel, uint16_t on, ui
 }
 
 /**
- *
- * @param hi2c
- * @param addr7
- * @param freq
- * @return
- */
-/**
  * @brief Set the PWM frequency for a PCA9685 device.
  * @param addr7 7-bit I2C device address.
  * @param freq Desired frequency in Hertz (24-1526 Hz range).
