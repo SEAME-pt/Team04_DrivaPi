@@ -79,7 +79,7 @@ def save_training_results(model, results, args, local_rank):
     # Build results dictionary with all training information
     results_dict = {
         "training_complete": True,
-        "final_metrics": results.results_dict if hasattr(results, 'results_dict') else {},
+        "results_dict": results.results_dict if hasattr(results, 'results_dict') else {},
         "model_path": args.weights  # Initial model used
     }
     

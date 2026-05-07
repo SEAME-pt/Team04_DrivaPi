@@ -11,10 +11,11 @@ Usage:
 """
 import argparse
 import os
+import sys
 import yaml
 
 
-def parse_arguments():
+def parse_arguments(argv=None):
     """Parse command line arguments for training.
     
     Returns:
@@ -36,7 +37,11 @@ def parse_arguments():
     parser.add_argument("--lr0", type=float, default=None, help="Initial learning rate")
     parser.add_argument("--lrf", type=float, default=None, help="Final learning rate fraction")
     
-    return parser.parse_args()
+    if argv is None:
+        argv = sys.argv[1:]
+
+    args = parser.parse_args(argv)
+    return args
 
 
 def load_config_from_yaml(config_path):
@@ -73,17 +78,14 @@ def merge_config_with_args(args, config_dict):
     Returns:
         argparse.Namespace: Updated arguments with config values
     """
+
     if config_dict:
         # Update args with config values (keys can use hyphens in YAML)
         for key, value in config_dict.items():
-            # Convert hyphens to underscores for Python attribute names
-            key = key.replace("-", "_")
-            if hasattr(args, key):
+            # Only normalize hyphens when it matches a known CLI arg
+            cli_key = key.replace("-", "_")
+            if not hasattr(args, cli_key):
                 setattr(args, key, value)
-            else:
-                # Add new attributes from config if they don't exist in parser
-                setattr(args, key, value)
-        
         print(f"Loaded configuration from config file")
     
     return args

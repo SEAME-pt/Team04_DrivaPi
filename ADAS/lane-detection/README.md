@@ -26,9 +26,9 @@ The lane detection module provides:
 Navigate to the training directory and run training:
 
 ```bash
-cd ADAS/lane-detection/scripts/train
+cd ADAS/lane-detection/train
 source .venv/bin/activate
 python main.py --config training_config.yaml
 ```
 
-For complete environment setup, dataset preparation, and detailed training instructions, see [solo_train.md](scripts/train/solo_train.md).
+For complete environment setup, dataset preparation, and detailed training instructions, see [solo_train.md](train/solo_train.md).
