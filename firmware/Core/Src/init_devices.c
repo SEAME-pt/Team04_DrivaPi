@@ -15,7 +15,6 @@ void InitAllDevices(void)
 {
 	const char *msg = "Initializing PCA9685 devices...\r\n";
 	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
-	PCA9685_InitAllDevices();
 
 	if (BatteryInit(&hi2c3) == HAL_OK)
 	{

@@ -11,24 +11,16 @@
 #include "servo_motor.h"
 
 /**
- * @brief Set a servo angle using PCA9685 PWM output.
- *
- * @param channel PWM channel index.
- * @param angle_deg Target angle in degrees.
- * @return int 1 on success.
- */
-int SetServoAngle(uint8_t channel, uint16_t angle_deg)
-{
-	if (angle_deg > 180u)
-		angle_deg = 180u;
+  * @brief Maps physical angle (0-180) to Servo duty cycle (1ms to 2ms pulse)
+  * Utilizing the TIM8 ARR of 19999.
+  */
+void SetServoAngle(uint8_t angle) {
+    if (angle > 180) angle = 180;
 
-	uint16_t range = SERVO_MAX_PULSE - SERVO_MIN_PULSE;
-	uint16_t pulse = SERVO_MIN_PULSE + (range * angle_deg) / 180u;
-	HAL_StatusTypeDef status = PCA9685_SetPWM(PCA9685_ADDR_SERVO, channel, 0, pulse);
-	if (status == HAL_OK)
-		return 1;
-	else
-		return 0;
+    // Maps 0 - 180 degrees to 1000 - 2000 pulse width ticks
+    uint32_t compare_value = 1000 + ((uint32_t)angle * 1000 / 180);
+
+    __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_4, compare_value);
 }
 
 /**
@@ -51,7 +43,7 @@ void ServoMotor(ULONG initial_input)
 			tx_mutex_get(&g_servoMutex, TX_WAIT_FOREVER);
 			float angle_f = *((float *)msg.data);
 			uint16_t angle = (uint16_t)angle_f;
-			SetServoAngle(SERVO_CH, angle);
+			SetServoAngle(angle);
 			tx_mutex_put(&g_servoMutex);
 		}
 	}

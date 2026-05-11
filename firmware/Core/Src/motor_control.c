@@ -28,7 +28,7 @@ void MotorControlUpdate(MotorControlState *state, float current_speed)
         state->pwm_raw = 0;
         state->integral = 0.0f;  // Reset integral when stopped
         tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
-        MotorSetPWM(state->pwm_raw, state->pwm_raw);
+        MoveMotors(state->pwm_raw, false);
         tx_mutex_put(&g_motorMutex);
         state->current_speed = current_hm;
         return;
@@ -68,7 +68,7 @@ void MotorControlUpdate(MotorControlState *state, float current_speed)
     state->pwm_raw = pwm_magnitude * target_direction;
     
     tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
-    MotorSetPWM((int32_t)state->pwm_raw, (int32_t)state->pwm_raw);
+    MoveMotors(state->pwm_raw, false);
     tx_mutex_put(&g_motorMutex);
     
     state->current_speed = current_hm;

@@ -1,0 +1,2 @@
+../Core/Src/servo_motor.c:17:6:SetServoAngle	2
+../Core/Src/servo_motor.c:32:6:ServoMotor	2

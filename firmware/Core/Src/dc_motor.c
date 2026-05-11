@@ -10,78 +10,49 @@
 #include "dc_motor.h"
 
 /**
- * @brief Set PWM values for left and right DC motors based on pulse counts
- * 
- * @param left_counts PWM pulse count for left motor (positive=forward, negative=reverse, 0=neutral)
- * @param right_counts PWM pulse count for right motor (positive=forward, negative=reverse, 0=neutral)
- */
-void MotorSetPWM(int32_t left_counts, int32_t right_counts)
+  * @brief Controls motor direction and speed
+  * @param speed Target speed (0 to 665)
+  * @param forward True for forward, False for backward
+  */
+void MoveMotors(uint16_t speed, bool forward)
 {
-	const uint16_t max = (uint16_t)(PCA9685_COUNTS - 1u);
+    if (speed > 665) speed = 665;
 
-	/* Left motor */
-	if (left_counts > 0)
-	{
-		uint16_t pwm = ClampU16(left_counts);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, max);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, 0);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, pwm);
-		g_currentPWM = (int16_t)pwm;
-	}
-	else if (left_counts < 0)
-	{
-		uint16_t pwm = ClampU16(-left_counts);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, 0);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, max);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, pwm);
-		g_currentPWM = -(int16_t)pwm;
-	}
-	else
-	{
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, 0);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, 0);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, 0);
-		g_currentPWM = 0;
-	}
+    // Set Motor PWM Speeds
+    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, speed);
+    __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, speed);
 
-	/* Right motor */
-	if (right_counts > 0)
-	{
-		uint16_t pwm = ClampU16(right_counts);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, 0);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, max);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, pwm);
-	}
-	else if (right_counts < 0)
-	{
-		uint16_t pwm = ClampU16(-right_counts);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, max);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, 0);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, pwm);
-	}
-	else
-	{
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, 0);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, 0);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, 0);
-		g_currentPWM = 0;
-	}
+    if (forward) {
+        // Motor A Forward
+        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_7, GPIO_PIN_SET);   // AIN1 -> HIGH
+        HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_RESET);// AIN2 -> LOW
+        // Motor B Forward
+        HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, GPIO_PIN_SET);   // BIN1 -> HIGH
+        HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, GPIO_PIN_RESET); // BIN2 -> LOW
+    }
+    else {
+        // Motor A Backward
+        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_7, GPIO_PIN_RESET); // AIN1 -> LOW
+        HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET);  // AIN2 -> HIGH
+        // Motor B Backward
+        HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, GPIO_PIN_RESET); // BIN1 -> LOW
+        HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, GPIO_PIN_SET);   // BIN2 -> HIGH
+    }
 }
 
 /**
- * @brief Set PWM values for left and right DC motors to stop them
- */
-void MotorBrake(void)
-{
-	const uint16_t max = (uint16_t)(PCA9685_COUNTS - 1u);
-	
-	PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, max);
-	PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, max);
-	PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, max);
+  * @brief Stops both DC motors and cuts PWM signals
+  */
+void StopMotors(void) {
+    // Clear direction pins
+    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_7, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, GPIO_PIN_RESET);
 
-	PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, max);
-	PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, max);
-	PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, max);
+    // Set PWM duty cycles to 0
+    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 0);
+    __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, 0);
 }
 
 /**
@@ -126,7 +97,7 @@ VOID DcMotor(ULONG initial_input)
 		else
 		{
 			tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
-		    MotorBrake();
+		    StopMotors();
 		    tx_mutex_put(&g_motorMutex);
 		}
 		

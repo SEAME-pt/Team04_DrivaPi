@@ -1,0 +1,4 @@
+../Core/Src/app_threadx.c:78:6:App_ThreadX_Init	1
+../Core/Src/app_threadx.c:124:6:MX_ThreadX_Init	1
+../Core/Src/app_threadx.c:143:13:AppThreadX_LogBootDiagnostics	6
+../Core/Src/app_threadx.c:206:13:AppThreadX_LogThreadInitMessage	1
