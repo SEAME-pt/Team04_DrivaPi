@@ -17,7 +17,7 @@ static const uint32_t SENSOR_I2C_TIMEOUT_MS = 100;
 /* ============================================================================
  * Private Variables
  * ============================================================================ */
-static volatile bool        g_batteryPowerReady = false;
+bool        				g_batteryPowerReady = false;
 static uint8_t              g_ina231Addr7bit = INA231_I2C_ADDRESS;
 static HTS221_Calibration_t calib_data;
 

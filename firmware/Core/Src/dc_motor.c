@@ -16,7 +16,8 @@
   */
 void MoveMotors(uint16_t speed, bool forward)
 {
-    if (speed > 665) speed = 665;
+    if (speed > 665)
+    	speed = 665;
 
     // Set Motor PWM Speeds
     __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, speed);
@@ -43,7 +44,8 @@ void MoveMotors(uint16_t speed, bool forward)
 /**
   * @brief Stops both DC motors and cuts PWM signals
   */
-void StopMotors(void) {
+void StopMotors(void)
+{
     // Clear direction pins
     HAL_GPIO_WritePin(GPIOE, GPIO_PIN_7, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_RESET);
@@ -76,8 +78,11 @@ VOID DcMotor(ULONG initial_input)
 			while (tx_queue_receive(&g_queueSpeedCmd, &msg, TX_NO_WAIT) == TX_SUCCESS)
 			{	
 				g_targetSpeed = 0;
-				memcpy(&g_targetSpeed, msg.data, sizeof(int32_t));
-				memcpy(&g_motorControlState.direction, msg.data + sizeof(int32_t), sizeof(int32_t));	
+				memcpy(&g_targetSpeed, msg.data , sizeof(int32_t));
+				memcpy(&g_motorControlState.direction, msg.data + sizeof(int32_t), sizeof(int32_t));
+				UartPrintf("Direction: %d\r\n",g_motorControlState.direction);
+				UartPrintf("Speed: %d\r\n",g_targetSpeed);
+
 			}
 		}
 
@@ -92,7 +97,12 @@ VOID DcMotor(ULONG initial_input)
 
 		if (g_motorControlState.direction == FORWARD || g_motorControlState.direction == BACKWARD)
 		{
-			UpdateMotorControl();
+			//UpdateMotorControl();
+			if (g_motorControlState.direction == FORWARD)
+				MoveMotors(g_targetSpeed, true);
+			else
+				MoveMotors(g_targetSpeed, false);
+
 		}
 		else
 		{
