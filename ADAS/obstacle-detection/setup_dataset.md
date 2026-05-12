@@ -26,7 +26,7 @@ pip install -r requirements.txt
 Run the following command from the `obstacle-detection/` directory:
 
 ```bash
-curl -L "[https://app.roboflow.com/ds/grk91iJX3K?key=Nioy375aY6](https://app.roboflow.com/ds/grk91iJX3K?key=Nioy375aY6)" > roboflow.zip
+curl -L "https://app.roboflow.com/ds/grk91iJX3K?key=Nioy375aY6" > roboflow.zip
 unzip roboflow.zip -d ./dataset/
 rm roboflow.zip
 
