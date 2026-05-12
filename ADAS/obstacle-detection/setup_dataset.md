@@ -31,6 +31,12 @@ unzip roboflow.zip -d ./dataset/
 rm roboflow.zip
 
 ```
+# IMPORTANT: Fix data.yaml paths
+# Roboflow exports often use absolute or incorrect relative paths.
+# Ensure 'dataset/data.yaml' has:
+# path: ../dataset
+# train: train/images
+# val: train/images (if no 'valid' folder exists)
 
 ---
 
