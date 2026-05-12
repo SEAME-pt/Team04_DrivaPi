@@ -324,7 +324,7 @@ static uint8_t BatteryPercentFrom2SVoltage(float voltage_v)
 HAL_StatusTypeDef BatteryInit(I2C_HandleTypeDef *hi2c)
 {
     UartPrintf("Battery: Initializing INA231 at I2C address 0x%02X (using I2C%d)\r\n",
-               g_ina231Addr7bit, (hi2c == &hi2c2) ? 2 : 1);
+    g_ina231Addr7bit, (hi2c == &hi2c2) ? 2 : 1);
 
     /* PE13 power is enabled during GPIO init in main.c. */
     tx_thread_sleep(2);
@@ -462,7 +462,7 @@ HAL_StatusTypeDef Battery_ReadCurrent(I2C_HandleTypeDef *hi2c, float *current)
     if ((dbg_sample_count % 10u) == 0u)
     {
         UartPrintf("[INA231 CUR] reg_raw=%d reg=0x%02X%02X | shunt_raw=%d reg=0x%02X%02X\r\n", (int)current_raw,
-                   (unsigned int)buf[0], (unsigned int)buf[1], (int)shunt_raw, (unsigned int)shunt_buf[0], (unsigned int)shunt_buf[1]);
+        (unsigned int)buf[0], (unsigned int)buf[1], (int)shunt_raw, (unsigned int)shunt_buf[0], (unsigned int)shunt_buf[1]);
     }
 
     return HAL_OK;
