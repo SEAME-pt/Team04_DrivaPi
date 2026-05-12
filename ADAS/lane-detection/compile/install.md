@@ -45,23 +45,27 @@ Verify Docker installation:
 docker --version
 ```
 
-## NVIDIA Docker Runtime
+## NVIDIA Docker Runtime Installation
 
-#### Installation from Source
-
-For advanced users or custom builds:
+To enable GPU support in Docker containers, install the NVIDIA Container Toolkit:
 
 ```bash
-# Clone the repository
-git clone https://github.com/NVIDIA/nvidia-container-toolkit.git
-cd nvidia-container-toolkit
+# 1. Add NVIDIA's GPG key and repository
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
 
-# Install dependencies
-sudo apt install -y build-essential
+curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+  sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+  sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
 
-# Build and install
-make ubuntu
-sudo make install
+# 2. Install it
+sudo apt-get update
+sudo apt-get install -y nvidia-container-toolkit
+
+# 3. Configure Docker to use it
+sudo nvidia-ctk runtime configure --runtime=docker
+
+# 4. Restart Docker
+sudo systemctl restart docker
 ```
 
 #### Verify Installation
@@ -69,45 +73,9 @@ sudo make install
 After installation, verify nvidia-docker is installed:
 
 ```bash
-# Check nvidia-docker version
-nvidia-docker version
+# Check if nvidia-docker is available
+docker run --rm --gpus all nvidia/cuda:12.0-base nvidia-smi
 ```
-
-#### Post-Installation Setup
-
-Ensure Docker daemon can access the NVIDIA runtime:
-
-```bash
-# Check if daemon.json exists
-cat /etc/docker/daemon.json
-
-# If not configured, add NVIDIA runtime:
-sudo tee /etc/docker/daemon.json > /dev/null <<EOF
-{
-    "runtimes": {
-        "nvidia": {
-            "path": "/usr/bin/nvidia-container-runtime",
-            "runtimeArgs": []
-        }
-    }
-}
-EOF
-
-# Reload and restart Docker
-sudo systemctl daemon-reload
-sudo systemctl restart docker
-```
-
-#### Verify GPU Access
-
-After daemon setup, verify GPU access works:
-
-```bash
-# Test GPU access in container
-docker run --rm --gpus all nvidia/cuda:11.8.0-base-ubuntu22.04 nvidia-smi
-```
-
-Expected output: GPU information and CUDA version from nvidia-smi
 
 ## Download Hailo Docker Image
 
@@ -176,60 +144,6 @@ hailo --version
 
 ## Troubleshooting
 
-### nvidia-docker: command not found
-
-**Problem**: `nvidia-docker: command not found` when running nvidia-docker version
-
-**Solution**:
-
-The NVIDIA Container Toolkit may not be properly installed or not in your PATH. Try the following steps:
-
-1. **Check if nvidia-container-toolkit is installed**:
-   ```bash
-   which nvidia-container-runtime
-   dpkg -l | grep nvidia-container-toolkit
-   ```
-
-2. **If not installed, install it**:
-   ```bash
-   distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-   curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | \
-     sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-   
-   sudo apt update
-   sudo apt install -y nvidia-container-toolkit
-   sudo systemctl restart docker
-   ```
-
-3. **Update PATH and refresh environment**:
-   ```bash
-   /usr/bin/nvidia-container-runtime --version
-
-   # If found just add the path to your environment
-   export PATH="/usr/bin:$PATH"
-   nvidia-smi  # Verify GPU is accessible
-   ```
-
-4. **Use docker with NVIDIA runtime instead**:
-   If nvidia-docker command is still not found, use docker directly with NVIDIA runtime:
-   ```bash
-   docker run --rm --runtime=nvidia --gpus all nvidia/cuda:11.8.0-base-ubuntu22.04 nvidia-smi
-   ```
-
-5. **Verify daemon.json configuration**:
-   ```bash
-   cat /etc/docker/daemon.json
-   # Should contain nvidia runtime configuration
-   ```
-
-6. **Rebuild the connection to Docker daemon**:
-   ```bash
-   sudo systemctl daemon-reload
-   sudo systemctl restart docker
-   
-   # Test again
-   docker run --rm --gpus all nvidia/cuda:11.8.0-base-ubuntu22.04 nvidia-smi
-   ```
 
 ### GPU Not Detected in Container
 
@@ -241,7 +155,7 @@ The NVIDIA Container Toolkit may not be properly installed or not in your PATH. 
 nvidia-smi
 
 # Check nvidia-docker installation
-docker run --rm --gpus all nvidia/cuda:11.8.0-base-ubuntu22.04 nvidia-smi
+docker run --rm --gpus all nvidia/cuda:12.0-base nvidia-smi
 
 # Restart Docker daemon
 sudo systemctl restart docker
