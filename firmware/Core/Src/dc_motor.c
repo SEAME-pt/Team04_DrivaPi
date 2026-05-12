@@ -23,15 +23,17 @@ void MoveMotors(uint16_t speed, bool forward)
     __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, speed);
     __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, speed);
 
-    if (forward) {
+    if (forward)
+    {
         // Motor A Forward
-        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_7, GPIO_PIN_SET);   // AIN1 -> HIGH
-        HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_RESET);// AIN2 -> LOW
+        HAL_GPIO_WritePin(GPIOE, AIN1_Pin, GPIO_PIN_SET);   // AIN1 -> HIGH
+        HAL_GPIO_WritePin(GPIOD, AIN2_Pin, GPIO_PIN_RESET);// AIN2 -> LOW
         // Motor B Forward
-        HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, GPIO_PIN_SET);   // BIN1 -> HIGH
-        HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, GPIO_PIN_RESET); // BIN2 -> LOW
+        HAL_GPIO_WritePin(GPIOD, BIN1_Pin, GPIO_PIN_SET);   // BIN1 -> HIGH
+        HAL_GPIO_WritePin(GPIOD, BIN2_Pin, GPIO_PIN_RESET); // BIN2 -> LOW
     }
-    else {
+    else
+    {
         // Motor A Backward
         HAL_GPIO_WritePin(GPIOE, GPIO_PIN_7, GPIO_PIN_RESET); // AIN1 -> LOW
         HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET);  // AIN2 -> HIGH
@@ -57,6 +59,21 @@ void StopMotors(void)
     __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, 0);
 }
 
+void BrakeMotors(void)
+{
+    // Motor A brake
+    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_7, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET);
+
+    // Motor B brake
+    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, GPIO_PIN_SET);
+
+    // PWM = 0
+    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 0);
+    __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, 0);
+}
+
 /**
 * @brief DC motor thread entry that consumes speed commands from CAN.
 *
@@ -76,24 +93,29 @@ VOID DcMotor(ULONG initial_input)
 		{
 			// Process all pending CAN messages
 			while (tx_queue_receive(&g_queueSpeedCmd, &msg, TX_NO_WAIT) == TX_SUCCESS)
-			{	
+			{
 				g_targetSpeed = 0;
-				memcpy(&g_targetSpeed, msg.data , sizeof(int32_t));
+				memcpy(&g_targetSpeed, msg.data , sizeof(int16_t));
 				memcpy(&g_motorControlState.direction, msg.data + sizeof(int32_t), sizeof(int32_t));
-//				UartPrintf("Direction: %d\r\n",g_motorControlState.direction);
-//				UartPrintf("Speed: %d\r\n",g_targetSpeed);
-
+				g_targetSpeed = (g_targetSpeed * 665) / 90;
+				UartPrintf("Direction: %d\r\n",g_motorControlState.direction);
+				UartPrintf("Speed: %d\r\n",g_targetSpeed);
 			}
 		}
-
-		tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
-		if(g_emergencyBrake && g_motorControlState.direction == FORWARD)
+		else
 		{
-			tx_mutex_put(&g_emergencyMutex);
-			tx_thread_sleep(10);
-			continue ;
+			BrakeMotors();
+			g_motorControlState.direction = 3;
 		}
-		tx_mutex_put(&g_emergencyMutex);
+
+//		tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
+//		if(g_emergencyBrake && g_motorControlState.direction == FORWARD)
+//		{
+//			tx_mutex_put(&g_emergencyMutex);
+//			tx_thread_sleep(10);
+//			continue ;
+//		}
+//		tx_mutex_put(&g_emergencyMutex);
 
 		if (g_motorControlState.direction == FORWARD || g_motorControlState.direction == BACKWARD)
 		{
@@ -102,15 +124,9 @@ VOID DcMotor(ULONG initial_input)
 				MoveMotors(g_targetSpeed, true);
 			else
 				MoveMotors(g_targetSpeed, false);
+		}
 
-		}
-		else
-		{
-			tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
-		    StopMotors();
-		    tx_mutex_put(&g_motorMutex);
-		}
 		
-		tx_thread_sleep(10);
+		tx_thread_sleep(100);
 	}
 }

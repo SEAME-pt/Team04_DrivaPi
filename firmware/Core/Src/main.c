@@ -122,7 +122,9 @@ int main(void)
   MX_TIM8_Init();
   MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
-	
+  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);   // PWMA
+  HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);  // PWMB
+  HAL_TIMEx_OCN_Start(&htim8, TIM_CHANNEL_4);
   /* USER CODE END 2 */
 
   MX_ThreadX_Init();
@@ -748,7 +750,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(WRLS_WKUP_B_GPIO_Port, WRLS_WKUP_B_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, AIN2_Pin|BIN1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, AIN2_Pin|BIN1_Pin|BIN2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(AIN1_GPIO_Port, AIN1_Pin, GPIO_PIN_RESET);
@@ -913,14 +915,14 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(WRLS_WKUP_B_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : WRLS_NOTIFY_Pin Mems_INT_IIS2MDC_Pin BIN2_Pin */
-  GPIO_InitStruct.Pin = WRLS_NOTIFY_Pin|Mems_INT_IIS2MDC_Pin|BIN2_Pin;
+  /*Configure GPIO pins : WRLS_NOTIFY_Pin Mems_INT_IIS2MDC_Pin */
+  GPIO_InitStruct.Pin = WRLS_NOTIFY_Pin|Mems_INT_IIS2MDC_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : AIN2_Pin BIN1_Pin */
-  GPIO_InitStruct.Pin = AIN2_Pin|BIN1_Pin;
+  /*Configure GPIO pins : AIN2_Pin BIN1_Pin BIN2_Pin */
+  GPIO_InitStruct.Pin = AIN2_Pin|BIN1_Pin|BIN2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

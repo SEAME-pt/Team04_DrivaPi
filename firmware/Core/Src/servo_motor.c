@@ -41,9 +41,22 @@ void ServoMotor(ULONG initial_input)
 		while (tx_queue_receive(&g_queueSteerCmd, &msg, TX_NO_WAIT) == TX_SUCCESS)
 		{
 			tx_mutex_get(&g_servoMutex, TX_WAIT_FOREVER);
-			float angle_f = *((float *)msg.data);
-			uint16_t angle = (uint16_t)angle_f;
+
+			uint8_t angle_raw;
+			memcpy(&angle_raw, msg.data, sizeof(uint8_t));
+
+			if (angle_raw < 75)
+			    angle_raw = 75;
+			else if (angle_raw > 105)
+			    angle_raw = 105;
+
+			uint16_t angle = ((angle_raw - 75) * 180) / 30;
+
+			UartPrintf("raw angle: %d\r\n", angle_raw);
+			UartPrintf("mapped angle: %d\r\n", angle);
+
 			SetServoAngle(angle);
+
 			tx_mutex_put(&g_servoMutex);
 		}
 	}

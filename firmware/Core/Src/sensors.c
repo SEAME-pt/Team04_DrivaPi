@@ -416,7 +416,7 @@ HAL_StatusTypeDef Battery_ReadCurrent(I2C_HandleTypeDef *hi2c, float *current)
         dbg_fail_count++;
         if ((dbg_fail_count % 25u) == 0u)
         {
-            UartPrintf("[INA231 CUR] shunt read fail count=%lu err=0x%08lX\r\n", (unsigned long)dbg_fail_count, (unsigned long)HAL_I2C_GetError(hi2c));
+            //UartPrintf("[INA231 CUR] shunt read fail count=%lu err=0x%08lX\r\n", (unsigned long)dbg_fail_count, (unsigned long)HAL_I2C_GetError(hi2c));
         }
         return HAL_ERROR;
     }
@@ -427,8 +427,8 @@ HAL_StatusTypeDef Battery_ReadCurrent(I2C_HandleTypeDef *hi2c, float *current)
     dbg_sample_count++;
     if ((dbg_sample_count % 10u) == 0u)
     {
-        UartPrintf("[INA231 CUR] reg_raw=%d reg=0x%02X%02X | shunt_raw=%d reg=0x%02X%02X\r\n", (int)current_raw,
-        (unsigned int)buf[0], (unsigned int)buf[1], (int)shunt_raw, (unsigned int)shunt_buf[0], (unsigned int)shunt_buf[1]);
+        //UartPrintf("[INA231 CUR] reg_raw=%d reg=0x%02X%02X | shunt_raw=%d reg=0x%02X%02X\r\n", (int)current_raw,
+      //  (unsigned int)buf[0], (unsigned int)buf[1], (int)shunt_raw, (unsigned int)shunt_buf[0], (unsigned int)shunt_buf[1]);
     }
 
     return HAL_OK;
