@@ -1,3 +1,0 @@
-../Core/Src/motor_control.c:15:6:MotorControlUpdate	13
-../Core/Src/motor_control.c:77:6:UpdateMotorControl	1
-../Core/Src/motor_control.c:85:6:MotorControlInit	1
