@@ -13,19 +13,15 @@
  */
 void InitAllDevices(void)
 {
-	const char *msg = "Initializing PCA9685 devices...\r\n";
-	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+	char *msg;
 
-	if (BatteryInit(&hi2c3) == HAL_OK)
-	{
-		msg = "Battery: Initialized successfully\r\n";
-		HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
-	}
-	else
+	if (BatteryInit(&hi2c2) != HAL_OK)
 	{
 		msg = "Battery: Initialization failed!\r\n";
 		HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
 	}
+	else 
+		g_batteryPowerReady = true;
 
 	if (Hts221Init(&hi2c2) != HAL_OK)
 	{
