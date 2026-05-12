@@ -24,7 +24,7 @@ extern "C" {
  * @brief Hybrid feedforward + PI feedback controller
  */
 typedef struct {
-	float       target_speed;      		// desired speed (hm/h)
+	uint16_t    target_speed;      		// desired speed (hm/h)
 	float       current_speed;     		// measured speed (hm/h) from speed_sensor.c
 	float       error;             		// current error (target - actual)
 	float       integral;          		// accumulated error for I term
@@ -39,7 +39,7 @@ typedef struct {
 
 extern MotorControlState g_motorControlState;  // motor controller state
 extern float             g_vehicleSpeed;       // from speed_sensor.c (measured m/s)
-extern float             g_targetSpeed;        // from CAN message (remote command m/s)
+extern uint16_t          g_targetSpeed;        // from CAN message (remote command m/s)
 
 /**
  * @brief Compute feedforward + proportional control output and send signed PWM to motor

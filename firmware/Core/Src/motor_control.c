@@ -15,7 +15,7 @@
 void MotorControlUpdate(MotorControlState *state, float current_speed)
 {
     // Convert m/s to hm/h (1 m/s = 36 hm/h)
-    float current_hm = current_speed * 36.0f;
+	uint16_t current_hm = (uint16_t)ceilf(current_speed * 36.0f);
     
     int8_t target_direction;
     if (state->direction == FORWARD)

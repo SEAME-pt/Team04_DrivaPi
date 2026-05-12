@@ -80,8 +80,8 @@ VOID DcMotor(ULONG initial_input)
 				g_targetSpeed = 0;
 				memcpy(&g_targetSpeed, msg.data , sizeof(int32_t));
 				memcpy(&g_motorControlState.direction, msg.data + sizeof(int32_t), sizeof(int32_t));
-				UartPrintf("Direction: %d\r\n",g_motorControlState.direction);
-				UartPrintf("Speed: %d\r\n",g_targetSpeed);
+//				UartPrintf("Direction: %d\r\n",g_motorControlState.direction);
+//				UartPrintf("Speed: %d\r\n",g_targetSpeed);
 
 			}
 		}
