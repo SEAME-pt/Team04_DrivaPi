@@ -41,7 +41,7 @@ void MoveMotors(uint16_t speed, bool forward)
 /**
   * @brief Stops both DC motors and cuts PWM signals
   */
-void Motor_Coast(void)
+void MotorCoast(void)
 {
     // Clear direction pins
     HAL_GPIO_WritePin(GPIOE, AIN1_Pin, GPIO_PIN_RESET);
