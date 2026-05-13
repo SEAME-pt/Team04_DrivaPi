@@ -16,19 +16,20 @@ void MotorControlUpdate(MotorControlState *state, float current_speed)
 {
     // Convert m/s to hm/h (1 m/s = 36 hm/h)
 	uint16_t current_hm = (uint16_t)ceilf(current_speed * 36.0f);
+//	UartPrintf("Speed: %d\r\n", current_hm);
     
     int8_t target_direction;
     if (state->direction == FORWARD)
         target_direction = 1;
-    else if (state->direction == BACKWARD)
-        target_direction = -1;
+    else if (state->direction == REVERSE)
+        target_direction = 0;
     
     if (state->target_speed < 1.0f)
     {
         state->pwm_raw = 0;
         state->integral = 0.0f;  // Reset integral when stopped
         tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
-        MoveMotors(state->pwm_raw, false);
+        MoveMotors(state->pwm_raw, true);
         tx_mutex_put(&g_motorMutex);
         state->current_speed = current_hm;
         return;
@@ -61,15 +62,15 @@ void MotorControlUpdate(MotorControlState *state, float current_speed)
     if (pwm_normalized < 0.0f)
         pwm_normalized = 0.0f;
 
-    int16_t pwm_magnitude = (int16_t)(pwm_normalized * 4095.0f);
+    int16_t pwm_magnitude = (int16_t)(pwm_normalized * 665.0f);
 
     if (pwm_magnitude > 0 && pwm_magnitude < (int16_t)PWM_MIN)
         pwm_magnitude = (int16_t)PWM_MIN;
-    state->pwm_raw = pwm_magnitude * target_direction;
+    state->pwm_raw = pwm_magnitude;
     
-    tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
-    MoveMotors(state->pwm_raw, false);
-    tx_mutex_put(&g_motorMutex);
+	tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
+	MoveMotors(1000, target_direction);
+	tx_mutex_put(&g_motorMutex);
     
     state->current_speed = current_hm;
 }

@@ -14,8 +14,8 @@ extern "C" {
 
 #include "app_threadx.h"
 
-#define PWM_MIN 			300u   	// Minimum absolute PWM to overcome dead zone
-#define PWM_MAX				4095u  	// Maximum absolute PWM value
+#define PWM_MIN 			40u   	// Minimum absolute PWM to overcome dead zone
+#define PWM_MAX				665u  	// Maximum absolute PWM value
 #define SPEED_MARGIN		5.0f    // hm/h tolerance for "at target" detection
 #define INTEGRAL_LIMIT		500.0f  // Anti-windup limit for PI controller
 

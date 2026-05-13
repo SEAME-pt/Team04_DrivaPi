@@ -94,15 +94,7 @@ VOID DcMotor(ULONG initial_input)
 				g_targetSpeed = 0;
 				memcpy(&g_targetSpeed, msg.data , sizeof(int16_t));
 				memcpy(&g_motorControlState.direction, msg.data + sizeof(int32_t), sizeof(int32_t));
-				g_targetSpeed = (g_targetSpeed * 665) / 90;
-				UartPrintf("Direction: %d\r\n",g_motorControlState.direction);
-				UartPrintf("Speed: %d\r\n",g_targetSpeed);
 			}
-		}
-		else
-		{
-			StopMotors();
-			g_motorControlState.direction = 3;
 		}
 
 //		tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
@@ -113,14 +105,21 @@ VOID DcMotor(ULONG initial_input)
 //			continue ;
 //		}
 //		tx_mutex_put(&g_emergencyMutex);
-		if (g_motorControlState.direction == FORWARD || g_motorControlState.direction == BACKWARD)
+
+		if (g_motorControlState.direction == FORWARD || g_motorControlState.direction == REVERSE)
+			UpdateMotorControl();
+		else if (g_motorControlState.direction == NEUTRAL)
 		{
-			//UpdateMotorControl();
-			if (g_motorControlState.direction == FORWARD)
-				MoveMotors(g_targetSpeed, true);
-			else
-				MoveMotors(g_targetSpeed, false);
+			tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
+			MotorCoast();
+			tx_mutex_put(&g_motorMutex);
 		}
-		tx_thread_sleep(100);
+		else
+		{
+			tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
+			StopMotors();
+			tx_mutex_put(&g_motorMutex);
+		}
+		tx_thread_sleep(10);
 	}
 }

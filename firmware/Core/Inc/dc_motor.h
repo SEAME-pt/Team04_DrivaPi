@@ -14,9 +14,10 @@ extern "C" {
 
 #include "app_threadx.h"
 
-#define BACKWARD 0
+#define NEUTRAL 0
 #define FORWARD 1
-#define BRAKE 2
+#define REVERSE 2
+#define BRAKE 3
 
 void StopMotors(void);
 void MoveMotors(uint16_t speed, bool forward);
