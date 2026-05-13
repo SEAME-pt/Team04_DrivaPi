@@ -13,6 +13,9 @@
 /**
   * @brief Maps physical angle (0-180) to Servo duty cycle (1ms to 2ms pulse)
   * Utilizing the TIM8 ARR of 19999.
+	*
+	* @param angle Requested servo angle in degrees.
+	* @return void
   */
 void SetServoAngle(uint8_t angle) {
     if (angle > 180) angle = 180;
@@ -46,14 +49,11 @@ void ServoMotor(ULONG initial_input)
 			memcpy(&angle_raw, msg.data, sizeof(uint8_t));
 
 			if (angle_raw < 75)
-			    angle_raw = 75;
+				angle_raw = 75;
 			else if (angle_raw > 105)
-			    angle_raw = 105;
+				angle_raw = 105;
 
 			uint16_t angle = ((angle_raw - 75) * 180) / 30;
-
-			UartPrintf("raw angle: %d\r\n", angle_raw);
-			UartPrintf("mapped angle: %d\r\n", angle);
 
 			SetServoAngle(angle);
 
