@@ -12,7 +12,7 @@ A modern dual motor driver with better efficiency than older H-bridge modules.
 - **Current:** around 1.2A continuous per channel, higher peak current depending on module and cooling
 - **Strengths:** low voltage drop, compact, efficient, good PWM behavior
 - **Weaknesses:** lower current limit than L298N, so it must match the motor load
-- **Typical price:** about **$3 to $8** per module
+- **Typical price:** about **€3 to €8** per module
 
 ### 2. L298N
 A very common and easy-to-find dual motor driver board.
@@ -22,7 +22,7 @@ A very common and easy-to-find dual motor driver board.
 - **Current:** up to 2A per channel in theory, but practical use is lower without strong cooling
 - **Strengths:** cheap, widely available, simple to find and test
 - **Weaknesses:** large voltage drop, runs hot, wastes power, less efficient for battery systems
-- **Typical price:** about **$2 to $5** per module
+- **Typical price:** about **€2 to €5** per module
 
 ### 3. L9110S
 A very small and low-cost dual motor driver board.
@@ -32,15 +32,15 @@ A very small and low-cost dual motor driver board.
 - **Current:** lower than the other two, suitable only for small loads
 - **Strengths:** very cheap, simple, small size
 - **Weaknesses:** weakest current margin, not ideal for 12V motor systems, less robust for a car platform
-- **Typical price:** about **$1 to $3** per module
+- **Typical price:** about **€1 to €3** per module
 
 ## Comparison Table
 
 | Option | 12V Compatibility | Current Capability | STM32 Integration | Efficiency | Typical Price | Overall Fit |
 |---|---|---:|---|---|---:|---|
-| TB6612FNG | Good | Medium | Very good | Best | $3-$8 | Best choice |
-| L298N | Good | Medium-high on paper | Good | Poor | $2-$5 | Safe fallback |
-| L9110S | Borderline | Low | Good | Fair | $1-$3 | Not recommended |
+| TB6612FNG | Good | Medium | Very good | Best | €3-€8 | Best choice |
+| L298N | Good | Medium-high | Good | Poor | €2-€5 | Safe fallback |
+| L9110S | Borderline | Low | Good | Fair | €1-€3 | Not recommended |
 
 ## What is better in each one
 
