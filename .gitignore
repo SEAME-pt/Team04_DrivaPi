@@ -167,3 +167,12 @@ CMakeFiles/
 # Dotstop state file
 /.dotstop.dot
 target
+
+#ADAS
+ADAS/obstacle-detection/dataset/
+ADAS/obstacle-detection/train/images/
+ADAS/obstacle-detection/train/labels/
+ADAS/obstacle-detection/train/runs/
+ADAS/obstacle-detection/*.pt
+ADAS/obstacle-detection/*.onnx
+ADAS/obstacle-detection/inference/*.hef
