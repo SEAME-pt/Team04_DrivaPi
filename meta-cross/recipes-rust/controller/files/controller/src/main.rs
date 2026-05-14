@@ -6,6 +6,8 @@ use std::io::{ErrorKind, Read};
 use std::os::unix::io::AsRawFd;
 use std::path::Path;
 use std::{sync::mpsc, thread, time::Duration};
+use std::net::UdpSocket;
+use std::time::Instant;
 
 /* CAN Protocol Constants */
 const CAN_ID_MOTOR: u16 = 44;
@@ -45,7 +47,8 @@ pub struct Vector2f {
     y: f64,
 }
 
-
+#[derive(PartialEq, Debug)]
+enum DriveMode { Manual, Autonomous }
 
 /* Gamepad Input Struct 
     -> Struct serves the point of storing the values for each button in the GamePad
@@ -489,14 +492,63 @@ fn run_manual_mode(
     Ok(())
 }
 
+fn run_autonomous_mode(
+    input_rx: &mpsc::Receiver<GamepadInput>,
+    controller: &MotorController,
+    socket: &UdpSocket,
+) -> Result<(), Box<dyn std::error::Error>> {
+    println!(">>> AUTONOMOUS ACTIVE - Move sticks to OVERRIDE");
+    let mut last_ai_msg = Instant::now();
+
+    loop {
+        // OVERRIDE: if human move joystick it overrides
+        if let Some(input) = recv_latest_input(input_rx, Duration::from_millis(10)) {
+            if input.analog_stick_left.y.abs() > 0.2 || input.analog_stick_right.x.abs() > 0.2 {
+                println!("(!) MANUAL OVERRIDE");
+                controller.stop_dc_motors()?;
+				controller.reset_servo_motors()?;
+				break; 
+            }
+        }
+
+        // Receives from AI (Python)
+        let mut buf = [0u8; 128];
+        if let Ok((size, _)) = socket.recv_from(&mut buf) {
+            let data = String::from_utf8_lossy(&buf[..size]);
+            let p: Vec<&str> = data.trim().split(',').collect();
+            if p.len() == 3 {
+                let speed: u32 = p[0].parse().unwrap_or(0).min(90);
+                let dir: u8 = p[1].parse().unwrap_or(3);
+                let steer: u32 = p[2].parse().unwrap_or(90).clamp(75, 105);
+                
+                controller.send_motor_command(speed, dir)?;
+                controller.send_servo_command(steer)?;
+                last_ai_msg = Instant::now();
+            }
+        }
+
+        // WATCHDOG: If AI does not respond, it brakes in 500ms
+        if last_ai_msg.elapsed() > Duration::from_millis(500) {
+            controller.stop_dc_motors()?;
+            controller.reset_servo_motors()?;
+	}
+    }
+    controller.stop_dc_motors()?; // Garante paragem ao sair
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Initializing controller...");
 
     let (input_rx, gamepad_handle) = spawn_gamepad_thread(GAMEPAD_DEVICE)?;
     let controller = MotorController::new(CAN_INTERFACE, CAN_ID_MOTOR, CAN_ID_SERVO)?;
     let mut prev_start_pressed = false;
+    let mut prev_home_pressed = false;
 
-    println!("Controller ready. Press START to enter manual mode, SELECT to exit.");
+    let socket = UdpSocket::bind("127.0.0.1:5555")?;
+    socket.set_nonblocking(true)?;
+
+    println!("Controller ready. Press START to enter manual mode, HOME for Auto, SELECT to exit.");
 
     loop {
         let Some(input) = recv_latest_input(&input_rx, Duration::from_millis(50)) else {
@@ -514,7 +566,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         if input.button_start && !prev_start_pressed {
             run_manual_mode(&input_rx, &controller)?;
         }
-        prev_start_pressed = input.button_start;
+	prev_start_pressed = input.button_start;
+	if input.button_home && !prev_home_pressed {
+		run_autonomous_mode(&input_rx, &controller, &socket)?;
+	}
+        prev_home_pressed = input.button_home;
     }
 
     drop(input_rx);
