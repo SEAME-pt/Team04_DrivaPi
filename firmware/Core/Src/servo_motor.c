@@ -18,7 +18,8 @@
 	* @return void
   */
 void SetServoAngle(uint8_t angle) {
-    if (angle > 180) angle = 180;
+    if (angle > 180)
+    	angle = 180;
 
     // Maps 0 - 180 degrees to 1000 - 2000 pulse width ticks
     uint32_t compare_value = 1000 + ((uint32_t)angle * 1000 / 180);
@@ -47,13 +48,6 @@ void ServoMotor(ULONG initial_input)
 
 			uint8_t angle_raw;
 			memcpy(&angle_raw, msg.data, sizeof(uint8_t));
-
-			if (angle_raw < 75)
-				angle_raw = 75;
-			else if (angle_raw > 105)
-				angle_raw = 105;
-
-			uint16_t angle = ((angle_raw - 75) * 180) / 30;
 
 			SetServoAngle(angle);
 

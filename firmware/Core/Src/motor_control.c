@@ -16,7 +16,7 @@ void MotorControlUpdate(MotorControlState *state, float current_speed)
 {
     // Convert m/s to hm/h (1 m/s = 36 hm/h)
 	uint16_t current_hm = (uint16_t)ceilf(current_speed * 36.0f);
-//	UartPrintf("Speed: %d\r\n", current_hm);
+	UartPrintf("Speed: %d\r\n", current_hm);
     
     int8_t target_direction;
     if (state->direction == FORWARD)
@@ -37,7 +37,9 @@ void MotorControlUpdate(MotorControlState *state, float current_speed)
     
     state->error = state->target_speed - current_hm;
     
-    float base_pwm = state->target_speed / 100.0f;
+    float base_pwm = 0.0f;
+//    if (current_hm == 0.0f)
+	base_pwm = state->target_speed / 100.0f;
     if (base_pwm > 1.0f)
         base_pwm = 1.0f;
     
@@ -69,7 +71,7 @@ void MotorControlUpdate(MotorControlState *state, float current_speed)
     state->pwm_raw = pwm_magnitude;
     
 	tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
-	MoveMotors(1000, target_direction);
+	MoveMotors(state->pwm_raw, target_direction);
 	tx_mutex_put(&g_motorMutex);
     
     state->current_speed = current_hm;
