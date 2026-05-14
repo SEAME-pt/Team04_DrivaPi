@@ -46,4 +46,3 @@ rm roboflow.zip
 | --- | --- | --- |
 | **Training** | PC / macOS | Python venv + Ultralytics |
 | **Export to ONNX** | PC / macOS | `python3 train/main.py --export` |
-| **Hailo Compilation** | **Linux / Docker** | `python3 inference/compile.py --run` |
