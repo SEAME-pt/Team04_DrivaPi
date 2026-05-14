@@ -51,7 +51,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--no-augment", dest="augment", action="store_false", help="Disable augmentation")
     parser.set_defaults(augment=True)
     parser.add_argument("--patience", type=int, default=20, help="Early stopping patience")
-    parser.add_argument("--name", type=str, default="yolo26_v9", help="Training run name")
+    parser.add_argument("--name", type=str, default="yolo26_obstacle", help="Training run name")
     parser.add_argument(
         "--project",
         type=Path,
