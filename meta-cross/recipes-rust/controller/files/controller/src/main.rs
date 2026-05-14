@@ -29,10 +29,9 @@ const REVERSE: u8 = 2;
 const BRAKE: u8 = 3;
 
 /* Servo Constants */
-const MAX_SERVO_ANGLE: f64 = 105.0;
-const MIN_SERVO_ANGLE: f64 = 75.0;
-const MID_SERVO_ANGLE: f64 = 90.0;
-const SERVO_RANGE: f64 = 15.0; // Distance from center to min/max
+const MAX_SERVO_ANGLE: u32 = 180;
+const MIN_SERVO_ANGLE: u32 = 0;
+const MID_SERVO_ANGLE: u32 = 90;
 
 /* Gamepad Constants */
 const GAMEPAD_DEVICE: &str = "/dev/input/js0";
@@ -463,9 +462,8 @@ fn run_manual_mode(
             (joystick_motor_speed, direction)
         };
 
-        let servo_angle = (MID_SERVO_ANGLE + (steering * SERVO_RANGE))
-            .clamp(MIN_SERVO_ANGLE, MAX_SERVO_ANGLE)
-            .floor() as u32;
+        let servo_angle = (MID_SERVO_ANGLE + steering as u32)
+            .clamp(MIN_SERVO_ANGLE, MAX_SERVO_ANGLE);
 
     // =================================================================================
 
@@ -504,7 +502,7 @@ fn run_autonomous_mode(
         // OVERRIDE: if human move joystick it overrides
         if let Some(input) = recv_latest_input(input_rx, Duration::from_millis(10)) {
             if input.analog_stick_left.y.abs() > 0.2 || input.analog_stick_right.x.abs() > 0.2 {
-                println!("(!) MANUAL OVERRIDE");
+                println!("(!) MANUEL OVERRIDE");
                 controller.stop_dc_motors()?;
 				controller.reset_servo_motors()?;
 				break; 
@@ -517,9 +515,9 @@ fn run_autonomous_mode(
             let data = String::from_utf8_lossy(&buf[..size]);
             let p: Vec<&str> = data.trim().split(',').collect();
             if p.len() == 3 {
-                let speed: u32 = p[0].parse().unwrap_or(0).min(90);
-                let dir: u8 = p[1].parse().unwrap_or(3);
-                let steer: u32 = p[2].parse().unwrap_or(90).clamp(75, 105);
+                let speed: u32 = p[0].parse().unwrap_or(0).min(MAX_MOTOR_SPEED as u32);
+                let dir: u8 = p[1].parse().unwrap_or(BRAKE);
+                let steer: u32 = p[2].parse().unwrap_or(MID_SERVO_ANGLE).clamp(MIN_SERVO_ANGLE, MAX_SERVO_ANGLE);
                 
                 controller.send_motor_command(speed, dir)?;
                 controller.send_servo_command(steer)?;
@@ -531,9 +529,10 @@ fn run_autonomous_mode(
         if last_ai_msg.elapsed() > Duration::from_millis(500) {
             controller.stop_dc_motors()?;
             controller.reset_servo_motors()?;
+            break;
 	}
     }
-    controller.stop_dc_motors()?; // Garante paragem ao sair
+    controller.stop_dc_motors()?;
     Ok(())
 }
 
@@ -543,12 +542,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (input_rx, gamepad_handle) = spawn_gamepad_thread(GAMEPAD_DEVICE)?;
     let controller = MotorController::new(CAN_INTERFACE, CAN_ID_MOTOR, CAN_ID_SERVO)?;
     let mut prev_start_pressed = false;
-    let mut prev_home_pressed = false;
+    let mut prev_select_pressed = false;
 
     let socket = UdpSocket::bind("127.0.0.1:5555")?;
     socket.set_nonblocking(true)?;
 
-    println!("Controller ready. Press START to enter manual mode, HOME for Auto, SELECT to exit.");
+    println!("Controller ready. Press START to enter MANUEL mode, SELECT for Autonomous, HOME to exit.");
 
     loop {
         let Some(input) = recv_latest_input(&input_rx, Duration::from_millis(50)) else {
@@ -556,7 +555,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             break;
         };
 
-        if input.button_select {
+        if input.button_home {
             println!("Shutting down...");
             controller.stop_dc_motors()?;
             controller.reset_servo_motors()?;
@@ -566,11 +565,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         if input.button_start && !prev_start_pressed {
             run_manual_mode(&input_rx, &controller)?;
         }
-	prev_start_pressed = input.button_start;
-	if input.button_home && !prev_home_pressed {
-		run_autonomous_mode(&input_rx, &controller, &socket)?;
-	}
-        prev_home_pressed = input.button_home;
+    	prev_start_pressed = input.button_start;
+        
+    	if input.button_select && !prev_select_pressed{
+    		run_autonomous_mode(&input_rx, &controller, &socket)?;    
+    	}
+    	
+        prev_select_pressed = input.button_select;
     }
 
     drop(input_rx);
