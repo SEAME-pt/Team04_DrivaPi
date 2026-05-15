@@ -16,7 +16,7 @@ void MotorControlUpdate(MotorControlState *state, float current_speed)
 {
     // Convert m/s to hm/h (1 m/s = 36 hm/h)
 	uint16_t current_hm = (uint16_t)ceilf(current_speed * 36.0f);
-	UartPrintf("Speed: %d\r\n", current_hm);
+//	UartPrintf("Speed: %d\r\n", current_hm);
     
     int8_t target_direction;
     if (state->direction == FORWARD)
