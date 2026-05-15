@@ -48,8 +48,9 @@ void ServoMotor(ULONG initial_input)
 
 			uint8_t angle_raw;
 			memcpy(&angle_raw, msg.data, sizeof(uint8_t));
+			UartPrintf("ANGLE: %d\r\n", angle_raw);
 
-			SetServoAngle(angle);
+			SetServoAngle(angle_raw);
 
 			tx_mutex_put(&g_servoMutex);
 		}
