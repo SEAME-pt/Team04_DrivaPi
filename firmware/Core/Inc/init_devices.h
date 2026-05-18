@@ -12,6 +12,6 @@
 
 void InitAllDevices();
 
-extern bool g_batteryPowerReady;
+extern volatile bool g_batteryPowerReady;
 
 #endif /* __INIT_DEVICES_H */
