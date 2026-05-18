@@ -29,9 +29,9 @@ const REVERSE: u8 = 2;
 const BRAKE: u8 = 3;
 
 /* Servo Constants */
-const MAX_SERVO_ANGLE: u32 = 180;
-const MIN_SERVO_ANGLE: u32 = 0;
-const MID_SERVO_ANGLE: u32 = 90;
+const MAX_SERVO_ANGLE: f64 = 180.0;
+const MIN_SERVO_ANGLE: f64 = 0.0;
+const MID_SERVO_ANGLE: f64 = 90.0;
 
 /* Gamepad Constants */
 const GAMEPAD_DEVICE: &str = "/dev/input/js0";
@@ -462,8 +462,9 @@ fn run_manual_mode(
             (joystick_motor_speed, direction)
         };
 
-        let servo_angle = (MID_SERVO_ANGLE + steering as u32)
-            .clamp(MIN_SERVO_ANGLE, MAX_SERVO_ANGLE);
+        let servo_angle = (MID_SERVO_ANGLE + steering)
+            .clamp(MIN_SERVO_ANGLE, MAX_SERVO_ANGLE)
+            .floor() as u32;
 
     // =================================================================================
 
