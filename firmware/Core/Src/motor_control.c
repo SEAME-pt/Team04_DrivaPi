@@ -78,8 +78,14 @@ void MotorControlUpdate(MotorControlState *state, float current_speed)
 
 void UpdateMotorControl(void)
 {
+    float current_speed;
+
+    tx_mutex_get(&g_speedDataMutex, TX_WAIT_FOREVER);
+    current_speed = g_vehicleSpeed;
+    tx_mutex_put(&g_speedDataMutex);
+
     g_motorControlState.target_speed = g_targetSpeed;
-    MotorControlUpdate(&g_motorControlState, g_vehicleSpeed);
+    MotorControlUpdate(&g_motorControlState, current_speed);
 }
 
 void MotorControlInit(MotorControlState *state)
@@ -96,4 +102,3 @@ void MotorControlInit(MotorControlState *state)
     state->pwm_raw = 0;
     state->direction = -1;
 }
-

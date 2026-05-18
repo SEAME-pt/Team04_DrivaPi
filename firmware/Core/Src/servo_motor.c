@@ -44,8 +44,8 @@ void ServoMotor(ULONG initial_input)
 		
 		while (tx_queue_receive(&g_queueSteerCmd, &msg, TX_NO_WAIT) == TX_SUCCESS)
 		{
-			tx_mutex_get(&g_servoMutex, TX_WAIT_FOREVER);
 
+			tx_mutex_get(&g_servoMutex, TX_WAIT_FOREVER);
 			uint8_t angle;
 			memcpy(&angle, msg.data, sizeof(uint8_t));
 
