@@ -136,7 +136,7 @@ void UltrasonicEntry(ULONG initial_input)
 						if (i % 2 == 0)
 						{
 							tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
-							StopMotors();
+							MoveMotors(665, false);
 							tx_mutex_put(&g_motorMutex);
 
 							HAL_UART_Transmit(&huart1, (uint8_t*)"! ABS !\r\n", 24, 100);
