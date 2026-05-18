@@ -518,7 +518,7 @@ fn run_autonomous_mode(
             if p.len() == 3 {
                 let speed: u32 = p[0].parse().unwrap_or(0).min(MAX_MOTOR_SPEED as u32);
                 let dir: u8 = p[1].parse().unwrap_or(BRAKE);
-                let steer: u32 = p[2].parse().unwrap_or(MID_SERVO_ANGLE).clamp(MIN_SERVO_ANGLE, MAX_SERVO_ANGLE);
+                let steer: u32 = p[2].parse().unwrap_or(MID_SERVO_ANGLE as u32).clamp(MIN_SERVO_ANGLE as u32, MAX_SERVO_ANGLE as u32);
                 
                 controller.send_motor_command(speed, dir)?;
                 controller.send_servo_command(steer)?;
