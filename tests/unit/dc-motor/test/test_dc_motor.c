@@ -204,6 +204,7 @@ void setUp(void)
     s_tim_compare_call_count = 0;
     s_update_motor_control_calls = 0;
     g_targetSpeed = 0;
+    g_emergencyBrake = false;
 }
 
 void tearDown(void)
@@ -301,6 +302,8 @@ void test_DcMotor_ShouldProcessSpeedMessageAndTriggerControlUpdate(void)
 
     tx_event_flags_get_StubWithCallback(TxEventFlagsGetSuccessCallback);
     tx_queue_receive_StubWithCallback(TxQueueReceiveOnceCallback);
+    tx_mutex_get_ExpectAndReturn(&g_emergencyMutex, TX_WAIT_FOREVER, TX_SUCCESS);
+    tx_mutex_put_ExpectAndReturn(&g_emergencyMutex, TX_SUCCESS);
     tx_thread_sleep_StubWithCallback(TxThreadSleepBreakCallback);
 
     if (setjmp(s_dc_motor_loop_exit) == 0) {
@@ -322,6 +325,8 @@ void test_DcMotor_ShouldProcessReverseMessageAndTriggerControlUpdate(void)
 
     tx_event_flags_get_StubWithCallback(TxEventFlagsGetSuccessCallback);
     tx_queue_receive_StubWithCallback(TxQueueReceiveOnceCallback);
+    tx_mutex_get_ExpectAndReturn(&g_emergencyMutex, TX_WAIT_FOREVER, TX_SUCCESS);
+    tx_mutex_put_ExpectAndReturn(&g_emergencyMutex, TX_SUCCESS);
     tx_thread_sleep_StubWithCallback(TxThreadSleepBreakCallback);
 
     if (setjmp(s_dc_motor_loop_exit) == 0) {
@@ -338,6 +343,8 @@ void test_DcMotor_ShouldCoastWhenDirectionIsNeutral(void)
     g_motorControlState.direction = NEUTRAL;
 
     tx_event_flags_get_StubWithCallback(TxEventFlagsGetNoEventsCallback);
+    tx_mutex_get_ExpectAndReturn(&g_emergencyMutex, TX_WAIT_FOREVER, TX_SUCCESS);
+    tx_mutex_put_ExpectAndReturn(&g_emergencyMutex, TX_SUCCESS);
     tx_mutex_get_ExpectAndReturn(&g_motorMutex, TX_WAIT_FOREVER, TX_SUCCESS);
     tx_mutex_put_ExpectAndReturn(&g_motorMutex, TX_SUCCESS);
     tx_thread_sleep_StubWithCallback(TxThreadSleepBreakCallback);
@@ -361,6 +368,8 @@ void test_DcMotor_ShouldBrakeWhenDirectionIsNotForwardReverseOrNeutral(void)
     g_motorControlState.direction = BRAKE;
 
     tx_event_flags_get_StubWithCallback(TxEventFlagsGetNoEventsCallback);
+    tx_mutex_get_ExpectAndReturn(&g_emergencyMutex, TX_WAIT_FOREVER, TX_SUCCESS);
+    tx_mutex_put_ExpectAndReturn(&g_emergencyMutex, TX_SUCCESS);
     tx_mutex_get_ExpectAndReturn(&g_motorMutex, TX_WAIT_FOREVER, TX_SUCCESS);
     tx_mutex_put_ExpectAndReturn(&g_motorMutex, TX_SUCCESS);
     tx_thread_sleep_StubWithCallback(TxThreadSleepBreakCallback);
@@ -377,4 +386,40 @@ void test_DcMotor_ShouldBrakeWhenDirectionIsNotForwardReverseOrNeutral(void)
     TEST_ASSERT_EQUAL_UINT32(2u, s_tim_compare_call_count);
     TEST_ASSERT_EQUAL_UINT32(665u, s_tim_compare_calls[0].compare_value);
     TEST_ASSERT_EQUAL_UINT32(665u, s_tim_compare_calls[1].compare_value);
+}
+
+void test_DcMotor_ShouldSkipUpdateWhenEmergencyBrakeActiveAndForward(void)
+{
+    g_emergencyBrake = true;
+    g_motorControlState.direction = FORWARD;
+
+    tx_event_flags_get_StubWithCallback(TxEventFlagsGetNoEventsCallback);
+    tx_mutex_get_ExpectAndReturn(&g_emergencyMutex, TX_WAIT_FOREVER, TX_SUCCESS);
+    tx_mutex_put_ExpectAndReturn(&g_emergencyMutex, TX_SUCCESS);
+    tx_thread_sleep_StubWithCallback(TxThreadSleepBreakCallback);
+
+    if (setjmp(s_dc_motor_loop_exit) == 0) {
+        DcMotor(0);
+    }
+
+    TEST_ASSERT_EQUAL_UINT32(0u, s_update_motor_control_calls);
+    TEST_ASSERT_EQUAL_UINT32(0u, s_gpio_write_call_count);
+    TEST_ASSERT_EQUAL_UINT32(0u, s_tim_compare_call_count);
+}
+
+void test_DcMotor_ShouldAllowUpdateWhenEmergencyBrakeActiveAndReverse(void)
+{
+    g_emergencyBrake = true;
+    g_motorControlState.direction = REVERSE;
+
+    tx_event_flags_get_StubWithCallback(TxEventFlagsGetNoEventsCallback);
+    tx_mutex_get_ExpectAndReturn(&g_emergencyMutex, TX_WAIT_FOREVER, TX_SUCCESS);
+    tx_mutex_put_ExpectAndReturn(&g_emergencyMutex, TX_SUCCESS);
+    tx_thread_sleep_StubWithCallback(TxThreadSleepBreakCallback);
+
+    if (setjmp(s_dc_motor_loop_exit) == 0) {
+        DcMotor(0);
+    }
+
+    TEST_ASSERT_EQUAL_UINT32(1u, s_update_motor_control_calls);
 }
