@@ -8,7 +8,7 @@ const int PWMA = 8;
 // --- MOTOR B PINS (Second Motor) ---
 const int BIN1 = 12;
 const int BIN2 = 11;
-const int PWMB = 13; /
+const int PWMB = 13;
 
 // --- SERVO PIN ---
 Servo myServo;
