@@ -21,6 +21,7 @@ extern "C" {
 
 void StopMotors(void);
 void MoveMotors(uint16_t speed, bool forward);
+void MotorCoast(void);
 
 extern TIM_HandleTypeDef htim4;
 extern TIM_HandleTypeDef htim8;

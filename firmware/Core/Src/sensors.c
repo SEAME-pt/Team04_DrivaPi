@@ -289,29 +289,17 @@ static uint8_t BatteryPercentFrom2SVoltage(float voltage_v)
     float pct = 0.0f;
 
     if (voltage_v >= soc_max_v)
-    {
         return 100u;
-    }
     if (voltage_v <= soc_min_v)
-    {
         return 0u;
-    }
     if (voltage_v >= soc_nom_v)
-    {
         pct = 50.0f + ((voltage_v - soc_nom_v) / (soc_max_v - soc_nom_v)) * 50.0f;
-    }
     else
-    {
         pct = ((voltage_v - soc_min_v) / (soc_nom_v - soc_min_v)) * 50.0f;
-    }
     if (pct < 0.0f)
-    {
         pct = 0.0f;
-    }
     if (pct > 100.0f)
-    {
         pct = 100.0f;
-    }
     return (uint8_t)(pct + 0.5f);
 }
 
@@ -376,8 +364,6 @@ HAL_StatusTypeDef Battery_Read(I2C_HandleTypeDef *hi2c, float *voltage, uint8_t 
     return HAL_OK;
 }
 
-
-
 /**
  * @brief Read current from INA226 shunt resistor
  * @param hi2c I2C handle
@@ -427,8 +413,8 @@ HAL_StatusTypeDef Battery_ReadCurrent(I2C_HandleTypeDef *hi2c, float *current)
     dbg_sample_count++;
     if ((dbg_sample_count % 10u) == 0u)
     {
-        //UartPrintf("[INA231 CUR] reg_raw=%d reg=0x%02X%02X | shunt_raw=%d reg=0x%02X%02X\r\n", (int)current_raw,
-      //  (unsigned int)buf[0], (unsigned int)buf[1], (int)shunt_raw, (unsigned int)shunt_buf[0], (unsigned int)shunt_buf[1]);
+        UartPrintf("[INA231 CUR] reg_raw=%d reg=0x%02X%02X | shunt_raw=%d reg=0x%02X%02X\r\n", (int)current_raw,
+        (unsigned int)buf[0], (unsigned int)buf[1], (int)shunt_raw, (unsigned int)shunt_buf[0], (unsigned int)shunt_buf[1]);
     }
 
     return HAL_OK;
@@ -676,4 +662,3 @@ void SensorBatteryThread(ULONG initial_input)
         tx_thread_sleep(POLL_INTERVAL_TICKS);
     }
 }
-
