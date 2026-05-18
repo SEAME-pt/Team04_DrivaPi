@@ -16,7 +16,6 @@ void MotorControlUpdate(MotorControlState *state, float current_speed)
 {
     // Convert m/s to hm/h (1 m/s = 36 hm/h)
 	uint16_t current_hm = (uint16_t)ceilf(current_speed * 36.0f);
-//	UartPrintf("Speed: %d\r\n", current_hm);
     
     int8_t target_direction;
     if (state->direction == FORWARD)
@@ -38,7 +37,7 @@ void MotorControlUpdate(MotorControlState *state, float current_speed)
     state->error = state->target_speed - current_hm;
     
     float base_pwm = 0.0f;
-//    if (current_hm == 0.0f)
+
 	base_pwm = state->target_speed / 100.0f;
     if (base_pwm > 1.0f)
         base_pwm = 1.0f;
@@ -79,8 +78,6 @@ void MotorControlUpdate(MotorControlState *state, float current_speed)
 
 void UpdateMotorControl(void)
 {
-    // CAN receiver has already populated g_targetSpeed
-    // Update motor controller with current speed feedback
     g_motorControlState.target_speed = g_targetSpeed;
     MotorControlUpdate(&g_motorControlState, g_vehicleSpeed);
 }

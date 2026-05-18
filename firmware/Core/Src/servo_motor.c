@@ -48,7 +48,6 @@ void ServoMotor(ULONG initial_input)
 
 			uint8_t angle;
 			memcpy(&angle, msg.data, sizeof(uint8_t));
-//			UartPrintf("ANGLE: %d\r\n", angle_raw);
 
 			SetServoAngle(angle);
 

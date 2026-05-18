@@ -85,10 +85,8 @@ VOID DcMotor(ULONG initial_input)
 
 	while (1)
 	{
-		// Check for new CAN messages (non-blocking)
 		if (tx_event_flags_get(&g_eventFlags, FLAG_CAN_SPEED_CMD, TX_OR_CLEAR, &actual_flags, TX_NO_WAIT) == TX_SUCCESS)
 		{
-			// Process all pending CAN messages
 			while (tx_queue_receive(&g_queueSpeedCmd, &msg, TX_NO_WAIT) == TX_SUCCESS)
 			{
 				g_targetSpeed = 0;
