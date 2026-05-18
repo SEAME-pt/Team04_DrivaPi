@@ -169,6 +169,27 @@ static UINT TxEventFlagsGetNoEventsCallback(TX_EVENT_FLAGS_GROUP *group_ptr,
     return 1u;
 }
 
+static UINT TxEventFlagsGetNoEventsThenBreakCallback(TX_EVENT_FLAGS_GROUP *group_ptr,
+                                                     ULONG requested_flags,
+                                                     UINT get_option,
+                                                     ULONG *actual_flags,
+                                                     ULONG wait_option,
+                                                     int cmock_num_calls)
+{
+    (void)group_ptr;
+    (void)requested_flags;
+    (void)get_option;
+    (void)actual_flags;
+    (void)wait_option;
+
+    if (cmock_num_calls == 0) {
+        return 1u;
+    }
+
+    longjmp(s_dc_motor_loop_exit, 1);
+    return 1u;
+}
+
 static UINT TxQueueReceiveOnceCallback(TX_QUEUE *queue_ptr,
                                        void *destination_ptr,
                                        ULONG wait_option,
@@ -393,10 +414,10 @@ void test_DcMotor_ShouldSkipUpdateWhenEmergencyBrakeActiveAndForward(void)
     g_emergencyBrake = true;
     g_motorControlState.direction = FORWARD;
 
-    tx_event_flags_get_StubWithCallback(TxEventFlagsGetNoEventsCallback);
+    tx_event_flags_get_StubWithCallback(TxEventFlagsGetNoEventsThenBreakCallback);
     tx_mutex_get_ExpectAndReturn(&g_emergencyMutex, TX_WAIT_FOREVER, TX_SUCCESS);
     tx_mutex_put_ExpectAndReturn(&g_emergencyMutex, TX_SUCCESS);
-    tx_thread_sleep_StubWithCallback(TxThreadSleepBreakCallback);
+    tx_thread_sleep_ExpectAndReturn((ULONG)10, TX_SUCCESS);
 
     if (setjmp(s_dc_motor_loop_exit) == 0) {
         DcMotor(0);
