@@ -45,17 +45,3 @@ void SoftwareDelay(uint32_t ms)
 		__asm("nop");
 }
 
-/**
-* @brief Clamp a signed value into the PCA9685 PWM range.
-*
-* @param computed_value Signed PWM count value.
-* @return uint16_t Clamped PWM value.
-*/
-inline uint16_t ClampU16(int32_t computed_value)
-{
-	if (computed_value < 0)
-		return 0;
-	if (computed_value >= (int32_t)PCA9685_COUNTS) 
-		return (uint16_t)(PCA9685_COUNTS - 1u);
-	return (uint16_t)computed_value;
-}

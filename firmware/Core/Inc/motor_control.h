@@ -14,8 +14,8 @@ extern "C" {
 
 #include "app_threadx.h"
 
-#define PWM_MIN 			300u   	// Minimum absolute PWM to overcome dead zone
-#define PWM_MAX				4095u  	// Maximum absolute PWM value
+#define PWM_MIN 			40u   	// Minimum absolute PWM to overcome dead zone
+#define PWM_MAX				665u  	// Maximum absolute PWM value
 #define SPEED_MARGIN		5.0f    // hm/h tolerance for "at target" detection
 #define INTEGRAL_LIMIT		500.0f  // Anti-windup limit for PI controller
 
@@ -24,7 +24,7 @@ extern "C" {
  * @brief Hybrid feedforward + PI feedback controller
  */
 typedef struct {
-	float       target_speed;      		// desired speed (hm/h)
+	uint16_t    target_speed;      		// desired speed (hm/h)
 	float       current_speed;     		// measured speed (hm/h) from speed_sensor.c
 	float       error;             		// current error (target - actual)
 	float       integral;          		// accumulated error for I term
@@ -39,7 +39,7 @@ typedef struct {
 
 extern MotorControlState g_motorControlState;  // motor controller state
 extern float             g_vehicleSpeed;       // from speed_sensor.c (measured m/s)
-extern float             g_targetSpeed;        // from CAN message (remote command m/s)
+extern uint16_t          g_targetSpeed;        // from CAN message (remote command m/s)
 
 /**
  * @brief Compute feedforward + proportional control output and send signed PWM to motor

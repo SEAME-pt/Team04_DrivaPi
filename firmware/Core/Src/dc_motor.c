@@ -10,78 +10,66 @@
 #include "dc_motor.h"
 
 /**
- * @brief Set PWM values for left and right DC motors based on pulse counts
- * 
- * @param left_counts PWM pulse count for left motor (positive=forward, negative=reverse, 0=neutral)
- * @param right_counts PWM pulse count for right motor (positive=forward, negative=reverse, 0=neutral)
- */
-void MotorSetPWM(int32_t left_counts, int32_t right_counts)
+  * @brief Controls motor direction and speed
+  * @param speed Target speed (0 to 665)
+  * @param forward True for forward, False for backward
+  */
+void MoveMotors(uint16_t speed, bool forward)
 {
-	const uint16_t max = (uint16_t)(PCA9685_COUNTS - 1u);
+    if (speed > 665)
+        speed = 665;
 
-	/* Left motor */
-	if (left_counts > 0)
-	{
-		uint16_t pwm = ClampU16(left_counts);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, max);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, 0);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, pwm);
-		g_currentPWM = (int16_t)pwm;
-	}
-	else if (left_counts < 0)
-	{
-		uint16_t pwm = ClampU16(-left_counts);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, 0);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, max);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, pwm);
-		g_currentPWM = -(int16_t)pwm;
-	}
-	else
-	{
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, 0);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, 0);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, 0);
-		g_currentPWM = 0;
-	}
+    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, speed);
+    __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, speed);
 
-	/* Right motor */
-	if (right_counts > 0)
-	{
-		uint16_t pwm = ClampU16(right_counts);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, 0);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, max);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, pwm);
-	}
-	else if (right_counts < 0)
-	{
-		uint16_t pwm = ClampU16(-right_counts);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, max);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, 0);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, pwm);
-	}
-	else
-	{
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, 0);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, 0);
-		PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, 0);
-		g_currentPWM = 0;
-	}
+    if (forward)
+    {
+        HAL_GPIO_WritePin(GPIOE, AIN1_Pin, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOD, AIN2_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOD, BIN1_Pin, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOD, BIN2_Pin, GPIO_PIN_RESET);
+    }
+    else
+    {
+        HAL_GPIO_WritePin(GPIOE, AIN1_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOD, AIN2_Pin, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOD, BIN1_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOD, BIN2_Pin, GPIO_PIN_SET);
+    }
 }
 
 /**
- * @brief Set PWM values for left and right DC motors to stop them
- */
-void MotorBrake(void)
+  * @brief Stops both DC motors and cuts PWM signals
+  */
+void MotorCoast(void)
 {
-	const uint16_t max = (uint16_t)(PCA9685_COUNTS - 1u);
-	
-	PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_A, 0, max);
-	PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_B, 0, max);
-	PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_L_PWM, 0, max);
+    // Clear direction pins
+    HAL_GPIO_WritePin(GPIOE, AIN1_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOD, AIN2_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOD, BIN1_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOD, BIN2_Pin, GPIO_PIN_RESET);
 
-	PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_A, 0, max);
-	PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_B, 0, max);
-	PCA9685_SetPWM(PCA9685_ADDR_MOTOR, MOTOR_R_PWM, 0, max);
+    // Set PWM duty cycles to 0
+    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 0);
+    __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, 0);
+}
+
+/**
+  * @brief Applies active braking to both DC motors.
+  *
+  * Sets both H-bridge direction pins high and applies maximum PWM,
+  * forcing the motors to stop quickly.
+  */
+void StopMotors(void)
+{
+    HAL_GPIO_WritePin(GPIOE, AIN1_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(GPIOD, AIN2_Pin, GPIO_PIN_SET);
+
+    HAL_GPIO_WritePin(GPIOD, BIN1_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(GPIOD, BIN2_Pin, GPIO_PIN_SET);
+
+    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 665);
+    __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, 665);
 }
 
 /**
@@ -97,39 +85,39 @@ VOID DcMotor(ULONG initial_input)
 
 	while (1)
 	{
-		// Check for new CAN messages (non-blocking)
-		if (tx_event_flags_get(&g_eventFlags, FLAG_CAN_SPEED_CMD,
-		    TX_OR_CLEAR, &actual_flags, TX_NO_WAIT) == TX_SUCCESS)
+		if (tx_event_flags_get(&g_eventFlags, FLAG_CAN_SPEED_CMD, TX_OR_CLEAR, &actual_flags, TX_NO_WAIT) == TX_SUCCESS)
 		{
-			// Process all pending CAN messages
 			while (tx_queue_receive(&g_queueSpeedCmd, &msg, TX_NO_WAIT) == TX_SUCCESS)
-			{	
+			{
 				g_targetSpeed = 0;
-				memcpy(&g_targetSpeed, msg.data, sizeof(int32_t));
-				memcpy(&g_motorControlState.direction, msg.data + sizeof(int32_t), sizeof(int32_t));	
+				memcpy(&g_targetSpeed, msg.data , sizeof(int16_t));
+				memcpy(&g_motorControlState.direction, msg.data + sizeof(int32_t), sizeof(int32_t));
 			}
 		}
 
-		tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
-		if(g_emergencyBrake && g_motorControlState.direction == FORWARD)
-		{
-			tx_mutex_put(&g_emergencyMutex);
-			tx_thread_sleep(10);
-			continue ;
-		}
-		tx_mutex_put(&g_emergencyMutex);
+//		tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
+//		if(g_emergencyBrake && g_motorControlState.direction == FORWARD)
+//		{
+//			tx_mutex_put(&g_emergencyMutex);
+//			tx_thread_sleep(10);
+//			continue ;
+//		}
+//		tx_mutex_put(&g_emergencyMutex);
 
-		if (g_motorControlState.direction == FORWARD || g_motorControlState.direction == BACKWARD)
-		{
+		if (g_motorControlState.direction == FORWARD || g_motorControlState.direction == REVERSE)
 			UpdateMotorControl();
+		else if (g_motorControlState.direction == NEUTRAL)
+		{
+			tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
+			MotorCoast();
+			tx_mutex_put(&g_motorMutex);
 		}
 		else
 		{
 			tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
-		    MotorBrake();
-		    tx_mutex_put(&g_motorMutex);
+			StopMotors();
+			tx_mutex_put(&g_motorMutex);
 		}
-		
 		tx_thread_sleep(10);
 	}
 }
