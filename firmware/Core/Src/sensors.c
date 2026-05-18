@@ -401,9 +401,7 @@ HAL_StatusTypeDef Battery_ReadCurrent(I2C_HandleTypeDef *hi2c, float *current)
         *current = 0.0f;
         dbg_fail_count++;
         if ((dbg_fail_count % 25u) == 0u)
-        {
-            //UartPrintf("[INA231 CUR] shunt read fail count=%lu err=0x%08lX\r\n", (unsigned long)dbg_fail_count, (unsigned long)HAL_I2C_GetError(hi2c));
-        }
+            UartPrintf("[INA231 CUR] shunt read fail count=%lu err=0x%08lX\r\n", (unsigned long)dbg_fail_count, (unsigned long)HAL_I2C_GetError(hi2c));
         return HAL_ERROR;
     }
     int16_t current_raw = (int16_t)((buf[0] << 8) | buf[1]);
