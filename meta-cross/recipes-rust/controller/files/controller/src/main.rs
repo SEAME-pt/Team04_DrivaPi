@@ -495,9 +495,10 @@ fn run_autonomous_mode(
     input_rx: &mpsc::Receiver<GamepadInput>,
     controller: &MotorController,
     socket: &UdpSocket,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<Option<DriveMode>, Box<dyn std::error::Error>> {
     println!(">>> AUTONOMOUS ACTIVE - Move sticks to OVERRIDE");
     let mut last_ai_msg = Instant::now();
+    let mut next_mode: Option<DriveMode> = None;
 
     loop {
         // OVERRIDE: if human move joystick it overrides
@@ -506,7 +507,8 @@ fn run_autonomous_mode(
                 println!("(!) MANUEL OVERRIDE");
                 controller.stop_dc_motors()?;
 				controller.reset_servo_motors()?;
-				break; 
+                next_mode = Some(DriveMode::Manual);
+				break;
             }
         }
 
@@ -534,7 +536,7 @@ fn run_autonomous_mode(
 	}
     }
     controller.stop_dc_motors()?;
-    Ok(())
+    Ok(next_mode)
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -544,6 +546,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let controller = MotorController::new(CAN_INTERFACE, CAN_ID_MOTOR, CAN_ID_SERVO)?;
     let mut prev_start_pressed = false;
     let mut prev_select_pressed = false;
+    let mut requested_mode: Option<DriveMode> = None;
 
     let socket = UdpSocket::bind("127.0.0.1:5555")?;
     socket.set_nonblocking(true)?;
@@ -565,16 +568,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             break;
         }
 
-        if input.button_start && !prev_start_pressed {
-            run_manual_mode(&input_rx, &controller)?;
-        }
-    	prev_start_pressed = input.button_start;
-        
-    	if input.button_select && !prev_select_pressed{
-    		run_autonomous_mode(&input_rx, &controller, &socket)?;    
-    	}
-    	
+        let start_pressed = input.button_start && !prev_start_pressed;
+        let select_pressed = input.button_select && !prev_select_pressed;
+        prev_start_pressed = input.button_start;
         prev_select_pressed = input.button_select;
+
+        if start_pressed {
+            requested_mode = Some(DriveMode::Manual);
+        } else if select_pressed {
+            requested_mode = Some(DriveMode::Autonomous);
+        }
+
+        while let Some(mode) = requested_mode.take() {
+            match mode {
+                DriveMode::Manual => run_manual_mode(&input_rx, &controller)?,
+                DriveMode::Autonomous => {
+                    requested_mode = run_autonomous_mode(&input_rx, &controller, &socket)?;
+                }
+            }
+        }
     }
 
     drop(input_rx);
