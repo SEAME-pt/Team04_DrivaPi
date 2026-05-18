@@ -462,7 +462,7 @@ fn run_manual_mode(
             (joystick_motor_speed, direction)
         };
 
-        let servo_angle = (MID_SERVO_ANGLE + steering)
+        let servo_angle = (MID_SERVO_ANGLE + (steering * MID_SERVO_ANGLE))
             .clamp(MIN_SERVO_ANGLE, MAX_SERVO_ANGLE)
             .floor() as u32;
 
