@@ -552,6 +552,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     loop {
         let Some(input) = recv_latest_input(&input_rx, Duration::from_millis(50)) else {
             eprintln!("Gamepad input thread disconnected");
+            controller.stop_dc_motors()?;
+            controller.reset_servo_motors()?;
             break;
         };
 
