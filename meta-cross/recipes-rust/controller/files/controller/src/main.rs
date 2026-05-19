@@ -337,7 +337,7 @@ fn recv_latest_input(
 fn run_manual_mode(
     input_rx: &mpsc::Receiver<GamepadInput>,
     controller: &MotorController,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<Option<DriveMode>, Box<dyn std::error::Error>> {
     println!("MANUEL MODE - Press B to exit");
 // =================================================================================
 //                              INIT HELPER VARIABLES
@@ -352,6 +352,8 @@ fn run_manual_mode(
     let mut cruise_control_enabled = false;
     let mut cruise_direction: u8 = NEUTRAL;
     let mut cruise_speed: u32 = 0;
+
+    let mut next_mode: Option<DriveMode> = None;
     
 // =================================================================================
 
@@ -377,6 +379,17 @@ fn run_manual_mode(
             println!("Exiting MANUEL mode");
             controller.stop_dc_motors()?;
             controller.reset_servo_motors()?;
+            break;
+        }
+
+    // =================================================================================
+
+    // =================================================================================
+    //                          ENTERING AUTONOMOUS MODE
+    
+        if input.button_y {
+            println!("Entering AUTONOMOUS mode");
+            next_mode = Some(DriveMode::Autonomous);
             break;
         }
 
@@ -488,7 +501,7 @@ fn run_manual_mode(
     // =================================================================================
     }
 
-    Ok(())
+    Ok(next_mode)
 }
 
 fn run_autonomous_mode(
@@ -496,7 +509,7 @@ fn run_autonomous_mode(
     controller: &MotorController,
     socket: &UdpSocket,
 ) -> Result<Option<DriveMode>, Box<dyn std::error::Error>> {
-    println!(">>> AUTONOMOUS ACTIVE - Move sticks to OVERRIDE");
+    println!("AUTONOMOUS MODE - Move sticks to OVERRIDE - Press B to exit");
     let mut last_ai_msg = Instant::now();
     let mut next_mode: Option<DriveMode> = None;
 
@@ -507,6 +520,12 @@ fn run_autonomous_mode(
                 println!("(!) MANUEL OVERRIDE");
                 next_mode = Some(DriveMode::Manual);
 				break;
+            }
+            if input.button_b {
+                println!("Exiting AUTONOMOUS mode");
+                controller.stop_dc_motors()?;
+                controller.reset_servo_motors()?;
+                break;
             }
         }
 
@@ -528,6 +547,7 @@ fn run_autonomous_mode(
 
         // WATCHDOG: If AI does not respond, it brakes in 500ms
         if last_ai_msg.elapsed() > Duration::from_millis(500) {
+            println!("AI not answering");
             controller.stop_dc_motors()?;
             controller.reset_servo_motors()?;
             break;
@@ -578,7 +598,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         while let Some(mode) = requested_mode.take() {
             match mode {
-                DriveMode::Manual => run_manual_mode(&input_rx, &controller)?,
+                DriveMode::Manual => {
+                    requested_mode = run_manual_mode(&input_rx, &controller)?;
+                }
                 DriveMode::Autonomous => {
                     requested_mode = run_autonomous_mode(&input_rx, &controller, &socket)?;
                 }
