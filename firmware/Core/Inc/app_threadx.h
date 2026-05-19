@@ -37,10 +37,8 @@ extern "C" {
 #include <stdbool.h>
 #include <stdlib.h>
 #include "main.h"
-#include "pca9685.h"
 #include "dc_motor.h"
 #include "servo_motor.h"
-#include "dc_motor_test.h"
 #include "motor_utils.h"
 #include "motor_control.h"
 #include "sensors.h"

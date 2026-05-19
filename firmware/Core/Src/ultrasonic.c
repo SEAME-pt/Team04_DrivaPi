@@ -126,7 +126,7 @@ void UltrasonicEntry(ULONG initial_input)
 				if (ttc_ms < TTC_THRESHOLD_MS && ttc_ms >= 200 && current_gear != GEAR_REVERSE)
 				{
 					tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
-					MotorSetPWM(0, 0);
+					StopMotors();
 					tx_mutex_put(&g_motorMutex);
 				}
 				else if (ttc_ms < 200 && range_cm > BRAKE_THRESHOLD_CM && current_speed >= 0.2 && current_gear != GEAR_REVERSE)
@@ -136,7 +136,7 @@ void UltrasonicEntry(ULONG initial_input)
 						if (i % 2 == 0)
 						{
 							tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
-							MotorSetPWM(-4096, -4096);
+							MoveMotors(665, false);
 							tx_mutex_put(&g_motorMutex);
 
 							HAL_UART_Transmit(&huart1, (uint8_t*)"! ABS !\r\n", 24, 100);
@@ -144,18 +144,18 @@ void UltrasonicEntry(ULONG initial_input)
 						else if (i % 5 == 0)
 						{
 							tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
-							MotorSetPWM(0, 0);
+							StopMotors();
 							tx_mutex_put(&g_motorMutex);
 						}
 					}
 					tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
-					MotorSetPWM(0, 0);
+					StopMotors();
 					tx_mutex_put(&g_motorMutex);
 				}
 				else if (range_cm <= BRAKE_THRESHOLD_CM && current_gear)
 				{
 					tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
-					MotorSetPWM(0, 0);
+					StopMotors();
 					tx_mutex_put(&g_motorMutex);
 				}
 				else

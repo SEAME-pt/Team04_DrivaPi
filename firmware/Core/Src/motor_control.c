@@ -15,20 +15,20 @@
 void MotorControlUpdate(MotorControlState *state, float current_speed)
 {
     // Convert m/s to hm/h (1 m/s = 36 hm/h)
-    float current_hm = current_speed * 36.0f;
+	uint16_t current_hm = (uint16_t)ceilf(current_speed * 36.0f);
     
     int8_t target_direction;
     if (state->direction == FORWARD)
         target_direction = 1;
-    else if (state->direction == BACKWARD)
-        target_direction = -1;
+    else if (state->direction == REVERSE)
+        target_direction = 0;
     
     if (state->target_speed < 1.0f)
     {
         state->pwm_raw = 0;
         state->integral = 0.0f;  // Reset integral when stopped
         tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
-        MotorSetPWM(state->pwm_raw, state->pwm_raw);
+        MoveMotors(state->pwm_raw, true);
         tx_mutex_put(&g_motorMutex);
         state->current_speed = current_hm;
         return;
@@ -36,7 +36,9 @@ void MotorControlUpdate(MotorControlState *state, float current_speed)
     
     state->error = state->target_speed - current_hm;
     
-    float base_pwm = state->target_speed / 100.0f;
+    float base_pwm = 0.0f;
+
+	base_pwm = state->target_speed / 100.0f;
     if (base_pwm > 1.0f)
         base_pwm = 1.0f;
     
@@ -61,25 +63,29 @@ void MotorControlUpdate(MotorControlState *state, float current_speed)
     if (pwm_normalized < 0.0f)
         pwm_normalized = 0.0f;
 
-    int16_t pwm_magnitude = (int16_t)(pwm_normalized * 4095.0f);
+    int16_t pwm_magnitude = (int16_t)(pwm_normalized * 665.0f);
 
     if (pwm_magnitude > 0 && pwm_magnitude < (int16_t)PWM_MIN)
         pwm_magnitude = (int16_t)PWM_MIN;
-    state->pwm_raw = pwm_magnitude * target_direction;
+    state->pwm_raw = pwm_magnitude;
     
-    tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
-    MotorSetPWM((int32_t)state->pwm_raw, (int32_t)state->pwm_raw);
-    tx_mutex_put(&g_motorMutex);
+	tx_mutex_get(&g_motorMutex, TX_WAIT_FOREVER);
+	MoveMotors(state->pwm_raw, target_direction);
+	tx_mutex_put(&g_motorMutex);
     
     state->current_speed = current_hm;
 }
 
 void UpdateMotorControl(void)
 {
-    // CAN receiver has already populated g_targetSpeed
-    // Update motor controller with current speed feedback
+    float current_speed;
+
+    tx_mutex_get(&g_speedDataMutex, TX_WAIT_FOREVER);
+    current_speed = g_vehicleSpeed;
+    tx_mutex_put(&g_speedDataMutex);
+
     g_motorControlState.target_speed = g_targetSpeed;
-    MotorControlUpdate(&g_motorControlState, g_vehicleSpeed);
+    MotorControlUpdate(&g_motorControlState, current_speed);
 }
 
 void MotorControlInit(MotorControlState *state)
@@ -96,4 +102,3 @@ void MotorControlInit(MotorControlState *state)
     state->pwm_raw = 0;
     state->direction = -1;
 }
-

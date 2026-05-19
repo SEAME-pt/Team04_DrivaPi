@@ -202,10 +202,7 @@
    code size and overhead, but provides the ability to generate system trace information which
    is available for viewing in TraceX.  */
 
-#define TX_ENABLE_EVENT_TRACE
-
-/* Enable scheduler execution-change callbacks used to feed SystemView task switch events. */
-#define TX_ENABLE_EXECUTION_CHANGE_NOTIFY
+/*#define TX_ENABLE_EVENT_TRACE*/
 
 /* Determine if block pool performance gathering is required by the application. When the following is
    defined, ThreadX gathers various block pool performance information. */
@@ -246,14 +243,6 @@
    defined, ThreadX gathers various timer performance information. */
 
 /*#define TX_TIMER_ENABLE_PERFORMANCE_INFO*/
-
-/* Define the clock source for trace event entry time stamp. */
-
-/*#define TX_TRACE_TIME_SOURCE  *((ULONG *) 0xE0001004)*/
-
-/* Define the clock source for trace mask. */
-
-/*#define TX_TRACE_TIME_MASK  0xFFFFFFFFUL*/
 
 /* Define the common timer tick reference for use by other middleware components. */
 

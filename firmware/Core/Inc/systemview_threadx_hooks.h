@@ -14,6 +14,7 @@ extern "C" {
 #endif
 
 #include "tx_api.h"
+#include "tx_thread.h"
 #include "app_threadx.h"
 
 VOID _tx_execution_initialize(VOID);

@@ -13,7 +13,6 @@ RM := rm -rf
 -include Middlewares/ST/threadx/ports/cortex_m33/gnu/src/subdir.mk
 -include Middlewares/ST/threadx/common/src/subdir.mk
 -include Drivers/STM32U5xx_HAL_Driver/Src/subdir.mk
--include Core/Test/subdir.mk
 -include Core/Startup/subdir.mk
 -include Core/Src/subdir.mk
 -include AZURE_RTOS/App/subdir.mk

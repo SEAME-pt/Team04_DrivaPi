@@ -217,15 +217,13 @@ VOID CanTx(ULONG initial_input)
 
 		float speed = 0.0f;
 		if (tx_mutex_get(&g_speedDataMutex, MUTEX_WAIT_TICKS) == TX_SUCCESS)
-		{
 			speed = g_vehicleSpeed;
-			tx_mutex_put(&g_speedDataMutex);
-		}
 		else
 		{
 			tx_thread_sleep(1);
 			continue;
 		}
+		tx_mutex_put(&g_speedDataMutex);
 
 		if (tx_mutex_get(&g_canMutex, 5) == TX_SUCCESS)
 		{
@@ -242,10 +240,8 @@ VOID CanTx(ULONG initial_input)
 				PublishHtsData();
 				last_hts_send = now;
 			}
-
 			tx_mutex_put(&g_canMutex);
 		}
-
 		tx_thread_sleep(100);
 	}
 }
