@@ -506,7 +506,7 @@ fn run_autonomous_mode(
             if input.analog_stick_left.y.abs() > 0.2 || input.analog_stick_right.x.abs() > 0.2 {
                 println!("(!) MANUEL OVERRIDE");
                 next_mode = Some(DriveMode::Manual);
-				Ok(next_mode);
+				break;
             }
         }
 
@@ -531,10 +531,8 @@ fn run_autonomous_mode(
             controller.stop_dc_motors()?;
             controller.reset_servo_motors()?;
             break;
-	}
+	    }
     }
-    controller.stop_dc_motors()?;
-    controller.reset_servo_motors()?;
     Ok(next_mode)
 }
 
