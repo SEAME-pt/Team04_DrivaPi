@@ -505,10 +505,8 @@ fn run_autonomous_mode(
         if let Some(input) = recv_latest_input(input_rx, Duration::from_millis(10)) {
             if input.analog_stick_left.y.abs() > 0.2 || input.analog_stick_right.x.abs() > 0.2 {
                 println!("(!) MANUEL OVERRIDE");
-                controller.stop_dc_motors()?;
-				controller.reset_servo_motors()?;
                 next_mode = Some(DriveMode::Manual);
-				break;
+				Ok(next_mode);
             }
         }
 
@@ -536,6 +534,7 @@ fn run_autonomous_mode(
 	}
     }
     controller.stop_dc_motors()?;
+    controller.reset_servo_motors()?;
     Ok(next_mode)
 }
 
