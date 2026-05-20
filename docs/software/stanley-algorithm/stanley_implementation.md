@@ -153,18 +153,18 @@ Keep manual mode unchanged and add a mode switch (button or config flag).
 
 ---
 
-## 5. Steering-to-Servo Mapping (PiRacer-Specific)
+## 5. Steering-to-Servo Mapping
 
 Current firmware servo center and range:
 
 - Center: `90°`
-- Limits: `75° .. 105°`
+- Limits: `0° .. 180°`
 
 Use:
 
 ```text
 servo_deg = 90.0 + STEER_TO_SERVO_GAIN * delta_rad
-servo_deg = clamp(servo_deg, 75.0, 105.0)
+servo_deg = clamp(servo_deg, 0.0, 180.0)
 ```
 
 Calibration procedure:

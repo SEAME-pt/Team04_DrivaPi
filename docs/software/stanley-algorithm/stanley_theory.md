@@ -24,32 +24,32 @@ These two terms are added to produce the steering command.
 
 Vehicle state (typical):
 
-- \(x, y\): vehicle position in world frame
-- \(\psi\): vehicle yaw (heading angle)
-- \(v\): longitudinal speed
+- $x, y$: vehicle position in world frame
+- $\psi$: vehicle yaw (heading angle)
+- $v$: longitudinal speed
 
 Reference path:
 
-- sequence of points \((x_i, y_i)\)
-- path heading at each point \(\psi_i^{path}\)
+- sequence of points $(x_i, y_i)$
+- path heading at each point $\psi_i^{path}$
 
 For Stanley, error is usually measured at the **front axle point**, not vehicle center:
 
-\[
+$$
 x_f = x + L \cos(\psi), \quad y_f = y + L \sin(\psi)
-\]
+$$
 
-where \(L\) is wheelbase.
+where $L$ is wheelbase.
 
 ### Camera-only interpretation for this project
 
 Since your lateral perception is camera-based, the controller can be fed directly with:
 
-- camera-estimated cross-track error \(e_y\)
-- camera-estimated heading error \(e_{\psi}\)
-- speed sensor value \(v\)
+- camera-estimated cross-track error $e_y$
+- camera-estimated heading error $e_{\psi}$
+- speed sensor value $v$
 
-In this mode, global \((x,y,\psi)\) can be optional for Stanley computation.
+In this mode, global $(x,y,\psi)$ can be optional for Stanley computation.
 
 ---
 
@@ -57,22 +57,22 @@ In this mode, global \((x,y,\psi)\) can be optional for Stanley computation.
 
 ### 4.1 Heading Error
 
-\[
+$$
 e_{\psi} = \text{wrapToPi}\left(\psi_{ref} - \psi\right)
-\]
+$$
 
-- \(\psi_{ref}\): heading of closest/reference path point
-- `wrapToPi`: normalizes angle to \((-\pi, \pi]\)
+- $\psi_{ref}$: heading of closest/reference path point
+- `wrapToPi`: normalizes angle to $(-\pi, \pi]$
 
 ### 4.2 Cross-Track Error
 
-Let \(e_y\) be signed lateral distance from front axle to path.  
+Let $e_y$ be signed lateral distance from front axle to path.  
 Sign is determined by 2D cross product between path tangent and vector from path point to front axle.
 
-For camera lane tracking, \(e_y\) is obtained from lane center offset (image-to-ground conversion), with sign convention:
+For camera lane tracking, $e_y$ is obtained from lane center offset (image-to-ground conversion), with sign convention:
 
-- \(e_y > 0\): lane center is to one side of vehicle centerline
-- \(e_y < 0\): lane center is to the opposite side
+- $e_y > 0$: lane center is to one side of vehicle centerline
+- $e_y < 0$: lane center is to the opposite side
 
 This sign must match steering command convention.
 
@@ -82,15 +82,15 @@ This sign must match steering command convention.
 
 The classical form:
 
-\[
+$$
 \delta = e_{\psi} + \arctan\left(\frac{k \, e_y}{v + k_s}\right)
-\]
+$$
 
 where:
 
-- \(\delta\): steering command (rad)
-- \(k > 0\): cross-track gain
-- \(k_s > 0\): softening term for low speed robustness
+- $\delta$: steering command (rad)
+- $k > 0$: cross-track gain
+- $k_s > 0$: softening term for low speed robustness
 
 Interpretation:
 
@@ -102,8 +102,8 @@ Interpretation:
 
 ## 6. Why It Works (Intuition)
 
-If heading is wrong, \(e_{\psi}\) rotates the vehicle toward path tangent.  
-If vehicle is offset sideways, \(e_y\)-term steers inward to reduce offset.  
+If heading is wrong, $e_{\psi}$ rotates the vehicle toward path tangent.  
+If vehicle is offset sideways, $e_y$-term steers inward to reduce offset.  
 The arctangent saturates naturally, preventing unbounded commands for large errors.
 
 Together, this creates practical, robust convergence in many real driving conditions.
@@ -112,14 +112,14 @@ Together, this creates practical, robust convergence in many real driving condit
 
 ## 7. Theoretical Implementation Procedure
 
-At each control step \(t_k\):
+At each control step $t_k$:
 
-1. Get state \((x, y, \psi, v)\).
-2. Compute front axle \((x_f, y_f)\).
-3. Find nearest/reference path index \(i^\*\) to \((x_f, y_f)\).
-4. Compute \(e_{\psi}\) and signed \(e_y\).
-5. Compute \(\delta\) using Stanley law.
-6. Clamp \(\delta\) to steering limits.
+1. Get state $(x, y, \psi, v)$.
+2. Compute front axle $(x_f, y_f)$.
+3. Find nearest/reference path index $i^*$ to $(x_f, y_f)$.
+4. Compute $e_{\psi}$ and signed $e_y$.
+5. Compute $\delta$ using Stanley law.
+6. Clamp $\delta$ to steering limits.
 7. (Optional but recommended) apply steering rate limit.
 8. Send steering command to actuator.
 9. Repeat at fixed frequency.
@@ -130,10 +130,10 @@ At each tick:
 
 1. Detect lane boundaries/centerline from camera frame.
 2. Estimate:
-   - \(e_y\): lateral offset to lane center (meters)
-   - \(e_{\psi}\): angle between vehicle forward axis and lane tangent (rad)
-3. Read speed \(v\) from speed sensor.
-4. Compute Stanley steering \(\delta\).
+   - $e_y$: lateral offset to lane center (meters)
+   - $e_{\psi}$: angle between vehicle forward axis and lane tangent (rad)
+3. Read speed $v$ from speed sensor.
+4. Compute Stanley steering $\delta$.
 5. Apply saturation/rate limit and send steering.
 6. If lane confidence is low: safe fallback (center + slow/stop).
 
@@ -170,9 +170,9 @@ last_delta = delta
 For theoretical correctness in a real system:
 
 - Use **consistent coordinate frames** everywhere.
-- Use **continuous path heading** (no jumps near \(\pm\pi\)).
+- Use **continuous path heading** (no jumps near $\pm\pi$).
 - Ensure **signed cross-track error** is consistent with steering sign convention.
-- Run at fixed control period (deterministic \(dt\)).
+- Run at fixed control period (deterministic $dt$).
 - Keep target index monotonic to avoid oscillation due to nearest-point switching.
 - Calibrate camera geometry (intrinsics/extrinsics) so pixel offset maps consistently to meters.
 - Stabilize lane estimates (temporal filtering) to reduce steering jitter.
@@ -181,16 +181,16 @@ For theoretical correctness in a real system:
 
 ## 10. Parameter Roles (Theory)
 
-- \(k\): larger -> more aggressive lateral convergence, but can oscillate.
-- \(k_s\): larger -> less aggressive at low speed, improves smoothness.
-- \(L\): affects front-axle geometry; must match physical vehicle.
-- \(\delta_{max}\): physical steering saturation bound.
+- $k$: larger -> more aggressive lateral convergence, but can oscillate.
+- $k_s$: larger -> less aggressive at low speed, improves smoothness.
+- $L$: affects front-axle geometry; must match physical vehicle.
+- $\delta_{max}$: physical steering saturation bound.
 
 Typical tuning logic:
 
-1. fix geometry/limits (\(L, \delta_{max}\))
-2. tune \(k\)
-3. tune \(k_s\) for low-speed behavior
+1. fix geometry/limits ($L, \delta_{max}$)
+2. tune $k$
+3. tune $k_s$ for low-speed behavior
 
 ---
 
@@ -205,8 +205,8 @@ A complete autonomous stack also needs a longitudinal controller for speed:
 
 So theoretical architecture is:
 
-- **Lateral:** Stanley \(\rightarrow\) steering
-- **Longitudinal:** separate controller \(\rightarrow\) throttle/brake
+- **Lateral:** Stanley $\rightarrow$ steering
+- **Longitudinal:** separate controller $\rightarrow$ throttle/brake
 
 ---
 
