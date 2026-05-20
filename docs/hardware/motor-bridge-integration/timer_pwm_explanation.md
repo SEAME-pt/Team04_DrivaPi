@@ -11,6 +11,9 @@ It also explains why the motor PWM command is limited to 665.
 
 ## Acronyms and register names (quick reference)
 
+- `RCC` (Reset and Clock Control): MCU peripheral that configures and distributes clock signals and controls reset sources.
+- `MSI` (Multi-Speed Internal clock): The internal, low-power RC oscillator available at multiple selectable frequencies.
+- `MSIClockRange / RCC_MSIRANGE_x`: Selector for the MSI frequency; `RCC_MSIRANGE_4` selects 4 MHz on this MCU.
 - `PLL` (Phase-Locked Loop): A clock block that creates a faster and stable internal clock from a lower-frequency source.
 - `APB` (Advanced Peripheral Bus): The internal bus clock domain used by peripherals such as timers, UART, and SPI.
 - `Prescaler` / `PSC`: A timer divider that slows the timer clock by `PSC + 1`.
@@ -64,7 +67,7 @@ F_{PWM,motor} = \frac{160\,000\,000}{16 \times 666}
 = 15\,015\,\text{Hz} \approx 15\,\text{kHz}
 $$
 
-Conclusion: yes, this math is intentionally chosen to produce approximately 15 kHz motor PWM.
+Conclusion: This math is intentionally chosen to produce approximately 15 kHz motor PWM.
 
 ## 3. Why motor speed is clamped to 665
 
