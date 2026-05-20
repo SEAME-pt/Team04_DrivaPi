@@ -36,27 +36,38 @@ void MotorControlUpdate(MotorControlState *state, float current_speed)
     
     state->error = state->target_speed - current_hm;
     
-    float base_pwm = 0.0f;
+    // BASE: PID + feedforward (discrete time)
+    // error = target - current
+    // integral = clamp(integral + (error * dt), -limit, limit)
+    // derivative = (error - prev_error) / dt
+    // feedforward_raw = (target - prev_target) / dt        (simulator-style)
+    // feedforward = ff_smooth * (1 - ff_alpha) + feedforward_raw * ff_alpha
+    // output = (Kp * error) + (Ki * integral) + (Kd * derivative) + (Kff * feedforward)
+    // base_pwm = feedforward_gain * target                  (static mapping)
+    // pwm_normalized = clamp(base_pwm + output, 0.0f, 1.0f)
+    float pwm_normalized = 0.0f;
 
-	base_pwm = state->target_speed / 100.0f;
-    if (base_pwm > 1.0f)
-        base_pwm = 1.0f;
-    
-    float p_term = state->error * state->proportional_gain;
-    float pwm_test = base_pwm + p_term + (state->integral * state->integral_gain);
-    if (pwm_test < 1.0f && pwm_test > 0.0f)
-    {
-        state->integral += state->error * 0.1f;
-
-        if (state->integral >= INTEGRAL_LIMIT)
-            state->integral = INTEGRAL_LIMIT;
-        else if (state->integral <= -INTEGRAL_LIMIT)
-            state->integral = -INTEGRAL_LIMIT;
-    }
-    
-    float i_term = state->integral * state->integral_gain;
-    
-    float pwm_normalized = base_pwm + p_term + i_term;
+#if 0
+    /* Requires adding previous_error, previous_target, derivative_gain,
+     * ff_alpha, and ff_smooth to MotorControlState. */
+    /* PID base (example with feedforward):
+     * float dt = 0.1f;
+     * float base_pwm = clamp(state->feedforward_gain * state->target_speed, 0.0f, 1.0f);
+     * state->integral = clamp(state->integral + (state->error * dt),
+     *                         -INTEGRAL_LIMIT, INTEGRAL_LIMIT);
+     * float derivative = (state->error - state->previous_error) / dt;
+     * float feedforward_raw = (state->target_speed - state->previous_target) / dt;
+     * state->ff_smooth = state->ff_smooth * (1.0f - state->ff_alpha)
+     *                    + feedforward_raw * state->ff_alpha;
+     * float p_term = state->error * state->proportional_gain;
+     * float i_term = state->integral * state->integral_gain;
+     * float d_term = derivative * state->derivative_gain;
+     * float ff_term = state->feedforward_gain * state->ff_smooth;
+     * pwm_normalized = base_pwm + p_term + i_term + d_term + ff_term;
+     * state->previous_error = state->error;
+     * state->previous_target = state->target_speed;
+     */
+#endif
     
     if (pwm_normalized > 1.0f)
         pwm_normalized = 1.0f;
