@@ -104,8 +104,10 @@ heading_error = normalize_angle(path[idx].yaw_rad - yaw)
 Use path tangent vector `t = [cos(path_yaw), sin(path_yaw)]` and vector from path point to front axle `e = [x_f - x_path, y_f - y_path]`.
 
 ```text
-cross_track_error = sign(t_x * e_y - t_y * e_x) * ||e||
+cross_track_error = sign(t_x * e_y - t_y * e_x) * sqrt(e_x.pow(2) + e_y.pow(2))
 ```
+
+[//]: <> (||e|| -> same thing as the sqrt)
 
 4. Compute steering:
 
