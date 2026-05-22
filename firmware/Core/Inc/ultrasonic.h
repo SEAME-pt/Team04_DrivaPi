@@ -3,11 +3,12 @@
 
 #include "app_threadx.h"
 
-// SRF08 Commands
-#define SRF08_ADDR          0xE0
-#define CMD_REG             0x00
-#define RANGE_REG           0x02
-#define CMD_CENTIMETERS     0x51
+#define SRF08_I2C_ADDR        0xE0
+#define SRF08_CMD_REG         0x00
+#define SRF08_ECHO_HIGH_REG   0x02
+#define SRF08_RANGING_CM      0x51
+
+extern I2C_HandleTypeDef hi2c3;
 
 // Safety Thresholds
 #define BRAKE_THRESHOLD_CM  17   // Hard Stop
