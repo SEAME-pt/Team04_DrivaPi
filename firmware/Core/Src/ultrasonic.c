@@ -1,4 +1,4 @@
-#/**
+/**
  * @file ultrasonic.c
  * @brief SRF08 ultrasonic sensor handling and collision safety thread.
  *
@@ -7,6 +7,7 @@
  * controls emergency braking logic.
  */
 #include "ultrasonic.h"
+#include "main.h"
 
 /**
  * @brief Issue a ranging command to the SRF08 sensor.
@@ -100,7 +101,7 @@ void UltrasonicEntry(ULONG initial_input)
 				tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
 				g_emergencyBrake = true;
 				tx_mutex_put(&g_emergencyMutex);
-				HAL_UART_Transmit(&huart1, (uint8_t*)"! STOPPING !\r\n", 24, 100);
+				UartPrintf("! STOPPING !\r\n");
 
 				if (ttc_ms < TTC_THRESHOLD_MS && ttc_ms >= 200 && current_gear != GEAR_REVERSE)
 				{
@@ -118,7 +119,7 @@ void UltrasonicEntry(ULONG initial_input)
 							MoveMotors(665, false);
 							tx_mutex_put(&g_motorMutex);
 
-							HAL_UART_Transmit(&huart1, (uint8_t*)"! ABS !\r\n", 24, 100);
+							UartPrintf("! ABS !\r\n");
 						}
 						else if (i % 5 == 0)
 						{
@@ -138,14 +139,14 @@ void UltrasonicEntry(ULONG initial_input)
 					tx_mutex_put(&g_motorMutex);
 				}
 				else
-					HAL_UART_Transmit(&huart1, (uint8_t*)"sike!\r\n", 24, 100);
+					UartPrintf("sike!\r\n");
 			}
 			else if (ttc_ms > TTC_THRESHOLD_MS && range_cm > BRAKE_THRESHOLD_CM)
 			{
 				tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
 				g_emergencyBrake = false;
 				tx_mutex_put(&g_emergencyMutex);
-				HAL_UART_Transmit(&huart1, (uint8_t*)"brake free\r\n", 24, 100);
+				UartPrintf("brake free\r\n");
 			}
 			dist_old = range_cm;
 		}
