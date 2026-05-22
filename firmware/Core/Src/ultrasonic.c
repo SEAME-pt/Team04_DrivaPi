@@ -18,7 +18,7 @@
 static HAL_StatusTypeDef SRF08_StartRanging(void)
 {
 	uint8_t cmd = SRF08_RANGING_CM;
-	return HAL_I2C_Mem_Write(&hi2c1, SRF08_I2C_ADDR, SRF08_CMD_REG, I2C_MEMADD_SIZE_8BIT, &cmd, 1, 200);
+	return HAL_I2C_Mem_Write(&hi2c3, SRF08_I2C_ADDR, SRF08_CMD_REG, I2C_MEMADD_SIZE_8BIT, &cmd, 1, 200);
 }
 
 /**
@@ -32,7 +32,7 @@ static HAL_StatusTypeDef SRF08_StartRanging(void)
 static int32_t SRF08_ReadDistanceCm(void)
 {
 	uint8_t data[2] = {0};
-	if (HAL_I2C_Mem_Read(&hi2c1, SRF08_I2C_ADDR, SRF08_ECHO_HIGH_REG, I2C_MEMADD_SIZE_8BIT, data, 2, 200) != HAL_OK)
+	if (HAL_I2C_Mem_Read(&hi2c3, SRF08_I2C_ADDR, SRF08_ECHO_HIGH_REG, I2C_MEMADD_SIZE_8BIT, data, 2, 200) != HAL_OK)
 		return -1;
 	int32_t dist = ((int32_t)data[0] << 8) | data[1];
 	return dist;
@@ -45,8 +45,8 @@ static int32_t SRF08_ReadDistanceCm(void)
  */
 void UltrasonicEntry(ULONG initial_input)
 {
-	if (SRF08_StartRanging(void)() != HAL_OK)
-		UartPrintf(&huart1, "I2C3 config failed\r\n");
+	if (SRF08_StartRanging() != HAL_OK)
+		UartPrintf("I2C3 config failed\r\n");
 	tx_thread_sleep(10);
 
 	// --- VARIABLES ---
@@ -59,12 +59,12 @@ void UltrasonicEntry(ULONG initial_input)
 
 	while(1)
 	{
-		range_cm = SRF08_ReadDistanceCm(void);
+		range_cm = SRF08_ReadDistanceCm();
 		if (range_cm < 0)
 		{
-			UartPrintf(&huart1, "SRF08 read error\r\n");
-			if (SRF08_StartRanging(void)() != HAL_OK)
-				UartPrintf(&huart1, "I2C3 config failed\r\n");
+			UartPrintf("SRF08 read error\r\n");
+			if (SRF08_StartRanging() != HAL_OK)
+				UartPrintf("I2C3 config failed\r\n");
 			tx_thread_sleep(100);
 			continue;
 		}
