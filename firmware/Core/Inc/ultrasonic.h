@@ -16,5 +16,4 @@ extern I2C_HandleTypeDef hi2c3;
 #define DT_SECONDS          0.057f
 #define BACKSPIN_THRESHOLD	70
 
-
 #endif /* __ULTRASONIC_H */

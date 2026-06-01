@@ -46,10 +46,6 @@ static int32_t SRF08_ReadDistanceCm(void)
  */
 void UltrasonicEntry(ULONG initial_input)
 {
-	if (SRF08_StartRanging() != HAL_OK)
-		UartPrintf("I2C3 config failed\r\n");
-	tx_thread_sleep(10);
-
 	// --- VARIABLES ---
 	int32_t range_cm = 0;
 	int32_t dist_old = 0;
@@ -57,18 +53,19 @@ void UltrasonicEntry(ULONG initial_input)
 	float ttc_ms = 9999;
 	float current_speed = 0;
 	RNDGear_t current_gear = GEAR_NEUTRAL;
-
+	tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
+	g_emergencyBrake = false;
+	tx_mutex_put(&g_emergencyMutex);
+	
 	while(1)
 	{
-		range_cm = SRF08_ReadDistanceCm();
-		if (range_cm < 0)
+		if (SRF08_StartRanging() == HAL_OK)
 		{
-			UartPrintf("SRF08 read error\r\n");
-			if (SRF08_StartRanging() != HAL_OK)
-				UartPrintf("I2C3 config failed\r\n");
-			tx_thread_sleep(100);
-			continue;
+			tx_thread_sleep(20);
+			range_cm = SRF08_ReadDistanceCm();
 		}
+		else
+			continue;
 		
 		// Get current speed locally so we don't need to use the mutex every time we try to access it
 		tx_mutex_get(&g_speedDataMutex, TX_WAIT_FOREVER);
@@ -95,13 +92,12 @@ void UltrasonicEntry(ULONG initial_input)
 				ttc_ms = ((float)range_cm / velocity_cm_s) * 1000.0f;
 			else
 				ttc_ms = 9999.0f;
-
 			if (current_gear != GEAR_REVERSE && (ttc_ms < TTC_THRESHOLD_MS || range_cm < BRAKE_THRESHOLD_CM))
 			{
 				tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
 				g_emergencyBrake = true;
 				tx_mutex_put(&g_emergencyMutex);
-				UartPrintf("! STOPPING !\r\n");
+				UartPrintf("! STOPPING ! %d\r\n", (int32_t)ttc_ms );
 
 				if (ttc_ms < TTC_THRESHOLD_MS && ttc_ms >= 200 && current_gear != GEAR_REVERSE)
 				{
@@ -146,11 +142,10 @@ void UltrasonicEntry(ULONG initial_input)
 				tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
 				g_emergencyBrake = false;
 				tx_mutex_put(&g_emergencyMutex);
-				UartPrintf("brake free\r\n");
 			}
 			dist_old = range_cm;
 		}
 
-		tx_thread_sleep(1);
+		tx_thread_sleep(20);
 	}
 }
