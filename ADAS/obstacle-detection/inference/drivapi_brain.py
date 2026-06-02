@@ -125,7 +125,7 @@ class DrivaPiBrain:
         reason = "NORMAL"
 
         # Explicit priority hierarchy to avoid control conflicts.
-        # 0 = Normal, 1 = Cautela, 2 = Following (Proporcional), 3 = Emergência/STOP
+        # 0 = Normal, 1 = Caution, 2 = Following (Proportional), 3 = Emergency/STOP
         current_priority = 0
 
         # 2. Process confirmed detections.
