@@ -3,7 +3,7 @@
 # Toolchain: GNU Tools for STM32 (14.3.rel1)
 ################################################################################
 
-# Add inputs and outputs from these tool invocations to the build variables
+# Add inputs and outputs from these tool invocations to the build variables 
 S_UPPER_SRCS += \
 ../Middlewares/ST/threadx/ports/cortex_m33/gnu/src/tx_thread_context_restore.S \
 ../Middlewares/ST/threadx/ports/cortex_m33/gnu/src/tx_thread_context_save.S \
@@ -13,7 +13,7 @@ S_UPPER_SRCS += \
 ../Middlewares/ST/threadx/ports/cortex_m33/gnu/src/tx_thread_schedule.S \
 ../Middlewares/ST/threadx/ports/cortex_m33/gnu/src/tx_thread_stack_build.S \
 ../Middlewares/ST/threadx/ports/cortex_m33/gnu/src/tx_thread_system_return.S \
-../Middlewares/ST/threadx/ports/cortex_m33/gnu/src/tx_timer_interrupt.S
+../Middlewares/ST/threadx/ports/cortex_m33/gnu/src/tx_timer_interrupt.S 
 
 OBJS += \
 ./Middlewares/ST/threadx/ports/cortex_m33/gnu/src/tx_thread_context_restore.o \
@@ -24,7 +24,7 @@ OBJS += \
 ./Middlewares/ST/threadx/ports/cortex_m33/gnu/src/tx_thread_schedule.o \
 ./Middlewares/ST/threadx/ports/cortex_m33/gnu/src/tx_thread_stack_build.o \
 ./Middlewares/ST/threadx/ports/cortex_m33/gnu/src/tx_thread_system_return.o \
-./Middlewares/ST/threadx/ports/cortex_m33/gnu/src/tx_timer_interrupt.o
+./Middlewares/ST/threadx/ports/cortex_m33/gnu/src/tx_timer_interrupt.o 
 
 S_UPPER_DEPS += \
 ./Middlewares/ST/threadx/ports/cortex_m33/gnu/src/tx_thread_context_restore.d \
@@ -35,7 +35,7 @@ S_UPPER_DEPS += \
 ./Middlewares/ST/threadx/ports/cortex_m33/gnu/src/tx_thread_schedule.d \
 ./Middlewares/ST/threadx/ports/cortex_m33/gnu/src/tx_thread_stack_build.d \
 ./Middlewares/ST/threadx/ports/cortex_m33/gnu/src/tx_thread_system_return.d \
-./Middlewares/ST/threadx/ports/cortex_m33/gnu/src/tx_timer_interrupt.d
+./Middlewares/ST/threadx/ports/cortex_m33/gnu/src/tx_timer_interrupt.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
