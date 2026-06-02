@@ -1,0 +1,6 @@
+{
+  "alert_id": "EVP_ACTIVE_INT_04",
+  "status": "PREEMPTION_ACTIVE",
+  "target_lane": "NORTH_BOUND",
+  "clear_corridor_radius_meters": 30.0
+}

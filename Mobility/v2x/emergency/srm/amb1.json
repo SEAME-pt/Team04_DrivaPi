@@ -1,0 +1,12 @@
+{
+  "vehicle_id": "AMB_PORTO_01",
+  "priority_level": 1,
+  "timestamp": 1780417553,
+  "telemetry": {
+    "latitude": 41.1496,
+    "longitude": -8.6110,
+    "heading": 180.5,
+    "speed_kmh": 75.2
+  },
+  "signature": "0x8f3c...ba42"
+}
