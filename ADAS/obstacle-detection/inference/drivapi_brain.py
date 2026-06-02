@@ -5,11 +5,14 @@ Integrates an asymmetric filter, hazard decay, defensive clamping, and command p
 
 from __future__ import annotations
 
+import logging
 import socket
 import time
 from dataclasses import dataclass
 from typing import Iterable
 from hailo_config import HailoConfig as cfg
+
+logger = logging.getLogger(__name__)
 
 class PersistenceTracker:
     """Reacts on the first frame (zero latency) and decays hazard if the sensor drops."""
@@ -34,8 +37,8 @@ class PersistenceTracker:
                     self.active_det = Detection(
                         label=self.active_det.label,
                         ymin=self.active_det.ymin,
-                        ymax=self.active_det.ymin + (h_current * 0.88),  # Shrink height 12% per frame.
-                        confidence=self.active_det.confidence * 0.90,  # Reduce confidence 10% per frame.
+                        ymax=self.active_det.ymin + (h_current * cfg.HAZARD_DECAY_HEIGHT_SCALE),
+                        confidence=self.active_det.confidence * cfg.HAZARD_DECAY_CONF_SCALE,
                     )
                 return True
             else:
@@ -73,13 +76,15 @@ class DrivaPiBrain:
         # Tracker allocation.
         self.trackers: dict[str, PersistenceTracker] = {}
         for label in cfg.CLASSES:
-            if label in ["car", "obstacle", "gate"]:
-                self.trackers[label] = PersistenceTracker(hold_frames=6)
-            else:
-                self.trackers[label] = PersistenceTracker(hold_frames=4)
+            hold_frames = (
+                cfg.TRACKER_HOLD_FRAMES_CRITICAL
+                if label in cfg.CRITICAL_TRACKER_LABELS
+                else cfg.TRACKER_HOLD_FRAMES_DEFAULT
+            )
+            self.trackers[label] = PersistenceTracker(hold_frames=hold_frames)
 
-        self.accel_rate = 0.5
-        self.decel_rate = 9.0
+        self.accel_rate = cfg.ACCEL_RATE
+        self.decel_rate = cfg.DECEL_RATE
 
     def process_detections(self, detections: Iterable[Detection]) -> None:
         """Update hazard state and emit PWM commands based on detections."""
@@ -87,7 +92,7 @@ class DrivaPiBrain:
 
         # Speed-limit expiration from sign detections (50 / 80).
         if now > self.limit_expiry and self.speed_limit != cfg.PWM_CRUISE:
-            print("[BRAIN] Speed limit expired. Returning to cruise.")
+            logger.info("state=speed_limit_expired limit=%d", self.speed_limit)
             self.speed_limit = cfg.PWM_CRUISE
 
         # --- SEQUENTIAL STOP CONTROL (software delay trick) ---
@@ -97,19 +102,19 @@ class DrivaPiBrain:
                 self.current_pwm = cfg.PWM_SLOW
                 self.send_command(int(self.current_pwm), cfg.FORWARD, cfg.PWM_SLOW, "APPROACHING_STOP_LINE")
                 return
-            elif now < self.stop_at + 3.0:
+            elif now < self.stop_at + cfg.STOP_DURATION_SEC:
                 # PHASE 2: Approach timer expired, enforce a 3-second stop.
                 self.current_pwm = 0.0
                 self.send_command(0, cfg.BRAKE, 0, "STOP_TIMER_ACTIVE")
                 return
             else:
                 # PHASE 3: Stop complete. Reset state and enable STOP cooldown.
-                print("[BRAIN] 3-second stop completed. Resuming drive.")
+                logger.info("state=stop_completed")
                 self.last_stop_time = now
                 self.stop_at = 0.0
 
-        # 1. Immediate capture and tracker update (aligned to 0.20 in main_inference).
-        detected_this_frame = {d.label for d in detections if d.confidence > 0.20}
+        # 1. Immediate capture and tracker update (aligned to main_inference threshold).
+        detected_this_frame = {d.label for d in detections if d.confidence > cfg.CONFIDENCE_THRESHOLD}
         confirmed_detections = []
 
         for label in cfg.CLASSES:
@@ -141,10 +146,10 @@ class DrivaPiBrain:
 
             elif det.label == "stop_sign" and h > cfg.H_STOP:
                 # Only schedule a new stop if not in post-stop immunity.
-                if now - self.last_stop_time > 6.0:
+                if now - self.last_stop_time > cfg.STOP_COOLDOWN_SEC:
                     if current_priority <= 3:
                         # Schedule the real stop 0.3s ahead to allow a short roll.
-                        self.stop_at = now + 0.3
+                        self.stop_at = now + cfg.STOP_DELAY_SEC
                         temp_target = cfg.PWM_SLOW
                         reason = "STOP_SIGN_DETECTED"
                         current_priority = 3
@@ -162,9 +167,9 @@ class DrivaPiBrain:
                     current_priority = 3
 
             # --- PRIORITY 2: PROPORTIONAL FOLLOWING (Cars/Obstacles) ---
-            elif det.label in ["car", "obstacle"] and h > 0.15:
+            elif det.label in ["car", "obstacle"] and h > cfg.FOLLOWING_START_H:
                 if current_priority < 2:
-                    ratio = (h - 0.15) / (cfg.H_EMERGENCY - 0.15)
+                    ratio = (h - cfg.FOLLOWING_START_H) / (cfg.H_EMERGENCY - cfg.FOLLOWING_START_H)
                     ratio = max(0.0, min(ratio, 1.0))
 
                     temp_target = min(temp_target, cfg.PWM_CRUISE - (cfg.PWM_CRUISE - cfg.PWM_SLOW) * ratio)
@@ -174,9 +179,9 @@ class DrivaPiBrain:
             # --- PRIORITY 1: CAUTION ZONES (Real progressive slowing on track) ---
             elif det.label in ["crosswalk_sign", "yield_sign", "danger_sign", "traffic_light_yellow", "stop_sign"]:
                 if current_priority < 1:
-                    # Start braking smoothly at h=0.07 down to PWM_SLOW (6).
-                    h_start = 0.07
-                    h_end = cfg.H_STOP if det.label == "stop_sign" else 0.25
+                    # Start braking smoothly at the configured height down to PWM_SLOW (6).
+                    h_start = cfg.CAUTION_START_H
+                    h_end = cfg.H_STOP if det.label == "stop_sign" else cfg.CAUTION_END_H
 
                     if h >= h_start:
                         ratio = (h - h_start) / (h_end - h_start)
@@ -191,10 +196,10 @@ class DrivaPiBrain:
             # --- PRIORITY 0: BASELINE CHANGES (Speed signs) ---
             elif det.label == "50_sign":
                 self.speed_limit = cfg.PWM_50  # FIX: Updated from PWM_CRUISE to PWM_50.
-                self.limit_expiry = now + 10.0
+                self.limit_expiry = now + cfg.SPEED_LIMIT_DURATION_SEC
             elif det.label == "80_sign":
                 self.speed_limit = cfg.PWM_80  # FIX: Updated from PWM_HIGH to PWM_80.
-                self.limit_expiry = now + 10.0
+                self.limit_expiry = now + cfg.SPEED_LIMIT_DURATION_SEC
             elif det.label == "traffic_light_green":
                 self.speed_limit = cfg.PWM_CRUISE
 
@@ -226,6 +231,11 @@ class DrivaPiBrain:
             self.last_sent_msg = msg
 
         # Telemetry throttle to avoid flooding the Pi 5 terminal.
-        if now - self.last_log > 0.2:
-            print(f"[FSM] PWM: {int(speed):02d} -> Target: {int(target_frame):02d} | Reason: {reason}")
+        if now - self.last_log > cfg.TELEMETRY_INTERVAL_SEC:
+            logger.info(
+                "metrics state=control pwm=%d target=%d reason=%s",
+                int(speed),
+                int(target_frame),
+                reason,
+            )
             self.last_log = now
