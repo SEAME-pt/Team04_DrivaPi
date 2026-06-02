@@ -59,7 +59,7 @@ float                   g_vehicleSpeed;
 float 					g_currentSpeed;
 int16_t 				g_currentPWM;
 MotorControlState		g_motorControlState;
-float					g_targetSpeed;
+uint16_t				g_targetSpeed;
 unsigned char			trace_buffer[TRACE_BUFFER_SIZE];
 /* USER CODE END PV */
 
@@ -77,7 +77,7 @@ static void AppThreadX_LogThreadInitMessage(void);
   */
 UINT App_ThreadX_Init(VOID *memory_ptr)
 {
-UINT ret = TX_SUCCESS;
+  UINT ret = TX_SUCCESS;
   /* USER CODE BEGIN App_ThreadX_MEM_POOL */
 
   /* USER CODE END App_ThreadX_MEM_POOL */
@@ -116,11 +116,11 @@ UINT ret = TX_SUCCESS;
   return ret;
 }
 
-/**
-	 * @brief  Function that implements the kernel's initialization.
-	 * @param  None
-	 * @retval None
- */
+  /**
+  * @brief  Function that implements the kernel's initialization.
+  * @param  None
+  * @retval None
+  */
 void MX_ThreadX_Init(void)
 {
   /* USER CODE BEGIN Before_Kernel_Start */
@@ -131,7 +131,7 @@ void MX_ThreadX_Init(void)
 #endif
   /* USER CODE END Before_Kernel_Start */
 
-	tx_kernel_enter();
+  tx_kernel_enter();
 
   /* USER CODE BEGIN Kernel_Start_Error */
 

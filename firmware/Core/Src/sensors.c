@@ -17,7 +17,7 @@ static const uint32_t SENSOR_I2C_TIMEOUT_MS = 100;
 /* ============================================================================
  * Private Variables
  * ============================================================================ */
-static volatile bool        g_batteryPowerReady = false;
+volatile bool				g_batteryPowerReady = false;
 static uint8_t              g_ina231Addr7bit = INA231_I2C_ADDRESS;
 static HTS221_Calibration_t calib_data;
 
@@ -28,7 +28,6 @@ static HAL_StatusTypeDef SensorI2cMemRead(I2C_HandleTypeDef *hi2c, uint16_t dev_
 static HAL_StatusTypeDef SensorI2cMemWrite(I2C_HandleTypeDef *hi2c, uint16_t dev_addr, uint16_t mem_addr, const uint8_t *buf, uint16_t len);
 
 static uint8_t           BatteryPercentFrom2SVoltage(float voltage_v);
-static HAL_StatusTypeDef ExpansionBattery_Read(I2C_HandleTypeDef *hi2c, float *voltage, uint8_t *percentage);
 
 static HAL_StatusTypeDef HTS221WriteReg(I2C_HandleTypeDef *hi2c, uint8_t reg, uint8_t data);
 static HAL_StatusTypeDef HTS221ReadCalibration(I2C_HandleTypeDef *hi2c);
@@ -290,29 +289,17 @@ static uint8_t BatteryPercentFrom2SVoltage(float voltage_v)
     float pct = 0.0f;
 
     if (voltage_v >= soc_max_v)
-    {
         return 100u;
-    }
     if (voltage_v <= soc_min_v)
-    {
         return 0u;
-    }
     if (voltage_v >= soc_nom_v)
-    {
         pct = 50.0f + ((voltage_v - soc_nom_v) / (soc_max_v - soc_nom_v)) * 50.0f;
-    }
     else
-    {
         pct = ((voltage_v - soc_min_v) / (soc_nom_v - soc_min_v)) * 50.0f;
-    }
     if (pct < 0.0f)
-    {
         pct = 0.0f;
-    }
     if (pct > 100.0f)
-    {
         pct = 100.0f;
-    }
     return (uint8_t)(pct + 0.5f);
 }
 
@@ -324,7 +311,7 @@ static uint8_t BatteryPercentFrom2SVoltage(float voltage_v)
 HAL_StatusTypeDef BatteryInit(I2C_HandleTypeDef *hi2c)
 {
     UartPrintf("Battery: Initializing INA231 at I2C address 0x%02X (using I2C%d)\r\n",
-               g_ina231Addr7bit, (hi2c == &hi2c2) ? 2 : 1);
+    g_ina231Addr7bit, (hi2c == &hi2c2) ? 2 : 1);
 
     /* PE13 power is enabled during GPIO init in main.c. */
     tx_thread_sleep(2);
@@ -378,41 +365,6 @@ HAL_StatusTypeDef Battery_Read(I2C_HandleTypeDef *hi2c, float *voltage, uint8_t 
 }
 
 /**
- * @brief  Read external Expansion Battery info.
- * @param  hi2c I2C handle
- * @param  voltage Output pointer
- * @param  percentage Output pointer
- * @return HAL_StatusTypeDef
- */
-static HAL_StatusTypeDef ExpansionBattery_Read(I2C_HandleTypeDef *hi2c, float *voltage, uint8_t *percentage)
-{
-    uint8_t buf[2];
-    HAL_StatusTypeDef status;
-    const uint16_t dev_addr = (uint16_t)(0x41u << 1);
-
-    if (voltage == NULL || percentage == NULL)
-    {
-        return HAL_ERROR;
-    }
-
-    status = SensorI2cMemRead(hi2c, dev_addr, INA219_REG_BUS_V, buf, 2);
-
-    if (status != HAL_OK)
-    {
-        *voltage = 0.0f;
-        *percentage = 0;
-        return HAL_ERROR;
-    }
-
-    uint16_t bus_voltage_raw = (uint16_t)((buf[0] << 8) | buf[1]);
-    uint16_t voltage_bits = (uint16_t)((bus_voltage_raw >> 3) & 0x1FFFu);
-    *voltage = voltage_bits * 0.004f;
-    *percentage = BatteryPercentFrom2SVoltage(*voltage);
-
-    return HAL_OK;
-}
-
-/**
  * @brief Read current from INA226 shunt resistor
  * @param hi2c I2C handle
  * @param current Pointer to store current in Amps
@@ -449,9 +401,7 @@ HAL_StatusTypeDef Battery_ReadCurrent(I2C_HandleTypeDef *hi2c, float *current)
         *current = 0.0f;
         dbg_fail_count++;
         if ((dbg_fail_count % 25u) == 0u)
-        {
             UartPrintf("[INA231 CUR] shunt read fail count=%lu err=0x%08lX\r\n", (unsigned long)dbg_fail_count, (unsigned long)HAL_I2C_GetError(hi2c));
-        }
         return HAL_ERROR;
     }
     int16_t current_raw = (int16_t)((buf[0] << 8) | buf[1]);
@@ -462,7 +412,7 @@ HAL_StatusTypeDef Battery_ReadCurrent(I2C_HandleTypeDef *hi2c, float *current)
     if ((dbg_sample_count % 10u) == 0u)
     {
         UartPrintf("[INA231 CUR] reg_raw=%d reg=0x%02X%02X | shunt_raw=%d reg=0x%02X%02X\r\n", (int)current_raw,
-                   (unsigned int)buf[0], (unsigned int)buf[1], (int)shunt_raw, (unsigned int)shunt_buf[0], (unsigned int)shunt_buf[1]);
+        (unsigned int)buf[0], (unsigned int)buf[1], (int)shunt_raw, (unsigned int)shunt_buf[0], (unsigned int)shunt_buf[1]);
     }
 
     return HAL_OK;
@@ -600,14 +550,8 @@ void SensorHTS221Thread(ULONG initial_input)
  */
 void SensorBatteryThread(ULONG initial_input)
 {
-    /* hi2c3 required for Expansion Battery */
-    extern I2C_HandleTypeDef hi2c3;
-
-    float               expansion_voltage;
     float               ina_voltage;
-    uint8_t             expansion_percentage;
     uint8_t             ina_percentage;
-    HAL_StatusTypeDef   expansion_status;
     HAL_StatusTypeDef   ina_status;
     HAL_StatusTypeDef   current_status;
     uint32_t            error_count = 0;
@@ -666,15 +610,10 @@ void SensorBatteryThread(ULONG initial_input)
         ULONG current_time = tx_time_get();
         loop_count++;
         if ((loop_count % 250u) == 0u)
-        {
             UartPrintf("[BATTERY LOOP] alive=%lu tick=%lu\r\n", (unsigned long)loop_count, (unsigned long)current_time);
-        }
 
         (void)last_send_time;
 
-        expansion_voltage = 0.0f;
-        expansion_percentage = 0u;
-        expansion_status = ExpansionBattery_Read(&hi2c3, &expansion_voltage, &expansion_percentage);
         ina_status = Battery_Read(&hi2c2, &ina_voltage, &ina_percentage);
 
         if (ina_status == HAL_OK)
@@ -690,9 +629,7 @@ void SensorBatteryThread(ULONG initial_input)
                 last_current_sample_time = current_time;
             }
             else
-            {
                 last_current_amps = 0.0f;
-            }
 
             if (tx_mutex_get(&g_sensorDataMutex, 100) == TX_SUCCESS)
             {
@@ -702,28 +639,14 @@ void SensorBatteryThread(ULONG initial_input)
                 g_ina231Data.percentage = last_ina_percentage;
                 g_ina231Data.timestamp = current_time;
                 g_ina231Data.data_valid = 1u;
-                if (expansion_status == HAL_OK)
-                {
-                    g_batteryData.voltage = expansion_voltage;
-                    g_batteryData.percentage = expansion_percentage;
-                    g_batteryData.timestamp = current_time;
-                    g_batteryData.data_valid = 1u;
-                }
                 tx_mutex_put(&g_sensorDataMutex);
             }
-        }
-
-        if (expansion_status == HAL_OK || ina_status == HAL_OK)
-        {
-            error_count = 0;
         }
         else
         {
             error_count++;
             if ((error_count % 200u) == 0u)
-            {
                 UartPrintf("[BATTERY] INA read fail count=%lu\r\n", (unsigned long)error_count);
-            }
             if (error_count >= 3)
             {
                 if (tx_mutex_get(&g_sensorDataMutex, 100) == TX_SUCCESS)
@@ -737,4 +660,3 @@ void SensorBatteryThread(ULONG initial_input)
         tx_thread_sleep(POLL_INTERVAL_TICKS);
     }
 }
-
