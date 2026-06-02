@@ -1,3 +1,9 @@
+"""Runs Hailo inference and streams annotated frames with PWM control output."""
+
+from __future__ import annotations
+
+from typing import Tuple
+
 import cv2
 import numpy as np
 import subprocess
@@ -16,7 +22,9 @@ output_frame = None
 lock = threading.Lock()
 
 class StreamHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
+    """Serves a multipart MJPEG stream of the latest inference frame."""
+
+    def do_GET(self) -> None:
         if self.path == '/':
             self.send_response(200)
             self.send_header('Content-type', 'multipart/x-mixed-replace; boundary=frame')
@@ -29,11 +37,19 @@ class StreamHandler(BaseHTTPRequestHandler):
                 if ok:
                     self.wfile.write(b'--frame\r\nContent-type: image/jpeg\r\n\r\n' + bytearray(img) + b'\r\n')
 
-class ThreadedHTTPServer(ThreadingMixIn, HTTPServer): pass
+class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
+    """Threaded HTTP server for MJPEG streaming."""
 
-def sigmoid(x): return 1 / (1 + np.exp(-np.clip(x, -20, 20)))
+    pass
 
-def build_yolo_grid():
+def sigmoid(x: np.ndarray) -> np.ndarray:
+    """Numerically stable sigmoid for tensor values."""
+
+    return 1 / (1 + np.exp(-np.clip(x, -20, 20)))
+
+def build_yolo_grid() -> Tuple[np.ndarray, np.ndarray]:
+    """Build YOLOv8 grid centers and stride array."""
+
     strides = [8, 16, 32]
     grid_sizes = [(80, 80), (40, 40), (20, 20)]
     grid_centers, stride_array = [], []
@@ -45,7 +61,9 @@ def build_yolo_grid():
     return np.array(grid_centers), np.array(stride_array)
 
 class DrivaPiInference:
-    def __init__(self):
+    """Runs Hailo inference and forwards detections to the control brain."""
+
+    def __init__(self) -> None:
         self.brain = DrivaPiBrain()
         self.vdevice = VDevice()
         self.hef = HEF(str(cfg.HEF_PATH))
@@ -54,7 +72,9 @@ class DrivaPiInference:
         self.network_group_params = self.network_group.create_params()
         self.centers, self.strides = build_yolo_grid()
 
-    def start(self):
+    def start(self) -> None:
+        """Start camera capture, run inference, and stream results."""
+
         global output_frame
         cam_w, cam_h = 640, 480
         cmd = ["rpicam-vid", "-t", "0", "--codec", "yuv420", "--width", str(cam_w), "--height", str(cam_h), "-o", "-", "--nopreview", "--vflip", "--hflip"]
@@ -66,7 +86,7 @@ class DrivaPiInference:
         with InferVStreams(self.network_group, input_params, output_params) as pipeline:
             with self.network_group.activate(self.network_group_params):
                 input_name = list(input_params.keys())[0]
-                print(f"[*] Sistema ADAS em Pista Ativo. Proteções NMS Ativadas.")
+                print("[*] ADAS track system active. NMS protections enabled.")
                 
                 while True:
                     data = camera.stdout.read(cam_w * cam_h * 3 // 2)
@@ -77,7 +97,7 @@ class DrivaPiInference:
                     resized = cv2.resize(frame, (640, 640))
                     results = pipeline.infer({input_name: np.expand_dims(resized.astype(np.float32)/255.0, axis=0)})
                     
-                    # Mantido o mapeamento original estável v9 solicitado
+                    # Keep the requested stable v9 mapping.
                     slice1 = results['yolo26_v9/slice1'][0, 0]
                     slice2 = results['yolo26_v9/slice2'][0, 0]
                     raw_scores = results['yolo26_v9/activation3'][0, 0]
@@ -115,7 +135,7 @@ class DrivaPiInference:
                         classes_for_nms.append(class_ids[idx])
                         normalized_y_bounds.append((float(y_min_640 / 640.0), float(y_max_640 / 640.0)))
 
-                    # FIX CRÍTICO: Threshold do NMS baixado para 0.20 para evitar perda de frames válidos
+                    # CRITICAL FIX: Lower NMS threshold to 0.20 to avoid dropping valid frames.
                     indices = cv2.dnn.NMSBoxes(boxes_for_nms, scores_for_nms, 0.20, 0.40)
 
                     detections = []
@@ -145,4 +165,4 @@ if __name__ == "__main__":
         server_thread.start()
         detector.start()
     except KeyboardInterrupt:
-        print("\n\n[*] Encerramento limpo solicitado pelo utilizador.")
+        print("\n\n[*] Clean shutdown requested by user.")
