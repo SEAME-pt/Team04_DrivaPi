@@ -14,29 +14,18 @@ extern "C" {
 
 #include "app_threadx.h"
 
-#define PCA9685_ADDR_MOTOR 0x60
-#define MOTOR_I2C hi2c3
+#define NEUTRAL 0
+#define FORWARD 1
+#define REVERSE 2
+#define BRAKE 3
 
-#define MOTOR_L_PWM 7
-#define MOTOR_L_A 5
-#define MOTOR_L_B 6
-#define MOTOR_R_PWM 0
-#define MOTOR_R_A 1
-#define MOTOR_R_B 2
+void StopMotors(void);
+void MoveMotors(uint16_t speed, bool forward);
+void MotorCoast(void);
 
-#ifndef PCA9685_COUNTS
-#define PCA9685_COUNTS 4096u
-#endif
-
-void SetMotor(double value);
-void MotorSetPWM(int32_t left_counts, int32_t right_counts);
-void MotorStop(void);
-void MotorForward(double speed);
-void MotorBackward(double speed);
-void MotorLeft(double speed);
-void MotorRight(double speed);
-
-extern I2C_HandleTypeDef hi2c3;
+extern TIM_HandleTypeDef htim4;
+extern TIM_HandleTypeDef htim8;
+extern TIM_HandleTypeDef htim16;
 
 #ifdef __cplusplus
 }

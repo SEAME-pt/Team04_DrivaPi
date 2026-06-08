@@ -22,6 +22,10 @@
 #include "stm32u5xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#if DEBUG_DIAGNOSTICS
+#include <stdio.h>
+#include <string.h>
+#endif
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -41,16 +45,59 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
+static volatile uint32_t g_hardfault_cfsr = 0u;
+static volatile uint32_t g_hardfault_hfsr = 0u;
+static volatile uint32_t g_hardfault_mmfar = 0u;
+static volatile uint32_t g_hardfault_bfar = 0u;
+static volatile uint32_t g_hardfault_r0 = 0u;
+static volatile uint32_t g_hardfault_r1 = 0u;
+static volatile uint32_t g_hardfault_r2 = 0u;
+static volatile uint32_t g_hardfault_r3 = 0u;
+static volatile uint32_t g_hardfault_r12 = 0u;
+static volatile uint32_t g_hardfault_lr = 0u;
+static volatile uint32_t g_hardfault_pc = 0u;
+static volatile uint32_t g_hardfault_psr = 0u;
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
+static void HardFault_DumpContext(uint32_t *stack_ptr);
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static void HardFault_DumpContext(uint32_t *stack_ptr)
+{
+#if DEBUG_DIAGNOSTICS
+  char line[192];
+#endif
+
+  if (stack_ptr != NULL)
+  {
+    g_hardfault_r0  = stack_ptr[0];
+    g_hardfault_r1  = stack_ptr[1];
+    g_hardfault_r2  = stack_ptr[2];
+    g_hardfault_r3  = stack_ptr[3];
+    g_hardfault_r12 = stack_ptr[4];
+    g_hardfault_lr  = stack_ptr[5];
+    g_hardfault_pc  = stack_ptr[6];
+    g_hardfault_psr = stack_ptr[7];
+  }
+
+  g_hardfault_cfsr  = SCB->CFSR;
+  g_hardfault_hfsr  = SCB->HFSR;
+  g_hardfault_mmfar = SCB->MMFAR;
+  g_hardfault_bfar  = SCB->BFAR;
+
+#if DEBUG_DIAGNOSTICS
+  (void)snprintf(line, sizeof(line), "\r\n[FAULT] HardFault CFSR=0x%08lX HFSR=0x%08lX MMFAR=0x%08lX BFAR=0x%08lX\r\n", (unsigned long)g_hardfault_cfsr, (unsigned long)g_hardfault_hfsr, (unsigned long)g_hardfault_mmfar, (unsigned long)g_hardfault_bfar);
+  (void)HAL_UART_Transmit(&huart1, (uint8_t*)line, (uint16_t)strlen(line), 100);
+  (void)snprintf(line, sizeof(line), "[FAULT] r0=0x%08lX r1=0x%08lX r2=0x%08lX r3=0x%08lX r12=0x%08lX lr=0x%08lX pc=0x%08lX psr=0x%08lX\r\n", (unsigned long)g_hardfault_r0, (unsigned long)g_hardfault_r1, (unsigned long)g_hardfault_r2, (unsigned long)g_hardfault_r3, (unsigned long)g_hardfault_r12, (unsigned long)g_hardfault_lr, (unsigned long)g_hardfault_pc, (unsigned long)g_hardfault_psr);
+  (void)HAL_UART_Transmit(&huart1, (uint8_t*)line, (uint16_t)strlen(line), 100);
+#endif
+}
 
 /* USER CODE END 0 */
 
@@ -84,6 +131,16 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
+  uint32_t *stack_ptr;
+  __asm volatile
+  (
+    "tst lr, #4 \n"
+    "ite eq     \n"
+    "mrseq %0, msp \n"
+    "mrsne %0, psp \n"
+    : "=r" (stack_ptr)
+  );
+  HardFault_DumpContext(stack_ptr);
 
   /* USER CODE END HardFault_IRQn 0 */
   while (1)
@@ -114,6 +171,10 @@ void MemManage_Handler(void)
 void BusFault_Handler(void)
 {
   /* USER CODE BEGIN BusFault_IRQn 0 */
+#if DEBUG_DIAGNOSTICS
+	const char msg[] = "\r\n[FAULT] BusFault\r\n";
+	HAL_UART_Transmit(&huart1, (uint8_t*)msg, sizeof(msg) - 1u, 100);
+#endif
 
   /* USER CODE END BusFault_IRQn 0 */
   while (1)
@@ -129,6 +190,10 @@ void BusFault_Handler(void)
 void UsageFault_Handler(void)
 {
   /* USER CODE BEGIN UsageFault_IRQn 0 */
+#if DEBUG_DIAGNOSTICS
+	const char msg[] = "\r\n[FAULT] UsageFault\r\n";
+	HAL_UART_Transmit(&huart1, (uint8_t*)msg, sizeof(msg) - 1u, 100);
+#endif
 
   /* USER CODE END UsageFault_IRQn 0 */
   while (1)

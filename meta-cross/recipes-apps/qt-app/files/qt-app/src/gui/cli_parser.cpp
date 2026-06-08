@@ -50,7 +50,10 @@ RunConfig buildRunConfig(const QCommandLineParser& parser, const CliOptions& opt
     config.kuksa.address = addr.isEmpty()
         ? QStringLiteral("localhost:55555")
         : addr;
-    config.kuksa.useSsl = parser.isSet(opts.kuksaTlsOption) && !parser.isSet(opts.kuksaInsecureOption);
+    if (parser.isSet(opts.kuksaInsecureOption))
+        config.kuksa.useSsl = false;
+    else if (parser.isSet(opts.kuksaTlsOption))
+        config.kuksa.useSsl = true;
     config.kuksa.rootCaPath = parser.value(opts.kuksaCaOption);
     config.kuksa.clientCertPath = parser.value(opts.kuksaCertOption);
     config.kuksa.clientKeyPath = parser.value(opts.kuksaKeyOption);

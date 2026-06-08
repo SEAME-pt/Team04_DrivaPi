@@ -25,7 +25,7 @@ struct CliOptions {
     QCommandLineOption canIfOption{QStringList() << "c" << "can-if",
         "CAN interface name", "ifname", "can0"};
 #endif
-    QCommandLineOption kuksaAddrOption{QStringList() << "kuksa-addr",
+    QCommandLineOption kuksaAddrOption{QStringList() << "kuksa-addr" << "kuksa-address",
         "Kuksa databroker address (host:port)", "addr"};
     QCommandLineOption kuksaTlsOption{QStringList() << "kuksa-tls",
         "Use TLS for Kuksa connection"};

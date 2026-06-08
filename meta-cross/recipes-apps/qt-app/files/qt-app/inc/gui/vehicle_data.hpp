@@ -39,6 +39,7 @@ class VehicleData : public QObject
 
     Q_PROPERTY(int rpiBattery READ getRpiBattery WRITE setRpiBattery NOTIFY rpiBatteryChanged)
     Q_PROPERTY(double rpiBatteryVoltage READ getRpiBatteryVoltage WRITE setRpiBatteryVoltage NOTIFY rpiBatteryVoltageChanged)
+    Q_PROPERTY(double rpiBatteryCurrent READ getRpiBatteryCurrent WRITE setRpiBatteryCurrent NOTIFY rpiBatteryCurrentChanged)
     Q_PROPERTY(int distance READ getDistance WRITE setDistance NOTIFY distanceChanged)
     Q_PROPERTY(int odo READ getOdometer WRITE setOdometer NOTIFY odometerChanged)
     Q_PROPERTY(bool autonomousMode READ getAutonomousMode WRITE setAutonomousMode NOTIFY autonomousModeChanged)
@@ -63,6 +64,7 @@ public:
 
     int     getRpiBattery() const;
     double  getRpiBatteryVoltage() const;
+    double  getRpiBatteryCurrent() const;
     int     getDistance() const;
     int     getOdometer() const;
     int     getTemperature() const;
@@ -79,6 +81,7 @@ public:
     void    setStm32Humidity(float humidityPct);
     void    setRpiBattery(int battery);
     void    setRpiBatteryVoltage(double volts);
+    void    setRpiBatteryCurrent(double amps);
     void    setDistance(int distance);
     void    setOdometer(int odo);
     void    setGear(const QString &gear);
@@ -109,6 +112,7 @@ signals:
 
     void rpiBatteryChanged();
     void rpiBatteryVoltageChanged();
+    void rpiBatteryCurrentChanged();
     void distanceChanged();
     void odometerChanged();
     void temperatureChanged();
@@ -131,6 +135,7 @@ private:
 
     int     m_rpiBattery;
     double  m_rpiBatteryVoltage;
+    double  m_rpiBatteryCurrent;
     int     m_distance;
     int     m_odometer;
     QString m_gear;

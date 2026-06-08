@@ -74,6 +74,23 @@ namespace handlers {
 				<< " = " << voltage_v << " V\n";
 	}
 
+	void HandleRpiBatteryCurrent(const can_frame& frame, feeder::Publisher& publisher)
+	{
+		// Payload: [0..3]=float current LE (amps)
+		if (frame.can_dlc < 4) {
+			std::cerr << "[Handler] RPi battery current frame too short: "
+					<< static_cast<int>(frame.can_dlc) << " bytes\n";
+			return;
+		}
+
+		const float current_a = can_decode::FloatLe(frame.data);
+
+		publisher.PublishFloat(vss::RPI_BATTERY_CURRENT, current_a);
+
+		std::cout << "[Handler] Published " << vss::RPI_BATTERY_CURRENT
+				<< " = " << current_a << " A\n";
+	}
+
 	void HandleGear(const can_frame& frame, feeder::Publisher& publisher)
 	{
 		// Payload: [0]=u8 gear 0=N, 1=R, 2=D

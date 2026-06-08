@@ -7,9 +7,10 @@ TX_MUTEX g_speedDataMutex;
 TX_EVENT_FLAGS_GROUP g_eventFlags;
 TX_QUEUE g_queueSpeedCmd;
 TX_QUEUE g_queueSteerCmd;
-float g_current_speed;
-int16_t g_current_pwm;
+float g_currentSpeed;
+int16_t g_currentPWM;
 TX_MUTEX g_gearMutex;
+TX_MUTEX g_canMutex;
 
 float g_vehicleSpeed = 0.0f;
 
@@ -21,11 +22,12 @@ TIM_TypeDef fake_tim1_registers;
 /* --- INCLUDE SOURCE FILE DIRECTLY --- */
 #include "../../../firmware/Core/Src/speed_sensor.c"
 
-RNDGear_t g_current_gear;
+RNDGear_t g_currentGear;
 
 /* --- TEST INFRASTRUCTURE --- */
 static jmp_buf test_break_jump;
 static int s_canSendCallCount;
+static int s_canMutexPutCallCount;
 static t_can_message s_lastCanSendMessage;
 
 /* Stub for Error_Handler */
@@ -61,6 +63,7 @@ void setUp(void)
     // requires either resetting the system or adding a 'reset_sensor()' helper function
     // to your source code. For these tests, we assume a fresh start or we manage logic carefully.
     s_canSendCallCount = 0;
+    s_canMutexPutCallCount = 0;
     memset(&s_lastCanSendMessage, 0, sizeof(s_lastCanSendMessage));
 }
 
@@ -77,6 +80,29 @@ UINT Stub_BreakLoop_OnSecondCall(TX_EVENT_FLAGS_GROUP *group_ptr, ULONG flags_to
     }
 
     // Otherwise (Index 0), just pretend we set the flags successfully
+    return TX_SUCCESS;
+}
+
+UINT Stub_MutexGet_FailOnlyCan(TX_MUTEX *mutex_ptr, ULONG wait_option, int cmock_num_calls)
+{
+    (void)wait_option;
+    (void)cmock_num_calls;
+
+    if (mutex_ptr == &g_canMutex)
+    {
+        return 1u;
+    }
+    return TX_SUCCESS;
+}
+
+UINT Stub_MutexPut_TrackCan(TX_MUTEX *mutex_ptr, int cmock_num_calls)
+{
+    (void)cmock_num_calls;
+
+    if (mutex_ptr == &g_canMutex)
+    {
+        s_canMutexPutCallCount++;
+    }
     return TX_SUCCESS;
 }
 
@@ -459,7 +485,7 @@ void test_SpeedSensor_Thread_Should_LoopTwice(void)
 void test_SpeedSensor_ShouldSendCanGearMessage_WhenGearChanges(void)
 {
     fake_tim1_registers.CNT = 1000;
-    g_current_pwm = 500;
+    g_currentPWM = 500;
 
     HAL_TIM_Base_Stop_ExpectAndReturn(&htim1, HAL_OK);
     HAL_TIM_Base_Start_ExpectAndReturn(&htim1, HAL_OK);
@@ -477,6 +503,8 @@ void test_SpeedSensor_ShouldSendCanGearMessage_WhenGearChanges(void)
     tx_mutex_put_ExpectAndReturn(&g_speedDataMutex, TX_SUCCESS);
     tx_mutex_get_ExpectAndReturn(&g_gearMutex, TX_WAIT_FOREVER, TX_SUCCESS);
     tx_mutex_put_ExpectAndReturn(&g_gearMutex, TX_SUCCESS);
+    tx_mutex_get_ExpectAndReturn(&g_canMutex, MUTEX_WAIT_TICKS, TX_SUCCESS);
+    tx_mutex_put_ExpectAndReturn(&g_canMutex, TX_SUCCESS);
 
     tx_event_flags_set_Stub(Stub_BreakLoop_OnSecondCallAndMoveCounter);
 
@@ -492,3 +520,31 @@ void test_SpeedSensor_ShouldSendCanGearMessage_WhenGearChanges(void)
     TEST_ASSERT_EQUAL_UINT8((uint8_t)GEAR_DRIVE, s_lastCanSendMessage.data[0]);
 }
 
+void test_SpeedSensor_ShouldNotSendCanGearMessage_WhenCanMutexGetFails(void)
+{
+    fake_tim1_registers.CNT = 1000;
+    g_currentPWM = 500;
+
+    HAL_TIM_Base_Stop_ExpectAndReturn(&htim1, HAL_OK);
+    HAL_TIM_Base_Start_ExpectAndReturn(&htim1, HAL_OK);
+
+    tx_thread_sleep_ExpectAndReturn(50, TX_SUCCESS);
+    tx_time_get_ExpectAndReturn(1000);
+
+    tx_thread_sleep_ExpectAndReturn(50, TX_SUCCESS);
+    tx_time_get_ExpectAndReturn(2000);
+
+    tx_mutex_get_Stub(Stub_MutexGet_FailOnlyCan);
+    tx_mutex_put_Stub(Stub_MutexPut_TrackCan);
+
+    tx_event_flags_set_Stub(Stub_BreakLoop_OnSecondCallAndMoveCounter);
+
+    if (setjmp(test_break_jump) == 0)
+    {
+        SpeedSensor(0);
+        TEST_FAIL_MESSAGE("Loop did not break!");
+    }
+
+    TEST_ASSERT_EQUAL_INT(0, s_canSendCallCount);
+    TEST_ASSERT_EQUAL_INT(0, s_canMutexPutCallCount);
+}

@@ -1,7 +1,7 @@
 /**
  * @file main.cpp
  * @brief KUKSA CAN Feeder - Main entry point
- * 
+ *
  * Orchestrates initialization and runs the CAN-to-KUKSA feed loop.
  * Frame dispatch and signal handling delegated to specialized modules.
  */
@@ -86,10 +86,29 @@ int main(int argc, char** argv)
                                         ? (frame.can_id & CAN_EFF_MASK)
                                         : (frame.can_id & CAN_SFF_MASK);
 
-            // O(1) Dispatch: Instantly jump to the handler function.
-            // Strict boundary check prevents segfaults if a 29-bit EFF frame leaks through.
-            if (can_id < 2048 && dispatchTable[can_id]) {
-                dispatchTable[can_id](frame, publisher);
+            // Dispatch frame to appropriate handler
+            switch (can_id) {
+                case can::ID_SPEED:
+                    handlers::HandleSpeed(frame, publisher);
+                    break;
+                case can::ID_STM32_BATTERY:
+                    handlers::HandleStm32Battery(frame, publisher);
+                    break;
+                case can::ID_RPI_BATTERY:
+                    handlers::HandleRpiBattery(frame, publisher);
+                    break;
+                case can::ID_RPI_BATTERY_CURRENT:
+                    handlers::HandleRpiBatteryCurrent(frame, publisher);
+                    break;
+                case can::ID_GEAR:
+                    handlers::HandleGear(frame, publisher);
+                    break;
+                case can::ID_ENV:
+                    handlers::HandleEnv(frame, publisher);
+                    break;
+                default:
+                    // Ignore unknown CAN IDs silently
+                    break;
             }
         }
 

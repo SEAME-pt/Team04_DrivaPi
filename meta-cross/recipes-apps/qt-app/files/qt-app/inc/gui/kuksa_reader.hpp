@@ -21,8 +21,8 @@ namespace kuksa {
 
 struct KuksaOptions {
     QString address{"localhost:55555"};
-    bool useSsl{false};
-    QString rootCaPath{};
+    bool useSsl{true};
+    QString rootCaPath{"/etc/kuksa/server.crt"};
     QString clientCertPath{};
     QString clientKeyPath{};
     QString token{};
@@ -50,6 +50,7 @@ signals:
 	// 12V battery from RPi (percent + voltage)
     void rpiBatteryPercentReceived(int percent);
     void rpiBatteryVoltageReceived(double volts);
+    void rpiBatteryCurrentReceived(double amps);
 
     // STM32 internal sensors
     void stm32TemperatureReceived(float tempC);

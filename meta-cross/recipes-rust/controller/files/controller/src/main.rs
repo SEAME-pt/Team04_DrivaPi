@@ -1,11 +1,11 @@
-use std::fs::File;
-use std::io::{Read, ErrorKind};
-use std::os::unix::io::AsRawFd;
-use std::collections::HashMap;
-use std::path::Path;
-use socketcan::{CanFrame, CanSocket, StandardId, EmbeddedFrame};
 use socketcan::Socket;
-use std::{thread, time::Duration};
+use socketcan::{CanFrame, CanSocket, EmbeddedFrame, StandardId};
+use std::collections::HashMap;
+use std::fs::File;
+use std::io::{ErrorKind, Read};
+use std::os::unix::io::AsRawFd;
+use std::path::Path;
+use std::{sync::mpsc, thread, time::Duration};
 
 /* CAN Protocol Constants */
 const CAN_ID_MOTOR: u16 = 44;
@@ -14,11 +14,23 @@ const CAN_INTERFACE: &str = "can1";
 
 /* Motor Constants */
 const MAX_MOTOR_SPEED: f64 = 90.0;
-const MIN_MOTOR_SPEED: f64 = -90.0;
+
+/* Cruise Control Constants */
+const MIN_CRUISE: u32 = 1;
+const MAX_CRUISE: u32 = 90;
+const STEP_CRUISE: u32 = 5;
+
+/* Direction Constants */
+const NEUTRAL: u8 = 0;
+const FORWARD: u8 = 1;
+const REVERSE: u8 = 2;
+const BRAKE: u8 = 3;
 
 /* Servo Constants */
-const MAX_SERVO_ANGLE: f64 = 180.0;
-const MIN_SERVO_ANGLE: f64 = 0.0;
+const MAX_SERVO_ANGLE: f64 = 105.0;
+const MIN_SERVO_ANGLE: f64 = 75.0;
+const MID_SERVO_ANGLE: f64 = 90.0;
+const SERVO_RANGE: f64 = 15.0; // Distance from center to min/max
 
 /* Gamepad Constants */
 const GAMEPAD_DEVICE: &str = "/dev/input/js0";
@@ -33,7 +45,12 @@ pub struct Vector2f {
     y: f64,
 }
 
-#[derive(Default, Debug)]
+
+
+/* Gamepad Input Struct 
+    -> Struct serves the point of storing the values for each button in the GamePad
+*/
+#[derive(Default, Debug, Clone, Copy)]
 pub struct GamepadInput {
     analog_stick_left: Vector2f,
     analog_stick_right: Vector2f,
@@ -53,6 +70,10 @@ pub struct GamepadInput {
     button_r3: bool,
 }
 
+
+/* JoyStick Struct
+    -> Struct to store the addresses for each button in the GamePad 
+*/
 pub struct Joystick {
     axis_states: HashMap<u8, f64>,
     button_states: HashMap<u8, bool>,
@@ -69,23 +90,30 @@ impl Joystick {
         }
 
         let file = File::open(dev_fn)?;
-        
-        // Set file descriptor to non-blocking mode using fcntl
+
+    //================================================================================================
+    //================================================================================================
+        /* 
+            Unsafe code block, because we are using `C` function fcntl
+            Set file descriptor to non-blocking mode using fcntl
+        */
         let fd = file.as_raw_fd();
         unsafe {
-            use std::os::raw::{c_int, c_long};
+            use std::os::raw::c_int;
             const F_GETFL: c_int = 3;
             const F_SETFL: c_int = 4;
             const O_NONBLOCK: c_int = 2048;
-            
+
             unsafe extern "C" {
                 fn fcntl(fd: c_int, cmd: c_int, ...) -> c_int;
             }
-            
+
             let flags = fcntl(fd, F_GETFL, 0);
             fcntl(fd, F_SETFL, flags | O_NONBLOCK);
         }
-        
+    //================================================================================================
+    //================================================================================================
+
         Ok(Self {
             axis_states: HashMap::new(),
             button_states: HashMap::new(),
@@ -95,7 +123,7 @@ impl Joystick {
 
     fn poll(&mut self) -> Option<JoystickEvent> {
         let mut buf = [0u8; JOYSTICK_EVENT_SIZE];
-        
+
         match self.jsdev.read(&mut buf) {
             Ok(JOYSTICK_EVENT_SIZE) => {
                 let _timestamp = u32::from_le_bytes([buf[0], buf[1], buf[2], buf[3]]);
@@ -117,7 +145,10 @@ impl Joystick {
                 if event_type & JS_EVENT_AXIS != 0 {
                     let normalized_value = (value as f64) / 32767.0;
                     self.axis_states.insert(number, normalized_value);
-                    return Some(JoystickEvent::Axis { number, value: normalized_value });
+                    return Some(JoystickEvent::Axis {
+                        number,
+                        value: normalized_value,
+                    });
                 }
             }
             Ok(_) => {
@@ -158,35 +189,31 @@ impl Gamepad {
     fn update(&mut self) {
         if let Some(event) = self.joystick.poll() {
             match event {
-                JoystickEvent::Axis { number, value } => {
-                    match number {
-                        0 => self.input.analog_stick_left.x = value,
-                        1 => self.input.analog_stick_left.y = -value,
-                        2 => self.input.button_l2 = value == 1.0,
-                        3 => self.input.analog_stick_right.x = value,
-                        4 => self.input.analog_stick_right.y = -value,
-                        5 => self.input.button_r2 = value == 1.0,
-                        6 => self.input.d_pad.x = value,
-                        7 => self.input.d_pad.y = -value,
-                        _ => {}
-                    }
-                }
-                JoystickEvent::Button { number, pressed } => {
-                    match number {
-                        0 => self.input.button_a = pressed,
-                        1 => self.input.button_b = pressed,
-                        2 => self.input.button_x = pressed,
-                        3 => self.input.button_y = pressed,
-                        4 => self.input.button_l1 = pressed,
-                        5 => self.input.button_r1 = pressed,
-                        6 => self.input.button_select = pressed,
-                        7 => self.input.button_start = pressed,
-                        8 => self.input.button_home = pressed,
-                        9 => self.input.button_l3 = pressed,
-                        10 => self.input.button_r3 = pressed,
-                        _ => {}
-                    }
-                }
+                JoystickEvent::Axis { number, value } => match number {
+                    0 => self.input.analog_stick_left.x = value,
+                    1 => self.input.analog_stick_left.y = -value,
+                    2 => self.input.button_l2 = value == 1.0,
+                    3 => self.input.analog_stick_right.x = value,
+                    4 => self.input.analog_stick_right.y = -value,
+                    5 => self.input.button_r2 = value == 1.0,
+                    6 => self.input.d_pad.x = value,
+                    7 => self.input.d_pad.y = -value,
+                    _ => {}
+                },
+                JoystickEvent::Button { number, pressed } => match number {
+                    0 => self.input.button_a = pressed,
+                    1 => self.input.button_b = pressed,
+                    2 => self.input.button_x = pressed,
+                    3 => self.input.button_y = pressed,
+                    4 => self.input.button_l1 = pressed,
+                    5 => self.input.button_r1 = pressed,
+                    6 => self.input.button_select = pressed,
+                    7 => self.input.button_start = pressed,
+                    8 => self.input.button_home = pressed,
+                    9 => self.input.button_l3 = pressed,
+                    10 => self.input.button_r3 = pressed,
+                    _ => {}
+                },
             }
         }
     }
@@ -203,115 +230,260 @@ struct MotorController {
 }
 
 impl MotorController {
-    fn new(interface: &str, motor_can_id: u16, servo_can_id: u16) -> Result<Self, Box<dyn std::error::Error>> {
+    fn new(
+        interface: &str,
+        motor_can_id: u16,
+        servo_can_id: u16,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
         let socket = CanSocket::open(interface)?;
         let motor_id = StandardId::new(motor_can_id)
             .ok_or_else(|| format!("Invalid motor CAN ID: {}", motor_can_id))?;
         let servo_id = StandardId::new(servo_can_id)
             .ok_or_else(|| format!("Invalid servo CAN ID: {}", servo_can_id))?;
 
-        Ok(Self { socket, motor_id, servo_id })
+        Ok(Self {
+            socket,
+            motor_id,
+            servo_id,
+        })
     }
 
-    fn send_motor_command(&self, left_speed: f64, right_speed: f64) -> Result<(), Box<dyn std::error::Error>> {
-        // Clamp and convert to i32
-        let left = left_speed.clamp(MIN_MOTOR_SPEED, MAX_MOTOR_SPEED) as i32;
-        let right = right_speed.clamp(MIN_MOTOR_SPEED, MAX_MOTOR_SPEED) as i32;
+    fn send_motor_command(
+        &self,
+        speed: u32,
+        direction: u8,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        // Build CAN frame: [speed][direction] = 5 bytes
 
-        // Build CAN frame: [left_i32][right_i32] = 8 bytes
-        let left_bytes = left.to_le_bytes();
-        let right_bytes = right.to_le_bytes();
-
+        let speed_bytes = speed.to_le_bytes();
+        let direction_bytes = direction.to_le_bytes();
         let data = [
-            left_bytes[0], left_bytes[1], left_bytes[2], left_bytes[3],
-            right_bytes[0], right_bytes[1], right_bytes[2], right_bytes[3],
+            speed_bytes[0],
+            speed_bytes[1],
+            speed_bytes[2],
+            speed_bytes[3],
+            direction_bytes[0],
         ];
 
-        let frame = CanFrame::new(self.motor_id, &data)
-            .ok_or("Failed to create motor CAN frame")?;
-        
+        let frame =
+            CanFrame::new(self.motor_id, &data).ok_or("Failed to create motor CAN frame")?;
+
         self.socket.write_frame(&frame)?;
         Ok(())
     }
 
-    fn send_servo_command(&self, angle_deg: f64) -> Result<(), Box<dyn std::error::Error>> {
-        // Clamp and convert to f32
-        let angle = angle_deg.clamp(MIN_SERVO_ANGLE, MAX_SERVO_ANGLE) as f32;
-
+    fn send_servo_command(&self, angle_deg: u32) -> Result<(), Box<dyn std::error::Error>> {
         // Build CAN frame: [angle_f32] = 4 bytes (no padding needed)
-        let angle_bytes = angle.to_le_bytes();
+        let angle_bytes = angle_deg.to_le_bytes();
         let data = [
-            angle_bytes[0], angle_bytes[1], angle_bytes[2], angle_bytes[3],
-            0,0,0,0,
+            angle_bytes[0],
+            angle_bytes[1],
+            angle_bytes[2],
+            angle_bytes[3],
         ];
 
-        let frame = CanFrame::new(self.servo_id, &data)
-            .ok_or("Failed to create servo CAN frame")?;
-        
+        let frame =
+            CanFrame::new(self.servo_id, &data).ok_or("Failed to create servo CAN frame")?;
+
         self.socket.write_frame(&frame)?;
         Ok(())
     }
 
     fn stop_dc_motors(&self) -> Result<(), Box<dyn std::error::Error>> {
-        self.send_motor_command(0.0, 0.0)
+        self.send_motor_command(0, BRAKE)
     }
-    fn stop_servo_motors(&self) -> Result<(), Box<dyn std::error::Error>> {
-        self.send_servo_command(90.0)
-    }    
+    fn reset_servo_motors(&self) -> Result<(), Box<dyn std::error::Error>> {
+        self.send_servo_command(90)
+    }
 }
 
-fn run_manual_mode(gamepad: &mut Gamepad, controller: &MotorController) -> Result<(), Box<dyn std::error::Error>> {
-    println!("MANUEL MODE - Press B to exit");
+fn spawn_gamepad_thread(
+    dev_fn: &str,
+) -> Result<(mpsc::Receiver<GamepadInput>, thread::JoinHandle<()>), Box<dyn std::error::Error>> {
+    let mut gamepad = Gamepad::new(dev_fn).map_err(|e| format!("Failed to open gamepad: {}", e))?;
 
-    // Track previous values to detect changes
-    let mut prev_motor_speed = 0.0;
-    let mut prev_servo_angle = 90.0;
+    let (input_tx, input_rx) = mpsc::channel::<GamepadInput>();
+    let handle = thread::spawn(move || {
+        loop {
+            gamepad.update();
+            if input_tx.send(*gamepad.get_input()).is_err() {
+                break;
+            }
+            thread::sleep(Duration::from_millis(1));
+        }
+    });
+
+    Ok((input_rx, handle))
+}
+
+fn recv_latest_input(
+    input_rx: &mpsc::Receiver<GamepadInput>,
+    timeout: Duration,
+) -> Option<GamepadInput> {
+    let mut latest = input_rx.recv_timeout(timeout).ok()?;
+    while let Ok(newer) = input_rx.try_recv() {
+        latest = newer;
+    }
+    Some(latest)
+}
+
+
+/*
+    MANUAL MODE
+    also known as MANUEL MODE
+*/
+fn run_manual_mode(
+    input_rx: &mpsc::Receiver<GamepadInput>,
+    controller: &MotorController,
+) -> Result<(), Box<dyn std::error::Error>> {
+    println!("MANUEL MODE - Press B to exit");
+// =================================================================================
+//                              INIT HELPER VARIABLES
+    // previous values
+    let mut prev_motor_speed: u32 = 0;
+    let mut prev_servo_angle: u32 = 90;
+    let mut prev_d_pad = false;
+    let mut prev_cruise_button = false;
+    let mut prev_direction = NEUTRAL;
+
+    // cruise control variables
+    let mut cruise_control_enabled = false;
+    let mut cruise_direction: u8 = NEUTRAL;
+    let mut cruise_speed: u32 = 0;
     
-    // Threshold for detecting meaningful changes
-    const MOTOR_THRESHOLD: f64 = 5.0;  // Only send if change > 5 counts
-    const SERVO_THRESHOLD: f64 = 1.0;   // Only send if change > 1 degree
+// =================================================================================
 
     loop {
-        gamepad.update();
-        let input = gamepad.get_input();
 
-        // Check exit condition
+    // =================================================================================
+    //                          GAMEPAD INPUT THREAD
+    
+        let Some(input) = recv_latest_input(input_rx, Duration::from_millis(25)) else {
+            eprintln!("Gamepad input thread disconnected");
+            controller.stop_dc_motors()?;
+            controller.reset_servo_motors()?;
+            break;
+        };
+
+    // =================================================================================
+    
+
+    // =================================================================================
+    //                          EXITING MANUEL MODE
+    
         if input.button_b {
             println!("Exiting MANUEL mode");
             controller.stop_dc_motors()?;
-            controller.stop_servo_motors()?;
+            controller.reset_servo_motors()?;
             break;
         }
 
-        // Get control inputs
-        let steering = input.analog_stick_right.x;   // Right stick X: -1.0 to 1.0
-        let throttle = input.analog_stick_left.y;    // Left stick Y: -1.0 to 1.0
+    // =================================================================================
+    
+
+    // =================================================================================
+    //                          GAMEPAD INPUT VARIABLES
+    
+        let steering = input.analog_stick_right.x;
+        let throttle = input.analog_stick_left.y;
         let max_speed = input.button_r2;
+        let brake = input.button_l2;
+        let d_pad: bool = input.d_pad.y as i8 != 0;
 
-        // Calculate motor speeds (same for both motors, no differential)
-        let motor_speed;
-        if max_speed{ motor_speed = throttle * MAX_MOTOR_SPEED; }
-        else { motor_speed = throttle * MAX_MOTOR_SPEED / 2.0; }
+    // =================================================================================
+    
+    
+    // =================================================================================
+    //                          DEFINING DIRECTION
+    
+        let direction = if brake {
+            BRAKE
+        } else if throttle > 0.0 {
+            FORWARD
+        } else if throttle < 0.0 {
+            REVERSE
+        } else {
+            NEUTRAL
+        };
 
-        // Calculate servo angle (map -1..1 to 0..180)
-        let servo_angle = ((steering + 1.0) / 2.0) * MAX_SERVO_ANGLE;
+    // =================================================================================
 
-        // Send motor command only if value changed significantly
-        if (motor_speed - prev_motor_speed).abs() > MOTOR_THRESHOLD {
-            controller.send_motor_command(motor_speed, motor_speed)?;
-            prev_motor_speed = motor_speed;
-            println!("Motor updated: {}", motor_speed);
+
+    // =================================================================================
+    //                          CHANGING CRUISE CONTROL SPEED VALUE
+    
+        if cruise_control_enabled {
+            if d_pad && !prev_d_pad {
+                if input.d_pad.y < 0.0 {
+                    cruise_speed = cruise_speed.saturating_sub(STEP_CRUISE).max(MIN_CRUISE);
+                }
+                else if input.d_pad.y > 0.0 {
+                    cruise_speed = cruise_speed.saturating_add(STEP_CRUISE).min(MAX_CRUISE);
+                }
+            }
+        }
+        prev_d_pad = d_pad;
+        
+    // =================================================================================
+
+    
+    // =================================================================================
+    //                          ACTIVATING CRUISE CONTROL
+    
+        if input.button_l3 && !prev_cruise_button {
+            if cruise_control_enabled {
+                cruise_control_enabled = false;
+            } else if direction == FORWARD {
+                cruise_control_enabled = true;
+                cruise_speed = prev_motor_speed;
+                cruise_direction = direction;
+            }
+        }
+        if direction == BRAKE || direction == REVERSE { cruise_control_enabled = false; }
+        prev_cruise_button = input.button_l3;
+
+    // =================================================================================
+
+    
+    // =================================================================================
+    //                      DEFINING SPEED AND ANGLES
+    
+        let joystick_motor_speed = if max_speed {
+            (throttle.abs() * MAX_MOTOR_SPEED).floor() as u32
+        } else {
+            (throttle.abs() * MAX_MOTOR_SPEED / 2.0).floor() as u32
+        };
+
+        let (final_motor_speed, final_direction) = if cruise_control_enabled {
+            (cruise_speed, cruise_direction)
+        } else {
+            (joystick_motor_speed, direction)
+        };
+
+        let servo_angle = (MID_SERVO_ANGLE + (steering * SERVO_RANGE))
+            .clamp(MIN_SERVO_ANGLE, MAX_SERVO_ANGLE)
+            .floor() as u32;
+
+    // =================================================================================
+
+    
+    // =================================================================================
+    //                          SENDING VALUES THROUGH CAN
+
+        if final_motor_speed != prev_motor_speed || final_direction != prev_direction {
+            controller.send_motor_command(final_motor_speed, final_direction)?;
+            prev_motor_speed = final_motor_speed;
+            prev_direction = final_direction;
+            println!("Motor updated: {}\nDirection {}", final_motor_speed, final_direction);
         }
 
-        // Send servo command only if value changed significantly
-        if (servo_angle - prev_servo_angle).abs() > SERVO_THRESHOLD {
+        if servo_angle != prev_servo_angle {
             controller.send_servo_command(servo_angle)?;
             prev_servo_angle = servo_angle;
-            println!("Servo updated: {:.1}°", servo_angle);
+            println!("Servo updated: {:.1}°\n Steering value: {steering}", servo_angle);
         }
-
-        // Small delay to avoid busy-waiting
-        thread::sleep(Duration::from_millis(10));
+        
+    // =================================================================================
     }
 
     Ok(())
@@ -320,34 +492,34 @@ fn run_manual_mode(gamepad: &mut Gamepad, controller: &MotorController) -> Resul
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Initializing controller...");
 
-    // Initialize gamepad
-    let mut gamepad = Gamepad::new(GAMEPAD_DEVICE)
-        .map_err(|e| format!("Failed to open gamepad: {}", e))?;
-
-    // Initialize CAN controller
+    let (input_rx, gamepad_handle) = spawn_gamepad_thread(GAMEPAD_DEVICE)?;
     let controller = MotorController::new(CAN_INTERFACE, CAN_ID_MOTOR, CAN_ID_SERVO)?;
+    let mut prev_start_pressed = false;
 
     println!("Controller ready. Press START to enter manual mode, SELECT to exit.");
 
-    // Main state machine loop
     loop {
-        gamepad.update();
-        let input = gamepad.get_input();
+        let Some(input) = recv_latest_input(&input_rx, Duration::from_millis(50)) else {
+            eprintln!("Gamepad input thread disconnected");
+            break;
+        };
 
-        // Check for exit
         if input.button_select {
             println!("Shutting down...");
             controller.stop_dc_motors()?;
-            controller.stop_servo_motors()?;
+            controller.reset_servo_motors()?;
             break;
         }
 
-        // Check for manual mode entry
-        if input.button_start {
-            run_manual_mode(&mut gamepad, &controller)?;
+        if input.button_start && !prev_start_pressed {
+            run_manual_mode(&input_rx, &controller)?;
         }
+        prev_start_pressed = input.button_start;
+    }
 
-        thread::sleep(Duration::from_millis(10));
+    drop(input_rx);
+    if gamepad_handle.join().is_err() {
+        return Err(std::io::Error::other("Gamepad thread panicked").into());
     }
 
     Ok(())

@@ -28,6 +28,7 @@ static constexpr const char* PATH_STM32_HUM    = "Vehicle.ControlUnit.STM32.Heal
 
 static constexpr const char* PATH_RPI_BATTERY_PERCENT = "Vehicle.ControlUnit.Central.Health.Resources.BatteryLevel";
 static constexpr const char* PATH_RPI_BATTERY_VOLTAGE = "Vehicle.ControlUnit.Central.Health.Resources.BatteryVoltage";
+static constexpr const char* PATH_RPI_BATTERY_CURRENT = "Vehicle.ControlUnit.Central.Health.Resources.BatteryCurrent";
 
 KuksaReader::KuksaReader(QObject *parent)
     : QObject(parent)
@@ -121,12 +122,14 @@ void KuksaReader::start()
 
     // Required paths (guaranteed by kuksa_feeder — must exist in the databroker VSS).
     const std::vector<std::string> requiredPaths = {
-        PATH_SPEED, PATH_BATTERY_PERCENT, PATH_BATTERY_VOLT, PATH_CURRENT_GEAR
+        PATH_SPEED,
+        PATH_CURRENT_GEAR,
     };
     // Optional paths (custom VSS extensions — may not be registered in every deployment).
     const std::vector<std::string> allPaths = {
         PATH_SPEED, PATH_BATTERY_PERCENT, PATH_BATTERY_VOLT, PATH_CURRENT_GEAR,
-        PATH_STM32_TEMP, PATH_STM32_HUM, PATH_RPI_BATTERY_PERCENT, PATH_RPI_BATTERY_VOLTAGE
+        PATH_STM32_TEMP, PATH_STM32_HUM, PATH_RPI_BATTERY_PERCENT, PATH_RPI_BATTERY_VOLTAGE,
+        PATH_RPI_BATTERY_CURRENT
     };
 
     while (!m_stopRequested.load()) {
@@ -195,6 +198,9 @@ bool KuksaReader::subscribeLoop(const std::vector<std::string>& paths)
         }
         if (auto it = entries.find(PATH_RPI_BATTERY_VOLTAGE); it != entries.end()) {
             emit rpiBatteryVoltageReceived(static_cast<double>(readFloat(it->second, 0.0f)));
+        }
+        if (auto it = entries.find(PATH_RPI_BATTERY_CURRENT); it != entries.end()) {
+            emit rpiBatteryCurrentReceived(static_cast<double>(readFloat(it->second, 0.0f)));
         }
     }
 
