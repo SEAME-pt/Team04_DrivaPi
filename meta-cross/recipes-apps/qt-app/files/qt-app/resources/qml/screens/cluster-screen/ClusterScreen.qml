@@ -37,6 +37,9 @@ Rectangle {
     // ISO 26262 Fail-Safe: Null/Invalid Data Handling
     property bool vehicleDataAvailable: vehicleData !== null && vehicleData !== undefined
 
+    property bool emergencyPriorityActive: false
+    property bool demoEmergencyAlert: false
+
     // Demo / fallback (replace with your real signal if you have it)
     // ISO 26262 ASIL requirement: Valid fallback for critical safety display
     property int speedLimitValue: vehicleDataAvailable && vehicleData.speedLimit ? Math.round(vehicleData.speedLimit) : 120
@@ -404,6 +407,25 @@ Rectangle {
 
             }
         }
+    }
+
+    Timer {
+        id: demoEmergencyTimer
+        running: root.demoEmergencyAlert
+        interval: 10000
+        repeat: true
+        onTriggered: root.emergencyPriorityActive = !root.emergencyPriorityActive
+    }
+
+    // ==========================================================
+    // V2X EMERGENCY OVERLAY
+    // ==========================================================
+    EmergencyAlert {
+        id: v2xEmergencyAlert
+        z: 2000
+        s: root.s
+        isActive: root.emergencyPriorityActive
+        alertMessage: "EMERGENCY VEHICLE"
     }
 
     // Battery Status Popup
