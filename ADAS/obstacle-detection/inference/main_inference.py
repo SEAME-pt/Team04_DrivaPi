@@ -34,10 +34,13 @@ class StreamHandler(BaseHTTPRequestHandler):
             self.end_headers()
             while not shutdown_event.is_set():
                 time.sleep(0.01)
-                with lock:
-                    if output_frame is None:
-                        continue
-                    ok, img = cv2.imencode(".jpg", output_frame)
+with lock:
+    if output_frame is None:
+        continue
+    local_frame = output_frame.copy() # Fast memory copy
+
+# Lock is now released! Main thread can continue.
+ok, img = cv2.imencode(".jpg", local_frame) # Heavy CPU task happens safely outside
                 if ok:
                     try:
                         self.wfile.write(
