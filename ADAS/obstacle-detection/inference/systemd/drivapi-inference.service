@@ -1,0 +1,19 @@
+[Unit]
+Description=DrivaPi ADAS Inference
+After=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+Environment=PYTHONUNBUFFERED=1
+Environment=DRIVAPI_ROOT=/opt/drivapi
+WorkingDirectory=${DRIVAPI_ROOT}/ADAS/obstacle-detection/inference
+ExecStart=/usr/bin/python3 ${DRIVAPI_ROOT}/ADAS/obstacle-detection/inference/main_inference.py
+Restart=on-failure
+RestartSec=2
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
