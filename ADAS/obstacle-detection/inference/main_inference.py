@@ -12,8 +12,8 @@ import time
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
-from hailo_platform import (VDevice, HEF, ConfigureParams, InferVStreams, 
-                            InputVStreamParams, OutputVStreamParams, 
+from hailo_platform import (VDevice, HEF, ConfigureParams, InferVStreams,
+                            InputVStreamParams, OutputVStreamParams,
                             FormatType, HailoStreamInterface)
 
 from hailo_config import HailoConfig as cfg
@@ -24,6 +24,7 @@ lock = threading.Lock()
 shutdown_event = threading.Event()
 logger = logging.getLogger(__name__)
 
+
 class StreamHandler(BaseHTTPRequestHandler):
     """Serves a multipart MJPEG stream of the latest inference frame."""
 
@@ -32,15 +33,18 @@ class StreamHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-type', 'multipart/x-mixed-replace; boundary=frame')
             self.end_headers()
+
             while not shutdown_event.is_set():
                 time.sleep(0.01)
-with lock:
-    if output_frame is None:
-        continue
-    local_frame = output_frame.copy() # Fast memory copy
 
-# Lock is now released! Main thread can continue.
-ok, img = cv2.imencode(".jpg", local_frame) # Heavy CPU task happens safely outside
+                with lock:
+                    if output_frame is None:
+                        continue
+                    local_frame = output_frame.copy()
+
+                # Heavy JPEG encoding happens outside the lock so inference can keep updating frames.
+                ok, img = cv2.imencode(".jpg", local_frame)
+
                 if ok:
                     try:
                         self.wfile.write(
@@ -51,15 +55,18 @@ ok, img = cv2.imencode(".jpg", local_frame) # Heavy CPU task happens safely outs
                     except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
                         break
 
+
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     """Threaded HTTP server for MJPEG streaming."""
 
     pass
 
+
 def sigmoid(x: np.ndarray) -> np.ndarray:
     """Numerically stable sigmoid for tensor values."""
 
     return 1 / (1 + np.exp(-np.clip(x, -20, 20)))
+
 
 def build_yolo_grid() -> Tuple[np.ndarray, np.ndarray]:
     """Build YOLOv8 grid centers and stride array."""
@@ -73,6 +80,7 @@ def build_yolo_grid() -> Tuple[np.ndarray, np.ndarray]:
                 grid_centers.append([(j + 0.5) * stride, (i + 0.5) * stride])
                 stride_array.append(stride)
     return np.array(grid_centers), np.array(stride_array)
+
 
 class DrivaPiInference:
     """Runs Hailo inference and forwards detections to the control brain."""
@@ -112,7 +120,6 @@ class DrivaPiInference:
         input_params = InputVStreamParams.make(self.network_group, format_type=FormatType.FLOAT32)
         output_params = OutputVStreamParams.make(self.network_group, format_type=FormatType.FLOAT32)
 
-        frame_period = 1.0 / cfg.TARGET_FPS
         last_metrics_time = time.time()
         frames_since_metrics = 0
         last_detection_count = 0
@@ -124,10 +131,10 @@ class DrivaPiInference:
                     logger.info("state=inference_started")
 
                     while not shutdown_event.is_set():
-                        frame_start = time.time()
                         data = camera.stdout.read(cam_w * cam_h * 3 // 2)
                         if not data:
                             break
+
                         yuv = np.frombuffer(data, dtype=np.uint8).reshape((cam_h * 3 // 2, cam_w))
                         frame = cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR_I420)
 
@@ -197,6 +204,7 @@ class DrivaPiInference:
 
                         with lock:
                             output_frame = frame.copy()
+
                         self.brain.process_detections(detections)
 
                         last_detection_count = len(detections)
@@ -213,11 +221,6 @@ class DrivaPiInference:
                             )
                             last_metrics_time = now
                             frames_since_metrics = 0
-
-                        loop_elapsed = time.time() - frame_start
-                        sleep_time = frame_period - loop_elapsed
-                        if sleep_time > 0:
-                            time.sleep(sleep_time)
         finally:
             shutdown_event.set()
             if camera.poll() is None:
@@ -227,6 +230,7 @@ class DrivaPiInference:
                 except subprocess.TimeoutExpired:
                     camera.kill()
                     camera.wait()
+
 
 if __name__ == "__main__":
     server = None
