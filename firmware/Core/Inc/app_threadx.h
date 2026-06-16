@@ -38,6 +38,7 @@ extern "C" {
 #include <stdlib.h>
 #include "main.h"
 #include "dc_motor.h"
+#include "mqtt.h"
 #include "servo_motor.h"
 #include "motor_utils.h"
 #include "motor_control.h"

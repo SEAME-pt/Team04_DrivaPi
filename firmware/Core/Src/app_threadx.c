@@ -45,6 +45,8 @@
 /* USER CODE BEGIN PV */
 bool					g_emergencyBrake;
 thread_t				g_threads[9];
+TX_THREAD 				mqtt_thread;
+ULONG 					mqtt_thread_stack[4096];
 TX_QUEUE                g_queueSpeedCmd;
 TX_QUEUE                g_queueSteerCmd;
 TX_EVENT_FLAGS_GROUP    g_eventFlags;
@@ -54,6 +56,7 @@ TX_MUTEX                g_canMutex;
 TX_MUTEX                g_motorMutex;
 TX_MUTEX                g_servoMutex;
 TX_MUTEX             	g_gearMutex;
+TX_MUTEX 				mx_wifi_api_mutex;
 RNDGear_t				g_currentGear;
 float                   g_vehicleSpeed;
 float 					g_currentSpeed;
@@ -105,11 +108,14 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
 	tx_mutex_create(&g_motorMutex, "Motor Mutex", TX_INHERIT);
 	tx_mutex_create(&g_servoMutex, "Servo Mutex", TX_INHERIT);
 	tx_mutex_create(&g_gearMutex, "Gear Mutex", TX_INHERIT);
+	tx_mutex_create(&mx_wifi_api_mutex, "My Mutex", TX_INHERIT);
 
-	InitAllDevices();
-	MotorControlInit(&g_motorControlState);
-	AppThreadX_LogThreadInitMessage();
-	ThreadInit();
+	//InitAllDevices();
+	//MotorControlInit(&g_motorControlState);
+	//AppThreadX_LogThreadInitMessage();
+	tx_thread_create(&mqtt_thread, "MQTT Thread", mqtt_thread_fc, 0,
+	mqtt_thread_stack, sizeof(mqtt_thread_stack), 1, 1, TX_NO_TIME_SLICE, TX_AUTO_START);
+	//ThreadInit();
 
   /* USER CODE END App_ThreadX_Init */
 

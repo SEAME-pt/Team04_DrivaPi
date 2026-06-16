@@ -224,5 +224,13 @@ void DebugMon_Handler(void)
 /******************************************************************************/
 
 /* USER CODE BEGIN 1 */
+void EXTI14_IRQHandler(void)
+{
+  HAL_GPIO_EXTI_IRQHandler(WRLS_NOTIFY_Pin);
+}
 
+void EXTI15_IRQHandler(void)
+{
+  HAL_GPIO_EXTI_IRQHandler(WRLS_FLOW_Pin);
+}
 /* USER CODE END 1 */

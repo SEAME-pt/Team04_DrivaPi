@@ -21,6 +21,7 @@ void UartPrintf(const char* format, ...)
 	vsnprintf(buffer, sizeof(buffer), format, args);
 	va_end(args);
 	HAL_UART_Transmit(&huart1, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
+	HAL_UART_Transmit(&huart1, (uint8_t*)"\r\n", 2, HAL_MAX_DELAY);
 }
 
 /**
@@ -31,6 +32,7 @@ void UartPrintf(const char* format, ...)
 void UartPrint(const char* msg)
 {
 	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+	HAL_UART_Transmit(&huart1, (uint8_t*)"\r\n", 2, HAL_MAX_DELAY);
 }
 
 /**
