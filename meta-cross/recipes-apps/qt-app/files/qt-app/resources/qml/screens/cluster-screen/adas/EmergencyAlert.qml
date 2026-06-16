@@ -1,12 +1,13 @@
 /**
  * @file EmergencyAlert.qml
  * @author DrivaPi Team
- * @brief V2X Emergency Vehicle Priority Alert Overlay
+ * @brief V2X Emergency Vehicle Priority Alert Overlay (Premium Angular Style)
  */
 
 import QtQuick
 import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects
+import QtQuick.Shapes
+import Qt5Compat.GraphicalEffects as Effects
 import "../../../theme"
 
 Item {
@@ -16,88 +17,97 @@ Item {
     property string alertMessage: "EMERGENCY VEHICLE"
     property real s: 1.0
 
-    width: 480 * s
-    height: 72 * s
+    width: 460 * s
+    height: 70 * s
 
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.top: parent.top
-    anchors.topMargin: isActive ? (80 * s) : (-height - 20)
+    anchors.topMargin: isActive ? (70 * s) : (-height - 40)
 
     opacity: isActive ? 1.0 : 0.0
 
     Behavior on anchors.topMargin {
-        NumberAnimation { duration: AppTheme.animation.normal; easing.type: Easing.OutBack }
+        NumberAnimation { duration: 700; easing.type: Easing.OutBack; easing.overshoot: 1.2 }
     }
     Behavior on opacity {
-        NumberAnimation { duration: AppTheme.animation.fast }
+        NumberAnimation { duration: 400; easing.type: Easing.OutQuad }
     }
 
-    // Efeito de pulso externo (Glow) - Não afeta a legibilidade do texto
-    Rectangle {
-        id: pulseBorder
-        anchors.fill: parent
-        anchors.margins: -4 * root.s
-        radius: AppTheme.radius.medium + (4 * root.s)
-        color: "transparent"
-        border.color: AppTheme.colors.error
-        border.width: 3 * root.s
-        opacity: 0.0
+    // Outer glow effect
+    layer.enabled: true
+    layer.effect: Effects.DropShadow {
+        transparentBorder: true
+        radius: 20 * root.s
+        samples: 35
+        color: root.isActive ? "#99FF0000" : "transparent"
+        verticalOffset: 4
+    }
 
-        SequentialAnimation on opacity {
-            running: root.isActive
-            loops: Animation.Infinite
-            NumberAnimation { to: 0.65; duration: 600; easing.type: Easing.InOutQuad }
-            NumberAnimation { to: 0.0; duration: 600; easing.type: Easing.InOutQuad }
+    // Angular background shape
+    Shape {
+        id: angularBackground
+        anchors.fill: parent
+        
+        ShapePath {
+            strokeWidth: 2 * root.s
+            strokeColor: "#FF1A1A"
+            
+            fillGradient: LinearGradient {
+                x1: 0; y1: 0; x2: 0; y2: root.height
+                GradientStop { position: 0.0; color: "#D91A0000" } 
+                GradientStop { position: 1.0; color: "#E6050505" } 
+            }
+
+            startX: 20 * root.s; startY: 0
+            PathLine { x: root.width - 20 * root.s; y: 0 }
+            PathLine { x: root.width; y: root.height / 2 }
+            PathLine { x: root.width - 20 * root.s; y: root.height }
+            PathLine { x: 20 * root.s; y: root.height }
+            PathLine { x: 0; y: root.height / 2 }
+            PathLine { x: 20 * root.s; y: 0 }
         }
     }
 
-    // Fundo principal do alerta (Opacidade Estável)
-    Rectangle {
-        id: alertBackground
+    // Content layout
+    RowLayout {
         anchors.fill: parent
-        radius: AppTheme.radius.medium
-        color: AppTheme.colors.error
-        border.color: AppTheme.colors.surfaceElevated
-        border.width: 2 * root.s
+        anchors.leftMargin: 40 * root.s
+        anchors.rightMargin: 40 * root.s
+        spacing: 20 * root.s
 
-        layer.enabled: !AppTheme.isDark
-        layer.effect: DropShadow {
-            transparentBorder: true
-            radius: 8
-            samples: 17
-            color: AppTheme.alpha(AppTheme.colors.error, 0.6)
+        Image {
+            source: "qrc:/icons/common/alert.svg"
+            Layout.preferredWidth: 30 * root.s
+            Layout.preferredHeight: 30 * root.s
+            layer.enabled: true
+            layer.effect: Effects.ColorOverlay {
+                color: "#FF3333"
+            }
+
+            SequentialAnimation on opacity {
+                running: root.isActive
+                loops: Animation.Infinite
+                NumberAnimation { to: 0.3; duration: 800; easing.type: Easing.InOutSine }
+                NumberAnimation { to: 1.0; duration: 800; easing.type: Easing.InOutSine }
+            }
         }
 
-        RowLayout {
-            anchors.fill: parent
-            anchors.margins: AppTheme.spacing.medium * root.s
-            spacing: AppTheme.spacing.medium * root.s
-
-            Image {
-                source: "qrc:/icons/hardware/sensor.svg"
-                Layout.preferredWidth: 32 * root.s
-                Layout.preferredHeight: 32 * root.s
-                layer.enabled: true
-                layer.effect: ColorOverlay {
-                    color: "#FFFFFF"
-                }
+        Text {
+            text: root.alertMessage
+            color: "#FFFFFF"
+            font.family: AppTheme.typography.fontFamily
+            font.pixelSize: 22 * root.s
+            font.weight: Font.Black
+            font.letterSpacing: 3.0
+            font.capitalization: Font.AllUppercase
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            
+            layer.enabled: true
+            layer.effect: Effects.DropShadow {
+                radius: 4; samples: 8; color: "#000000"; verticalOffset: 2
             }
-
-            Text {
-                text: root.alertMessage
-                color: "#FFFFFF"
-                style: Text.Outline
-                styleColor: "#80000000"
-                font.family: AppTheme.typography.fontFamily
-                font.pixelSize: Math.max(18, AppTheme.typography.headlineMedium * root.s)
-                font.weight: Font.ExtraBold
-                font.letterSpacing: 2.0
-                Layout.fillWidth: true
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-            }
-
-            Item { Layout.preferredWidth: 32 * root.s }
         }
     }
 }
