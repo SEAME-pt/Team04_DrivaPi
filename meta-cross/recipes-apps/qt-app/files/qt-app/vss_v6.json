@@ -559,6 +559,17 @@
 						},
 						"description": "Traction Control System signals.",
 						"type": "branch"
+					},
+					"V2X": {
+						"type": "branch",
+						"description": "Vehicle-to-Everything (V2X) communication signals.",
+						"children": {
+							"EmergencyPriority": {
+								"datatype": "float",
+								"type": "sensor",
+								"description": "V2X priority level from emergency vehicles (0=Clear, 1=Warning, 2=High)."
+							}
+						}
 					}
 				},
 				"description": "All Advanced Driver Assist Systems data.",
