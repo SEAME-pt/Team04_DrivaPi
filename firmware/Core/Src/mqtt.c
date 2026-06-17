@@ -79,7 +79,8 @@ void mqtt_thread_fc(ULONG thread_input)
     data.clientID.cstring = "STM32_Client_02";
     data.keepAliveInterval = 60;
     data.cleansession = 1;
-
+    data.username.cstring = MQTT_USERNAME;
+    data.password.cstring = MQTT_PASSWORD;
     if (MX_WIFI_DEBUG)
         UartPrint("[MQTT] connect...");
 

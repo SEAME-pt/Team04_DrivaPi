@@ -17,4 +17,7 @@
 #define MQTT_BROKER_IP_2      220
 #define MQTT_BROKER_IP_3      164
 
+
+#define MQTT_USERNAME         "my_stm32_user"
+#define MQTT_PASSWORD         "drivapi"
 #endif
