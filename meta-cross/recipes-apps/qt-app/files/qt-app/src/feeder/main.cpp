@@ -29,6 +29,7 @@ void InitDispatchTable() {
     dispatchTable[can::ID_RPI_BATTERY]   = handlers::HandleRpiBattery;
     dispatchTable[can::ID_GEAR]          = handlers::HandleGear;
     dispatchTable[can::ID_ENV]           = handlers::HandleEnv;
+    dispatchTable[can::ID_V2X_EMERGENCY] = handlers::HandleV2XEmergency;
 }
 
 int main(int argc, char** argv)
@@ -105,6 +106,9 @@ int main(int argc, char** argv)
                     break;
                 case can::ID_ENV:
                     handlers::HandleEnv(frame, publisher);
+                    break;
+                case can::ID_EMERGENCY_VEHICLE:
+                    handlers::HandleV2XEmergency(frame, publisher);
                     break;
                 default:
                     // Ignore unknown CAN IDs silently
