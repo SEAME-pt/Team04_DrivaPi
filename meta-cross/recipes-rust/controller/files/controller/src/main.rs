@@ -1,4 +1,6 @@
+mod stanley;
 use socketcan::Socket;
+
 use socketcan::{CanFrame, CanSocket, EmbeddedFrame, StandardId};
 use std::collections::HashMap;
 use std::fs::File;
@@ -12,7 +14,7 @@ use std::time::Instant;
 /* CAN Protocol Constants */
 const CAN_ID_MOTOR: u16 = 44;
 const CAN_ID_SERVO: u16 = 45;
-const CAN_INTERFACE: &str = "can1";
+const CAN_INTERFACE: &str = "vcan1";
 
 /* Motor Constants */
 const MAX_MOTOR_SPEED: f64 = 90.0;
@@ -513,6 +515,19 @@ fn run_autonomous_mode(
     let mut last_ai_msg = Instant::now();
     let mut next_mode: Option<DriveMode> = None;
 
+    // Stanley configuration
+    let config = stanley::StanleyConfig {
+        k: 1.0,
+        k_soft: 1.0,
+        wheelbase_m: 0.25, // Measured approx wheelbase
+        max_steer_rad: 0.30,
+        max_steer_rate: 1.5,
+    };
+    
+    let mut prev_delta = 0.0;
+    let dt = 0.025; // 40Hz
+    let steer_gain = 50.0; // To be tuned
+
     loop {
         // OVERRIDE: if human move joystick it overrides
         if let Some(input) = recv_latest_input(input_rx, Duration::from_millis(10)) {
@@ -530,17 +545,47 @@ fn run_autonomous_mode(
         }
 
         // Receives from AI (Python)
+        // Expected format: cte,heading_err,confidence,speed_sensor
         let mut buf = [0u8; 128];
         if let Ok((size, _)) = socket.recv_from(&mut buf) {
             let data = String::from_utf8_lossy(&buf[..size]);
             let p: Vec<&str> = data.trim().split(',').collect();
-            if p.len() == 3 {
-                let speed: u32 = p[0].parse().unwrap_or(0).min(MAX_MOTOR_SPEED as u32);
-                let dir: u8 = p[1].parse().unwrap_or(BRAKE);
-                let steer: u32 = p[2].parse().unwrap_or(MID_SERVO_ANGLE as u32).clamp(MIN_SERVO_ANGLE as u32, MAX_SERVO_ANGLE as u32);
+            if p.len() == 4 {
+                let cte: f64 = p[0].parse().unwrap_or(0.0);
+                let heading_err: f64 = p[1].parse().unwrap_or(0.0);
+                let confidence: f64 = p[2].parse().unwrap_or(0.0);
+                let speed: f64 = p[3].parse().unwrap_or(0.0);
+
+                // Safety: check confidence
+                if confidence > 0.5 {
+                    let observation = stanley::CameraLaneObservation {
+                        cross_track_error_m: cte,
+                        heading_error_rad: heading_err,
+                        confidence,
+                    };
+                    
+                    let delta = stanley::compute_steering(
+                        &observation,
+                        speed,
+                        prev_delta,
+                        dt,
+                        &config
+                    );
+                    prev_delta = delta;
+                    
+                    let servo_deg = stanley::steering_to_servo_deg(delta, steer_gain, MID_SERVO_ANGLE);
+                    
+                    // Simple speed policy: fixed for now
+                    let target_speed: u32 = 40; 
+                    
+                    controller.send_motor_command(target_speed, FORWARD)?;
+                    controller.send_servo_command(servo_deg as u32)?;
+                } else {
+                    println!("Low confidence: {} - Braking", confidence);
+                    controller.stop_dc_motors()?;
+                    controller.reset_servo_motors()?;
+                }
                 
-                controller.send_motor_command(speed, dir)?;
-                controller.send_servo_command(steer)?;
                 last_ai_msg = Instant::now();
             }
         }
