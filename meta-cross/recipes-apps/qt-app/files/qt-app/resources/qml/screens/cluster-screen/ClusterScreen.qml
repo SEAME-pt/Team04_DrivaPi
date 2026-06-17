@@ -332,7 +332,6 @@ Rectangle {
         }
     }
 
-    // Failsafe timer: Esconde o alerta se a rede cair ou perder pacote "Clear"
     Timer {
         id: emergencyTimeoutTimer
         interval: 15000
