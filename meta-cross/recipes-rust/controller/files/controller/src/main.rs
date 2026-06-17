@@ -14,7 +14,7 @@ use std::time::Instant;
 /* CAN Protocol Constants */
 const CAN_ID_MOTOR: u16 = 44;
 const CAN_ID_SERVO: u16 = 45;
-const CAN_INTERFACE: &str = "vcan1";
+const CAN_INTERFACE: &str = "can1";
 
 /* Motor Constants */
 const MAX_MOTOR_SPEED: f64 = 90.0;
@@ -586,8 +586,38 @@ fn run_autonomous_mode(
                     controller.reset_servo_motors()?;
                 }
                 
-                last_ai_msg = Instant::now();
             }
+            if p.len() == 2 {
+                let cte: f64 = p[0].parse().unwrap_or(0.0);
+                let heading_err: f64 = p[1].parse().unwrap_or(0.0);
+            
+                // Since Python doesn't send confidence or speed,
+                // provide defaults.
+                let observation = stanley::CameraLaneObservation {
+                    cross_track_error_m: cte,
+                    heading_error_rad: heading_err,
+                    confidence: 1.0, // assume valid lane detection
+                };
+            
+                let speed = 40.0; // fixed speed for Stanley controller
+            
+                let delta = stanley::compute_steering(
+                    &observation,
+                    speed,
+                    prev_delta,
+                    dt,
+                    &config,
+                );
+            
+                prev_delta = delta;
+            
+                let servo_deg =
+                    stanley::steering_to_servo_deg(delta, steer_gain, MID_SERVO_ANGLE);
+            
+                controller.send_motor_command(40, FORWARD)?;
+                controller.send_servo_command(servo_deg as u32)?;
+            }
+            last_ai_msg = Instant::now();
         }
 
         // WATCHDOG: If AI does not respond, it brakes in 500ms
