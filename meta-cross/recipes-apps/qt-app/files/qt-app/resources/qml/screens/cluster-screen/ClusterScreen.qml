@@ -121,19 +121,6 @@ Rectangle {
         }
     }
 
-    // Reset odometer function
-    // function resetOdometer() {
-    //     odometerDistance = 0;
-    //     accumulatedDistance = 0;
-    //     // Update backend too
-    //     if (vehicleDataAvailable) {
-    //         vehicleData.odo = 0;
-    //     }
-    //     showOdometerReset = true;
-    //     resetOdometerTimer.start();
-    //     console.log("[ClusterScreen] Odometer reset to 0 km");
-    // }
-
     Timer {
         id: resetOdometerTimer
         interval: 500
