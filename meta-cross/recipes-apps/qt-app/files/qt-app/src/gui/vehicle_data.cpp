@@ -287,9 +287,14 @@ void VehicleData::handleCanMessage(const QByteArray &payload, uint32_t canId)
 	 if (canId == EMERGENCY_VEHICLE_CAN_ID) {
 		if (dlc < 1) return;
 		const int priorityLevel = static_cast<int>(data[0]);
-		emit emergencyAlertChanged(priorityLevel);
+		updateEmergencyAlert(priorityLevel);
 		return;
 	}
+}
+void VehicleData::updateEmergencyAlert(int priorityLevel)
+{
+    // priorityLevel: 0 = Clear, 1 = Warning, 2 = High Priority (e.g., ambulance)
+    emit emergencyAlertChanged(priorityLevel);
 }
 
 // ===== Persistence =====

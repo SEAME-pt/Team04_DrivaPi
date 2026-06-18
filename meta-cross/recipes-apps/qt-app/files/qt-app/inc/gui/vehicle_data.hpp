@@ -100,6 +100,7 @@ public:
 public slots:
     /// @brief Process CAN frame and update vehicle data.
     void handleCanMessage(const QByteArray &payload, uint32_t canId);
+	void updateEmergencyAlert(int priorityLevel);
 
 signals:
     void speedChanged();
@@ -118,6 +119,8 @@ signals:
     void temperatureChanged();
     void gearChanged();
     void autonomousModeChanged();
+
+	void emergencyAlertChanged(int priorityLevel)
 
 private slots:
     /// @brief Check all properties for staleness (timestamps exceed threshold).
