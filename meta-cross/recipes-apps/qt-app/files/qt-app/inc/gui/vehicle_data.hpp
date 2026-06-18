@@ -120,7 +120,7 @@ signals:
     void gearChanged();
     void autonomousModeChanged();
 
-	void emergencyAlertChanged(int priorityLevel)
+	void emergencyAlertChanged(int priorityLevel);
 
 private slots:
     /// @brief Check all properties for staleness (timestamps exceed threshold).
