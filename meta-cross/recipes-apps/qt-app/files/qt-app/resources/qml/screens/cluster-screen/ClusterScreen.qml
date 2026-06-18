@@ -64,27 +64,6 @@ Rectangle {
         }
     }
 
-    // Listen for changes in vehicleData.odo (sync with backend changes)
-/*    Connections {
-        target: vehicleData
-        enabled: vehicleDataAvailable
-        function onOdometerChanged() {
-            // If backend updates odometer, sync it
-            if (vehicleData.odo > odometerDistance) {
-                odometerDistance = vehicleData.odo;
-                console.log("[ClusterScreen] Odometer synced from backend:", odometerDistance, "km");
-            }
-        }
-        function onStm32BatteryChanged() {
-            // Update dual battery display
-            console.log("[ClusterScreen] STM32 Battery changed to:", vehicleData.stm32Battery, "%");
-        }
-        function onRpiBatteryChanged() {
-            // Update dual battery display
-            console.log("[ClusterScreen] RPi Battery changed to:", vehicleData.rpiBattery, "%");
-        }
-    }*/
-
     Timer {
         id: odometerUpdateTimer
         interval: 100  // Update every 100ms
