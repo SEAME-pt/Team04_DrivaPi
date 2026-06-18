@@ -107,7 +107,11 @@ VOID SpeedSensor(ULONG initial_input)
 			can_msg.id = CAN_ID_RND_GEAR;
 			can_msg.len = 1;
 			can_msg.data[0] = (uint8_t)current_gear;
-			CanSend(&can_msg);
+			if (tx_mutex_get(&g_canMutex, MUTEX_WAIT_TICKS) == TX_SUCCESS)
+			{
+				CanSend(&can_msg);
+				tx_mutex_put(&g_canMutex);
+			}
 			last_gear = current_gear;
 		}
 		tx_event_flags_set(&g_eventFlags, FLAG_SENSOR_UPDATE, TX_OR);

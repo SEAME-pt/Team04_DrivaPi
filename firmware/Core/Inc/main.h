@@ -51,6 +51,8 @@ extern I2C_HandleTypeDef hi2c3;
 
 /* USER CODE END EM */
 
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -67,8 +69,6 @@ void Error_Handler(void);
 #define USB_UCPD_CC1_GPIO_Port GPIOA
 #define OCTOSPI_F_NCS_Pin GPIO_PIN_5
 #define OCTOSPI_F_NCS_GPIO_Port GPIOI
-#define SOFT_SDA_Pin GPIO_PIN_6
-#define SOFT_SDA_GPIO_Port GPIOB
 #define OCTOSPI_R_IO5_Pin GPIO_PIN_0
 #define OCTOSPI_R_IO5_GPIO_Port GPIOI
 #define OCTOSPI_F_IO7_Pin GPIO_PIN_12
@@ -89,8 +89,6 @@ void Error_Handler(void);
 #define PC14_OSC32_IN_GPIO_Port GPIOC
 #define OCTOSPI_R_DQS_Pin GPIO_PIN_3
 #define OCTOSPI_R_DQS_GPIO_Port GPIOE
-#define SOFT_SCL_Pin GPIO_PIN_0
-#define SOFT_SCL_GPIO_Port GPIOE
 #define T_SWO_Pin GPIO_PIN_3
 #define T_SWO_GPIO_Port GPIOB
 #define OCTOSPI_R_IO7_Pin GPIO_PIN_7
@@ -155,6 +153,8 @@ void Error_Handler(void);
 #define Mems_VLX_GPIO_GPIO_Port GPIOG
 #define WRLS_NOTIFY_Pin GPIO_PIN_14
 #define WRLS_NOTIFY_GPIO_Port GPIOD
+#define AIN2_Pin GPIO_PIN_15
+#define AIN2_GPIO_Port GPIOD
 #define OCTOSPI_R_IO6_Pin GPIO_PIN_3
 #define OCTOSPI_R_IO6_GPIO_Port GPIOC
 #define OCTOSPI_F_DQS_Pin GPIO_PIN_12
@@ -165,30 +165,38 @@ void Error_Handler(void);
 #define OCTOSPI_R_CLK_P_GPIO_Port GPIOB
 #define Mems_INT_IIS2MDC_Pin GPIO_PIN_10
 #define Mems_INT_IIS2MDC_GPIO_Port GPIOD
-#define USB_IANA_Pin GPIO_PIN_13
-#define USB_IANA_GPIO_Port GPIOD
 #define Mems_INT_LPS22HH_Pin GPIO_PIN_2
 #define Mems_INT_LPS22HH_GPIO_Port GPIOG
 #define USB_VBUS_SENSE_Pin GPIO_PIN_14
 #define USB_VBUS_SENSE_GPIO_Port GPIOF
+#define AIN1_Pin GPIO_PIN_7
+#define AIN1_GPIO_Port GPIOE
 #define OCTOSPI_R_NCS_Pin GPIO_PIN_11
 #define OCTOSPI_R_NCS_GPIO_Port GPIOB
 #define WRLS_SPI2_NSS_Pin GPIO_PIN_12
 #define WRLS_SPI2_NSS_GPIO_Port GPIOB
 #define USB_UCPD_CC2_Pin GPIO_PIN_15
 #define USB_UCPD_CC2_GPIO_Port GPIOB
-#define SPEED_SENSOR_Pin GPIO_PIN_9
-#define SPEED_SENSOR_GPIO_Port GPIOD
+#define BIN1_Pin GPIO_PIN_8
+#define BIN1_GPIO_Port GPIOD
+#define BIN2_Pin GPIO_PIN_9
+#define BIN2_GPIO_Port GPIOD
 #define Mems_STSAFE_RESET_Pin GPIO_PIN_11
 #define Mems_STSAFE_RESET_GPIO_Port GPIOF
 #define Mems_ISM330DLC_INT1_Pin GPIO_PIN_11
 #define Mems_ISM330DLC_INT1_GPIO_Port GPIOE
+#define SOFT_SCL_Pin GPIO_PIN_15
+#define SOFT_SCL_GPIO_Port GPIOE
 #define MIC_SDIN0_Pin GPIO_PIN_1
 #define MIC_SDIN0_GPIO_Port GPIOB
 #define WRLS_WKUP_W_Pin GPIO_PIN_15
 #define WRLS_WKUP_W_GPIO_Port GPIOF
+#define SOFT_SDA_Pin GPIO_PIN_12
+#define SOFT_SDA_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
+#define DEBUG_DIAGNOSTICS 0u
+
 extern FDCAN_HandleTypeDef hfdcan1;
 extern FDCAN_TxHeaderTypeDef TxHeader;
 /* USER CODE END Private defines */
