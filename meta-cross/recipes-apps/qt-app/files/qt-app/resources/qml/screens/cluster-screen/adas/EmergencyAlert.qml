@@ -25,7 +25,7 @@ Item {
     readonly property color gradientEnd: "#E6050505"
     readonly property int pulseDuration: priorityLevel >= 2 ? 400 : 800 // Faster pulse for higher priority
 
-    width: 520 * s
+    width: 560 * s
     height: 70 * s
 
     anchors.horizontalCenter: parent.horizontalCenter
