@@ -8,7 +8,34 @@ End-to-end recipe to turn a trained YOLO-seg checkpoint into a deployable
 > `More than one output is not supported for layer matmul1`. YOLOv8n-seg is
 > pure-conv and compiles cleanly. (Tested on DFC 3.33 — see Troubleshooting.)
 
-## 0. Prerequisites
+## Acronyms
+
+| Term | Meaning |
+|---|---|
+| **YOLOv8n-seg** | The model. YOLO = object-detector family · `-seg` = segmentation variant (outputs pixel masks, not just boxes) · `n` = nano (smallest/fastest) |
+| **checkpoint** | The saved trained model file (`best.pt`) — the weights produced by training |
+| **NPU** | Neural accelerator — the Hailo-8 chip that runs the model |
+| **DFC** | Hailo **D**ataflow **C**ompiler — the toolchain that turns an ONNX into a `.hef` |
+| **HailoRT** | Hailo Runtime — the on-device library that loads and runs the `.hef` |
+| **ONNX** | Open model format exported from PyTorch (the input to the DFC) |
+| **HAR** | Hailo Archive — intermediate file between the parse / optimize / compile steps |
+| **HEF** | Hailo Executable Format — the **final compiled model** that runs on the chip |
+| **INT8 / FP32** | 8-bit integer vs 32-bit float — INT8 is the quantized precision the chip runs; FP32 is full precision on a PC |
+| **calibration set** | A few hundred sample images the DFC uses to choose the INT8 ranges |
+| **model script (`.alls`)** | A small Hailo config file applied during *optimize* (e.g. on-chip normalization) |
+| **head** | An output branch of the network — here the box / class / mask / proto branches |
+| **stride** | How much a feature map is shrunk vs the input (8/16/32 → coarser grids) |
+| **DFL** | YOLO's box encoding — predicts each box edge as a small distribution, not a single number |
+| **anchor** | A reference point on the feature grid that box predictions are measured from |
+| **proto** | The mask "prototype" bank — 32 basis masks the per-detection coefficients combine into a lane mask |
+| **SiLU / sigmoid** | Activation functions — SiLU is used inside YOLO; sigmoid squashes a value to a 0–1 probability |
+| **C2PSA** | YOLO11's attention block (the part that does **not** compile for Hailo) |
+| **matmul** | Matrix multiply — the operation inside attention that Hailo can't compile (it multiplies data×data, unlike a conv which is data×fixed-weights) |
+| **pure-conv** | A network built only from convolutions (no attention) — what the NPU compiles cleanly; YOLOv8 is this |
+| **ROI** | Region of interest — here, blacking out the top 35% (sky/ceiling) so the model only sees the road |
+| **NHWC** | Tensor layout: batch, height, width, channels (the order Hailo uses for I/O) |
+
+## Prerequisites
 
 - The **Hailo AI SW Suite** Docker image (this guide used `hailo8_ai_sw_suite_2025-10:1`, DFC 3.33 / HailoRT 4.23).
 - A trained **YOLOv8n-seg** checkpoint `best.pt` (5 lane classes).
@@ -185,10 +212,10 @@ Stack them (step 2).
 
 **`End nodes mapped ...` lists fewer than expected / parse error on a node name.**
 The node names are ONNX-specific (`model.22` for v8, `model.23` for v11). Inspect
-your ONNX (e.g. with Netron or `onnx.load`) and use the actual names of the final
+your ONNX (e.g. with Netron — an ONNX graph viewer — or `onnx.load`) and use the actual names of the final
 conv of each `cv2/cv3/cv4` branch + the proto's `act/Mul`.
 
 ## Acceptance checklist
 - [ ] `lane_seg.hef` produced and loads in HailoRT.
-- [ ] Input `(640,640,3)` + 10 outputs with the shapes in §5.
+- [ ] Input `(640,640,3)` + 10 outputs with the shapes in Section 5 (HEF I/O layers).
 - [ ] Runs on the Pi via `deploy_lanes_headless.py` (see deploy README).
