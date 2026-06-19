@@ -73,6 +73,7 @@ QString VehicleData::getGear() const { return m_gear; }
 bool VehicleData::getAutonomousMode() const { return m_autonomousMode; }
 
 // ===== Setters =====
+
 void VehicleData::setSpeed(float mps)
 {
     if (!qFuzzyCompare(m_speed, mps)) {
@@ -201,6 +202,12 @@ void VehicleData::setAutonomousMode(bool mode)
     }
     updateTimestamp("autonomousMode");
 }
+
+void VehicleData::requestOdometerReset()
+{
+    setOdometer(0);
+}
+
 
 // ===== QML methods =====
 void VehicleData::toggleAutonomousMode()

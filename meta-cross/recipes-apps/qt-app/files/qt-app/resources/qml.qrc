@@ -7,6 +7,7 @@
 
         <file>qml/screens/cluster-screen/ClusterScreen.qml</file>
         <file>qml/screens/cluster-screen/adas/SpeedLimitIndicator.qml</file>
+        <file>qml/screens/cluster-screen/adas/EmergencyAlert.qml</file>
         <file>qml/screens/cluster-screen/panels/MediaMini.qml</file>
         <file>qml/screens/cluster-screen/panels/NavigationMini.qml</file>
         <file>qml/screens/cluster-screen/panels/RightInfoPanel.qml</file>
@@ -57,6 +58,7 @@
         <file>icons/common/media-mode.svg</file>
         <file>icons/common/arrow-forward.svg</file>
         <file>icons/common/music-note.svg</file>
+		<file>icons/common/alert.svg</file>
 
         <file>icons/controls/play.svg</file>
         <file>icons/controls/pause.svg</file>

@@ -37,6 +37,9 @@ Rectangle {
     // ISO 26262 Fail-Safe: Null/Invalid Data Handling
     property bool vehicleDataAvailable: vehicleData !== null && vehicleData !== undefined
 
+    property bool emergencyPriorityActive: false
+    property bool demoEmergencyAlert: false
+
     // Demo / fallback (replace with your real signal if you have it)
     // ISO 26262 ASIL requirement: Valid fallback for critical safety display
     property int speedLimitValue: vehicleDataAvailable && vehicleData.speedLimit ? Math.round(vehicleData.speedLimit) : 120
@@ -58,27 +61,6 @@ Rectangle {
         if (vehicleDataAvailable && vehicleData.odo > 0) {
             odometerDistance = vehicleData.odo;
             console.log("[ClusterScreen] Initialized odometer from vehicleData:", odometerDistance, "km");
-        }
-    }
-
-    // Listen for changes in vehicleData.odo (sync with backend changes)
-    Connections {
-        target: vehicleData
-        enabled: vehicleDataAvailable
-        function onOdometerChanged() {
-            // If backend updates odometer, sync it
-            if (vehicleData.odo > odometerDistance) {
-                odometerDistance = vehicleData.odo;
-                console.log("[ClusterScreen] Odometer synced from backend:", odometerDistance, "km");
-            }
-        }
-        function onStm32BatteryChanged() {
-            // Update dual battery display
-            console.log("[ClusterScreen] STM32 Battery changed to:", vehicleData.stm32Battery, "%");
-        }
-        function onRpiBatteryChanged() {
-            // Update dual battery display
-            console.log("[ClusterScreen] RPi Battery changed to:", vehicleData.rpiBattery, "%");
         }
     }
 
@@ -116,19 +98,6 @@ Rectangle {
                 accumulatedDistance = 0;  // Reset accumulator
             }
         }
-    }
-
-    // Reset odometer function
-    function resetOdometer() {
-        odometerDistance = 0;
-        accumulatedDistance = 0;
-        // Update backend too
-        if (vehicleDataAvailable) {
-            vehicleData.odo = 0;
-        }
-        showOdometerReset = true;
-        resetOdometerTimer.start();
-        console.log("[ClusterScreen] Odometer reset to 0 km");
     }
 
     Timer {
@@ -395,9 +364,34 @@ Rectangle {
                 tripDistance: root.tripDistance
                 powerOutput: root.powerOutput
                 odometerDistance: root.odometerDistance
-                onResetRequested: root.resetOdometer()
+                onResetRequested: {
+                    vehicleData.requestOdometerReset();
+                    showOdometerReset = true;
+                    resetOdometerTimer.start();
+                    console.log("[ClusterScreen] Odometer reset to 0 km");
+                }
+
             }
         }
+    }
+
+    Timer {
+        id: demoEmergencyTimer
+        running: root.demoEmergencyAlert
+        interval: 10000
+        repeat: true
+        onTriggered: root.emergencyPriorityActive = !root.emergencyPriorityActive
+    }
+
+    // ==========================================================
+    // V2X EMERGENCY OVERLAY
+    // ==========================================================
+    EmergencyAlert {
+        id: v2xEmergencyAlert
+        z: 2000
+        s: root.s
+        isActive: root.emergencyPriorityActive
+        alertMessage: "EMERGENCY VEHICLE"
     }
 
     // Battery Status Popup
