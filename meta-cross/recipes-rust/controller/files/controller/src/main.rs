@@ -6,6 +6,8 @@ use std::io::{ErrorKind, Read};
 use std::os::unix::io::AsRawFd;
 use std::path::Path;
 use std::{sync::mpsc, thread, time::Duration};
+use std::net::UdpSocket;
+use std::time::Instant;
 
 /* CAN Protocol Constants */
 const CAN_ID_MOTOR: u16 = 44;
@@ -27,10 +29,9 @@ const REVERSE: u8 = 2;
 const BRAKE: u8 = 3;
 
 /* Servo Constants */
-const MAX_SERVO_ANGLE: f64 = 105.0;
-const MIN_SERVO_ANGLE: f64 = 75.0;
+const MAX_SERVO_ANGLE: f64 = 180.0;
+const MIN_SERVO_ANGLE: f64 = 0.0;
 const MID_SERVO_ANGLE: f64 = 90.0;
-const SERVO_RANGE: f64 = 15.0; // Distance from center to min/max
 
 /* Gamepad Constants */
 const GAMEPAD_DEVICE: &str = "/dev/input/js0";
@@ -45,7 +46,8 @@ pub struct Vector2f {
     y: f64,
 }
 
-
+#[derive(PartialEq, Debug)]
+enum DriveMode { Manual, Autonomous }
 
 /* Gamepad Input Struct 
     -> Struct serves the point of storing the values for each button in the GamePad
@@ -335,7 +337,7 @@ fn recv_latest_input(
 fn run_manual_mode(
     input_rx: &mpsc::Receiver<GamepadInput>,
     controller: &MotorController,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<Option<DriveMode>, Box<dyn std::error::Error>> {
     println!("MANUEL MODE - Press B to exit");
 // =================================================================================
 //                              INIT HELPER VARIABLES
@@ -350,6 +352,8 @@ fn run_manual_mode(
     let mut cruise_control_enabled = false;
     let mut cruise_direction: u8 = NEUTRAL;
     let mut cruise_speed: u32 = 0;
+
+    let mut next_mode: Option<DriveMode> = None;
     
 // =================================================================================
 
@@ -375,6 +379,17 @@ fn run_manual_mode(
             println!("Exiting MANUEL mode");
             controller.stop_dc_motors()?;
             controller.reset_servo_motors()?;
+            break;
+        }
+
+    // =================================================================================
+
+    // =================================================================================
+    //                          ENTERING AUTONOMOUS MODE
+    
+        if input.button_y {
+            println!("Entering AUTONOMOUS mode");
+            next_mode = Some(DriveMode::Autonomous);
             break;
         }
 
@@ -460,7 +475,7 @@ fn run_manual_mode(
             (joystick_motor_speed, direction)
         };
 
-        let servo_angle = (MID_SERVO_ANGLE + (steering * SERVO_RANGE))
+        let servo_angle = (MID_SERVO_ANGLE + (steering * MID_SERVO_ANGLE))
             .clamp(MIN_SERVO_ANGLE, MAX_SERVO_ANGLE)
             .floor() as u32;
 
@@ -486,7 +501,59 @@ fn run_manual_mode(
     // =================================================================================
     }
 
-    Ok(())
+    Ok(next_mode)
+}
+
+fn run_autonomous_mode(
+    input_rx: &mpsc::Receiver<GamepadInput>,
+    controller: &MotorController,
+    socket: &UdpSocket,
+) -> Result<Option<DriveMode>, Box<dyn std::error::Error>> {
+    println!("AUTONOMOUS MODE - Move sticks to OVERRIDE - Press B to exit");
+    let mut last_ai_msg = Instant::now();
+    let mut next_mode: Option<DriveMode> = None;
+
+    loop {
+        // OVERRIDE: if human move joystick it overrides
+        if let Some(input) = recv_latest_input(input_rx, Duration::from_millis(10)) {
+            if input.analog_stick_left.y.abs() > 0.2 || input.analog_stick_right.x.abs() > 0.2 {
+                println!("(!) MANUEL OVERRIDE");
+                next_mode = Some(DriveMode::Manual);
+				break;
+            }
+            if input.button_b {
+                println!("Exiting AUTONOMOUS mode");
+                controller.stop_dc_motors()?;
+                controller.reset_servo_motors()?;
+                break;
+            }
+        }
+
+        // Receives from AI (Python)
+        let mut buf = [0u8; 128];
+        if let Ok((size, _)) = socket.recv_from(&mut buf) {
+            let data = String::from_utf8_lossy(&buf[..size]);
+            let p: Vec<&str> = data.trim().split(',').collect();
+            if p.len() == 3 {
+                let speed: u32 = p[0].parse().unwrap_or(0).min(MAX_MOTOR_SPEED as u32);
+                let dir: u8 = p[1].parse().unwrap_or(BRAKE);
+                let steer: u32 = p[2].parse().unwrap_or(MID_SERVO_ANGLE as u32).clamp(MIN_SERVO_ANGLE as u32, MAX_SERVO_ANGLE as u32);
+                
+                controller.send_motor_command(speed, dir)?;
+                controller.send_servo_command(steer)?;
+                last_ai_msg = Instant::now();
+            }
+        }
+
+        // WATCHDOG: If AI does not respond, it brakes in 500ms
+        if last_ai_msg.elapsed() > Duration::from_millis(500) {
+            println!("AI not answering");
+            controller.stop_dc_motors()?;
+            controller.reset_servo_motors()?;
+            break;
+	    }
+    }
+    Ok(next_mode)
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -495,26 +562,50 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (input_rx, gamepad_handle) = spawn_gamepad_thread(GAMEPAD_DEVICE)?;
     let controller = MotorController::new(CAN_INTERFACE, CAN_ID_MOTOR, CAN_ID_SERVO)?;
     let mut prev_start_pressed = false;
+    let mut prev_select_pressed = false;
+    let mut requested_mode: Option<DriveMode> = None;
 
-    println!("Controller ready. Press START to enter manual mode, SELECT to exit.");
+    let socket = UdpSocket::bind("127.0.0.1:5555")?;
+    socket.set_nonblocking(true)?;
+
+    println!("Controller ready. Press START to enter MANUEL mode, SELECT for Autonomous, HOME to exit.");
 
     loop {
         let Some(input) = recv_latest_input(&input_rx, Duration::from_millis(50)) else {
             eprintln!("Gamepad input thread disconnected");
+            controller.stop_dc_motors()?;
+            controller.reset_servo_motors()?;
             break;
         };
 
-        if input.button_select {
+        if input.button_home {
             println!("Shutting down...");
             controller.stop_dc_motors()?;
             controller.reset_servo_motors()?;
             break;
         }
 
-        if input.button_start && !prev_start_pressed {
-            run_manual_mode(&input_rx, &controller)?;
-        }
+        let start_pressed = input.button_start && !prev_start_pressed;
+        let select_pressed = input.button_select && !prev_select_pressed;
         prev_start_pressed = input.button_start;
+        prev_select_pressed = input.button_select;
+
+        if start_pressed {
+            requested_mode = Some(DriveMode::Manual);
+        } else if select_pressed {
+            requested_mode = Some(DriveMode::Autonomous);
+        }
+
+        while let Some(mode) = requested_mode.take() {
+            match mode {
+                DriveMode::Manual => {
+                    requested_mode = run_manual_mode(&input_rx, &controller)?;
+                }
+                DriveMode::Autonomous => {
+                    requested_mode = run_autonomous_mode(&input_rx, &controller, &socket)?;
+                }
+            }
+        }
     }
 
     drop(input_rx);
