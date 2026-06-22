@@ -43,8 +43,10 @@ CLASS_COLORS = [(0, 165, 255), (0, 255, 255), (255, 255, 0), (0, 255, 0), (0, 0,
 
 
 def preprocess(frame_bgr):
-    frame_bgr[: int(frame_bgr.shape[0] * ROI_RATIO)] = 0
-    img = cv2.resize(frame_bgr, (MODEL_SIZE, MODEL_SIZE))
+    proc = frame_bgr.copy()
+    proc[: int(proc.shape[0] * ROI_RATIO)] = 0
+    img = cv2.resize(proc, (MODEL_SIZE, MODEL_SIZE))
+    # Keep input in [0, 255]. The HEF performs /255 normalization on-chip.
     return cv2.cvtColor(img, cv2.COLOR_BGR2RGB).astype(np.float32)[np.newaxis]
 
 
