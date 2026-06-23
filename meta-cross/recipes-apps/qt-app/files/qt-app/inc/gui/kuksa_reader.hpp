@@ -61,6 +61,8 @@ signals:
 
     void errorOccurred(const QString& message);
 
+	void adasVisionReceived(int classId);
+
 private:
     /// @brief Run one subscribe-read loop for the given VSS paths.
     /// @return true if stopped cleanly, false if the subscription failed with an error.
