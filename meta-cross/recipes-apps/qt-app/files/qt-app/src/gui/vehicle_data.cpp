@@ -44,6 +44,7 @@ VehicleData::VehicleData(QObject *parent)
     , m_autonomousMode(false)
     , m_settings(new QSettings(this))
     , m_watchdogTimer(new QTimer(this))
+	, m_adasClassId(0)
 {
     loadOdometerFromSettings();
 
@@ -71,6 +72,8 @@ int VehicleData::getOdometer() const { return m_odometer; }
 int VehicleData::getTemperature() const { return m_temperature; }
 QString VehicleData::getGear() const { return m_gear; }
 bool VehicleData::getAutonomousMode() const { return m_autonomousMode; }
+
+int VehicleData::getAdasClassId() const { return m_adasClassId; }
 
 // ===== Setters =====
 
@@ -208,6 +211,17 @@ void VehicleData::requestOdometerReset()
     setOdometer(0);
 }
 
+void VehicleData::setAdasClassId(int classId) {
+    if (m_adasClassId != classId) {
+        m_adasClassId = classId;
+        emit adasClassIdChanged();
+    }
+}
+
+void VehicleData::updateAdasVision(int classId) {
+    setAdasClassId(classId);
+    emit adasVisionChanged(classId); // Para animações QML imediatas
+}
 
 // ===== QML methods =====
 void VehicleData::toggleAutonomousMode()
