@@ -330,6 +330,35 @@ Rectangle {
                 emergencyTimeoutTimer.stop();
             }
         }
+
+		function onAdasVisionChanged(classId) {
+            console.log("[ClusterScreen] ADAS Vision AI ID:", classId);
+
+            // Using the same logic (cfg.CLASSES):
+            // 0 = Clear, 1 = 50_sign, 2 = 80_sign, 3 = gate, 4 = crosswalk, 5 = stop_sign...
+            // 7 = car, 9 = obstacle, etc.
+
+            // Example: Update speed limit based on detected traffic sign
+            if (classId === 1) {
+                root.speedLimitValue = 50;
+            } else if (classId === 2) {
+                root.speedLimitValue = 80;
+            }
+
+            // Example: Show emergency alert for certain detected objects
+            if (classId === 7 || classId === 9) {
+                // Reuse the emergency alert logic for detected vehicles or obstacles
+                root.emergencyPriorityLevel = 1; // Yellow
+                root.emergencyPriorityActive = true;
+                v2xEmergencyAlert.alertMessage = "HAZARD DETECTED";
+            } else if (classId === 5) { // Stop Sign
+                root.emergencyPriorityLevel = 2; // Red
+                root.emergencyPriorityActive = true;
+                v2xEmergencyAlert.alertMessage = "STOP SIGN AHEAD";
+            } else if (classId === 0) { // Clear
+                root.emergencyPriorityActive = false;
+            }
+        }
     }
 
     Timer {
