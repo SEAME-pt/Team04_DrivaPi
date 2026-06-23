@@ -61,6 +61,8 @@ signals:
 
     void errorOccurred(const QString& message);
 
+    void emergencyAlertReceived(int priorityLevel);
+
 	void adasVisionReceived(int classId);
 
 private:

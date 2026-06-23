@@ -14,10 +14,18 @@ Item {
     id: root
 
     property bool isActive: false
+    property int priorityLevel: 2 // 1 = Warning (Orange), 2 = High Priority (Red)
     property string alertMessage: "EMERGENCY VEHICLE"
     property real s: 1.0
 
-    width: 460 * s
+    // Dynamic styling based on priority level
+    readonly property color mainColor: priorityLevel >= 2 ? "#FF1A1A" : "#FF9900"
+    readonly property color glowColor: priorityLevel >= 2 ? "#99FF0000" : "#99FF9900"
+    readonly property color gradientStart: priorityLevel >= 2 ? "#D91A0000" : "#D9331A00"
+    readonly property color gradientEnd: "#E6050505"
+    readonly property int pulseDuration: priorityLevel >= 2 ? 400 : 800 // Faster pulse for higher priority
+
+    width: 560 * s
     height: 70 * s
 
     anchors.horizontalCenter: parent.horizontalCenter
@@ -39,7 +47,7 @@ Item {
         transparentBorder: true
         radius: 20 * root.s
         samples: 35
-        color: root.isActive ? "#99FF0000" : "transparent"
+        color: root.isActive ? root.glowColor : "transparent"
         verticalOffset: 4
     }
 
@@ -47,15 +55,15 @@ Item {
     Shape {
         id: angularBackground
         anchors.fill: parent
-        
+
         ShapePath {
             strokeWidth: 2 * root.s
-            strokeColor: "#FF1A1A"
-            
+            strokeColor: root.mainColor
+
             fillGradient: LinearGradient {
                 x1: 0; y1: 0; x2: 0; y2: root.height
-                GradientStop { position: 0.0; color: "#D91A0000" } 
-                GradientStop { position: 1.0; color: "#E6050505" } 
+                GradientStop { position: 0.0; color: root.gradientStart }
+                GradientStop { position: 1.0; color: root.gradientEnd }
             }
 
             startX: 20 * root.s; startY: 0
@@ -81,14 +89,14 @@ Item {
             Layout.preferredHeight: 30 * root.s
             layer.enabled: true
             layer.effect: Effects.ColorOverlay {
-                color: "#FF3333"
+                color: root.mainColor
             }
 
             SequentialAnimation on opacity {
                 running: root.isActive
                 loops: Animation.Infinite
-                NumberAnimation { to: 0.3; duration: 800; easing.type: Easing.InOutSine }
-                NumberAnimation { to: 1.0; duration: 800; easing.type: Easing.InOutSine }
+                NumberAnimation { to: 0.3; duration: root.pulseDuration; easing.type: Easing.InOutSine }
+                NumberAnimation { to: 1.0; duration: root.pulseDuration; easing.type: Easing.InOutSine }
             }
         }
 
@@ -103,7 +111,7 @@ Item {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
-            
+
             layer.enabled: true
             layer.effect: Effects.DropShadow {
                 radius: 4; samples: 8; color: "#000000"; verticalOffset: 2

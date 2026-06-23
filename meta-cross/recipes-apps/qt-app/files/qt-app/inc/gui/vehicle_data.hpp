@@ -102,6 +102,7 @@ public:
 public slots:
     /// @brief Process CAN frame and update vehicle data.
     void handleCanMessage(const QByteArray &payload, uint32_t canId);
+	void updateEmergencyAlert(int priorityLevel);
 	void setAdasClassId(int classId);
     void updateAdasVision(int classId);
 
@@ -122,6 +123,8 @@ signals:
     void temperatureChanged();
     void gearChanged();
     void autonomousModeChanged();
+
+	void emergencyAlertChanged(int priorityLevel);
 
 	void adasClassIdChanged();
 	void adasVisionChanged(int classId);

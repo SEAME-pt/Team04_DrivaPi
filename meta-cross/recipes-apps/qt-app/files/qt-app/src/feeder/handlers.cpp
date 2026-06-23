@@ -137,4 +137,12 @@ namespace handlers {
 				<< " = " << hum_pct << " %\n";
 	}
 
+	void HandleV2XEmergency(const can_frame& frame, feeder::Publisher& publisher)
+	{
+		int priority = can_decode::decodeV2XEmergencyPriority(frame);
+		
+		publisher.PublishFloat("Vehicle.ADAS.V2X.EmergencyPriority", static_cast<float>(priority));
+		std::cout << "[Handler] Published Vehicle.ADAS.V2X.EmergencyPriority = " << priority << "\n";
+	}
+
 } // namespace handlers

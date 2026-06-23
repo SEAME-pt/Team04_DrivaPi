@@ -128,6 +128,9 @@ int AppController::run(QGuiApplication& app)
 		QObject::connect(kuksaReader, &kuksa::KuksaReader::adasVisionReceived,
 						 vehicleData.get(), &VehicleData::updateAdasVision,
 						 Qt::QueuedConnection);
+		QObject::connect(kuksaReader, &kuksa::KuksaReader::emergencyAlertReceived,
+                         vehicleData.get(), &VehicleData::updateEmergencyAlert,
+                         Qt::QueuedConnection);
 
         QObject::connect(kuksaReader, &kuksa::KuksaReader::errorOccurred,
                          [](const QString& err) { qCritical() << "[KUKSA]" << err; });
