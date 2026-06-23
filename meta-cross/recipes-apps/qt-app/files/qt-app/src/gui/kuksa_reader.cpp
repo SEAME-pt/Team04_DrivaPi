@@ -29,6 +29,7 @@ static constexpr const char* PATH_STM32_HUM    = "Vehicle.ControlUnit.STM32.Heal
 static constexpr const char* PATH_RPI_BATTERY_PERCENT = "Vehicle.ControlUnit.Central.Health.Resources.BatteryLevel";
 static constexpr const char* PATH_RPI_BATTERY_VOLTAGE = "Vehicle.ControlUnit.Central.Health.Resources.BatteryVoltage";
 static constexpr const char* PATH_RPI_BATTERY_CURRENT = "Vehicle.ControlUnit.Central.Health.Resources.BatteryCurrent";
+static constexpr const char* PATH_TRAFFIC_SIGN = "Vehicle.ADAS.TrafficSignRecognition.CurrentSign";
 
 KuksaReader::KuksaReader(QObject *parent)
     : QObject(parent)
@@ -202,6 +203,10 @@ bool KuksaReader::subscribeLoop(const std::vector<std::string>& paths)
         if (auto it = entries.find(PATH_RPI_BATTERY_CURRENT); it != entries.end()) {
             emit rpiBatteryCurrentReceived(static_cast<double>(readFloat(it->second, 0.0f)));
         }
+		if (auto it = entries.find(PATH_TRAFFIC_SIGN); it != entries.end()) {
+			int classId = static_cast<int>(value.uint32());
+		    emit adasVisionReceived(classId);
+		}
     }
 
     grpc::Status status = reader->Finish();
