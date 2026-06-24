@@ -24,6 +24,7 @@ class StanleyController:
                 })
 
         if not lane_candidates:
+            print("None from lane_candidates")
             return None
 
         filtered = []
@@ -36,6 +37,7 @@ class StanleyController:
                 filtered.append(c)
 
         if not filtered:
+            print("None from filtered")
             return None
 
         image_center = w / 2
@@ -77,6 +79,7 @@ class StanleyController:
                 lane_center_far_x  = lane["far"] * 0.5
 
         else:
+            print("None from lanes")
             return None
 
 
