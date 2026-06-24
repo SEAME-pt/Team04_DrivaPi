@@ -33,7 +33,7 @@ class StanleyController:
 
             # reject flat/broken/noisy detections
             # reject extremely wide jumps (often opposite lane)
-            if 5 < dx < 400:
+            if 2 < dx < 1000:
                 filtered.append(c)
 
         if not filtered:
