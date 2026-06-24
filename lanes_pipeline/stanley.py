@@ -31,6 +31,12 @@ class StanleyController:
         for c in lane_candidates:
             dx = abs(c["far"] - c["near"])
 
+            print(
+                    f'near={c["near"]:.1f} '
+                    f'far={c["far"]:.1f} '
+                    f'dx={dx:.1f}'
+                )
+
             # reject flat/broken/noisy detections
             # reject extremely wide jumps (often opposite lane)
             if 2 < dx < 1000:
