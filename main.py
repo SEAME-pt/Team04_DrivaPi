@@ -7,7 +7,7 @@ import threading
 
 import cv2
 import numpy as np
-from lanes_pipeline.stanley import compute_stanley_errors
+from lanes_pipeline.stanley import StanleyController
 from lanes_pipeline.post_process import build_class_masks, decode, extract_lane_lines
 from lanes_pipeline.preprocess import preprocess
 from lanes_pipeline.lane_memory import LaneMemory
