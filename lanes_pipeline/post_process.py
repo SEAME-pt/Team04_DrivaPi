@@ -30,7 +30,11 @@ def extract_lane_lines(class_masks, w, h):
             continue
         scaled = [pts * (mx, my) for pts in fit_lane_lines(mask)]
         if scaled:
-            out[CLASS_NAMES[cls_id]] = scaled
+            out.setdefault(CLASS_NAMES[cls_id], []).append({
+                "pts": scaled,
+                "class_id": cls_id
+            })
+            # out[CLASS_NAMES[cls_id]] = scaled
     return out
 
 def draw_debug(frame, class_masks, lane_lines, steering):

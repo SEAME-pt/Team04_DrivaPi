@@ -1,17 +1,3 @@
-"""
-Headless lane detection for driving on the RPi5 + Hailo-8.
-
-Same detection pipeline as deploy_lanes, but WITHOUT the expensive rendering:
-it keeps decode → masks → LaneMemory (temporal) → fit_lane_lines (geometry) and
-exposes the fitted lane lines + a steering signal for the controller. Drawing is
-~28 ms/frame at 720p and is pure visualization, so it is off by default (only
-under --debug). This runs the control path at ~30 FPS instead of ~17.
-
-    python3 deploy_lanes_headless.py                 # driving (headless, fast)
-    python3 deploy_lanes_headless.py --debug         # also draw + show timing
-    python3 deploy_lanes_headless.py --debug --record dbg.avi
-    python3 deploy_lanes_headless.py --source clip.mp4
-"""
 
 import argparse
 import time
@@ -73,6 +59,7 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
 
     publisher = SharedMemoryPublisher()
     memory = LaneMemory()
+    stanley = StanleyController()
     writer = None
     n = 0
 
@@ -103,18 +90,10 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                     class_masks = memory.update(class_masks)
                     lane_lines = extract_lane_lines(class_masks, w, h)
 
-                    # vis = draw_debug(frame.copy(), class_masks, lane_lines, None)
-
-                    # global latest_preview
-
-                    # with preview_lock:
-                        # latest_preview = vis
-
-
                     t4 = time.time()
 
                     cte, heading_error = None, None
-                    stanley_result = compute_stanley_errors(lane_lines, w, h)
+                    stanley_result = stanley.compute_stanley_errors(lane_lines, w, h)
 
                     if stanley_result is not None:
                         cte, heading_error = stanley_result
