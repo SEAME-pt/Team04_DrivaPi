@@ -20,21 +20,19 @@ CLASS_COLORS = [(0, 165, 255), (0, 255, 255), (255, 255, 0), (0, 255, 0), (0, 0,
 
 
 def extract_lane_lines(class_masks, w, h):
-    """Fitted lane lines per class, in FRAME coordinates.
-    Returns {class_name: [ (n,2) float array, ... ]}. This is the geometry the
-    controller consumes — computed on the temporally-persisted masks."""
     mx, my = w / WORK_SIZE, h / WORK_SIZE
     out = {}
+
     for cls_id, mask in class_masks.items():
         if cls_id not in LINE_CLASSES:
             continue
-        scaled = [pts * (mx, my) for pts in fit_lane_lines(mask)]
+
+        lines = fit_lane_lines(mask)
+        scaled = [pts * (mx, my) for pts in lines]
+
         if scaled:
-            out.setdefault(CLASS_NAMES[cls_id], []).append({
-                "pts": scaled,
-                "class_id": cls_id
-            })
-            # out[CLASS_NAMES[cls_id]] = scaled
+            out[CLASS_NAMES[cls_id]] = scaled
+
     return out
 
 def draw_debug(frame, class_masks, lane_lines, steering):
