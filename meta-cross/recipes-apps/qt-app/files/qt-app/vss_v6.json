@@ -560,6 +560,17 @@
 						"description": "Traction Control System signals.",
 						"type": "branch"
 					},
+					"TrafficSignRecognition": {
+						"description": "AI-based Traffic Sign and Obstacle Recognition",
+						"type": "branch",
+						"children": {
+							"CurrentSign": {
+								"datatype": "uint32",
+								"description": "ID of the currently detected sign or obstacle (0=Clear).",
+								"type": "sensor"
+							}
+						}
+					},
 					"V2X": {
 						"type": "branch",
 						"description": "Vehicle-to-Everything (V2X) communication signals.",
