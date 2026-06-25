@@ -45,7 +45,7 @@ def extract_lane_lines(class_masks, w, h):
             )
 
         if scaled_lines:
-            out[CLASS_NAMES[cls_id]] = scaled
+            out[CLASS_NAMES[cls_id]] = scaled_lines
 
     return out
 
