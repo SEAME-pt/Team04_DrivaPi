@@ -206,7 +206,7 @@ bool KuksaReader::subscribeLoop(const std::vector<std::string>& paths)
             emit rpiBatteryCurrentReceived(static_cast<double>(readFloat(it->second, 0.0f)));
         }
 		if (auto it = entries.find(PATH_TRAFFIC_SIGN); it != entries.end()) {
-			int classId = static_cast<int>(value.uint32());
+			int classId = static_cast<int>(readInt(it->second, 0));
 		    emit adasVisionReceived(classId);
 		}
         if (auto it = entries.find(PATH_V2X_EMERGENCY_PRIORITY); it != entries.end()) {
