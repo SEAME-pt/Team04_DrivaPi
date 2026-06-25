@@ -456,6 +456,30 @@ Rectangle {
 		alertMessage: root.emergencyMessage
 	}
 
+	Rectangle {
+		id: debugAlwaysVisible
+		z: 999999
+		visible: true
+
+		width: 500 * root.s
+		height: 80 * root.s
+
+		anchors.horizontalCenter: parent.horizontalCenter
+		anchors.top: parent.top
+		anchors.topMargin: 20 * root.s
+
+		color: "red"
+		border.color: "white"
+		border.width: 4
+
+		Text {
+			anchors.centerIn: parent
+			text: "DEBUG ALERT VISIBLE"
+			color: "white"
+			font.pixelSize: 28 * root.s
+			font.bold: true
+		}
+	}
     BatteryPopup {
         id: batteryPopup
         anchors.fill: parent
