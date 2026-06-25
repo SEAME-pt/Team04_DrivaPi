@@ -22,15 +22,21 @@ class StanleyController:
                 y_sorted = ys[order]
                 x_sorted = xs[order]
 
+                print(
+                    f"lane y range = {y_sorted.min():.1f} -> {y_sorted.max():.1f}"
+                )
+                
                 near_x = float(np.interp(near_row, y_sorted,x_sorted))
                 far_x = float(np.interp(far_row, y_sorted,x_sorted))
-                
+
                 lane_candidates.append((near_x, far_x))
 
         if not lane_candidates:
             print("None from lane_candidates")
             return None
 
+        print("frame h =", h)
+        print("lane y max =", y_sorted.max())
 
         filtered = []
         y_diff = far_row - near_row
