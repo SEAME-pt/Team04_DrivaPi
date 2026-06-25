@@ -384,15 +384,13 @@ Rectangle {
     // V2X EMERGENCY OVERLAY
     // ==========================================================
     EmergencyAlert {
-        id: v2xEmergencyAlert
-        z: 2000
-        s: root.s
-        isActive: root.emergencyPriorityActive
-
-        priorityLevel: root.emergencyPriorityLevel
-
-        alertMessage: root.emergencyPriorityLevel >= 2 ? "PULL OVER - EMERGENCY" : "EMERGENCY VEHICLE AHEAD"
-    }
+    id: v2xEmergencyAlert
+    z: 2000
+    s: root.s
+    isActive: root.emergencyPriorityActive
+    priorityLevel: root.emergencyPriorityLevel
+    alertMessage: root.emergencyMessage
+	}
 
     BatteryPopup {
         id: batteryPopup
