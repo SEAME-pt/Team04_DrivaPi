@@ -26,7 +26,7 @@ from globals import npu_lock, REPORT_EVERY, FRAME_BUDGET
 import os
 import socket
 
-latest_preview = None
+preview_frame = None
 preview_lock = threading.Lock()
 
 def systemd_notify_ready():
