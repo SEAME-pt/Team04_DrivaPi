@@ -23,12 +23,24 @@ def extract_lane_lines(class_masks, w, h):
     mx, my = w / WORK_SIZE, h / WORK_SIZE
     out = {}
 
+    print("mx =", mx)
+    print("my =", my)
+    print("WORK_SIZE =", WORK_SIZE)
+    print("frame =", w, h)
+
     for cls_id, mask in class_masks.items():
         if cls_id not in LINE_CLASSES:
             continue
 
         scaled_lines = []
         for pts in fit_lane_lines(mask):
+            print(
+                cls_id,
+                "x:",
+                pts[:,0].min(), pts[:,0].max(),
+                "y:",
+                pts[:,1].min(), pts[:,1].max()
+            )
             print(
                 "before scale:",
                 pts[:,1].min(),
