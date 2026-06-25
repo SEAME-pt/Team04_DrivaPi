@@ -27,6 +27,7 @@ def extract_lane_lines(class_masks, w, h):
         if cls_id not in LINE_CLASSES:
             continue
 
+        scaled_lines = []
         for pts in fit_lane_lines(mask):
             print(
                 "before scale:",
@@ -35,6 +36,7 @@ def extract_lane_lines(class_masks, w, h):
             )
 
             scaled = pts * (mx, my)
+            scaled_lines.append(scaled)
 
             print(
                 "after scale:",
@@ -42,7 +44,7 @@ def extract_lane_lines(class_masks, w, h):
                 scaled[:,1].max()
             )
 
-        if scaled:
+        if scaled_lines:
             out[CLASS_NAMES[cls_id]] = scaled
 
     return out
