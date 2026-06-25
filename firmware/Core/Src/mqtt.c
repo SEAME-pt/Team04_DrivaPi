@@ -71,10 +71,8 @@ void mqtt_thread_fc(ULONG thread_input)
         addr.sa_data[4] = MQTT_BROKER_IP_2;
         addr.sa_data[5] = MQTT_BROKER_IP_3;
 
-        // A função MX_WIFI_TLS_connect faz o socket TCP e o Handshake TLS tudo de uma vez!
-        // Passamos NULL e 0 no fim para contornar a validação estrita da CA (Modo Insecure)
         mqtt_tls_id = MX_WIFI_TLS_connect(wifi_ptr, MX_AF_INET, MX_SOCK_STREAM, MX_IPPROTO_TCP,
-                                          &addr, sizeof(addr), NULL, 0);
+        &addr, sizeof(addr), NULL, 0);
 
         if (mqtt_tls_id < 0)
         {
