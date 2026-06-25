@@ -326,37 +326,23 @@ Rectangle {
 				root.emergencyPriorityLevel = 2;
 				root.emergencyPriorityActive = true;
 				emergencyTimeoutTimer.restart();
+
 			} else if (priorityLevel === 1) {
 				root.emergencyMessage = "EMERGENCY VEHICLE AHEAD";
 				root.emergencyPriorityLevel = 1;
 				root.emergencyPriorityActive = true;
 				emergencyTimeoutTimer.restart();
+
 			} else {
-				root.emergencyPriorityActive = false;
-				root.emergencyPriorityLevel = 0;
 				root.emergencyMessage = "";
+				root.emergencyPriorityLevel = 0;
+				root.emergencyPriorityActive = false;
 				emergencyTimeoutTimer.stop();
 			}
 		}
 
 		function onAdasVisionChanged(classId) {
 			console.log("[ClusterScreen] ADAS Vision AI ID:", classId);
-
-			// Python cfg.CLASSES mapping:
-			// 0=Clear
-			// 1=50_sign
-			// 2=80_sign
-			// 3=gate
-			// 4=crosswalk_sign
-			// 5=stop_sign
-			// 6=yield_sign
-			// 7=car
-			// 8=danger_sign
-			// 9=obstacle
-			// 10=traffic_light_green
-			// 11=traffic_light_off
-			// 12=traffic_light_red
-			// 13=traffic_light_yellow
 
 			if (classId === 1) {
 				root.speedLimitValue = 50;
@@ -440,8 +426,8 @@ Rectangle {
 			}
 
 			// Important:
-			// Do NOT clear immediately on classId 0.
-			// The model publishes Clear very often, so the alert can disappear before it is visible.
+			// Do not clear immediately on classId 0.
+			// The model publishes Clear often, and it can hide the alert too fast.
 		}
 	}
 
@@ -452,6 +438,7 @@ Rectangle {
         repeat: false
         onTriggered: {
             console.log("[ClusterScreen] V2X Emergency Alert Auto-Cleared (Timeout)");
+			root.emergencyMessage = "";
             root.emergencyPriorityLevel = 0;
             root.emergencyPriorityActive = false;
         }
