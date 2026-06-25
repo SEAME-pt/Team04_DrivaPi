@@ -37,6 +37,7 @@ Rectangle {
     // V2X Emergency State
     property bool emergencyPriorityActive: false
     property int emergencyPriorityLevel: 0
+	property string emergencyMessage: ""
     // A flag de demo agora deve estar a false para produção
     property bool demoEmergencyAlert: false
 
@@ -314,59 +315,135 @@ Rectangle {
     // BACKEND SIGNAL CONNECTIONS (C++ to QML Bridge)
     // ==========================================================
     Connections {
-        target: vehicleData
-        enabled: vehicleDataAvailable
+		target: vehicleData
+		enabled: vehicleDataAvailable
 
-        function onEmergencyAlertChanged(priorityLevel) {
-            console.log("[ClusterScreen] V2X Emergency Alert Received. Priority:", priorityLevel);
+		function onEmergencyAlertChanged(priorityLevel) {
+			console.log("[ClusterScreen] V2X Emergency Alert Received. Priority:", priorityLevel);
 
-            if (priorityLevel > 0) {
-                root.emergencyPriorityLevel = priorityLevel;
-                root.emergencyPriorityActive = true;
-                emergencyTimeoutTimer.restart(); // Inicia countdown de segurança
-            } else {
-                root.emergencyPriorityLevel = 0;
-                root.emergencyPriorityActive = false;
-                emergencyTimeoutTimer.stop();
-            }
-        }
+			if (priorityLevel >= 2) {
+				root.emergencyMessage = "PULL OVER - EMERGENCY";
+				root.emergencyPriorityLevel = 2;
+				root.emergencyPriorityActive = true;
+				emergencyTimeoutTimer.restart();
+			} else if (priorityLevel === 1) {
+				root.emergencyMessage = "EMERGENCY VEHICLE AHEAD";
+				root.emergencyPriorityLevel = 1;
+				root.emergencyPriorityActive = true;
+				emergencyTimeoutTimer.restart();
+			} else {
+				root.emergencyPriorityActive = false;
+				root.emergencyPriorityLevel = 0;
+				root.emergencyMessage = "";
+				emergencyTimeoutTimer.stop();
+			}
+		}
 
 		function onAdasVisionChanged(classId) {
 			console.log("[ClusterScreen] ADAS Vision AI ID:", classId);
 
-			// cfg.CLASSES python mapping:
-			// 0=Clear, 1=50, 2=80, 3=gate, 4=crosswalk, 5=stop, 6=yield, 7=car, 8=danger, 9=obstacle
+			// Python cfg.CLASSES mapping:
+			// 0=Clear
+			// 1=50_sign
+			// 2=80_sign
+			// 3=gate
+			// 4=crosswalk_sign
+			// 5=stop_sign
+			// 6=yield_sign
+			// 7=car
+			// 8=danger_sign
+			// 9=obstacle
+			// 10=traffic_light_green
+			// 11=traffic_light_off
+			// 12=traffic_light_red
+			// 13=traffic_light_yellow
 
-			// Update Speed Limits
 			if (classId === 1) {
 				root.speedLimitValue = 50;
+				root.emergencyMessage = "50 SIGN DETECTED";
+				root.emergencyPriorityLevel = 1;
+				root.emergencyPriorityActive = true;
+				emergencyTimeoutTimer.restart();
+
 			} else if (classId === 2) {
 				root.speedLimitValue = 80;
+				root.emergencyMessage = "80 SIGN DETECTED";
+				root.emergencyPriorityLevel = 1;
+				root.emergencyPriorityActive = true;
+				emergencyTimeoutTimer.restart();
+
+			} else if (classId === 3) {
+				root.emergencyMessage = "GATE AHEAD";
+				root.emergencyPriorityLevel = 2;
+				root.emergencyPriorityActive = true;
+				emergencyTimeoutTimer.restart();
+
+			} else if (classId === 4) {
+				root.emergencyMessage = "CROSSWALK AHEAD";
+				root.emergencyPriorityLevel = 1;
+				root.emergencyPriorityActive = true;
+				emergencyTimeoutTimer.restart();
+
+			} else if (classId === 5) {
+				root.emergencyMessage = "STOP SIGN DETECTED";
+				root.emergencyPriorityLevel = 2;
+				root.emergencyPriorityActive = true;
+				emergencyTimeoutTimer.restart();
+
+			} else if (classId === 6) {
+				root.emergencyMessage = "YIELD SIGN DETECTED";
+				root.emergencyPriorityLevel = 1;
+				root.emergencyPriorityActive = true;
+				emergencyTimeoutTimer.restart();
+
+			} else if (classId === 7) {
+				root.emergencyMessage = "CAR AHEAD";
+				root.emergencyPriorityLevel = 2;
+				root.emergencyPriorityActive = true;
+				emergencyTimeoutTimer.restart();
+
+			} else if (classId === 8) {
+				root.emergencyMessage = "DANGER SIGN DETECTED";
+				root.emergencyPriorityLevel = 1;
+				root.emergencyPriorityActive = true;
+				emergencyTimeoutTimer.restart();
+
+			} else if (classId === 9) {
+				root.emergencyMessage = "OBSTACLE AHEAD";
+				root.emergencyPriorityLevel = 2;
+				root.emergencyPriorityActive = true;
+				emergencyTimeoutTimer.restart();
+
+			} else if (classId === 10) {
+				root.emergencyMessage = "GREEN LIGHT";
+				root.emergencyPriorityLevel = 1;
+				root.emergencyPriorityActive = true;
+				emergencyTimeoutTimer.restart();
+
+			} else if (classId === 11) {
+				root.emergencyMessage = "TRAFFIC LIGHT OFF";
+				root.emergencyPriorityLevel = 1;
+				root.emergencyPriorityActive = true;
+				emergencyTimeoutTimer.restart();
+
+			} else if (classId === 12) {
+				root.emergencyMessage = "RED LIGHT";
+				root.emergencyPriorityLevel = 2;
+				root.emergencyPriorityActive = true;
+				emergencyTimeoutTimer.restart();
+
+			} else if (classId === 13) {
+				root.emergencyMessage = "YELLOW LIGHT";
+				root.emergencyPriorityLevel = 1;
+				root.emergencyPriorityActive = true;
+				emergencyTimeoutTimer.restart();
 			}
 
-			// Hazard Overlays
-			if (classId === 5) { // Stop Sign
-				root.emergencyMessage = "STOP SIGN DETECTED";
-				root.emergencyPriorityLevel = 2; // Red
-				root.emergencyPriorityActive = true;
-				emergencyTimeoutTimer.restart();
-			} else if (classId === 7 || classId === 9) { // Car/Obstacle
-				root.emergencyMessage = "OBSTACLE AHEAD";
-				root.emergencyPriorityLevel = 2; // Red
-				root.emergencyPriorityActive = true;
-				emergencyTimeoutTimer.restart();
-			} else if (classId === 3 || classId === 8) { // Obstacle/Gate/Danger
-				root.emergencyMessage = "HAZARD AHEAD";
-				root.emergencyPriorityLevel = 1; // Orange
-				root.emergencyPriorityActive = true;
-				emergencyTimeoutTimer.restart();
-			} else if (classId === 0 && root.emergencyMessage !== "PULL OVER - EMERGENCY" && root.emergencyMessage !== "EMERGENCY VEHICLE AHEAD") {
-				// Clear overlay only if it's an ADAS alert (don't interfere with V2X ambulances)
-				root.emergencyPriorityActive = false;
-				emergencyTimeoutTimer.stop();
-			}
+			// Important:
+			// Do NOT clear immediately on classId 0.
+			// The model publishes Clear very often, so the alert can disappear before it is visible.
 		}
-    }
+	}
 
     Timer {
         id: emergencyTimeoutTimer
@@ -384,12 +461,12 @@ Rectangle {
     // V2X EMERGENCY OVERLAY
     // ==========================================================
     EmergencyAlert {
-    id: v2xEmergencyAlert
-    z: 2000
-    s: root.s
-    isActive: root.emergencyPriorityActive
-    priorityLevel: root.emergencyPriorityLevel
-    alertMessage: root.emergencyMessage
+		id: v2xEmergencyAlert
+		z: 2000
+		s: root.s
+		isActive: root.emergencyPriorityActive
+		priorityLevel: root.emergencyPriorityLevel
+		alertMessage: root.emergencyMessage
 	}
 
     BatteryPopup {

@@ -207,9 +207,11 @@ bool KuksaReader::subscribeLoop(const std::vector<std::string>& paths)
         }
 		if (auto it = entries.find(PATH_TRAFFIC_SIGN); it != entries.end()) {
 			int classId = static_cast<int>(readInt(it->second, 0));
+			qInfo("[KUKSA] ADAS CurrentSign received: %d", classId);
 		    emit adasVisionReceived(classId);
 		}
         if (auto it = entries.find(PATH_V2X_EMERGENCY_PRIORITY); it != entries.end()) {
+			qInfo("[KUKSA] V2X EmergencyPriority received: %d", priority);
             emit emergencyAlertReceived(static_cast<int>(readFloat(it->second, 0.0f)));
         }
     }
