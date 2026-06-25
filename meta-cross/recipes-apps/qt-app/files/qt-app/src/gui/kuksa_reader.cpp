@@ -211,7 +211,7 @@ bool KuksaReader::subscribeLoop(const std::vector<std::string>& paths)
 		    emit adasVisionReceived(classId);
 		}
         if (auto it = entries.find(PATH_V2X_EMERGENCY_PRIORITY); it != entries.end()) {
-			qInfo("[KUKSA] V2X EmergencyPriority received: %d", priority);
+			qInfo("[KUKSA] V2X EmergencyPriority received: %d", static_cast<int>(readFloat(it->second, 0.0f)));
             emit emergencyAlertReceived(static_cast<int>(readFloat(it->second, 0.0f)));
         }
     }
