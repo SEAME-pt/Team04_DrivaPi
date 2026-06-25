@@ -89,11 +89,11 @@ def _fit_single(mask, degree=FIT_DEGREE, n_pts=40):
     y_span, x_span = ys.max() - ys.min(), xs.max() - xs.min()
     if y_span >= x_span:
         deg = degree if y_span > MIN_SPAN else 1
-        coeffs = np.polyfit(ys, xs, 1)
+        coeffs = np.polyfit(ys, xs, deg)
         yy = np.linspace(ys.min(), ys.max(), n_pts); xx = np.polyval(coeffs, yy)
     else:
         deg = degree if x_span > MIN_SPAN else 1
-        coeffs = np.polyfit(xs, ys, 1)
+        coeffs = np.polyfit(xs, ys, deg)
         xx = np.linspace(xs.min(), xs.max(), n_pts); yy = np.polyval(coeffs, xx)
     return np.stack([xx, yy], axis=1)          # float, WORK_SIZE coords
 
