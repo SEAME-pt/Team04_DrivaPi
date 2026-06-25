@@ -6,7 +6,9 @@ class StanleyController:
         self.prev_center_x = None
 
     def compute_stanley_errors(self, lane_lines, w, h):
-        # lookahead = 0.15 * h
+
+        near_row = 0.90 * h   # bottom of road (closest to car)
+        far_row  = 0.55 * h   # mid-road (lookahead)
 
         all_y = []
 
@@ -24,9 +26,6 @@ class StanleyController:
         print("max_lane_y =", max_lane_y)
         print("min_lane_y =", min_lane_y)
 
-        near_row = max_lane_y
-        far_row = min_lane_y + 0.5 * (max_lane_y - min_lane_y)
-        
         lane_candidates = []
 
         for lines in lane_lines.values():
@@ -41,7 +40,7 @@ class StanleyController:
                 print(
                     f"lane y range = {y_sorted.min():.1f} -> {y_sorted.max():.1f}"
                 )
-                
+
                 near_x = float(np.interp(near_row, y_sorted,x_sorted))
                 far_x = float(np.interp(far_row, y_sorted,x_sorted))
 
@@ -67,7 +66,7 @@ class StanleyController:
                 f'dx={dx:.6f} '
                 f'slope={slope:.6f}'
             )
-            if abs(dx) < 2.0 and abs(slope) < 0.01:
+            if abs(dx) < 1.5:
                 continue
 
             filtered.append((near_x, far_x))
