@@ -23,10 +23,6 @@ def extract_lane_lines(class_masks, w, h):
     mx, my = w / WORK_SIZE, h / WORK_SIZE
     out = {}
 
-    print("mx =", mx)
-    print("my =", my)
-    print("WORK_SIZE =", WORK_SIZE)
-    print("frame =", w, h)
 
     for cls_id, mask in class_masks.items():
         if cls_id not in LINE_CLASSES:
@@ -34,27 +30,10 @@ def extract_lane_lines(class_masks, w, h):
 
         scaled_lines = []
         for pts in fit_lane_lines(mask):
-            print(
-                cls_id,
-                "x:",
-                pts[:,0].min(), pts[:,0].max(),
-                "y:",
-                pts[:,1].min(), pts[:,1].max()
-            )
-            print(
-                "before scale:",
-                pts[:,1].min(),
-                pts[:,1].max()
-            )
 
             scaled = pts * (mx, my)
             scaled_lines.append(scaled)
 
-            print(
-                "after scale:",
-                scaled[:,1].min(),
-                scaled[:,1].max()
-            )
 
         if scaled_lines:
             out[CLASS_NAMES[cls_id]] = scaled_lines

@@ -17,7 +17,6 @@ class CameraStream:
         self.lock = threading.Lock()
         self.proc = None
         self.cap = None
-
         if self.source:
             self.cap = cv2.VideoCapture(self.source)
         else:

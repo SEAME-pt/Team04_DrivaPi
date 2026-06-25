@@ -23,8 +23,6 @@ class StanleyController:
         max_lane_y = max(all_y)
         min_lane_y = min(all_y)
 
-        print("max_lane_y =", max_lane_y)
-        print("min_lane_y =", min_lane_y)
 
         lane_candidates = []
 
@@ -37,10 +35,6 @@ class StanleyController:
                 y_sorted = ys[order]
                 x_sorted = xs[order]
 
-                print(
-                    f"lane y range = {y_sorted.min():.1f} -> {y_sorted.max():.1f}"
-                )
-
                 near_x = float(np.interp(near_row, y_sorted,x_sorted))
                 far_x = float(np.interp(far_row, y_sorted,x_sorted))
 
@@ -50,22 +44,14 @@ class StanleyController:
             print("None from lane_candidates")
             return None
 
-        print("frame h =", h)
-        print("lane y max =", max_lane_y)
 
         filtered = []
         y_diff = far_row - near_row
         for near_x, far_x in lane_candidates:
-            print("raw lane:", near_x, far_x)
+
             dx = far_x - near_x
             slope = dx / y_diff
 
-            print(
-                f'near={near_x:.6f} '
-                f'far={far_x:.6f} '
-                f'dx={dx:.6f} '
-                f'slope={slope:.6f}'
-            )
             if abs(dx) < 1.5:
                 continue
 

@@ -89,10 +89,16 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                     class_masks = build_class_masks(detections, proto)
                     class_masks = memory.update(class_masks)
                     lane_lines = extract_lane_lines(class_masks, w, h)
+
+                    
                     debug_frame = frame.copy()
                     draw_debug(debug_frame, class_masks, lane_lines, None)
                     with preview_lock:
                         preview_frame = debug_frame
+                    print("preview_frame =", preview_frame is not None)
+
+                    print("updated preview")
+
 
                     t4 = time.time()
 
@@ -150,21 +156,25 @@ def arg_parser():
 def preview_thread(camera):
     global preview_frame
 
-    cv2.namedWindow("Lane Preview", cv2.WINDOW_NORMAL)
+    try:
+        print("preview thread started")
+        cv2.namedWindow("Lane Preview", cv2.WINDOW_NORMAL)
 
-    while True:
-        with preview_lock:
-            frame = None if preview_frame is None else preview_frame.copy()
+        while True:
+            with preview_lock:
+                frame = None if preview_frame is None else preview_frame.copy()
 
-        if frame is not None:
-            cv2.imshow("Lane Preview", frame)
+            print("frame is None =", frame is None)
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+            if frame is not None:
+                print("showing preview")
+                cv2.imshow("Lane Preview", frame)
 
-        time.sleep(0.01)
+            cv2.waitKey(1)
+            time.sleep(0.01)
 
-    cv2.destroyAllWindows()
+    except Exception as e:
+        print("PREVIEW CRASHED: ", e)
 
 
 def main():
@@ -195,8 +205,15 @@ def main():
         obstacle_ng = obstacle_network_groups[0]
 
         camera = CameraStream(source=args.source, cam_w=CAM_W, cam_h=CAM_H)
+
+
+        print("starting preview thread")
         threading.Thread(target=preview_thread, args=(camera,), daemon=True).start()
         # preview.start()
+
+
+
+        
         print("[*] Generating stream maps...")
         lane_in_p = InputVStreamParams.make(lane_ng, format_type=FormatType.FLOAT32)
         lane_out_p = OutputVStreamParams.make(lane_ng, format_type=FormatType.FLOAT32)
