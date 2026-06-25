@@ -22,10 +22,10 @@ class StanleyController:
                 y_sorted = ys[order]
                 x_sorted = xs[order]
 
-                lane_candidates.append({
-                    "near": float(np.interp(near_row, y_sorted,x_sorted)),
-                    "far": float(np.interp(far_row, y_sorted,x_sorted))
-                })
+                near_x = float(np.interp(near_row, y_sorted,x_sorted))
+                far_x = float(np.interp(far_row, y_sorted,x_sorted))
+                
+                lane_candidates.append((near_x, far_x))
 
         if not lane_candidates:
             print("None from lane_candidates")
@@ -34,19 +34,20 @@ class StanleyController:
 
         filtered = []
         y_diff = far_row - near_row
-        for c in lane_candidates:
-            dx = c["far"] - c["near"]
+        for near_x, far_x in lane_candidates:
+            dx = far_x - near_x
             slope = dx / y_diff
 
+            print(
+                f'near={near_x:.6f} '
+                f'far={far_x:.6f} '
+                f'dx={dx:.6f} '
+                f'slope={slope:.6f}'
+            )
             if abs(slope) < 0.001:
                 continue
 
-            print(
-                    f'near={c["near"]:.1f} '
-                    f'far={c["far"]:.1f} '
-                    f'dx={dx:.1f}'
-                )
-            filtered.append(c)
+            filtered.append((near_x, far_x))
 
             # reject flat/broken/noisy detections
             # reject extremely wide jumps (often opposite lane)
@@ -65,48 +66,45 @@ class StanleyController:
 
 
 
-        for c in filtered:
-            if c["near"] < image_center:
-                left_candidates.append(c)
+        for near_x, far_x in filtered:
+            if near_x < image_center:
+                left_candidates.append((near_x, far_x))
             else:
-                right_candidates.append(c)
+                right_candidates.append((near_x, far_x))
 
-
+        def score(x):
+            return abs(x - image_center)
 
 
         if left_candidates and right_candidates:
 
-            def score(c):
-                return abs(c["near"] - image_center)
+            left  = min(left_candidates, key=lambda x: score(x[0]))
+            right = min(right_candidates, key=lambda x: score(x[0]))
 
-
-            left = min(left_candidates, key=score)
-            right = min(right_candidates, key=score)
-
-            lane_center_near_x = (left["near"] + right["near"]) / 2
-            lane_center_far_x  = (left["far"] + right["far"]) / 2
+            lane_center_near_x = (left[0] + right[0]) * 0.5
+            lane_center_far_x  = (left[1] + right[1]) * 0.5
 
         elif left_candidates:
-            lane = min(left_candidates, key=lambda c: c["near"])
+            lane = min(left_candidates, key=lambda x: x[0])
 
             if self.prev_center_x is not None:
-                alpha = 0.7
-                lane_center_near_x = alpha * lane["near"] + (1 -alpha) * self.prev_center_x
-                lane_center_far_x  = alpha * lane["far"] + (1 -alpha) * self.prev_center_x
+                alpha = 0.8
+                lane_center_near_x = alpha * lane[0] + (1 - alpha) * self.prev_center_x
+                lane_center_far_x  = alpha * lane[1] + (1 - alpha) * self.prev_center_x
             else:
-                lane_center_near_x = lane["near"] + (w - lane["near"]) * 0.5
-                lane_center_far_x  = lane["far"] + (w - lane["far"]) * 0.5
+                lane_center_near_x = lane[0] + (w - lane[0]) * 0.5
+                lane_center_far_x  = lane[1] + (w - lane[1]) * 0.5
 
         elif right_candidates:
-            lane = min(right_candidates, key=lambda c: c["near"])
+            lane = min(right_candidates, key=lambda x: x[0])
 
             if self.prev_center_x is not None:
-                alpha = 0.7
-                lane_center_near_x = alpha * lane["near"] + (1 -alpha) * self.prev_center_x
-                lane_center_far_x  = alpha * lane["far"] + (1 -alpha) * self.prev_center_x
+                alpha = 0.8
+                lane_center_near_x = alpha * lane[0] + (1 - alpha) * self.prev_center_x
+                lane_center_far_x  = alpha * lane[1] + (1 - alpha) * self.prev_center_x
             else:
-                lane_center_near_x = lane["near"] * 0.5
-                lane_center_far_x  = lane["far"] * 0.5
+                lane_center_near_x = lane[0] * 0.5
+                lane_center_far_x  = lane[1] * 0.5
 
         else:
             print("None from lanes")
