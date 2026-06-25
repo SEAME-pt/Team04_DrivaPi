@@ -5,6 +5,9 @@ from pathlib import Path
 import socket
 import threading
 
+from flask import Flask, Response
+
+
 import cv2
 import numpy as np
 from lanes_pipeline.stanley import StanleyController
@@ -26,8 +29,36 @@ from globals import npu_lock, REPORT_EVERY, FRAME_BUDGET
 import os
 import socket
 
-preview_frame = None
-preview_lock = threading.Lock()
+latest_debug_frame = None
+debug_lock = threading.Lock()
+
+app = Flask(__name__)
+
+def generate():
+    global latest_debug_frame
+
+    while True:
+        with debug_lock:
+            frame = latest_debug_frame
+
+        if frame is None:
+            time.sleep(0.01)
+            continue
+
+        frame = frame.copy()
+
+        encode_params = [int(cv2.IMWRITE_JPEG_QUALITY), 70]
+        _, jpeg = cv2.imencode('.jpg', frame, encode_params)
+
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' +
+               jpeg.tobytes() +
+               b'\r\n')
+
+@app.route('/video')
+def video():
+    return Response(generate(),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
 
 def systemd_notify_ready():
     """
@@ -56,7 +87,6 @@ CAM_W, CAM_H = 1280, 720
 def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, in_p, out_p, thread_nbr):
     print("LANE THREAD STARTED")
     print(f"Lane Thread{thread_nbr} started | mode: {'DEBUG' if debug else 'HEADLESS'}", flush=True)
-    global preview_frame
     publisher = SharedMemoryPublisher()
     memory = LaneMemory()
     stanley = StanleyController()
@@ -93,11 +123,9 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                     
                     debug_frame = frame.copy()
                     draw_debug(debug_frame, class_masks, lane_lines, None)
-                    with preview_lock:
-                        preview_frame = debug_frame
-                    print("preview_frame =", preview_frame is not None)
 
-                    print("updated preview")
+                    with debug_lock:
+                        latest_debug_frame = debug_frame.copy()
 
 
                     t4 = time.time()
@@ -207,8 +235,8 @@ def main():
         camera = CameraStream(source=args.source, cam_w=CAM_W, cam_h=CAM_H)
 
 
-        print("starting preview thread")
-        threading.Thread(target=preview_thread, args=(camera,), daemon=True).start()
+        # print("starting preview thread")
+        # threading.Thread(target=preview_thread, args=(camera,), daemon=True).start()
         # preview.start()
 
 
@@ -243,4 +271,13 @@ def main():
     return 0
 
 if __name__ == "__main__":
+    threading.Thread(
+        target=lambda: app.run(
+            host="0.0.0.0",
+            port=5000,
+            threaded=True,
+            use_reloader=False
+        ),
+        daemon=True
+    ).start()
     main()
