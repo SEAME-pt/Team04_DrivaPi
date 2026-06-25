@@ -34,15 +34,13 @@ Rectangle {
     // ISO 26262 Fail-Safe: Null/Invalid Data Handling
     property bool vehicleDataAvailable: vehicleData !== null && vehicleData !== undefined
 
-    // V2X and ADAS Emergency State
+    // V2X Emergency State
     property bool emergencyPriorityActive: false
     property int emergencyPriorityLevel: 0
-    property string emergencyMessage: "EMERGENCY VEHICLE"
+    // A flag de demo agora deve estar a false para produção
     property bool demoEmergencyAlert: false
 
-    // Speed Limit updated dynamically by ADAS AI
-    property int speedLimitValue: 120
-
+    property int speedLimitValue: vehicleDataAvailable && vehicleData.speedLimit ? Math.round(vehicleData.speedLimit) : 120
     property real currentSpeed: vehicleDataAvailable && vehicleData.speed ? vehicleData.speed : 0
     property int stm32Battery: vehicleDataAvailable && vehicleData.stm32Battery !== undefined ? vehicleData.stm32Battery : 0
     property int rpiBattery: vehicleDataAvailable && vehicleData.rpiBattery !== undefined ? vehicleData.rpiBattery : 0
@@ -307,6 +305,7 @@ Rectangle {
                     resetOdometerTimer.start();
                     console.log("[ClusterScreen] Odometer reset to 0 km");
                 }
+
             }
         }
     }
@@ -323,9 +322,8 @@ Rectangle {
 
             if (priorityLevel > 0) {
                 root.emergencyPriorityLevel = priorityLevel;
-                root.emergencyMessage = priorityLevel >= 2 ? "PULL OVER - EMERGENCY" : "EMERGENCY VEHICLE AHEAD";
                 root.emergencyPriorityActive = true;
-                emergencyTimeoutTimer.restart();
+                emergencyTimeoutTimer.restart(); // Inicia countdown de segurança
             } else {
                 root.emergencyPriorityLevel = 0;
                 root.emergencyPriorityActive = false;
@@ -333,40 +331,41 @@ Rectangle {
             }
         }
 
-        function onAdasVisionChanged(classId) {
-            console.log("[ClusterScreen] ADAS Vision AI ID:", classId);
+		function onAdasVisionChanged(classId) {
+			console.log("[ClusterScreen] ADAS Vision AI ID:", classId);
 
-            // 0=Clear, 1=50, 2=80, 3=gate, 4=crosswalk, 5=stop, 6=yield, 7=car, 8=danger, 9=obstacle
+			// cfg.CLASSES python mapping:
+			// 0=Clear, 1=50, 2=80, 3=gate, 4=crosswalk, 5=stop, 6=yield, 7=car, 8=danger, 9=obstacle
 
-            // Update Speed Limits
-            if (classId === 1) {
-                root.speedLimitValue = 50;
-            } else if (classId === 2) {
-                root.speedLimitValue = 80;
-            }
+			// Update Speed Limits
+			if (classId === 1) {
+				root.speedLimitValue = 50;
+			} else if (classId === 2) {
+				root.speedLimitValue = 80;
+			}
 
-            // Hazard Overlays
-            if (classId === 5) { // Stop Sign
-                root.emergencyMessage = "STOP SIGN DETECTED";
-                root.emergencyPriorityLevel = 2; // Red
-                root.emergencyPriorityActive = true;
-                emergencyTimeoutTimer.restart();
-            } else if (classId === 7) { // Car
-                root.emergencyMessage = "COLLISION WARNING";
-                root.emergencyPriorityLevel = 2; // Red
-                root.emergencyPriorityActive = true;
-                emergencyTimeoutTimer.restart();
-            } else if (classId === 9 || classId === 3 || classId === 8) { // Obstacle/Gate/Danger
-                root.emergencyMessage = "HAZARD AHEAD";
-                root.emergencyPriorityLevel = 1; // Orange
-                root.emergencyPriorityActive = true;
-                emergencyTimeoutTimer.restart();
-            } else if (classId === 0 && root.emergencyMessage !== "PULL OVER - EMERGENCY" && root.emergencyMessage !== "EMERGENCY VEHICLE AHEAD") {
-                // Clear overlay only if it's an ADAS alert (don't clear V2X ambulances)
-                root.emergencyPriorityActive = false;
-                emergencyTimeoutTimer.stop();
-            }
-        }
+			// Hazard Overlays
+			if (classId === 5) { // Stop Sign
+				root.emergencyMessage = "STOP SIGN DETECTED";
+				root.emergencyPriorityLevel = 2; // Red
+				root.emergencyPriorityActive = true;
+				emergencyTimeoutTimer.restart();
+			} else if (classId === 7 || classId === 9) { // Car/Obstacle
+				root.emergencyMessage = "OBSTACLE AHEAD";
+				root.emergencyPriorityLevel = 2; // Red
+				root.emergencyPriorityActive = true;
+				emergencyTimeoutTimer.restart();
+			} else if (classId === 3 || classId === 8) { // Obstacle/Gate/Danger
+				root.emergencyMessage = "HAZARD AHEAD";
+				root.emergencyPriorityLevel = 1; // Orange
+				root.emergencyPriorityActive = true;
+				emergencyTimeoutTimer.restart();
+			} else if (classId === 0 && root.emergencyMessage !== "PULL OVER - EMERGENCY" && root.emergencyMessage !== "EMERGENCY VEHICLE AHEAD") {
+				// Clear overlay only if it's an ADAS alert (don't interfere with V2X ambulances)
+				root.emergencyPriorityActive = false;
+				emergencyTimeoutTimer.stop();
+			}
+		}
     }
 
     Timer {
@@ -375,24 +374,24 @@ Rectangle {
         running: false
         repeat: false
         onTriggered: {
-            console.log("[ClusterScreen] Emergency Alert Auto-Cleared (Timeout)");
+            console.log("[ClusterScreen] V2X Emergency Alert Auto-Cleared (Timeout)");
             root.emergencyPriorityLevel = 0;
             root.emergencyPriorityActive = false;
         }
     }
 
     // ==========================================================
-    // V2X & ADAS EMERGENCY OVERLAY
+    // V2X EMERGENCY OVERLAY
     // ==========================================================
     EmergencyAlert {
         id: v2xEmergencyAlert
         z: 2000
         s: root.s
-
         isActive: root.emergencyPriorityActive
+
         priorityLevel: root.emergencyPriorityLevel
 
-        alertMessage: root.emergencyMessage
+        alertMessage: root.emergencyPriorityLevel >= 2 ? "PULL OVER - EMERGENCY" : "EMERGENCY VEHICLE AHEAD"
     }
 
     BatteryPopup {
@@ -408,4 +407,3 @@ Rectangle {
         return colors[index % colors.length];
     }
 }
-```
