@@ -57,6 +57,7 @@ class StanleyController:
         filtered = []
         y_diff = far_row - near_row
         for near_x, far_x in lane_candidates:
+            print("raw lane:", near_x, far_x)
             dx = far_x - near_x
             slope = dx / y_diff
 
