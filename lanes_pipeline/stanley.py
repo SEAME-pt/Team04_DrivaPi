@@ -8,9 +8,25 @@ class StanleyController:
     def compute_stanley_errors(self, lane_lines, w, h):
         # lookahead = 0.15 * h
 
-        near_row = 0.90 * h
-        far_row = 0.50 * h
+        all_y = []
 
+        for lines in lane_lines.values():
+            for pts in lines:
+                all_y.extend(pts[:, 1])
+
+        if not all_y:
+            print("No lane points")
+            return None
+
+        max_lane_y = max(all_y)
+        min_lane_y = min(all_y)
+
+        print("max_lane_y =", max_lane_y)
+        print("min_lane_y =", min_lane_y)
+
+        near_row = max_lane_y
+        far_row = min_lane_y + 0.5 * (max_lane_y - min_lane_y)
+        
         lane_candidates = []
 
         for lines in lane_lines.values():
@@ -36,7 +52,7 @@ class StanleyController:
             return None
 
         print("frame h =", h)
-        print("lane y max =", y_sorted.max())
+        print("lane y max =", max_lane_y)
 
         filtered = []
         y_diff = far_row - near_row
@@ -50,15 +66,11 @@ class StanleyController:
                 f'dx={dx:.6f} '
                 f'slope={slope:.6f}'
             )
-            if abs(slope) < 0.001:
+            if abs(dx) < 2.0 and abs(slope) < 0.01:
                 continue
 
             filtered.append((near_x, far_x))
 
-            # reject flat/broken/noisy detections
-            # reject extremely wide jumps (often opposite lane)
-            # if 2 < dx < 1000:
-            #     filtered.append(c)
 
         if not filtered:
             print("None from filtered")
