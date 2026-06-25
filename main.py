@@ -8,7 +8,7 @@ import threading
 import cv2
 import numpy as np
 from lanes_pipeline.stanley import StanleyController
-from lanes_pipeline.post_process import build_class_masks, decode, extract_lane_lines
+from lanes_pipeline.post_process import build_class_masks, decode, extract_lane_lines, draw_debug
 from lanes_pipeline.preprocess import preprocess
 from lanes_pipeline.lane_memory import LaneMemory
 from obstacle_inference import DrivaPiInference
@@ -26,8 +26,8 @@ from globals import npu_lock, REPORT_EVERY, FRAME_BUDGET
 import os
 import socket
 
-# preview_lock = threading.Lock()
-# latest_preview = None
+latest_preview = None
+preview_lock = threading.Lock()
 
 def systemd_notify_ready():
     """
@@ -56,7 +56,7 @@ CAM_W, CAM_H = 1280, 720
 def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, in_p, out_p, thread_nbr):
     print("LANE THREAD STARTED")
     print(f"Lane Thread{thread_nbr} started | mode: {'DEBUG' if debug else 'HEADLESS'}", flush=True)
-
+    global preview_frame
     publisher = SharedMemoryPublisher()
     memory = LaneMemory()
     stanley = StanleyController()
@@ -89,6 +89,10 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                     class_masks = build_class_masks(detections, proto)
                     class_masks = memory.update(class_masks)
                     lane_lines = extract_lane_lines(class_masks, w, h)
+                    debug_frame = frame.copy()
+                    draw_debug(debug_frame, class_masks, lane_lines, None)
+                    with preview_lock:
+                        preview_frame = debug_frame
 
                     t4 = time.time()
 
@@ -143,14 +147,14 @@ def arg_parser():
     ap.add_argument("--obstacle-hef", default="obstacle.hef", help="path to lane model hef, default is obstacle.hef")
     return ap.parse_args()
 
-def preview_thread():
-    global latest_preview
+def preview_thread(camera):
+    global preview_frame
 
     cv2.namedWindow("Lane Preview", cv2.WINDOW_NORMAL)
 
     while True:
         with preview_lock:
-            frame = None if latest_preview is None else latest_preview.copy()
+            frame = None if preview_frame is None else preview_frame.copy()
 
         if frame is not None:
             cv2.imshow("Lane Preview", frame)
@@ -191,7 +195,7 @@ def main():
         obstacle_ng = obstacle_network_groups[0]
 
         camera = CameraStream(source=args.source, cam_w=CAM_W, cam_h=CAM_H)
-        # threading.Thread(target=preview_thread, daemon=True).start()
+        threading.Thread(target=preview_thread, args=(camera,), daemon=True).start()
         # preview.start()
         print("[*] Generating stream maps...")
         lane_in_p = InputVStreamParams.make(lane_ng, format_type=FormatType.FLOAT32)
