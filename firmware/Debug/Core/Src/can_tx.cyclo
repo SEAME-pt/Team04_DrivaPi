@@ -1,0 +1,6 @@
+../Core/Src/can_tx.c:20:6:FloatToUint8	2
+../Core/Src/can_tx.c:35:6:CraftSpeedMessage	1
+../Core/Src/can_tx.c:49:5:CanSend	4
+../Core/Src/can_tx.c:89:13:PublishBatteryAndInaData	6
+../Core/Src/can_tx.c:168:13:PublishHtsData	4
+../Core/Src/can_tx.c:204:6:CanTx	5

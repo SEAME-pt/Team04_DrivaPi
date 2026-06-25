@@ -15,7 +15,7 @@ void mqtt_thread_fc(ULONG thread_input);
 void stm32_emergency_callback(MessageData* data);
 
 #ifndef MX_WIFI_DEBUG
-#define MX_WIFI_DEBUG	(1)
+#define MX_WIFI_DEBUG	(0)
 #endif
 
 #ifndef EMERGENCY_VEHICLE

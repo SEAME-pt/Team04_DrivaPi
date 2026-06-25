@@ -15,7 +15,7 @@
 #define MQTT_BROKER_IP_0      10
 #define MQTT_BROKER_IP_1      21
 #define MQTT_BROKER_IP_2      220
-#define MQTT_BROKER_IP_3      164
+#define MQTT_BROKER_IP_3      251
 
 
 #define MQTT_USERNAME         "my_stm32_user"

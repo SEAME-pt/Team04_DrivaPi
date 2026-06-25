@@ -110,12 +110,12 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
 	tx_mutex_create(&g_gearMutex, "Gear Mutex", TX_INHERIT);
 	tx_mutex_create(&mx_wifi_api_mutex, "My Mutex", TX_INHERIT);
 
-	//InitAllDevices();
-	//MotorControlInit(&g_motorControlState);
-	//AppThreadX_LogThreadInitMessage();
+	InitAllDevices();
+	MotorControlInit(&g_motorControlState);
+	AppThreadX_LogThreadInitMessage();
 	tx_thread_create(&mqtt_thread, "MQTT Thread", mqtt_thread_fc, 0,
 	mqtt_thread_stack, sizeof(mqtt_thread_stack), 1, 1, TX_NO_TIME_SLICE, TX_AUTO_START);
-	//ThreadInit();
+	ThreadInit();
 
   /* USER CODE END App_ThreadX_Init */
 
