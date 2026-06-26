@@ -60,6 +60,17 @@ def video():
     return Response(generate(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
+@app.route('/')
+def index():
+    return """
+    <html>
+        <body>
+            <h2>Lane Stream</h2>
+            <img src="/video"/>
+        </body>
+    </html>
+    """
+
 def systemd_notify_ready():
     """
     Sends a native READY=1 signal to systemd via the Unix notification socket.
@@ -92,7 +103,7 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
     stanley = StanleyController()
     writer = None
     n = 0
-
+    global latest_debug_frame
     batch_start_time = time.time()
 
     time.sleep(1)
@@ -123,6 +134,9 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                     
                     debug_frame = frame.copy()
                     draw_debug(debug_frame, class_masks, lane_lines, None)
+# 
+#                     cv2.imshow("Car View", debug_frame)
+#                     cv2.waitKey(1)
 
                     with debug_lock:
                         latest_debug_frame = debug_frame.copy()
