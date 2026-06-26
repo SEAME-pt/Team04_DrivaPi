@@ -29,12 +29,13 @@ Item {
     readonly property color gradientEnd: "#E6050505"
     readonly property int pulseDuration: priorityLevel >= 2 ? 400 : 800
 
-    width: hasIcon ? (170 * s) : (560 * s)
-    height: hasIcon ? (170 * s) : (70 * s)
+    width: hasIcon ? (115 * s) : (560 * s)
+	height: hasIcon ? (115 * s) : (70 * s)
 
-    anchors.horizontalCenter: parent.horizontalCenter
-    anchors.top: parent.top
-    anchors.topMargin: isActive ? (35 * s) : (-height - 40)
+	anchors.horizontalCenter: parent.horizontalCenter
+	anchors.horizontalCenterOffset: hasIcon ? (90 * s) : 0
+	anchors.top: parent.top
+	anchors.topMargin: isActive ? (hasIcon ? (82 * s) : (70 * s)) : (-height - 40)
 
     opacity: isActive ? 1.0 : 0.0
     visible: opacity > 0.01

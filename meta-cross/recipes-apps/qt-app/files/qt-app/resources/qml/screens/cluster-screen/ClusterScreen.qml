@@ -41,7 +41,18 @@ Rectangle {
 	property url emergencyIconSource: ""
     property bool demoEmergencyAlert: false
 
-    property int speedLimitValue: vehicleDataAvailable && vehicleData.speedLimit ? Math.round(vehicleData.speedLimit) : 120
+	property int adasCandidateClassId: 0
+	property int adasCandidateCount: 0
+	property double adasCandidateFirstSeenMs: 0
+	property int lastShownAdasClassId: 0
+	property double lastShownAdasMs: 0
+
+	readonly property int adasConfirmRequired: 3
+	readonly property int adasConfirmWindowMs: 2500
+	readonly property int adasRepeatCooldownMs: 2500
+
+    property int speedLimitValue: 0
+	property bool speedLimitActive: false
     property real currentSpeed: vehicleDataAvailable && vehicleData.speed ? vehicleData.speed : 0
     property int stm32Battery: vehicleDataAvailable && vehicleData.stm32Battery !== undefined ? vehicleData.stm32Battery : 0
     property int rpiBattery: vehicleDataAvailable && vehicleData.rpiBattery !== undefined ? vehicleData.rpiBattery : 0
@@ -243,14 +254,25 @@ Rectangle {
                                 spacing: 14 * root.s
 
                                 SpeedLimitIndicator {
-                                    Layout.preferredWidth: 120 * root.s
-                                    Layout.preferredHeight: 120 * root.s
-                                    Layout.alignment: Qt.AlignVCenter
-                                    z: 1
-                                    vehicleDataAvailable: root.vehicleDataAvailable
-                                    speedLimitValue: root.speedLimitValue
-                                    s: root.s
-                                }
+									Layout.preferredWidth: 105 * root.s
+									Layout.preferredHeight: 105 * root.s
+									Layout.alignment: Qt.AlignVCenter
+									z: 1
+
+									visible: root.speedLimitActive
+									opacity: root.speedLimitActive ? 1.0 : 0.0
+
+									vehicleDataAvailable: root.vehicleDataAvailable
+									speedLimitValue: root.speedLimitValue
+									s: root.s
+
+									Behavior on opacity {
+										NumberAnimation {
+											duration: 180
+											easing.type: Easing.OutQuad
+										}
+									}
+								}
                                 Item { Layout.fillWidth: true }
                             }
                         }
@@ -330,6 +352,15 @@ Rectangle {
 		emergencyTimeoutTimer.restart();
 	}
 
+	function showSpeedLimit(limitValue) {
+		root.speedLimitValue = limitValue;
+		root.speedLimitActive = true;
+
+		console.log("[ClusterScreen] SPEED LIMIT ALERT:", limitValue);
+
+		speedLimitTimeoutTimer.restart();
+	}
+
 	function showTextAlert(message, priorityLevel) {
 		root.emergencyIconSource = "";
 		root.emergencyMessage = message;
@@ -350,6 +381,62 @@ Rectangle {
 		root.emergencyPriorityLevel = 0;
 		root.emergencyPriorityActive = false;
 	}
+
+	function shouldShowAdasClass(classId) {
+		if (classId === 0) {
+			return false;
+		}
+
+		var now = new Date().getTime();
+
+		if (root.adasCandidateClassId !== classId ||
+			now - root.adasCandidateFirstSeenMs > root.adasConfirmWindowMs) {
+
+			root.adasCandidateClassId = classId;
+			root.adasCandidateCount = 1;
+			root.adasCandidateFirstSeenMs = now;
+
+			console.log("[ClusterScreen] ADAS candidate started:",
+						classId,
+						"count=",
+						root.adasCandidateCount);
+
+			return false;
+		}
+
+		root.adasCandidateCount += 1;
+
+		console.log("[ClusterScreen] ADAS candidate confirmed progress:",
+					classId,
+					"count=",
+					root.adasCandidateCount);
+
+		if (root.adasCandidateCount < root.adasConfirmRequired) {
+			return false;
+		}
+
+		if (root.lastShownAdasClassId === classId &&
+			now - root.lastShownAdasMs < root.adasRepeatCooldownMs) {
+
+			console.log("[ClusterScreen] ADAS duplicate ignored by cooldown:",
+						classId);
+
+			return false;
+		}
+
+		root.lastShownAdasClassId = classId;
+		root.lastShownAdasMs = now;
+
+		root.adasCandidateClassId = 0;
+		root.adasCandidateCount = 0;
+		root.adasCandidateFirstSeenMs = 0;
+
+		console.log("[ClusterScreen] ADAS class accepted:",
+					classId);
+
+		return true;
+	}
+
     // ==========================================================
     // BACKEND SIGNAL CONNECTIONS (C++ to QML Bridge)
     // ==========================================================
@@ -383,17 +470,22 @@ Rectangle {
 				return;
 			}
 
+			// Only show the ADAS sign if it has been confirmed by multiple consecutive detections.
+			if (!shouldShowAdasClass(classId)) {
+				return;
+			}
+
 			// 1 = 50_sign
 			// No image yet. Keep using the existing SpeedLimitIndicator.
 			if (classId === 1) {
-				root.speedLimitValue = 50;
+				showSpeedLimit(50);
 				return;
 			}
 
 			// 2 = 80_sign
 			// No image yet. Keep using the existing SpeedLimitIndicator.
 			if (classId === 2) {
-				root.speedLimitValue = 80;
+				showSpeedLimit(80);
 				return;
 			}
 
@@ -468,7 +560,7 @@ Rectangle {
 
     Timer {
         id: emergencyTimeoutTimer
-        interval: 75000
+        interval: 2000
         running: false
         repeat: false
         onTriggered: {
@@ -476,7 +568,18 @@ Rectangle {
 			clearAlert();
 		}
     }
+	Timer {
+		id: speedLimitTimeoutTimer
+		interval: 2000
+		running: false
+		repeat: false
 
+		onTriggered: {
+			console.log("[ClusterScreen] Speed limit auto-cleared");
+			root.speedLimitActive = false;
+			root.speedLimitValue = 0;
+		}
+	}
     // ==========================================================
     // V2X EMERGENCY OVERLAY
     // ==========================================================
