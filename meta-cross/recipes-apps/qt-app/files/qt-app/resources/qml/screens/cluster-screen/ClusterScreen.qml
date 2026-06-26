@@ -47,7 +47,7 @@ Rectangle {
 	property int lastShownAdasClassId: 0
 	property double lastShownAdasMs: 0
 
-	readonly property int adasConfirmRequired: 1
+	readonly property int adasConfirmRequired: 2
 	readonly property int adasConfirmWindowMs: 2500
 	readonly property int adasRepeatCooldownMs: 2500
 
