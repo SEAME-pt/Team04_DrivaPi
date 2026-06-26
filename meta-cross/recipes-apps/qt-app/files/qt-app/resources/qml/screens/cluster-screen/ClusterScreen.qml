@@ -47,7 +47,7 @@ Rectangle {
 	property int lastShownAdasClassId: 0
 	property double lastShownAdasMs: 0
 
-	readonly property int adasConfirmRequired: 3
+	readonly property int adasConfirmRequired: 2
 	readonly property int adasConfirmWindowMs: 2500
 	readonly property int adasRepeatCooldownMs: 2500
 
@@ -560,7 +560,7 @@ Rectangle {
 
     Timer {
         id: emergencyTimeoutTimer
-        interval: 2000
+        interval: 2500
         running: false
         repeat: false
         onTriggered: {
@@ -570,7 +570,7 @@ Rectangle {
     }
 	Timer {
 		id: speedLimitTimeoutTimer
-		interval: 2000
+		interval: 2500
 		running: false
 		repeat: false
 
