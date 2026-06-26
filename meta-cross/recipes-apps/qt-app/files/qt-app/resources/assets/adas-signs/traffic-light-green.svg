@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="130" height="330">
+	<title>Green traffic lights</title>
+	<defs>
+		<radialGradient id="r"><stop stop-color="#fc7474" offset="0"/><stop stop-color="#d53a3a" offset="0.7"/><stop stop-color="#af0000" offset="1"/></radialGradient>
+		<radialGradient id="y"><stop stop-color="#fcfc74" offset="0"/><stop stop-color="#d4d53a" offset="0.7"/><stop stop-color="#afa500" offset="1"/></radialGradient>
+		<radialGradient id="g"><stop stop-color="#74fc94" offset="0"/><stop stop-color="#3ad55e" offset="0.7"/><stop stop-color="#00af29" offset="1"/></radialGradient>
+		<radialGradient id="b"><stop stop-color="#4d4d4d" offset="0"/><stop stop-color="#1a1a1a" offset="0.7"/><stop stop-color="#000000" offset="1"/></radialGradient>
+	</defs>
+	<rect width="120" height="320" x="5" y="5" fill="#1A1A1A" stroke="#000" stroke-width="10"/>
+	<circle cx="65" cy="65"  r="44" fill="url(#b)" stroke="#000" stroke-width="10"/>
+	<circle cx="65" cy="165" r="44" fill="url(#b)" stroke="#000" stroke-width="10"/>
+	<circle cx="65" cy="265" r="44" fill="url(#g)" stroke="#000" stroke-width="10"/>
+</svg>
