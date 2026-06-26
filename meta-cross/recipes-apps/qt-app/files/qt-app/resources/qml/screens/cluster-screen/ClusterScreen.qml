@@ -47,9 +47,10 @@ Rectangle {
 	property int lastShownAdasClassId: 0
 	property double lastShownAdasMs: 0
 
+	readonly property int adasConfirmWindowMs: 1800
+	readonly property int adasRepeatCooldownMs: 900
+
 	readonly property int adasConfirmRequired: 1
-	readonly property int adasConfirmWindowMs: 2500
-	readonly property int adasRepeatCooldownMs: 2500
 
     property int speedLimitValue: 0
 	property bool speedLimitActive: false
@@ -337,9 +338,9 @@ Rectangle {
 		return Qt.resolvedUrl("../../../assets/adas-signs/" + fileName);
 	}
 
-	function showAdasSign(fileName, priorityLevel) {
+	function showAdasSign(fileName, priorityLevel, message) {
 		root.emergencyIconSource = adasSign(fileName);
-		root.emergencyMessage = "";
+		root.emergencyMessage = message || "";
 		root.emergencyPriorityLevel = priorityLevel;
 		root.emergencyPriorityActive = true;
 
@@ -347,7 +348,9 @@ Rectangle {
 					fileName,
 					root.emergencyIconSource,
 					"priority=",
-					priorityLevel);
+					priorityLevel,
+					"message=",
+					root.emergencyMessage);
 
 		emergencyTimeoutTimer.restart();
 	}
@@ -382,12 +385,44 @@ Rectangle {
 		root.emergencyPriorityActive = false;
 	}
 
+	function adasConfirmRequiredForClass(classId) {
+		// Critical classes should be shown immediately.
+		// 5 = stop_sign
+		// 9 = obstacle
+		// 12 = traffic_light_red
+		if (classId === 5 || classId === 9 || classId === 12) {
+			return 1;
+		}
+
+		// Less critical / more noisy detections need confirmation.
+		return 2;
+	}
+
+	function acceptAdasClass(classId, now) {
+		root.lastShownAdasClassId = classId;
+		root.lastShownAdasMs = now;
+
+		root.adasCandidateClassId = 0;
+		root.adasCandidateCount = 0;
+		root.adasCandidateFirstSeenMs = 0;
+
+		console.log("[ClusterScreen] ADAS class accepted:", classId);
+	}
+
 	function shouldShowAdasClass(classId) {
 		if (classId === 0) {
 			return false;
 		}
 
 		var now = new Date().getTime();
+		var requiredCount = adasConfirmRequiredForClass(classId);
+
+		if (root.lastShownAdasClassId === classId &&
+			now - root.lastShownAdasMs < root.adasRepeatCooldownMs) {
+
+			console.log("[ClusterScreen] ADAS duplicate ignored by cooldown:", classId);
+			return false;
+		}
 
 		if (root.adasCandidateClassId !== classId ||
 			now - root.adasCandidateFirstSeenMs > root.adasConfirmWindowMs) {
@@ -399,41 +434,32 @@ Rectangle {
 			console.log("[ClusterScreen] ADAS candidate started:",
 						classId,
 						"count=",
-						root.adasCandidateCount);
+						root.adasCandidateCount,
+						"required=",
+						requiredCount);
+
+			if (requiredCount <= 1) {
+				acceptAdasClass(classId, now);
+				return true;
+			}
 
 			return false;
 		}
 
 		root.adasCandidateCount += 1;
 
-		console.log("[ClusterScreen] ADAS candidate confirmed progress:",
+		console.log("[ClusterScreen] ADAS candidate progress:",
 					classId,
 					"count=",
-					root.adasCandidateCount);
+					root.adasCandidateCount,
+					"required=",
+					requiredCount);
 
-		if (root.adasCandidateCount < root.adasConfirmRequired) {
+		if (root.adasCandidateCount < requiredCount) {
 			return false;
 		}
 
-		if (root.lastShownAdasClassId === classId &&
-			now - root.lastShownAdasMs < root.adasRepeatCooldownMs) {
-
-			console.log("[ClusterScreen] ADAS duplicate ignored by cooldown:",
-						classId);
-
-			return false;
-		}
-
-		root.lastShownAdasClassId = classId;
-		root.lastShownAdasMs = now;
-
-		root.adasCandidateClassId = 0;
-		root.adasCandidateCount = 0;
-		root.adasCandidateFirstSeenMs = 0;
-
-		console.log("[ClusterScreen] ADAS class accepted:",
-					classId);
-
+		acceptAdasClass(classId, now);
 		return true;
 	}
 
@@ -491,68 +517,67 @@ Rectangle {
 
 			// 3 = gate
 			if (classId === 3) {
-				showAdasSign("gate-sign.png", 1);
+				showAdasSign("gate-sign.png", 1, "");
 				return;
 			}
 
 			// 4 = crosswalk_sign
 			if (classId === 4) {
-				showAdasSign("crosswalk-sign.png", 1);
+				showAdasSign("crosswalk-sign.png", 1, """);
 				return;
 			}
 
 			// 5 = stop_sign
 			if (classId === 5) {
-				showAdasSign("stop-sign.png", 2);
+				showAdasSign("stop-sign.png", 2,"");
 				return;
 			}
 
 			// 6 = yield_sign
 			if (classId === 6) {
-				showAdasSign("yield-sign.svg", 1);
+				showAdasSign("yield-sign.svg", 1, "");
 				return;
 			}
 
 			// 7 = car
-			// Temporary: use obstacle sign until we add a car-specific icon.
 			if (classId === 7) {
-				showAdasSign("obstacle-sign.png", 2);
+				showAdasSign("obstacle-sign.png", 2, "CAR AHEAD");
 				return;
 			}
 
 			// 8 = danger_sign
 			if (classId === 8) {
-				showAdasSign("danger-sign.png", 1);
+				showAdasSign("danger-sign.png", 1, "");
 				return;
 			}
 
 			// 9 = obstacle
 			if (classId === 9) {
-				showAdasSign("obstacle-sign.png", 2);
+				showAdasSign("obstacle-sign.png", 2, "OBSTACLE AHEAD");
 				return;
 			}
 
 			// 10 = traffic_light_green
 			if (classId === 10) {
-				showAdasSign("traffic-light-green.svg", 1);
+				showAdasSign("traffic-light-green.svg", 1, "");
 				return;
 			}
 
 			// 11 = traffic_light_off
 			if (classId === 11) {
-				showAdasSign("traffic-light-off.svg", 1);
+				showAdasSign("traffic-light-off.svg", 1, "");
 				return;
 			}
 
 			// 12 = traffic_light_red
 			if (classId === 12) {
-				showAdasSign("traffic-light-red.svg", 2);
+				showAdasSign("traffic-light-red.svg", 2, "");
 				return;
 			}
 
 			// 13 = traffic_light_yellow
 			if (classId === 13) {
-				showAdasSign("traffic-light-yellow.svg", 1);
+				showAdasSign("traffic-light-yellow.svg", 1, "");
 				return;
 			}
 		}
