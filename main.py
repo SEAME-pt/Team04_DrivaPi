@@ -25,6 +25,8 @@ from hailo_platform import (
 from camera import CameraStream
 from globals import npu_lock, REPORT_EVERY, FRAME_BUDGET
 
+import pygame
+
 
 import os
 import socket
@@ -95,7 +97,7 @@ def systemd_notify_ready():
 # ── Config ────────────────────────────────────────────────────────────────────
 CAM_W, CAM_H = 1280, 720
 
-def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, in_p, out_p, thread_nbr):
+def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, in_p, out_p, thread_nbr, screen, surface):
     print("LANE THREAD STARTED")
     print(f"Lane Thread{thread_nbr} started | mode: {'DEBUG' if debug else 'HEADLESS'}", flush=True)
     publisher = SharedMemoryPublisher()
@@ -134,7 +136,14 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                     
                     debug_frame = frame.copy()
                     draw_debug(debug_frame, class_masks, lane_lines, None)
-# 
+
+
+
+
+
+                    rgb = cv2.cvtColor(debug_frame, cv2.COLOR_BGR2RGB)
+
+ 
 #                     cv2.imshow("Car View", debug_frame)
 #                     cv2.waitKey(1)
 
@@ -225,6 +234,13 @@ def main():
 
     args = arg_parser()
 
+    pygame.init()
+    
+    screen = pygame.display.set_mode((1280, 720), pygame.FULLSCREEN)
+    pygame.display.set_caption("DrivaPi Lane Detection")
+    
+    surface = pygame.Surface((CAM_W, CAM_H))
+
     lane_hef = HEF(str(args.lane_hef))
     lane_in_name = lane_hef.get_input_vstream_infos()[0].name
     lane_cfg = ConfigureParams.create_from_hef(lane_hef, interface=HailoStreamInterface.PCIe)
@@ -247,14 +263,6 @@ def main():
         obstacle_ng = obstacle_network_groups[0]
 
         camera = CameraStream(source=args.source, cam_w=CAM_W, cam_h=CAM_H)
-
-
-        # print("starting preview thread")
-        # threading.Thread(target=preview_thread, args=(camera,), daemon=True).start()
-        # preview.start()
-
-
-
         
         print("[*] Generating stream maps...")
         lane_in_p = InputVStreamParams.make(lane_ng, format_type=FormatType.FLOAT32)
@@ -266,7 +274,7 @@ def main():
         detector = DrivaPiInference()
         lanes_pipeline_thread = threading.Thread(
            target=lanes_thread,
-           args=(args.source, args.debug, args.record, lane_in_name, camera.get_frame, lane_ng, lane_in_p, lane_out_p, 1)
+           args=(args.source, args.debug, args.record, lane_in_name, camera.get_frame, lane_ng, lane_in_p, lane_out_p, 1, screen, surface)
         )
         obstacle_pipeline_thread = threading.Thread(
            target=detector.start,
@@ -276,9 +284,38 @@ def main():
         lanes_pipeline_thread.start()
         obstacle_pipeline_thread.start()
 
+        running = True
+
+        clock = pygame.time.Clock()
+
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+
+            
+            with debug_lock:
+                frame = latest_debug_frame.copy() if latest_debug_frame is not None else None
+
+            if frame is not None:
+                screen.fill((0, 0, 0))
+
+                rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+                pygame.surfarray.blit_array(surface, np.swapaxes(rgb, 0, 1))
+                screen.blit(surface, (0, 0))
+
+            pygame.display.flip()
+            clock.tick(30)
+
         lanes_pipeline_thread.join()
         obstacle_pipeline_thread.join()
 
+
+
+
+
+    pygame.quit()
     camera.close()
     while True:
         time.sleep(1)
