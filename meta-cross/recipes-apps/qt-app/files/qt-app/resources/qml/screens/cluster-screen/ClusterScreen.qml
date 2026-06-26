@@ -399,68 +399,68 @@ Rectangle {
 
 			// 3 = gate
 			if (classId === 3) {
-				showAdasSign("gate-sign.png", 1);
+				showAdasSign("qrc:/assets/adas-signs/gate-sign.png", 1);
 				return;
 			}
 
 			// 4 = crosswalk_sign
 			if (classId === 4) {
-				showAdasSign("crosswalk-sign.png", 1);
+				showAdasSign("qrc:/assets/adas-signs/crosswalk-sign.png", 1);
 				return;
 			}
 
 			// 5 = stop_sign
 			if (classId === 5) {
-				showAdasSign("stop-sign.png", 2);
+				showAdasSign("qrc:/assets/adas-signs/stop-sign.png", 2);
 				return;
 			}
 
 			// 6 = yield_sign
 			if (classId === 6) {
-				showAdasSign("yield-sign.svg", 1);
+				showAdasSign("qrc:/assets/adas-signs/yield-sign.svg", 1);
 				return;
 			}
 
 			// 7 = car
 			// Temporary: use obstacle sign until we add a car-specific icon.
 			if (classId === 7) {
-				showAdasSign("obstacle-sign.png", 2);
+				showAdasSign("qrc:/assets/adas-signs/obstacle-sign.png", 2);
 				return;
 			}
 
 			// 8 = danger_sign
 			if (classId === 8) {
-				showAdasSign("danger-sign.png", 1);
+				showAdasSign("qrc:/assets/adas-signs/danger-sign.png", 1);
 				return;
 			}
 
 			// 9 = obstacle
 			if (classId === 9) {
-				showAdasSign("obstacle-sign.png", 2);
+				showAdasSign("qrc:/assets/adas-signs/obstacle-sign.png", 2);
 				return;
 			}
 
 			// 10 = traffic_light_green
 			if (classId === 10) {
-				showAdasSign("traffic-light-green.svg", 1);
+				showAdasSign("qrc:/assets/adas-signs/traffic-light-green.svg", 1);
 				return;
 			}
 
 			// 11 = traffic_light_off
 			if (classId === 11) {
-				showAdasSign("traffic-light-off.svg", 1);
+				showAdasSign("qrc:/assets/adas-signs/traffic-light-off.svg", 1);
 				return;
 			}
 
 			// 12 = traffic_light_red
 			if (classId === 12) {
-				showAdasSign("traffic-light-red.svg", 2);
+				showAdasSign("qrc:/assets/adas-signs/traffic-light-red.svg", 2);
 				return;
 			}
 
 			// 13 = traffic_light_yellow
 			if (classId === 13) {
-				showAdasSign("traffic-light-yellow.svg", 1);
+				showAdasSign("qrc:/assets/adas-signs/traffic-light-yellow.svg", 1);
 				return;
 			}
 		}
