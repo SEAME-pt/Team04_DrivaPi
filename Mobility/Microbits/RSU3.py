@@ -4,11 +4,11 @@ import time
 import random
 import math
 
-MY_ID = "RSU3"
-EXPECTED_HEADING = 240  
-TOLERANCE = 30       
-
+MY_ID = "RSU2"
+EXPECTED_HEADING = 333
+TOLERANCE = 30
 POWER_LEVEL = 2
+
 G_TIME = 25000
 Y_TIME = 1500
 R_TIME = 10000
@@ -23,9 +23,12 @@ def set_lights(r, y, g):
     pin0.write_digital(r)
     pin1.write_digital(y)
     pin2.write_digital(g)
+    
+    # Send state to Pi 4 via USB
+    state = "R" if r else ("Y" if y else "G")
+    print("MQTT|" + MY_ID + "/state|" + state)
 
 set_lights(1, 0, 0)
-
 mode = "NORMAL"
 l_state = "R"
 last_t = time.ticks_ms()
@@ -52,31 +55,32 @@ def is_valid_approach(amb_h):
         diff = 360 - diff
     return diff <= TOLERANCE
 
-print(MY_ID + " BOOTED. GATE SET TO:", EXPECTED_HEADING)
+print(MY_ID + " BOOTED. GATE SET TO: " + str(EXPECTED_HEADING))
 
 while True:
     now = time.ticks_ms()
     current_h = get_upright_heading()
     
-    if time.ticks_diff(now, last_print) > 1000:
-        print(MY_ID + " LIVE PHYSICAL HEADING:", current_h)
-        last_print = now
-
+    # (Optional: Uncomment to see live heading, but it spams the MQTT bridge!)
+    # if time.ticks_diff(now, last_print) > 1000:
+    #     print(MY_ID + " LIVE PHYSICAL HEADING:", current_h)
+    #     last_print = now
+        
     packet = radio.receive_full()
-
+    
     if button_b.was_pressed():
         mode = "NORMAL"
         l_state = "R"
         set_lights(1, 0, 0)
         last_t = now
         cooldown_end = 0
-
+        
     if button_a.was_pressed():
         mode = "EVP_EVAL"
         my_rssi = 0 
-        bidding_end = now + 500
+        bidding_end = now + 50
         radio.send(MY_ID + "|0")
-
+        
     if packet:
         try:
             msg = packet[0][3:].decode('utf-8')
@@ -100,7 +104,7 @@ while True:
                         my_rssi = -999
                 except:
                     pass
-        
+                    
         elif "|" in msg:
             parts = msg.split('|')
             if mode == "EVP_EVAL" and parts[0] != MY_ID:
@@ -110,10 +114,15 @@ while True:
                         my_rssi = -999 
                 except:
                     pass
-
+                    
+    # --- EMERGENCY LOGIC TRIGGER ---
     if mode == "EVP_EVAL" and now > bidding_end:
         mode = "EVP_HOLD"
         last_t = now
+        
+        # 1. TELL THE NETWORK THE EMERGENCY HAS STARTED
+        print("MQTT|" + MY_ID + "/emergency|ON")
+        
         if my_rssi > -999:
             l_state = "G"
             set_lights(0, 0, 1)
@@ -124,7 +133,7 @@ while True:
             else:
                 l_state = "R"
                 set_lights(1, 0, 0)
-
+                
     if mode == "EVP_HOLD":
         if my_rssi <= -999 and l_state == "Y" and time.ticks_diff(now, last_t) > Y_TIME:
             l_state = "R"
@@ -135,13 +144,16 @@ while True:
             cooldown_end = now + COOLDOWN_TIME
             last_t = now
             
+            # 2. TELL THE NETWORK THE EMERGENCY IS OVER
+            print("MQTT|" + MY_ID + "/emergency|OFF")
+            
             if MY_ID == "RSU1":
                 l_state = "G"
                 set_lights(0, 0, 1)
             else:
                 l_state = "R"
                 set_lights(1, 0, 0)
-
+                
     if mode == "NORMAL":
         elapsed = time.ticks_diff(now, last_t)
         if l_state == "R" and elapsed > R_TIME:
