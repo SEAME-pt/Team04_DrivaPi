@@ -22,7 +22,7 @@ class CameraStream:
         else:
             self.proc = subprocess.Popen(
                 ["rpicam-vid", "-t", "0", "--codec", "yuv420", "--width", str(self.cam_w),
-                 "--height", str(self.cam_h), "--framerate", "30", "-o", "-"],
+                 "--height", str(self.cam_h), "--framerate", "30", "-o", "-", "--nopreview"],
                 stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
             )
             time.sleep(0.5)

@@ -25,9 +25,6 @@ from hailo_platform import (
 from camera import CameraStream
 from globals import npu_lock, REPORT_EVERY, FRAME_BUDGET
 
-import pygame
-
-
 import os
 import socket
 
@@ -48,6 +45,7 @@ def generate():
             continue
 
         frame = frame.copy()
+        frame = cv2.rotate(frame, cv2.ROTATE_180)
 
         encode_params = [int(cv2.IMWRITE_JPEG_QUALITY), 70]
         _, jpeg = cv2.imencode('.jpg', frame, encode_params)
@@ -139,8 +137,8 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
 
 
  
-#                     cv2.imshow("Car View", debug_frame)
-#                     cv2.waitKey(1)
+                    # cv2.imshow("Car View", debug_frame)
+                    # cv2.waitKey(1)
 
                     with debug_lock:
                         latest_debug_frame = debug_frame.copy()
@@ -284,6 +282,7 @@ def main():
                 frame = latest_debug_frame.copy() if latest_debug_frame is not None else None
         
             if frame is not None:
+                frame = cv2.rotate(frame, cv2.ROTATE_180)
                 cv2.imshow("Lane", frame)
         
             key = cv2.waitKey(1)

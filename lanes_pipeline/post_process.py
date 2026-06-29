@@ -23,21 +23,13 @@ def extract_lane_lines(class_masks, w, h):
     mx, my = w / WORK_SIZE, h / WORK_SIZE
     out = {}
 
-
     for cls_id, mask in class_masks.items():
         if cls_id not in LINE_CLASSES:
             continue
 
-        scaled_lines = []
-        for pts in fit_lane_lines(mask):
-
-            scaled = pts * (mx, my)
-            scaled_lines.append(scaled)
-
-
-        if scaled_lines:
-            out[CLASS_NAMES[cls_id]] = scaled_lines
-
+        scaled = [pts * (mx, my) for pts in fit_lane_lines(mask)]
+        if scaled:
+            out[CLASS_NAMES[cls_id]] = scaled
     return out
 
 def draw_debug(frame, class_masks, lane_lines, steering):

@@ -8,7 +8,7 @@ class StanleyController:
     def compute_stanley_errors(self, lane_lines, w, h):
 
         near_row = 0.90 * h   # bottom of road (closest to car)
-        far_row  = 0.55 * h   # mid-road (lookahead)
+        far_row  = 0.60 * h   # mid-road (lookahead)
 
         all_y = []
 
