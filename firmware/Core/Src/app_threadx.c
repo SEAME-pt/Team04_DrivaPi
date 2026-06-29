@@ -49,6 +49,7 @@ TX_THREAD 				mqtt_thread;
 ULONG 					mqtt_thread_stack[4096];
 TX_QUEUE                g_queueSpeedCmd;
 TX_QUEUE                g_queueSteerCmd;
+TX_QUEUE                g_queueEmergencyCmd;
 TX_EVENT_FLAGS_GROUP    g_eventFlags;
 TX_MUTEX                g_speedDataMutex;
 TX_MUTEX                g_emergencyMutex;
@@ -63,6 +64,7 @@ float 					g_currentSpeed;
 int16_t 				g_currentPWM;
 MotorControlState		g_motorControlState;
 uint16_t				g_targetSpeed;
+uint8_t					g_emergency_cmd;
 unsigned char			trace_buffer[TRACE_BUFFER_SIZE];
 /* USER CODE END PV */
 

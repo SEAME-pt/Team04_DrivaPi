@@ -14,13 +14,12 @@ int stm32_mqtt_recv(Network* n, unsigned char* buffer, int len, int timeout_ms);
 void mqtt_thread_fc(ULONG thread_input);
 void stm32_emergency_callback(MessageData* data);
 
+extern uint8_t g_emergency_cmd;
+
 #ifndef MX_WIFI_DEBUG
 #define MX_WIFI_DEBUG	(0)
 #endif
 
-#ifndef EMERGENCY_VEHICLE
-#define EMERGENCY_VEHICLE	 (1)
-#endif
 
 #ifdef __cplusplus
 }

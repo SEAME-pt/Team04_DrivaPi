@@ -1,5 +1,0 @@
-../Core/Src/mqtt.c:13:6:mqtt_init	3
-../Core/Src/mqtt.c:86:6:mqtt_thread_fc	2
-../Core/Src/mqtt.c:178:5:stm32_mqtt_send	1
-../Core/Src/mqtt.c:183:5:stm32_mqtt_recv	5
-../Core/Src/mqtt.c:220:6:stm32_emergency_callback	1

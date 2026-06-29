@@ -1,4 +1,5 @@
 #include "mqtt.h"
+#include "app_threadx.h"
 
 #define htons(x) ( ((x)<<8 & 0xFF00) | ((x)>>8 & 0x00FF) )
 static unsigned char	send_buf[512];
@@ -85,6 +86,10 @@ void mqtt_init(void)
 
 void mqtt_thread_fc(ULONG thread_input)
 {
+    ULONG			actual_flags;
+    t_can_message 	msg;
+    g_emergency_cmd = 0;
+
     WIFIStartup();
 
     if (MX_WIFI_DEBUG)
@@ -95,6 +100,15 @@ void mqtt_thread_fc(ULONG thread_input)
 
     while (1)
     {
+        if (tx_event_flags_get(&g_eventFlags, FLAG_CAN_EMERGENCY_CMD, TX_OR_CLEAR, &actual_flags, TX_NO_WAIT) == TX_SUCCESS)
+		{
+			while (tx_queue_receive(&g_queueEmergencyCmd, &msg, TX_NO_WAIT) == TX_SUCCESS)
+			{
+				memcpy(&g_emergency_cmd, msg.data , sizeof(uint8_t));
+
+			}
+		}
+
         if (!MQTTIsConnected(&client))
         {
             if (MX_WIFI_DEBUG)
@@ -104,8 +118,8 @@ void mqtt_thread_fc(ULONG thread_input)
             tx_thread_sleep(500);
             continue;
         }
-
-        if (EMERGENCY_VEHICLE)
+        UartPrintf("emergency%d\r\n", g_emergency_cmd);
+        if (g_emergency_cmd == 1)
         {
             sub_done = 0;
 
@@ -132,8 +146,8 @@ void mqtt_thread_fc(ULONG thread_input)
             }
             else
             {
-            	if (MX_WIFI_DEBUG)
-            		UartPrintf("Success Send: %s\r\n", payload);
+                if (MX_WIFI_DEBUG)
+                    UartPrintf("Success Send: %s\r\n", payload);
             }
 
             tx_thread_sleep(200);

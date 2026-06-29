@@ -1,3 +1,0 @@
-/home/hugofslopes/seame/Team04_DrivaPi/firmware/Core/Inc/Mx_WIFI/mx_wifi_bare_os.h:50:25:mx_buf_alloc	2
-../Middlewares/Mx_WIFI/core/mx_wifi_slip.c:57:10:slip_transfer	10
-../Middlewares/Mx_WIFI/core/mx_wifi_slip.c:108:11:slip_input_byte	20
