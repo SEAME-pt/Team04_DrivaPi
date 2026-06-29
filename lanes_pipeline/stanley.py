@@ -1,5 +1,6 @@
 
 import numpy as np
+import math
 
 class StanleyController:
     def __init__(self):
@@ -122,11 +123,11 @@ class StanleyController:
         lane_dx = lane_center_far_x - lane_center_near_x
         lane_dy = near_row - far_row
 
-        path_heading = np.atan2(lane_dy, lane_dx)
+        path_heading = math.atan2(lane_dy, lane_dx)
 
         if path_heading < 0:
             path_heading += 2 * np.pi
 
-        heading_error = path_heading - camera_heading
+        # heading_error = camera_heading - path_heading
         self.prev_center_x = lane_center_near_x
-        return closes_front_point_y, float(heading_error)
+        return closes_front_point_y, float(path_heading)
