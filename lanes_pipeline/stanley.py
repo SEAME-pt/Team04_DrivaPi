@@ -7,6 +7,7 @@ class StanleyController:
 
     def compute_stanley_errors(self, lane_lines, w, h):
 
+        camera_heading = np.pi / 2
         near_row = 0.90 * h   # bottom of road (closest to car)
         far_row  = 0.60 * h   # mid-road (lookahead)
 
@@ -115,12 +116,17 @@ class StanleyController:
             return None
 
 
-        cte = (lane_center_near_x - image_center) / image_center
+        # closes_front_point_y = (lane_center_near_x - image_center) / image_center
+        closes_front_point_y = lane_center_near_x - image_center
 
         lane_dx = lane_center_far_x - lane_center_near_x
-        lane_dy = far_row - near_row
+        lane_dy = near_row - far_row
 
-        heading_error = np.arctan2(lane_dx, -lane_dy)
+        path_heading = np.atan2(lane_dy, lane_dx)
 
+        if path_heading < 0:
+            path_heading += 2 * np.pi
+
+        heading_error = path_heading - camera_heading
         self.prev_center_x = lane_center_near_x
-        return cte, float(heading_error)
+        return closes_front_point_y, float(heading_error)

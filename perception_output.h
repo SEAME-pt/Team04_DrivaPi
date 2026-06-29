@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 typedef struct {
-    float cte;
+    float closest_front_point;
     float heading_error;
     float confidence;
     uint8_t valid;
