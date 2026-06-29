@@ -19,6 +19,8 @@ static constexpr uint32_t STM32_BATTERY_CAN_ID = 0x200; // u8 % + float (LE) vol
 static constexpr uint32_t GEAR_CAN_ID          = 0x300; // u8: 0=N, 1=R, 2=D
 static constexpr uint32_t ENV_CAN_ID           = 0x400; // float (LE) temp + float (LE) humidity
 
+static constexpr uint32_t EMERGENCY_VEHICLE_CAN_ID = 0x500; // u8: 0=Clear, 1=Warning, 2=High Priority (e.g., ambulance)
+
 static inline float readFloatLe(const uint8_t* p)
 {
     float f = 0.0f;
@@ -281,6 +283,18 @@ void VehicleData::handleCanMessage(const QByteArray &payload, uint32_t canId)
         setStm32Humidity(humPct);
         return;
     }
+
+	 if (canId == EMERGENCY_VEHICLE_CAN_ID) {
+		if (dlc < 1) return;
+		const int priorityLevel = static_cast<int>(data[0]);
+		updateEmergencyAlert(priorityLevel);
+		return;
+	}
+}
+void VehicleData::updateEmergencyAlert(int priorityLevel)
+{
+    // priorityLevel: 0 = Clear, 1 = Warning, 2 = High Priority (e.g., ambulance)
+    emit emergencyAlertChanged(priorityLevel);
 }
 
 // ===== Persistence =====

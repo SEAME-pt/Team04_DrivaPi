@@ -2,7 +2,7 @@
  * @file can_decode.hpp
  * @author DrivaPi Team
  * @brief Helper functions for decoding CAN payloads
- * 
+ *
  * Provides little-endian decoding utilities for CAN frame data
  */
 
@@ -68,6 +68,15 @@ inline double DoubleLe(const uint8_t* data) {
     double result;
     std::memcpy(&result, data, sizeof(double));
     return result;
+}
+
+/**
+ * @brief Decode V2X Emergency Priority level from CAN frame
+ * @param frame The raw CAN frame
+ * @return Priority level (0 = Clear, 1 = Warning, 2 = High Priority)
+ */
+inline int decodeV2XEmergencyPriority(const can_frame& frame) {
+    return static_cast<int>(U8(frame.data));
 }
 
 } // namespace can_decode

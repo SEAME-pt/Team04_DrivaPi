@@ -38,4 +38,7 @@ constexpr uint32_t ID_GEAR = 0x300;
 //   [4..7] float humidity (LE, percent)
 constexpr uint32_t ID_ENV = 0x400;
 
+// 0x500: 1 byte:
+constexpr uint32_t ID_EMERGENCY_VEHICLE = 0x500;
+
 } // namespace can

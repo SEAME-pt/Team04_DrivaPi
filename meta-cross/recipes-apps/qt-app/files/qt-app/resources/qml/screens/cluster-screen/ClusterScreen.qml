@@ -19,13 +19,10 @@ Rectangle {
     readonly property real motionSpeedKmh: currentSpeed
     readonly property real motionSpeedAbs: Math.abs(motionSpeedKmh)
     readonly property real motionDir: {
-        // Reverse animation if gear is "R"
-        if (currentGear === "R")
-            return -1;
+        if (currentGear === "R") return -1;
         return 1;
     }
 
-    // REAL-WORLD CALIBRATION: 4 m/s = 14.4 km/h = full intensity
     readonly property real realMaxSpeedKmh: 14.4
     readonly property real motionIntensity: clamp(motionSpeedAbs / realMaxSpeedKmh, 0, 1)
 
@@ -37,11 +34,12 @@ Rectangle {
     // ISO 26262 Fail-Safe: Null/Invalid Data Handling
     property bool vehicleDataAvailable: vehicleData !== null && vehicleData !== undefined
 
+    // V2X Emergency State
     property bool emergencyPriorityActive: false
+    property int emergencyPriorityLevel: 0
+    // A flag de demo agora deve estar a false para produção
     property bool demoEmergencyAlert: false
 
-    // Demo / fallback (replace with your real signal if you have it)
-    // ISO 26262 ASIL requirement: Valid fallback for critical safety display
     property int speedLimitValue: vehicleDataAvailable && vehicleData.speedLimit ? Math.round(vehicleData.speedLimit) : 120
     property real currentSpeed: vehicleDataAvailable && vehicleData.speed ? vehicleData.speed : 0
     property int stm32Battery: vehicleDataAvailable && vehicleData.stm32Battery !== undefined ? vehicleData.stm32Battery : 0
@@ -56,46 +54,34 @@ Rectangle {
     property real lastTimestamp: 0
     property bool showOdometerReset: false
 
-    // Initialize odometer with vehicleData value
     Component.onCompleted: {
         if (vehicleDataAvailable && vehicleData.odo > 0) {
             odometerDistance = vehicleData.odo;
-            console.log("[ClusterScreen] Initialized odometer from vehicleData:", odometerDistance, "km");
         }
     }
 
     Timer {
         id: odometerUpdateTimer
-        interval: 100  // Update every 100ms
+        interval: 100
         running: true
         repeat: true
-
         onTriggered: {
-            if (!vehicleDataAvailable)
-                return;
-
+            if (!vehicleDataAvailable) return;
             var currentTime = new Date().getTime();
             if (lastTimestamp === 0) {
                 lastTimestamp = currentTime;
                 return;
             }
-
-            // Calculate elapsed time in seconds
             var elapsedSeconds = (currentTime - lastTimestamp) / 1000;
             lastTimestamp = currentTime;
-
-            // Speed is already in km/h from currentSpeed property
             var speedKmh = currentSpeed;
-            var timeHours = elapsedSeconds / 3600;  // Convert seconds to hours
-            var distanceTraveled = speedKmh * timeHours;  // Distance in km
+            var timeHours = elapsedSeconds / 3600;
+            var distanceTraveled = speedKmh * timeHours;
 
-            // Accumulate distance
             accumulatedDistance += distanceTraveled;
-
-            // Update odometer when threshold reached
-            if (accumulatedDistance >= 0.01 && speedKmh > 0.5) {  // 10 meters
+            if (accumulatedDistance >= 0.01 && speedKmh > 0.5) {
                 odometerDistance += accumulatedDistance;
-                accumulatedDistance = 0;  // Reset accumulator
+                accumulatedDistance = 0;
             }
         }
     }
@@ -108,55 +94,33 @@ Rectangle {
         onTriggered: showOdometerReset = false
     }
 
-    // ====== END Odometer Logic ======
-    // Design Constants (ISO 26262 Instrument Cluster Compliance)
-    // ============================================================
-    // Font Sizes (consolidated for WCAG AA accessibility)
-    property int fontSizeXL: 132         // Primary speed display
-    property int fontSizeLarge: 44       // Speed limit indicator
-    property int fontSizeMedium: 22      // Bottom bar, labels
-    property int fontSizeSmall: 18       // Secondary information
-    property int fontSizeXSmall: 13      // Tertiary information
+    // Design Constants
+    property int fontSizeXL: 132
+    property int fontSizeLarge: 44
+    property int fontSizeMedium: 22
+    property int fontSizeSmall: 18
+    property int fontSizeXSmall: 13
 
-        // Road rendering parameters
     property real roadWidthFactor: 0.85
     property real roadHeightFactor: 3.5
     property real roadBaseOffset: -0.8
     property real horizonMarginRatio: 0.15
 
-    // Responsive scaling (1200x480 reference)
     property real refW: 1200
     property real refH: 480
     property real sx: width / refW
     property real sy: height / refH
     property real s: Math.min(sx, sy)
 
-    function clamp(v, a, b) {
-        return Math.max(a, Math.min(v, b));
-    }
+    function clamp(v, a, b) { return Math.max(a, Math.min(v, b)); }
 
     gradient: Gradient {
-        GradientStop {
-            position: 0.0
-            color: AppTheme.colors.surfaceVariant
-        }
-        GradientStop {
-            position: 0.5
-            color: AppTheme.colors.surface
-        }
-        GradientStop {
-            position: 1.0
-            color: AppTheme.colors.surfaceVariant
-        }
+        GradientStop { position: 0.0; color: AppTheme.colors.surfaceVariant }
+        GradientStop { position: 0.5; color: AppTheme.colors.surface }
+        GradientStop { position: 1.0; color: AppTheme.colors.surfaceVariant }
     }
 
-    // ==========================================================
-    // BACKGROUND LAYER (Glows + Road)
-    // ==========================================================
-    Background {
-        anchors.fill: parent
-        z: 0
-    }
+    Background { anchors.fill: parent; z: 0 }
 
     Item {
         id: uiLayer
@@ -188,16 +152,13 @@ Rectangle {
                     running: true
                     repeat: true
                     onTriggered: {
-                        if (root.motionSpeedAbs < 0.5)
-                            return;
-
+                        if (root.motionSpeedAbs < 0.5) return;
                         var normalizedSpeed = root.clamp(root.motionSpeedAbs / root.realMaxSpeedKmh, 0, 1);
                         var step = (interval / 1000.0) * normalizedSpeed * 2.0;
                         root.motionPhase = root.wrap01(root.motionPhase + root.motionDir * step);
                     }
                 }
 
-                // Background grid and glow
                 Image {
                     source: "qrc:/assets/cluster/floor-grid.svg"
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -218,16 +179,12 @@ Rectangle {
                     z: 2
                 }
 
-                // ==========================================================
-                // MAIN LAYOUT
-                // ==========================================================
                 RowLayout {
                     anchors.fill: parent
                     anchors.margins: 52 * root.s
                     spacing: 46 * root.s
                     z: 30
 
-                    // LEFT: Speed
                     Item {
                         Layout.fillHeight: true
                         Layout.preferredWidth: 400 * root.s
@@ -238,18 +195,11 @@ Rectangle {
                             spacing: 6 * root.s
 
                             Text {
-                                // Dynamically convert speed based on the selected setting
                                 text: {
-                                    if (!root.vehicleDataAvailable)
-                                        return "--";
-                                    let speedVal = root.currentSpeed; // Base is km/h
-
-                                    if (settingsManager.speedUnit === "m/s") {
-                                        speedVal = speedVal / 3.6;
-                                    } else if (settingsManager.speedUnit === "mph") {
-                                        speedVal = speedVal * 0.621371;
-                                    }
-
+                                    if (!root.vehicleDataAvailable) return "--";
+                                    let speedVal = root.currentSpeed;
+                                    if (settingsManager.speedUnit === "m/s") speedVal = speedVal / 3.6;
+                                    else if (settingsManager.speedUnit === "mph") speedVal = speedVal * 0.621371;
                                     return Math.round(speedVal).toString();
                                 }
                                 color: root.vehicleDataAvailable ? AppTheme.colors.text : AppTheme.colors.textSecondary
@@ -261,7 +211,6 @@ Rectangle {
                             }
 
                             Text {
-                                // Bind directly to the settings manager instead of hardcoding "km/h"
                                 text: settingsManager.speedUnit
                                 color: AppTheme.colors.textSecondary
                                 font.pixelSize: 22 * root.s
@@ -271,13 +220,11 @@ Rectangle {
                         }
                     }
 
-                    // CENTER: Speed + ADAS (OEM position)
                     Item {
                         z: 40
                         Layout.fillWidth: true
                         Layout.fillHeight: true
 
-                        // ISO 26266 ADAS / Warnings Area (ASIL-Compliant Display)
                         Rectangle {
                             id: adasZone
                             width: 560 * root.s
@@ -294,7 +241,6 @@ Rectangle {
                                 anchors.margins: 16 * root.s
                                 spacing: 14 * root.s
 
-                                // Speed Limit Indicator (ISO 26262 Safety-Critical Element)
                                 SpeedLimitIndicator {
                                     Layout.preferredWidth: 120 * root.s
                                     Layout.preferredHeight: 120 * root.s
@@ -304,11 +250,7 @@ Rectangle {
                                     speedLimitValue: root.speedLimitValue
                                     s: root.s
                                 }
-
-                                // Flexible spacer for centered layout
-                                Item {
-                                    Layout.fillWidth: true
-                                }
+                                Item { Layout.fillWidth: true }
                             }
                         }
 
@@ -321,22 +263,16 @@ Rectangle {
                             anchors.bottom: parent.bottom
                             anchors.bottomMargin: -50 * root.sy
                             opacity: 1.0
-
-                            // Subtler motion (still direction-aware)
                             transform: [
-                                Translate {
-                                    y: Math.sin(root.motionPhase * 6.28318530718 * 2.0) * (1.2 * root.sy) * root.motionIntensity
-                                },
+                                Translate { y: Math.sin(root.motionPhase * 6.28318530718 * 2.0) * (1.2 * root.sy) * root.motionIntensity },
                                 Rotation {
-                                    origin.x: carImg.width / 2
-                                    origin.y: carImg.height / 2
+                                    origin.x: carImg.width / 2; origin.y: carImg.height / 2
                                     angle: Math.sin(root.motionPhase * 6.28318530718) * (0.35 * root.motionIntensity) * root.motionDir
                                 }
                             ]
                         }
                     }
 
-                    // ====== RIGHT: Swipe (Media / Weather / Navigation) ======
                     RightInfoPanel {
                         Layout.fillHeight: true
                         Layout.preferredWidth: 400 * root.s
@@ -350,7 +286,6 @@ Rectangle {
                 }
             }
 
-            // Bottom bar
             BottomBar {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 52 * root.sy
@@ -375,12 +310,38 @@ Rectangle {
         }
     }
 
+    // ==========================================================
+    // BACKEND SIGNAL CONNECTIONS (C++ to QML Bridge)
+    // ==========================================================
+    Connections {
+        target: vehicleData
+        enabled: vehicleDataAvailable
+
+        function onEmergencyAlertChanged(priorityLevel) {
+            console.log("[ClusterScreen] V2X Emergency Alert Received. Priority:", priorityLevel);
+
+            if (priorityLevel > 0) {
+                root.emergencyPriorityLevel = priorityLevel;
+                root.emergencyPriorityActive = true;
+                emergencyTimeoutTimer.restart(); // Inicia countdown de segurança
+            } else {
+                root.emergencyPriorityLevel = 0;
+                root.emergencyPriorityActive = false;
+                emergencyTimeoutTimer.stop();
+            }
+        }
+    }
+
     Timer {
-        id: demoEmergencyTimer
-        running: root.demoEmergencyAlert
-        interval: 10000
-        repeat: true
-        onTriggered: root.emergencyPriorityActive = !root.emergencyPriorityActive
+        id: emergencyTimeoutTimer
+        interval: 15000
+        running: false
+        repeat: false
+        onTriggered: {
+            console.log("[ClusterScreen] V2X Emergency Alert Auto-Cleared (Timeout)");
+            root.emergencyPriorityLevel = 0;
+            root.emergencyPriorityActive = false;
+        }
     }
 
     // ==========================================================
@@ -391,10 +352,12 @@ Rectangle {
         z: 2000
         s: root.s
         isActive: root.emergencyPriorityActive
-        alertMessage: "EMERGENCY VEHICLE"
+
+        priorityLevel: root.emergencyPriorityLevel
+
+        alertMessage: root.emergencyPriorityLevel >= 2 ? "PULL OVER - EMERGENCY" : "EMERGENCY VEHICLE AHEAD"
     }
 
-    // Battery Status Popup
     BatteryPopup {
         id: batteryPopup
         anchors.fill: parent
