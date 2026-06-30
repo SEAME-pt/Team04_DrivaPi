@@ -9,9 +9,9 @@ class StanleyController:
     def compute_stanley_errors(self, lane_lines, w, h):
 
         camera_heading = np.pi / 2
-        near_row = 0.95 * h   # bottom of road (closest to car)
-        far_row  = 0.70 * h   # mid-road (lookahead)
-
+        near_row = 0.10 * h   # bottom of road (closest to car)
+        far_row  = 0.35 * h   # mid-road (lookahead)
+        #print(f"near_row = {near_row} far_row = {far_row} height = {h}")
         all_y = []
 
         for lines in lane_lines.values():
@@ -53,6 +53,7 @@ class StanleyController:
 
             dx = far_x - near_x
             slope = dx / y_diff
+            print(f"far_x = {far_x} near_x = {near_x} dx = {dx:.6}")
 
             if abs(dx) < 1.5:
                 continue

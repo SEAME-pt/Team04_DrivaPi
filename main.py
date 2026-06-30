@@ -39,6 +39,8 @@ def generate():
     while True:
         with debug_lock:
             frame = latest_debug_frame
+            #frame = cv2.rotate(frame, cv2.ROTATE_180)
+
 
         if frame is None:
             time.sleep(0.01)
@@ -112,12 +114,13 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                 while True:
                     t0 = time.time()
                     frame = get_frame()
+
                     if frame is None:
                         break
+                    #frame = cv2.rotate(frame, cv2.ROTATE_180)
                     h, w = frame.shape[:2]
 
                     t1 = time.time()
-                    frame = cv2.rotate(frame, cv2.ROTATE_180)
                     preprocessed_frame = preprocess(frame, 640, 0.35)
 
                     with npu_lock:
@@ -131,7 +134,6 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                     class_masks = memory.update(class_masks)
                     lane_lines = extract_lane_lines(class_masks, w, h)
 
-                    
                     debug_frame = frame.copy()
                     draw_debug(debug_frame, class_masks, lane_lines, None)
 
@@ -280,6 +282,8 @@ def main():
         while True:
             with debug_lock:
                 frame = latest_debug_frame.copy() if latest_debug_frame is not None else None
+                #frame = cv2.rotate(frame, cv2.ROTATE_180)
+
         
             if frame is not None:
                 cv2.imshow("Lane", frame)
