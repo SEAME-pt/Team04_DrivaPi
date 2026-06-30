@@ -104,8 +104,11 @@ def _nms(boxes, scores):
 
 def decode(outputs):
     cv2_list, cv3_list, cv4_list, proto = sort_outputs(outputs)
-    if proto is None or len(cv2_list) != 3:
-        return [], None
+    # All three head groups are indexed [i] in the loop below, so require the
+    # full expected output structure before decoding (guards against an
+    # incomplete inference result or a changed HEF layout → no IndexError).
+    if proto is None or len(cv2_list) != 3 or len(cv3_list) != 3 or len(cv4_list) != 3:
+        return [], proto
     all_boxes, all_scores, all_classes, all_coeffs = [], [], [], []
     for i, stride in enumerate([8, 16, 32]):
         cls_raw = _sigmoid(cv3_list[i].transpose(1, 2, 0).reshape(-1, NUM_CLASSES))
@@ -230,9 +233,9 @@ def compute_steering(lane_lines, w, h):
     for lines in lane_lines.values():
         for pts in lines:
             ys = pts[:, 1]
+            if y_look < ys.min() or y_look > ys.max():
+                continue
             order = np.argsort(ys)
-            # interpolate x at the lookahead row; if the line doesn't reach it,
-            # np.interp clamps to the nearest endpoint (so we still get a value)
             xs.append(float(np.interp(y_look, ys[order], pts[order, 0])))
     if not xs:
         return None
@@ -314,6 +317,12 @@ def main(source, debug, record_path):
                         h, w = frame.shape[:2]
 
                         raw = pipeline.infer({in_name: preprocess(frame)})
+
+                        if debug and t0 is None:
+                            print("HEF outputs (name: shape):")
+                            for name, tensor in raw.items():
+                                print(f"  {name}: {tensor.shape}")
+
                         detections, proto = decode(raw)
                         class_masks = build_class_masks(detections, proto)
                         class_masks = memory.update(class_masks)          # temporal
