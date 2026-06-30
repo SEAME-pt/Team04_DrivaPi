@@ -143,7 +143,7 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                     # cv2.waitKey(1)
 
                     with debug_lock:
-                        latest_debug_frame = debug_frame.copy()
+                        latest_debug_frame = debug_frame
 
 
                     t4 = time.time()
@@ -281,10 +281,9 @@ def main():
         
         while True:
             with debug_lock:
-                frame = latest_debug_frame.copy() if latest_debug_frame is not None else None
+                frame = latest_debug_frame if latest_debug_frame is not None else None
                 #frame = cv2.rotate(frame, cv2.ROTATE_180)
 
-        
             if frame is not None:
                 cv2.imshow("Lane", frame)
         

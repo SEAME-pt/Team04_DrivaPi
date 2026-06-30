@@ -10,7 +10,13 @@ REG_MAX     = 16
 CLASS_NAMES  = ["center_continuous_lane", "center_dashed_lane", "crosswalk",
                 "left_lane", "right_lane"]
 NUM_CLASSES = 5
-CONF_THRESH_PER_CLASS = np.array([0.45, 0.45, 0.45, 0.30, 0.45], dtype=np.float32)
+CONF_THRESH_PER_CLASS = np.array([
+    0.35,
+    0.35,
+    0.45,
+    0.35,
+    0.35
+], dtype=np.float32)
 IOU_THRESH  = 0.45
 DRAW_MASKS = True
 LINE_THICK = 4
@@ -52,33 +58,38 @@ def draw_debug(frame, class_masks, lane_lines, steering):
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
     return frame
 
-def _fit_single(mask, degree=FIT_DEGREE, n_pts=40):
-    ys, xs = np.nonzero(mask)
-    if len(ys) < MIN_MASK_PX:
-        return None
-    y_span, x_span = ys.max() - ys.min(), xs.max() - xs.min()
-    if y_span >= x_span:
-        deg = degree if y_span > MIN_SPAN else 1
-        coeffs = np.polyfit(ys, xs, deg)
-        yy = np.linspace(ys.min(), ys.max(), n_pts); xx = np.polyval(coeffs, yy)
-    else:
-        deg = degree if x_span > MIN_SPAN else 1
-        coeffs = np.polyfit(xs, ys, deg)
-        xx = np.linspace(xs.min(), xs.max(), n_pts); yy = np.polyval(coeffs, xx)
-    return np.stack([xx, yy], axis=1)          # float, WORK_SIZE coords
-
-
 
 def fit_lane_lines(mask):
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, DASH_BRIDGE))
-    closed = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-    n, labels = cv2.connectedComponents(closed)
-    lines = []
-    for lab in range(1, n):
-        pts = _fit_single((labels == lab).astype(np.uint8))
-        if pts is not None:
-            lines.append(pts)
-    return lines
+    ys = []
+    xs = []
+
+    for y in range(mask.shape[0]):
+
+        cols = np.where(mask[y] > 0)[0]
+
+        if len(cols) < 2:
+            continue
+
+        xs.append(cols.mean())
+        ys.append(y)
+
+    if len(xs) < MIN_MASK_PX:
+        return []
+
+    xs = np.asarray(xs, dtype=np.float32)
+    ys = np.asarray(ys, dtype=np.float32)
+
+    if len(xs) > 8:
+        coeffs = np.polyfit(ys, xs, 2)
+
+        yy = np.linspace(ys.min(), ys.max(), 40)
+        xx = np.polyval(coeffs, yy)
+
+        pts = np.stack((xx, yy), axis=1)
+    else:
+        pts = np.stack((xs, ys), axis=1)
+
+    return [pts]
 
 
 def sort_outputs(outputs):
