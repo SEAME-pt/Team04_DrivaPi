@@ -326,11 +326,16 @@ def main(source, debug, record_path):
                         detections, proto = decode(raw)
                         class_masks = build_class_masks(detections, proto)
                         class_masks = memory.update(class_masks)          # temporal
-                        lane_lines = extract_lane_lines(class_masks, w, h)  # geometry
+                        lane_lines = extract_lane_lines(class_masks, w, h)  # geometry (stable output)
+                        # EXPERIMENTAL starter signal, NOT final control — see
+                        # compute_steering() docstring. Build the real controller
+                        # on `lane_lines`, not on this helper.
                         steering = compute_steering(lane_lines, w, h)
 
                         # ───────────────────────────────────────────────────────
-                        # TODO: send `steering` (or `lane_lines`) to control.
+                        # TODO: real control plugs in here. `steering` is only a
+                        # starter; the controller still has to decide the corridor,
+                        # single-lane behavior, stale-detection handling, etc.
                         #   if steering is not None:
                         #       target_x, err = steering
                         #       set_servo(err)            # motor/servo here
@@ -364,6 +369,8 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--source", default=None, help="video file (omit for CSI camera)")
     ap.add_argument("--debug", action="store_true", help="draw masks/lines + show overlay")
-    ap.add_argument("--record", default=None, help="(debug only) save annotated .avi")
+    ap.add_argument("--record", default=None, help="(requires --debug) save annotated .avi")
     args = ap.parse_args()
+    if args.record and not args.debug:
+        ap.error("--record requires --debug")
     main(args.source, args.debug, args.record)
