@@ -573,8 +573,8 @@ fn run_autonomous_mode(
             );
             let observation = stanley::CameraLaneObservation {
                 closest_front_point_m: perception.closest_front_point as f64,
-                // heading_error_rad: stanley::normalize_heading(perception.heading_error as f64),
-                heading_error_rad: perception.heading_error as f64,
+                heading_error_rad: stanley::normalize_heading(perception.heading_error as f64),
+                // heading_error_rad: perception.heading_error as f64,
                 confidence: perception.confidence as f64,
             };
             
