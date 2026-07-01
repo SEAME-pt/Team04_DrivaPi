@@ -134,8 +134,8 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
 
                     if frame is None:
                         break
+                    # frame = cv2.warpPerspective(frame, M, (width, height))
 
-                    frame = cv2.warpPerspective(frame, M, (width, height))
                     h, w = frame.shape[:2]
 
                     t1 = time.time()
@@ -145,6 +145,7 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                         with network_group.activate():
                             t2 = time.time()
                             raw = pipeline.infer({in_name: preprocessed_frame})
+
 
                     t3 = time.time()
                     detections, proto = decode(raw)
