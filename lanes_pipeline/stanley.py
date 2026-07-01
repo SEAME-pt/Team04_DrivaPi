@@ -9,8 +9,8 @@ class StanleyController:
     def compute_stanley_errors(self, lane_lines, w, h):
 
         camera_heading = np.pi / 2
-        near_row = 0.10 * h   # bottom of road (closest to car)
-        far_row  = 0.35 * h   # mid-road (lookahead)
+        near_row = 0.95 * h   # bottom of road (closest to car)
+        far_row  = 0.75 * h   # mid-road (lookahead)
         #print(f"near_row = {near_row} far_row = {far_row} height = {h}")
         all_y = []
 
@@ -53,10 +53,10 @@ class StanleyController:
 
             dx = far_x - near_x
             slope = dx / y_diff
-            print(f"far_x = {far_x} near_x = {near_x} dx = {dx:.6}")
+            print(f"far_x = {far_x} near_x = {near_x} slope = {slope:.6} dx = {dx:.6}")
 
-            if abs(dx) < 1.5:
-                continue
+            #if abs(dx) < 1.5:
+                #continue
 
             filtered.append((near_x, far_x))
 
@@ -117,14 +117,14 @@ class StanleyController:
             print("None from lanes")
             return None
 
-
-        # closes_front_point_y = (lane_center_near_x - image_center) / image_center
+        #closes_front_point_y = (lane_center_near_x - image_center) / image_center
         closes_front_point_y = lane_center_near_x - image_center
 
         lane_dx = lane_center_far_x - lane_center_near_x
         lane_dy = near_row - far_row
 
         path_heading = math.atan2(lane_dy, lane_dx)
+        print(f"path_heading = {path_heading} lane_center_far = {lane_center_far_x} lane_center_near = {lane_center_near_x}")
 
         if path_heading < 0:
             path_heading += 2 * np.pi
