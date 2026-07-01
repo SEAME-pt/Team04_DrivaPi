@@ -269,6 +269,8 @@ def draw_debug(frame, class_masks, lane_lines, steering):
 def main(source, debug, record_path):
     if source:
         cap = cv2.VideoCapture(source)
+        if not cap.isOpened():
+            raise RuntimeError(f"Could not open video source: {source}")
         def get_frame():
             ok, f = cap.read()
             return f if ok else None
