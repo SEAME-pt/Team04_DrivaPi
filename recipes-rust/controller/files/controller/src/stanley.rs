@@ -34,12 +34,12 @@ pub struct StanleyConfig {
 impl Default for StanleyConfig {
     fn default() -> Self {
         Self {
-            k: 0.002,
-            k_soft: 0.4,
+            k: 0.5,
+            k_soft: 0.15,
             wheelbase_m: 0.15,
-            max_steer_rad: 0.8,
+            max_steer_rad: 0.5,
             max_steer_rate: 2.0,
-            steer_to_servo_gain: 60.0,
+            steer_to_servo_gain: 45.0,
         }
     }
 }
@@ -61,7 +61,9 @@ pub fn compute_steering(
     dt: f64,
     cfg: &StanleyConfig,
 ) -> f64 {
-    let crosstrack_error = (cfg.k * observation.closest_front_point_m).atan2(speed_mps);
+    let pixel_to_meter = 0.00258;
+    let cte_meters = observation.closest_front_point_m * pixel_to_meter;
+    let crosstrack_error = ((cfg.k * cte_meters) / (speed_mps + cfg.k_soft)).atan();
 
     let angle_raw = observation.heading_error_rad + crosstrack_error;
 
@@ -78,5 +80,7 @@ pub fn compute_steering(
 
 /// Converts steering radians to servo degrees
 pub fn steering_to_servo_deg(angle: f64, cfg: &StanleyConfig) -> f64 {
-     (90.0 - cfg.steer_to_servo_gain * angle).clamp(0.0, 180.0)
+     let protocol_gain = 90.0 / cfg.max_steer_rad;
+     let can_payload = 90.0 - (protocol_gain * angle);
+     can_payload.clamp(0.0, 180.0)
 }

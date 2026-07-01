@@ -520,14 +520,13 @@ fn run_autonomous_mode(
     
     let mut prev_delta = 0.0;
     let dt = 0.025; // 40Hz
-    let heading_gain = 40.0; // To be tuned
 
     const TIMEOUT_MS: u128 = 100;
 
     let mut last_servo: Option<u32> = None;
 
-    controller.send_motor_command(15, FORWARD)?;
-    let speed_mps = 15.0 * (100.0 / 3600.0);
+    controller.send_motor_command(10, FORWARD)?;
+    let speed_mps = 10.0 * (100.0 / 3600.0);
     loop {
         // OVERRIDE: if human move joystick it overrides
         if let Some(input) = recv_latest_input(input_rx, Duration::from_millis(10)) {
