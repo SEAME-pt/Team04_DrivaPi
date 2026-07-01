@@ -4,8 +4,21 @@ import music
 import time
 import math
 
+# State variables
+active = False
+last_radio = 0
+last_siren = 0
+last_print = 0
+siren_state = 0
+
+# Heading smoothing buffer
+BUFFER_SIZE = 10
+x_buf = [0] * BUFFER_SIZE
+y_buf = [0] * BUFFER_SIZE
+buf_idx = 0
+
 # Initialization
-#set_volume(255)
+set_volume(128)
 music.set_tempo(bpm=120, ticks=4)
 
 # Melodies
@@ -30,8 +43,7 @@ windows_logo = Image("99099:"
                      "99099:"
                      "99099")
 
-display.show(windows_logo)
-music.play(win_xp_start)
+
 
 # Peripherals setup
 radio.on()
@@ -41,24 +53,18 @@ uart.init(baudrate=115200)
 # compass.clear_calibration()
 # compass.calibrate()
 
-def play_melody(repeat=1):
-    music.stop() 
-    display.show(Image.TRIANGLE)
-    music.play(mx_vstp * repeat, wait=False)
+def play_melody(repeat=1, melody=mx_vstp, logo=Image.TRIANGLE):
+    music.stop()
+    display.clear()
+    display.show(logo)
+    music.play(melody * repeat, wait=False)
     display.clear()
 
-# State variables
-active = False
-last_radio = 0
-last_siren = 0
-last_print = 0
-siren_state = 0
 
-# Heading smoothing buffer
-BUFFER_SIZE = 10
-x_buf = [0] * BUFFER_SIZE
-y_buf = [0] * BUFFER_SIZE
-buf_idx = 0
+play_melody(repeat=1, melody=win_xp_start, logo=windows_logo)
+
+
+
 
 def get_smoothed_heading():
     global buf_idx
