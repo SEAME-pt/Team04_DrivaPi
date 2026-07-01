@@ -1,10 +1,10 @@
 """
 Headless lane detection for driving on the RPi5 + Hailo-8.
 
-    python3 deploy_lanes_headless.py                 # driving (headless, fast)
-    python3 deploy_lanes_headless.py --debug         # also draw + show timing
-    python3 deploy_lanes_headless.py --debug --record dbg.avi
-    python3 deploy_lanes_headless.py --source clip.mp4
+    python3 deploy_lanes_headless.py                          # driving (headless, fast)
+    python3 deploy_lanes_headless.py --debug --record dbg.avi # save annotated debug video
+    python3 deploy_lanes_headless.py --source clip.mp4        # test on a video file
+    # headless: no window is shown; --debug's overlay is only useful with --record
 """
 
 import argparse
