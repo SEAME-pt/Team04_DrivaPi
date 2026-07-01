@@ -107,6 +107,23 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
     global latest_debug_frame
     batch_start_time = time.time()
 
+    width, height = 1280, 720
+    src = np.float32([
+        [200, 720],
+        [1080, 720],
+        [820, 450],
+        [460, 450]
+    ])
+
+    dst = np.float32([
+        [350, height],
+        [930, height],
+        [930, 0],
+        [350, 0],
+    ])
+
+    M = cv2.getPerspectiveTransform(src, dst)
+
     time.sleep(1)
     try:
         if True:
@@ -117,7 +134,8 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
 
                     if frame is None:
                         break
-                    #frame = cv2.rotate(frame, cv2.ROTATE_180)
+
+                    frame = cv2.warpPerspective(frame, M, (width, height))
                     h, w = frame.shape[:2]
 
                     t1 = time.time()

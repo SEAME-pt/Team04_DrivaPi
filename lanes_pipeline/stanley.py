@@ -1,7 +1,6 @@
 
 import numpy as np
 import math
-import cv2
 
 class StanleyController:
     def __init__(self):
@@ -10,22 +9,6 @@ class StanleyController:
     def compute_stanley_errors(self, lane_lines, w, h):
 
         image_center = w / 2
-
-        src = np.float32([
-            [200, 720],
-            [1080, 720],
-            [820, 450],
-            [460, 450]
-        ])
-
-        dst = np.float32([
-            [320, h],
-            [930, h],
-            [930, 0],
-            [350, 0],
-        ])
-
-        M = cv2.getPerspectiveTransform(src, dst)
 
         camera_heading = np.pi / 2
         near_row = 0.95 * h   # bottom of road (closest to car)
@@ -141,12 +124,8 @@ class StanleyController:
         lane_dx = lane_center_far_x - lane_center_near_x
         lane_dy = near_row - far_row
 
-        path_heading = math.atan2(lane_dx, -lane_dy)
+        path_heading = math.atan2(lane_dx, lane_dy)
         print(f"path_heading = {path_heading} lane_center_far = {lane_center_far_x} lane_center_near = {lane_center_near_x}")
 
-        # if path_heading < 0:
-            # path_heading += 2 * np.pi
-
-        # heading_error = camera_heading - path_heading
         self.prev_center_x = lane_center_near_x
         return closes_front_point_y, float(path_heading)
