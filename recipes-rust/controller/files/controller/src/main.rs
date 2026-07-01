@@ -526,8 +526,8 @@ fn run_autonomous_mode(
 
     let mut last_servo: Option<u32> = None;
 
-    controller.send_motor_command(10, FORWARD)?;
-    let speed_mps = 10.0 * (100.0 / 3600.0);
+    controller.send_motor_command(15, FORWARD)?;
+    let speed_mps = 15.0 * (100.0 / 3600.0);
     loop {
         // OVERRIDE: if human move joystick it overrides
         if let Some(input) = recv_latest_input(input_rx, Duration::from_millis(10)) {
@@ -564,37 +564,30 @@ fn run_autonomous_mode(
             // break;
         }
         
-        // println!(
-        //     "[PERCEPTION] valid={} conf={:.2} cte={:.5} heading={:.5} speed={speed_mps}",
-        //     p.valid,
-        //     p.confidence,
-        //     -p.cte,
-        //     -p.heading_error
-        // );
 
         if perception.valid == 1 {
+            println!(
+                "[PERCEPTION] cte={:.5} heading={:.5} speed={speed_mps}",
+                perception.closest_front_point,
+                perception.heading_error
+            );
             let observation = stanley::CameraLaneObservation {
                 closest_front_point_m: perception.closest_front_point as f64,
-                heading_error_rad: stanley::normalize_heading(perception.heading_error as f64) * heading_gain,
+                // heading_error_rad: stanley::normalize_heading(perception.heading_error as f64),
+                heading_error_rad: perception.heading_error as f64,
                 confidence: perception.confidence as f64,
             };
             
-            let delta = stanley::compute_steering(
+            let angle = stanley::compute_steering(
                 &observation,
                 speed_mps, // speed
                 prev_delta,
                 dt,
                 &config
             );
-            println!(
-                "[STANLEY] cte={:.4} heading={:.6} prev_delta={:.4}",
-                observation.closest_front_point_m,
-                observation.heading_error_rad,
-                delta
-            );
-            prev_delta = delta;
+            prev_delta = angle;
             
-            let servo_deg = stanley::steering_to_servo_deg(delta, &config) as u32;
+            let servo_deg = stanley::steering_to_servo_deg(angle, &config) as u32;
 
             if last_servo != Some(servo_deg) {
                 controller.send_servo_command(servo_deg)?;
