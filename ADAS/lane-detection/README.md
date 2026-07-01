@@ -3,12 +3,14 @@
 Lane detection for the Piracer: a CSI (Camera Serial Interface) camera frame
 runs through a YOLOv8n-seg (You Only Look Once v8 nano, segmentation) model on
 the Hailo-8 NPU (Neural Processing Unit); the host (Pi CPU) decodes it into
-per-class lane masks, smooths them over time, and fits a continuous line per
-lane. The output
-is the **lane geometry** (`lane_lines`), ready for a steering controller.
+per-class lane masks, keeps recent masks alive for a few frames to bridge short
+detection gaps (temporal persistence), and fits one or more continuous lines per
+lane class. The output is the **lane geometry** (`lane_lines`), each class maps
+to a list of fitted line arrays, ready for a steering controller.
 
 The heavy work (the neural net) runs on the Hailo chip. Everything else
-(decode, masks, temporal smoothing, line fitting) is light NumPy on the CPU.
+(decode, masks, temporal persistence, line fitting) is lightweight NumPy/OpenCV
+post-processing on the CPU.
 
 ## Layout
 
@@ -30,10 +32,14 @@ correct run should look like.
 ## Run (on the Pi)
 
 ```bash
-python3 deploy_lanes_headless.py            # driving (headless, ~30 FPS)
-python3 deploy_lanes_headless.py --debug    # also draw masks/lines + steering overlay
-python3 deploy_lanes_headless.py --source clip.mp4   # test on a video
+python3 deploy_lanes_headless.py                          # driving (headless, ~30 FPS)
+python3 deploy_lanes_headless.py --debug --record dbg.avi # save annotated debug video (masks, lines, steering)
+python3 deploy_lanes_headless.py --source clip.mp4        # test on a video file
 ```
+
+There is no on-screen window (headless). `--debug` builds the annotated overlay
+but it is only useful when saved with `--record`; `--debug` on its own just adds
+the first-inference output logging.
 
 Requirements on the Pi: `hailo_platform` (HailoRT), `opencv-python`, `numpy`,
 and `rpicam-vid` for the CSI camera.
@@ -42,8 +48,15 @@ and `rpicam-vid` for the CSI camera.
 Each frame the loop produces:
 - `lane_lines` — `{class_name: [ (N,2) float arrays in frame pixels ]}` — the
   fitted lane geometry (this is what a steering controller consumes).
-- `steering` — `(target_x, err)` starter signal (`err ∈ [-1 left, +1 right]`).
-  Replace with control logic at the `# TODO: send to control` hook.
+- `steering` — `(target_x, err)` experimental starter signal. `err` is the
+  normalized lateral offset of the detected target from the image center:
+  negative = target left of center, positive = target right of center (not
+  explicitly clamped to [-1, 1]). This is **not** a final steering controller —
+  replace it at the `# TODO: send to control` hook.
+
+`crosswalk` is detected as a segmentation class (for scene awareness / debug),
+but it is excluded from the lane-line geometry (`lane_lines`) consumed by the
+future steering controller — only the lane classes are fitted into lines.
 
 Config knobs (top of the file): `ROTATE_180` (camera mounting), `ROI_RATIO`
 (ROI = Region of Interest), `CONF_THRESH_PER_CLASS`, `TEMPORAL_MAX_AGE`,
@@ -70,13 +83,11 @@ chip (train → export to ONNX (Open Neural Network Exchange) → quantize →
 compile). The training weights and dataset are kept in the team's model/data
 store, not in this repo.
 
-> **Why v8 and not v11?** The module was originally planned around YOLO11n-seg.
-> Tested on the Hailo DFC (3.33): YOLO11n-seg **parses and quantizes**, but
-> **fails at compile** — its `C2PSA` attention block's matmul hits a Hailo-8
-> limitation (`More than one output is not supported for layer matmul1`, and it
-> can't reach the required FPS), so it never produces a working `.hef` with the
-> standard flow. YOLOv8n-seg is pure-conv, compiles cleanly (~60% utilization)
-> and is validated — hence the **deployed model is v8**.
+> **Why v8 and not v11?** YOLO11n-seg was tested but did not produce a deployable
+> Hailo-8 `.hef` with the standard DFC flow, because of its `C2PSA` attention
+> block. YOLOv8n-seg is pure-convolutional, compiles cleanly, and met the runtime
+> target, so the **deployed model is v8**.
+> (Exact DFC error and details in [compile/compilation.md](compile/compilation.md).)
 
 If you ever touch the pipeline, the one thing that's easy to get wrong: **the
 chip expects the raw image in 0–255 and does the /255 itself**, so the code must
