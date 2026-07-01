@@ -153,8 +153,6 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                     class_masks = memory.update(class_masks)
                     lane_lines = extract_lane_lines(class_masks, w, h)
 
-                    debug_frame = frame.copy()
-                    draw_debug(debug_frame, class_masks, lane_lines, None)
 
 
  
@@ -175,6 +173,19 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                         publisher.publish(cte, heading_error, confidence=1.0, valid=1)
                     else:
                         publisher.publish(0.0, 0.0, confidence=0.0, valid=0)
+
+                    
+                    debug_frame = frame.copy()
+
+                    steering_vis = None
+                    if cte is not None:
+                        target_x = (w // 2) - cte
+                        steering_vis = (target_x, cte)
+
+                    import lanes_pipeline.post_process as pp
+                    pp.LOOKAHEAD_FRAC = 0.85
+                    
+                    draw_debug(debug_frame, class_masks, lane_lines, steering_vis)
                     t5 = time.time()
 
                     n += 1
