@@ -305,6 +305,7 @@ class DrivaPiBrain:
             return
 
         target_class_id = 0 # Default: 0 = Clear/No Hazard
+        best_det = None
 
         if confirmed_detections:
             # UI priority list (index 0 = most important to show on screen)
