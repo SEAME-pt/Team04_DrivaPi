@@ -63,7 +63,7 @@ signals:
 
     void emergencyAlertReceived(int priorityLevel);
 
-	void adasVisionReceived(int classId);
+	void trafficSignReceived(int classId);
 
 private:
     /// @brief Run one subscribe-read loop for the given VSS paths.
