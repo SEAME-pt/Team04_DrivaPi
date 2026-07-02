@@ -46,7 +46,7 @@ VehicleData::VehicleData(QObject *parent)
     , m_autonomousMode(false)
     , m_settings(new QSettings(this))
     , m_watchdogTimer(new QTimer(this))
-	, m_adasClassId(0)
+    , m_trafficSignClassId(0)
 {
     loadOdometerFromSettings();
 
@@ -75,7 +75,7 @@ int VehicleData::getTemperature() const { return m_temperature; }
 QString VehicleData::getGear() const { return m_gear; }
 bool VehicleData::getAutonomousMode() const { return m_autonomousMode; }
 
-int VehicleData::getAdasClassId() const { return m_adasClassId; }
+int VehicleData::getTrafficSignClassId() const { return m_trafficSignClassId; }
 
 // ===== Setters =====
 
@@ -213,16 +213,16 @@ void VehicleData::requestOdometerReset()
     setOdometer(0);
 }
 
-void VehicleData::setAdasClassId(int classId) {
-    if (m_adasClassId != classId) {
-        m_adasClassId = classId;
-        emit adasClassIdChanged();
+void VehicleData::setTrafficSignClassId(int classId) {
+    if (m_trafficSignClassId != classId) {
+        m_trafficSignClassId = classId;
+        emit trafficSignClassIdChanged();
     }
 }
 
-void VehicleData::updateAdasVision(int classId) {
-    setAdasClassId(classId);
-    emit adasVisionChanged(classId); // Para animações QML imediatas
+void VehicleData::updateTrafficSign(int classId) {
+    setTrafficSignClassId(classId);
+    emit trafficSignChanged(classId); // For QML binding to react to traffic sign changes
 }
 
 // ===== QML methods =====

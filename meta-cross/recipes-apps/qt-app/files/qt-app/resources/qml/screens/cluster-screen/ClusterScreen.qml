@@ -398,8 +398,8 @@ Rectangle {
 			emergencyTimeoutTimer.stop();
 		}
 
-		function onAdasVisionChanged(classId) {
-			console.log("[ClusterScreen] ADAS Vision AI ID:", classId);
+		function onTrafficSignChanged(classId) {
+			console.log("[ClusterScreen] Traffic Sign/Obstacle ID:", classId);
 
 			// 0 = Clear.
 			// Do not clear immediately because the model can publish Clear very often.

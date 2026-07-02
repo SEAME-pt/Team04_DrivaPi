@@ -71,7 +71,7 @@ public:
     int     getTemperature() const;
     QString getGear() const;
     bool    getAutonomousMode() const;
-	int getAdasClassId() const;
+    int     getTrafficSignClassId() const;
 
     // ===== Setters =====
     void    setSpeed(float mps);
@@ -103,7 +103,7 @@ public slots:
     /// @brief Process CAN frame and update vehicle data.
     void handleCanMessage(const QByteArray &payload, uint32_t canId);
 	void updateEmergencyAlert(int priorityLevel);
-	void setAdasClassId(int classId);
+    void setTrafficSignClassId(int classId);
     void updateTrafficSign(int classId);
 
 signals:
@@ -126,7 +126,7 @@ signals:
 
 	void emergencyAlertChanged(int priorityLevel);
 
-	void adasClassIdChanged();
+    void trafficSignClassIdChanged();
 	void trafficSignChanged(int classId);
 
 private slots:
@@ -152,7 +152,7 @@ private:
     int     m_temperature;
     bool    m_autonomousMode;
 
-	int m_adasClassId = 0;
+    int     m_trafficSignClassId = 0;
 
     // ===== Persistence =====
     QSettings *m_settings;
