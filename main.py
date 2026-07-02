@@ -179,7 +179,7 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                         steering_vis = (target_x, cte)
 
                     import lanes_pipeline.post_process as pp
-                    pp.LOOKAHEAD_FRAC = 0.85
+                    pp.LOOKAHEAD_FRAC = 0.75
                     
                     draw_debug(debug_frame, class_masks, lane_lines, steering_vis)
                     
