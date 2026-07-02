@@ -39,8 +39,6 @@ def generate():
     while True:
         with debug_lock:
             frame = latest_debug_frame
-            #frame = cv2.rotate(frame, cv2.ROTATE_180)
-
 
         if frame is None:
             time.sleep(0.01)
@@ -173,20 +171,20 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                         publisher.publish(0.0, 0.0, confidence=0.0, valid=0)
 
                     
-                    # debug_frame = frame.copy()
+                    debug_frame = frame.copy()
 
-                    # steering_vis = None
-                    # if cte is not None:
-                        # target_x = (w // 2) - cte
-                        # steering_vis = (target_x, cte)
+                    steering_vis = None
+                    if cte is not None:
+                        target_x = (w // 2) - cte
+                        steering_vis = (target_x, cte)
 
-                    # import lanes_pipeline.post_process as pp
-                    # pp.LOOKAHEAD_FRAC = 0.85
+                    import lanes_pipeline.post_process as pp
+                    pp.LOOKAHEAD_FRAC = 0.85
                     
-                    # draw_debug(debug_frame, class_masks, lane_lines, steering_vis)
+                    draw_debug(debug_frame, class_masks, lane_lines, steering_vis)
                     
-                    # with debug_lock:
-                        # latest_debug_frame = debug_frame
+                    with debug_lock:
+                        latest_debug_frame = debug_frame
                     t5 = time.time()
 
                     n += 1
@@ -330,13 +328,13 @@ def main():
     return 0
 
 if __name__ == "__main__":
-    # threading.Thread(
-        # target=lambda: app.run(
-            # host="0.0.0.0",
-            # port=5000,
-            # threaded=True,
-            # use_reloader=False
-        # ),
-        # daemon=True
-    # ).start()
+    threading.Thread(
+        target=lambda: app.run(
+            host="0.0.0.0",
+            port=5000,
+            threaded=True,
+            use_reloader=False
+        ),
+        daemon=True
+    ).start()
     main()

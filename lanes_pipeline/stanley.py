@@ -12,7 +12,7 @@ class StanleyController:
 
         camera_heading = np.pi / 2
         near_row = 0.95 * h   # bottom of road (closest to car)
-        far_row  = 0.70 * h   # mid-road (lookahead)
+        far_row  = 0.85 * h   # mid-road (lookahead)
         #print(f"near_row = {near_row} far_row = {far_row} height = {h}")
         all_y = []
 
