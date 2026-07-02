@@ -46,7 +46,7 @@ class VehicleData : public QObject
     Q_PROPERTY(int temperature READ getTemperature WRITE setTemperature NOTIFY temperatureChanged)
 
     Q_PROPERTY(int odometer READ getOdometer NOTIFY odometerChanged)
-	Q_PROPERTY(int adasClassId READ getAdasClassId WRITE setAdasClassId NOTIFY adasClassIdChanged)
+	Q_PROPERTY(int trafficSignClassId READ getTrafficSignClassId WRITE setTrafficSignClassId NOTIFY trafficSignClassIdChanged)
 
 public:
     /// @brief Construct VehicleData.
@@ -104,7 +104,7 @@ public slots:
     void handleCanMessage(const QByteArray &payload, uint32_t canId);
 	void updateEmergencyAlert(int priorityLevel);
 	void setAdasClassId(int classId);
-    void updateAdasVision(int classId);
+    void updateTrafficSign(int classId);
 
 signals:
     void speedChanged();
@@ -127,7 +127,7 @@ signals:
 	void emergencyAlertChanged(int priorityLevel);
 
 	void adasClassIdChanged();
-	void adasVisionChanged(int classId);
+	void trafficSignChanged(int classId);
 
 private slots:
     /// @brief Check all properties for staleness (timestamps exceed threshold).
