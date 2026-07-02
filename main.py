@@ -132,7 +132,6 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
 
                     if frame is None:
                         break
-                    # frame = cv2.warpPerspective(frame, M, (width, height))
 
                     h, w = frame.shape[:2]
 
@@ -150,14 +149,6 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                     class_masks = build_class_masks(detections, proto)
                     class_masks = memory.update(class_masks)
                     lane_lines = extract_lane_lines(class_masks, w, h)
-
-
-
- 
-                    # cv2.imshow("Car View", debug_frame)
-                    # cv2.waitKey(1)
-
-
 
                     t4 = time.time()
 
@@ -182,7 +173,31 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                     pp.LOOKAHEAD_FRAC = 0.75
                     
                     draw_debug(debug_frame, class_masks, lane_lines, steering_vis)
-                    
+
+                    purple_color = (180, 105, 255)
+                                        
+                    # 1. Far Lookahead Horizontal Line (0.75 * h)
+                    y_far = int(0.75 * h)
+                    cv2.line(debug_frame, (0, y_far), (w, y_far), purple_color, 2, cv2.LINE_AA)
+                    cv2.putText(debug_frame, "FAR LOOKAHEAD (0.75)", (15, y_far - 8),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, purple_color, 1, cv2.LINE_AA)
+
+                    # 2. Near Bumper Horizontal Line (0.95 * h)
+                    y_near = int(0.95 * h)
+                    cv2.line(debug_frame, (0, y_near), (w, y_near), purple_color, 1, cv2.LINE_4)
+                    cv2.putText(debug_frame, "NEAR BUMPER (0.95)", (15, y_near - 8),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, purple_color, 1, cv2.LINE_AA)
+                                
+                    # 3. Draw intercepts on the lines if a tracking solution is valid
+                    if stanley_result is not None:
+                        # Reconstruct where the centerline calculation sits on both planes
+                        cv2.circle(debug_frame, (int((w // 2) - cte), y_near), 5, purple_color, -1)
+                        
+                        # Calculate where the far lookahead projected point is sitting
+                        lane_dx = lane_center_far_x - lane_center_near_x if 'lane_center_far_x' in locals() else 0
+                        cv2.circle(debug_frame, (int((w // 2) - cte + lane_dx), y_far), 5, purple_color, -1)
+
+                        
                     with debug_lock:
                         latest_debug_frame = debug_frame
                     t5 = time.time()
