@@ -286,7 +286,7 @@ def main():
     # ─── OPTIMIZATION: ENABLE MONITORED SCHEDULER ───
     print("[*] Instantiating VDevice with Monitored Scheduler...", flush=True)
     params = VDevice.create_params()
-    params.scheduling_algorithm = HailoSchedulingAlgorithm.MONITORED
+    params.scheduling_algorithm = HailoSchedulingAlgorithm.ROUND_ROBIN
 
     with VDevice(params=params) as target:
         print("[*] Configuring lane network...", flush=True)
