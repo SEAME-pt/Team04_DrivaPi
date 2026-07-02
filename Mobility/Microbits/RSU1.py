@@ -15,11 +15,9 @@ R_TIME = 10000
 EVP_HOLD_TIME = 7000
 COOLDOWN_TIME = 5000
 
-
 radio.on()
 radio.config(group=42, power=POWER_LEVEL)
 uart.init(baudrate=115200)
-
 
 mode = "NORMAL"
 l_state = "R"

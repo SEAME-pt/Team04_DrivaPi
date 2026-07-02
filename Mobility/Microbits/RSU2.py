@@ -19,23 +19,46 @@ radio.on()
 radio.config(group=42, power=POWER_LEVEL)
 uart.init(baudrate=115200)
 
-def set_lights(r, y, g):
-    pin0.write_digital(r)
-    pin1.write_digital(y)
-    pin2.write_digital(g)
-    
-    # Send state to Pi 4 via USB
-    state = "R" if r else ("Y" if y else "G")
-    print("MQTT|" + MY_ID + "/state|" + state)
-
-set_lights(1, 0, 0)
 mode = "NORMAL"
 l_state = "R"
 last_t = time.ticks_ms()
+now = 0
 my_rssi = -999
 bidding_end = 0
 cooldown_end = 0
 last_print = 0
+packet = None
+
+def main():
+    global mode, l_state, last_t, now, my_rssi,\
+            bidding_end, cooldown_end, last_print, packet
+    print(MY_ID + " BOOTED. GATE SET TO: " + str(EXPECTED_HEADING))
+    l_state = set_lights("R")
+    
+    while True:
+        now = time.ticks_ms()
+        current_h = get_upright_heading()
+        
+        # (Optional: Uncomment to see live heading, but it spams the MQTT bridge!)
+        # if time.ticks_diff(now, last_print) > 1000:
+        #     print(MY_ID + " LIVE PHYSICAL HEADING:", current_h)
+        #     last_print = now
+            
+        packet = radio.receive_full()
+        
+        button_handler()
+        packet_handler()
+        emergency_logic()        
+        semaphore_logic()
+
+def set_lights(state):
+    pin0.write_digital(1 if state == "R" else 0)
+    pin1.write_digital(1 if state == "Y" else 0)
+    pin2.write_digital(1 if state == "G" else 0)
+
+    # Send state to Pi 4 via USB
+    print("MQTT|" + MY_ID + "/state|" + state)
+    return state
 
 def get_upright_heading():
     x = compass.get_x()
@@ -55,32 +78,68 @@ def is_valid_approach(amb_h):
         diff = 360 - diff
     return diff <= TOLERANCE
 
-print(MY_ID + " BOOTED. GATE SET TO: " + str(EXPECTED_HEADING))
+def emergency_logic():
+    global mode, l_state, last_t, now, my_rssi, bidding_end, cooldown_end
+    if mode == "EVP_EVAL" and now > bidding_end:
+        mode = "EVP_HOLD"
+        last_t = now
 
-while True:
-    now = time.ticks_ms()
-    current_h = get_upright_heading()
-    
-    # (Optional: Uncomment to see live heading, but it spams the MQTT bridge!)
-    # if time.ticks_diff(now, last_print) > 1000:
-    #     print(MY_ID + " LIVE PHYSICAL HEADING:", current_h)
-    #     last_print = now
-        
-    packet = radio.receive_full()
-    
+        # 1. TELL THE NETWORK THE EMERGENCY HAS STARTED
+        print("MQTT|" + MY_ID + "/emergency|ON")
+        if my_rssi > -999:
+            l_state = set_lights("G")
+        else:
+            if l_state == "G":
+                l_state = set_lights("Y")
+            else:
+                l_state = set_lights("R")                 
+    if mode == "EVP_HOLD":
+        if my_rssi <= -999 and l_state == "Y" and time.ticks_diff(now, last_t) > Y_TIME:
+            l_state = set_lights("R")
+            
+        if time.ticks_diff(now, last_t) > EVP_HOLD_TIME:
+            mode = "NORMAL"
+            cooldown_end = now + COOLDOWN_TIME
+            last_t = now
+            
+            # 2. TELL THE NETWORK THE EMERGENCY IS OVER
+            print("MQTT|" + MY_ID + "/emergency|OFF")
+            
+            if MY_ID == "RSU1":
+                l_state = set_lights("G")
+            else:
+                l_state = set_lights("R")
+
+def semaphore_logic():
+    global mode, l_state, now, last_t
+    if mode == "NORMAL":
+        elapsed = time.ticks_diff(now, last_t)
+        if l_state == "R" and elapsed > R_TIME:
+            l_state = set_lights("G")
+            last_t = now
+        elif l_state == "G" and elapsed > G_TIME:
+            l_state = set_lights("Y")
+            last_t = now
+        elif l_state == "Y" and elapsed > Y_TIME:
+            l_state = set_lights("R")
+            last_t = now
+
+def button_handler():
+    global mode, l_state, last_t, now, my_rssi, bidding_end, cooldown_end
     if button_b.was_pressed():
         mode = "NORMAL"
-        l_state = "R"
-        set_lights(1, 0, 0)
+        l_state = set_lights("R")
         last_t = now
         cooldown_end = 0
-        
+            
     if button_a.was_pressed():
         mode = "EVP_EVAL"
         my_rssi = 0 
         bidding_end = now + 50
         radio.send(MY_ID + "|0")
-        
+
+def packet_handler():
+    global mode, l_state, last_t, now, my_rssi, bidding_end, cooldown_end, packet
     if packet:
         try:
             msg = packet[0][3:].decode('utf-8')
@@ -114,57 +173,5 @@ while True:
                         my_rssi = -999 
                 except:
                     pass
-                    
-    # --- EMERGENCY LOGIC TRIGGER ---
-    if mode == "EVP_EVAL" and now > bidding_end:
-        mode = "EVP_HOLD"
-        last_t = now
-        
-        # 1. TELL THE NETWORK THE EMERGENCY HAS STARTED
-        print("MQTT|" + MY_ID + "/emergency|ON")
-        
-        if my_rssi > -999:
-            l_state = "G"
-            set_lights(0, 0, 1)
-        else:
-            if l_state == "G":
-                l_state = "Y"
-                set_lights(0, 1, 0)
-            else:
-                l_state = "R"
-                set_lights(1, 0, 0)
-                
-    if mode == "EVP_HOLD":
-        if my_rssi <= -999 and l_state == "Y" and time.ticks_diff(now, last_t) > Y_TIME:
-            l_state = "R"
-            set_lights(1, 0, 0)
-            
-        if time.ticks_diff(now, last_t) > EVP_HOLD_TIME:
-            mode = "NORMAL"
-            cooldown_end = now + COOLDOWN_TIME
-            last_t = now
-            
-            # 2. TELL THE NETWORK THE EMERGENCY IS OVER
-            print("MQTT|" + MY_ID + "/emergency|OFF")
-            
-            if MY_ID == "RSU1":
-                l_state = "G"
-                set_lights(0, 0, 1)
-            else:
-                l_state = "R"
-                set_lights(1, 0, 0)
-                
-    if mode == "NORMAL":
-        elapsed = time.ticks_diff(now, last_t)
-        if l_state == "R" and elapsed > R_TIME:
-            l_state = "G"
-            set_lights(0, 0, 1)
-            last_t = now
-        elif l_state == "G" and elapsed > G_TIME:
-            l_state = "Y"
-            set_lights(0, 1, 0)
-            last_t = now
-        elif l_state == "Y" and elapsed > Y_TIME:
-            l_state = "R"
-            set_lights(1, 0, 0)
-            last_t = now
+
+main()
