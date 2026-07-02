@@ -12,7 +12,7 @@ class StanleyController:
 
         camera_heading = np.pi / 2
         near_row = 0.95 * h   # bottom of road (closest to car)
-        far_row  = 0.85 * h   # mid-road (lookahead)
+        far_row  = 0.70 * h   # mid-road (lookahead)
         #print(f"near_row = {near_row} far_row = {far_row} height = {h}")
         all_y = []
 
@@ -55,10 +55,10 @@ class StanleyController:
 
             dx = far_x - near_x
             slope = dx / y_diff
-            print(f"far_x = {far_x} near_x = {near_x} slope = {slope:.6} dx = {dx:.6}")
+            # print(f"far_x = {far_x} near_x = {near_x} slope = {slope:.6} dx = {dx:.6}")
 
-            #if abs(dx) < 1.5:
-                #continue
+            if abs(dx) < 1.5:
+                continue
 
             filtered.append((near_x, far_x))
 
@@ -126,7 +126,7 @@ class StanleyController:
         lane_dy = near_row - far_row
 
         path_heading = math.atan2(-lane_dx, lane_dy)
-        print(f"path_heading = {path_heading} lane_center_far_x = {lane_center_far_x} lane_center_near_x = {lane_center_near_x}")
+        # print(f"path_heading = {path_heading} lane_center_far_x = {lane_center_far_x} lane_center_near_x = {lane_center_near_x}")
 
         self.prev_center_x = lane_center_near_x
         return closes_front_point_y, float(path_heading)

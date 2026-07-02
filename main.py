@@ -159,8 +159,6 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                     # cv2.imshow("Car View", debug_frame)
                     # cv2.waitKey(1)
 
-                    with debug_lock:
-                        latest_debug_frame = debug_frame
 
 
                     t4 = time.time()
@@ -175,17 +173,20 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                         publisher.publish(0.0, 0.0, confidence=0.0, valid=0)
 
                     
-                    debug_frame = frame.copy()
+                    # debug_frame = frame.copy()
 
-                    steering_vis = None
-                    if cte is not None:
-                        target_x = (w // 2) - cte
-                        steering_vis = (target_x, cte)
+                    # steering_vis = None
+                    # if cte is not None:
+                        # target_x = (w // 2) - cte
+                        # steering_vis = (target_x, cte)
 
-                    import lanes_pipeline.post_process as pp
-                    pp.LOOKAHEAD_FRAC = 0.85
+                    # import lanes_pipeline.post_process as pp
+                    # pp.LOOKAHEAD_FRAC = 0.85
                     
-                    draw_debug(debug_frame, class_masks, lane_lines, steering_vis)
+                    # draw_debug(debug_frame, class_masks, lane_lines, steering_vis)
+                    
+                    # with debug_lock:
+                        # latest_debug_frame = debug_frame
                     t5 = time.time()
 
                     n += 1
@@ -306,20 +307,19 @@ def main():
         obstacle_pipeline_thread.start()
 
 
-        cv2.namedWindow("Lane", cv2.WINDOW_NORMAL)
-        cv2.setWindowProperty("Lane", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+        # cv2.namedWindow("Lane", cv2.WINDOW_NORMAL)
+        # cv2.setWindowProperty("Lane", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         
-        while True:
-            with debug_lock:
-                frame = latest_debug_frame if latest_debug_frame is not None else None
-                #frame = cv2.rotate(frame, cv2.ROTATE_180)
+        # while True:
+            # with debug_lock:
+                # frame = latest_debug_frame if latest_debug_frame is not None else None
 
-            if frame is not None:
-                cv2.imshow("Lane", frame)
+            # if frame is not None:
+                # cv2.imshow("Lane", frame)
         
-            key = cv2.waitKey(1)
-            if key == 27:  # ESC
-                break
+            # key = cv2.waitKey(1)
+            # if key == 27:  # ESC
+                # break
 
         lanes_pipeline_thread.join()
         obstacle_pipeline_thread.join()
@@ -330,13 +330,13 @@ def main():
     return 0
 
 if __name__ == "__main__":
-    threading.Thread(
-        target=lambda: app.run(
-            host="0.0.0.0",
-            port=5000,
-            threaded=True,
-            use_reloader=False
-        ),
-        daemon=True
-    ).start()
+    # threading.Thread(
+        # target=lambda: app.run(
+            # host="0.0.0.0",
+            # port=5000,
+            # threaded=True,
+            # use_reloader=False
+        # ),
+        # daemon=True
+    # ).start()
     main()
