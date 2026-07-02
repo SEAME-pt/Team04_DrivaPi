@@ -138,10 +138,9 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                     t1 = time.time()
                     preprocessed_frame = preprocess(frame, 640, 0.35)
 
-                    with npu_lock:
-                        with network_group.activate():
-                            t2 = time.time()
-                            raw = pipeline.infer({in_name: preprocessed_frame})
+
+                    t2 = time.time()
+                    raw = pipeline.infer({in_name: preprocessed_frame})
 
 
                     t3 = time.time()
@@ -280,13 +279,14 @@ def main():
     lane_in_name = lane_hef.get_input_vstream_infos()[0].name
     lane_cfg = ConfigureParams.create_from_hef(lane_hef, interface=HailoStreamInterface.PCIe)
 
-
     obstacle_hef = HEF(str(args.obstacle_hef))
     obstacle_in_name = obstacle_hef.get_input_vstream_infos()[0].name
     obstacle_cfg = ConfigureParams.create_from_hef(obstacle_hef, interface=HailoStreamInterface.PCIe)
 
-    print("[*] Instantiating Clean VDevice (No Scheduler)...", flush=True)
+    # ─── OPTIMIZATION: ENABLE MONITORED SCHEDULER ───
+    print("[*] Instantiating VDevice with Monitored Scheduler...", flush=True)
     params = VDevice.create_params()
+    params.scheduling_algorithm = HailoSchedulingAlgorithm.MONITORED
 
     with VDevice(params=params) as target:
         print("[*] Configuring lane network...", flush=True)
@@ -304,9 +304,11 @@ def main():
         lane_out_p = OutputVStreamParams.make(lane_ng, format_type=FormatType.FLOAT32)
         obstacle_in_p = InputVStreamParams.make(obstacle_ng, format_type=FormatType.FLOAT32)
         obstacle_out_p = OutputVStreamParams.make(obstacle_ng, format_type=FormatType.FLOAT32)
-        print("🚀 Launching threads! (Move .activate() contexts inside your loop functions)", flush=True)
+        
+        print("🚀 Launching threads to async queues!", flush=True)
         systemd_notify_ready()
         detector = DrivaPiInference()
+        
         lanes_pipeline_thread = threading.Thread(
            target=lanes_thread,
            args=(args.source, args.debug, args.record, lane_in_name, camera.get_frame, lane_ng, lane_in_p, lane_out_p, 1)
@@ -319,28 +321,12 @@ def main():
         lanes_pipeline_thread.start()
         obstacle_pipeline_thread.start()
 
-
-        # cv2.namedWindow("Lane", cv2.WINDOW_NORMAL)
-        # cv2.setWindowProperty("Lane", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-        
-        # while True:
-            # with debug_lock:
-                # frame = latest_debug_frame if latest_debug_frame is not None else None
-
-            # if frame is not None:
-                # cv2.imshow("Lane", frame)
-        
-            # key = cv2.waitKey(1)
-            # if key == 27:  # ESC
-                # break
-
         lanes_pipeline_thread.join()
         obstacle_pipeline_thread.join()
 
     camera.close()
-    while True:
-        time.sleep(1)
     return 0
+
 
 if __name__ == "__main__":
     threading.Thread(
