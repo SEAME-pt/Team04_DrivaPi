@@ -170,16 +170,16 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                         steering_vis = (target_x, cte)
 
                     import lanes_pipeline.post_process as pp
-                    pp.LOOKAHEAD_FRAC = 0.75
+                    pp.LOOKAHEAD_FRAC = 0.70
                     
                     draw_debug(debug_frame, class_masks, lane_lines, steering_vis)
 
                     purple_color = (180, 105, 255)
                                         
-                    # 1. Far Lookahead Horizontal Line (0.75 * h)
-                    y_far = int(0.75 * h)
+                    # 1. Far Lookahead Horizontal Line (pp.LOOKAHEAD_FRAC * h)
+                    y_far = int(pp.LOOKAHEAD_FRAC * h)
                     cv2.line(debug_frame, (0, y_far), (w, y_far), purple_color, 2, cv2.LINE_AA)
-                    cv2.putText(debug_frame, "FAR LOOKAHEAD (0.75)", (15, y_far - 8),
+                    cv2.putText(debug_frame, "FAR LOOKAHEAD (0.70)", (15, y_far - 8),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, purple_color, 1, cv2.LINE_AA)
 
                     # 2. Near Bumper Horizontal Line (0.95 * h)
