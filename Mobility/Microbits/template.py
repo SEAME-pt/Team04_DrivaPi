@@ -4,8 +4,8 @@ import time
 import random
 import math
 
-MY_ID = "RSU2"
-EXPECTED_HEADING = 240
+MY_ID = __MY_ID__
+EXPECTED_HEADING = __EXPECTED_HEADING__
 TOLERANCE = 30
 POWER_LEVEL = 2
 
@@ -29,12 +29,38 @@ cooldown_end = 0
 last_print = 0
 packet = None
 
+one = Image("00009:"
+            "99999:"
+            "09009:"
+            "00000:"
+            "00000")
+
+two = Image("09009:"
+            "90909:"
+            "90099:"
+            "00000:"
+            "00000")
+
+three = Image("09990:"
+              "90909:"
+              "90009:"
+              "00000:"
+              "00000")
+
+def display_number():
+    if MY_ID == "RSU1":
+        display.show(one)
+    elif MY_ID == "RSU2":
+        display.show(two)
+    elif MY_ID == "RSU3":
+        display.show(three)
+
 def main():
     global mode, l_state, last_t, now, my_rssi,\
             bidding_end, cooldown_end, last_print, packet
     print(MY_ID + " BOOTED. GATE SET TO: " + str(EXPECTED_HEADING))
     l_state = set_lights("R")
-    
+    display_number()
     while True:
         now = time.ticks_ms()
         current_h = get_upright_heading()
