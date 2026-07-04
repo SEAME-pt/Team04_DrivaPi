@@ -5,7 +5,7 @@ import numpy as np
 import cv2
 
 class CameraStream:
-    def __init__(self, source=None, cam_w=1280, cam_h=720):
+    def __init__(self, source=None, cam_w=640, cam_h=360):
         self.source = source
         self.cam_w = cam_w
         self.cam_h = cam_h
