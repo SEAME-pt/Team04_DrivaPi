@@ -113,6 +113,8 @@ public slots:
 	void updateEmergencyAlert(int priorityLevel);
     void setTrafficSignClassId(int classId);
     void updateTrafficSign(int classId);
+	void setLaneOffset(float offset);
+	void setLaneHeading(float heading);
 
 signals:
     void speedChanged();

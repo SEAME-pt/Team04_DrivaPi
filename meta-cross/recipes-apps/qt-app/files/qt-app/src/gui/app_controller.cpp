@@ -133,6 +133,14 @@ int AppController::run(QGuiApplication& app)
                          vehicleData.get(), &VehicleData::updateEmergencyAlert,
                          Qt::QueuedConnection);
 
+		QObject::connect(kuksaReader, &kuksa::KuksaReader::laneOffsetReceived,
+						vehicleData.get(), &VehicleData::setLaneOffset,
+						Qt::QueuedConnection);
+
+		QObject::connect(kuksaReader, &kuksa::KuksaReader::laneHeadingReceived,
+						vehicleData.get(), &VehicleData::setLaneHeading,
+						Qt::QueuedConnection);
+
         QObject::connect(kuksaReader, &kuksa::KuksaReader::errorOccurred,
                          [](const QString& err) { qCritical() << "[KUKSA]" << err; });
     }
