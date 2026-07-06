@@ -96,14 +96,21 @@ minicom -b 115200 -D /dev/ttyACM0 | head -100 > rtt_results.txt
 ---
 
 ## 6. Conclusions & Statistical Analysis
-*(Space reserved for math and conclusions based on the `rtt_results.txt` output)*
 
-**Metrics to calculate:**
+**Metrics calculated from `serial_output.txt`:**
 * **Total Samples:** 100
-* **Average Latency (Mean RTT):** [To be calculated] ms
-* **Minimum Latency:** [To be calculated] ms
-* **Maximum Latency:** [To be calculated] ms
-* **Jitter (Variance):** [To be calculated] ms
+* **Average Latency (Mean RTT):** 139.80 ms
+* **Minimum Latency:** 10 ms
+* **Maximum Latency:** 800 ms
+* **Jitter (Variance):** 21741.96 ms² *(Standard Deviation: 147.45 ms | Network Jitter: 148.08 ms)*
 
 **Analysis:**
-* *[Insert your findings here: Is the latency acceptable for an emergency application? Are there any massive spikes? Did all 100 packets make it back?]*
+* **Packet Delivery & Loss:** All 100 packets were successfully captured and recorded. This represents a 100% packet delivery rate (0% packet loss), meaning the transmission medium is reliable in terms of data integrity, though highly unstable in timing.
+* **Latency Spikes:** The dataset shows severe and unpredictable latency spikes. Although the hardware is capable of a very fast minimum response time of 10 ms, the maximum latency reaches an extreme peak of 800 ms. Out of the 100 collected samples, 14% of the packets (14 samples) suffer from high delays ≥ 300 ms, which pulls the overall average RTT up to 139.80 ms.
+* **Emergency Application Suitability:** **No, this latency profile is completely unacceptable for a critical emergency application.** Safety-critical systems require highly predictable, stable, and low-latency communication (typically consistently under 50 ms to 100 ms). 
+* **Jitter Impact:** The exceptionally high variance (21741.96 ms²) and an average step-to-step network jitter of 148.08 ms indicate that the arrival time of data is highly unstable. A massive delay like 800 ms could mean the difference between a successful emergency shutdown and a catastrophic system failure. 
+* **Recommendations:** Before deploying, you must investigate the root cause of these periodic spikes. Common reasons include:
+  1. Microcontroller blocking loops (e.g., using `delay()` instead of non-blocking timers).
+  2. Wi-Fi or network congestion if the MQTT broker is remote.
+  3. Misconfigured MQTT QoS (Quality of Service) levels causing heavy acknowledgment overhead.
+  4. Serial port buffer delays or reading bottlenecks.
