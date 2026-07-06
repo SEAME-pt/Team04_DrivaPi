@@ -47,6 +47,8 @@ VehicleData::VehicleData(QObject *parent)
     , m_settings(new QSettings(this))
     , m_watchdogTimer(new QTimer(this))
     , m_trafficSignClassId(0)
+	, m_laneOffset(0.0f)
+	, m_laneHeading(0.0f)
 {
     loadOdometerFromSettings();
 
@@ -76,6 +78,8 @@ QString VehicleData::getGear() const { return m_gear; }
 bool VehicleData::getAutonomousMode() const { return m_autonomousMode; }
 
 int VehicleData::getTrafficSignClassId() const { return m_trafficSignClassId; }
+float VehicleData::getLaneOffset() const { return m_laneOffset; }
+float VehicleData::getLaneHeading() const { return m_laneHeading; }
 
 // ===== Setters =====
 
@@ -225,6 +229,22 @@ void VehicleData::updateTrafficSign(int classId) {
     emit trafficSignChanged(classId); // For QML binding to react to traffic sign changes
 }
 
+void VehicleData::setLaneOffset(float offset) {
+	if (!qFuzzyCompare(m_laneOffset, offset)) {
+		m_laneOffset = offset;
+		emit laneOffsetChanged();
+	}
+	updateTimestamp("laneOffset");
+}
+
+void VehicleData::setLaneHeading(float heading) {
+	if (!qFuzzyCompare(m_laneHeading, heading)) {
+		m_laneHeading = heading;
+		emit laneHeadingChanged();
+	}
+	updateTimestamp("laneHeading");
+}
+
 // ===== QML methods =====
 void VehicleData::toggleAutonomousMode()
 {
@@ -242,6 +262,8 @@ void VehicleData::resetValues()
     setStm32Humidity(0.0f);
 
     setGear("N");
+    setLaneOffset(0.0f);
+    setLaneHeading(0.0f);
 }
 
 void VehicleData::resetTrip()
@@ -353,7 +375,8 @@ void VehicleData::checkStaleProperties()
 
     const QStringList others = {
         "energy", "stm32Battery", "stm32BatteryVoltage", "stm32Temperature", "stm32Humidity",
-        "rpiBattery", "rpiBatteryVoltage", "rpiBatteryCurrent", "distance", "odo", "gear", "temperature", "autonomousMode"
+        "rpiBattery", "rpiBatteryVoltage", "rpiBatteryCurrent", "distance", "odo", "gear",
+		"temperature", "autonomousMode", "laneOffset", "laneHeading"
     };
 
     for (const QString& p : others) {

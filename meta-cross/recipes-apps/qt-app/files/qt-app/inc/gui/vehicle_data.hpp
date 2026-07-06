@@ -48,7 +48,11 @@ class VehicleData : public QObject
     Q_PROPERTY(int odometer READ getOdometer NOTIFY odometerChanged)
 	Q_PROPERTY(int trafficSignClassId READ getTrafficSignClassId WRITE setTrafficSignClassId NOTIFY trafficSignClassIdChanged)
 
-public:
+	// Lane detection properties
+	Q_PROPERTY(float laneOffset READ getLaneOffset WRITE setLaneOffset NOTIFY laneOffsetChanged)
+    Q_PROPERTY(float laneHeading READ getLaneHeading WRITE setLaneHeading NOTIFY laneHeadingChanged)
+
+	public:
     /// @brief Construct VehicleData.
     explicit VehicleData(QObject *parent = nullptr);
     /// @brief Destructor.
@@ -72,6 +76,8 @@ public:
     QString getGear() const;
     bool    getAutonomousMode() const;
     int     getTrafficSignClassId() const;
+	float   getLaneOffset() const;
+	float   getLaneHeading() const;
 
     // ===== Setters =====
     void    setSpeed(float mps);
@@ -89,6 +95,8 @@ public:
     void    setGear(const QString &gear);
     void    setTemperature(int temperature);
     void    setAutonomousMode(bool mode);
+    void    setLaneOffset(float offset);
+    void    setLaneHeading(float heading);
 
     // ===== QML-Invokable Methods =====
     Q_INVOKABLE void toggleAutonomousMode();
@@ -129,6 +137,9 @@ signals:
     void trafficSignClassIdChanged();
 	void trafficSignChanged(int classId);
 
+	void laneOffsetChanged();
+	void laneHeadingChanged();
+
 private slots:
     /// @brief Check all properties for staleness (timestamps exceed threshold).
     void checkStaleProperties();
@@ -153,6 +164,8 @@ private:
     bool    m_autonomousMode;
 
     int     m_trafficSignClassId = 0;
+    float   m_laneOffset;
+    float   m_laneHeading;
 
     // ===== Persistence =====
     QSettings *m_settings;
