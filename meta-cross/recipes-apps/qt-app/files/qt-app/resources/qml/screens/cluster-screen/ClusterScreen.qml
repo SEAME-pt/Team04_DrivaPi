@@ -37,10 +37,12 @@ Rectangle {
     // V2X Emergency State
     property bool emergencyPriorityActive: false
     property int emergencyPriorityLevel: 0
-    // A flag de demo agora deve estar a false para produção
+	property string emergencyMessage: ""
+	property url emergencyIconSource: ""
     property bool demoEmergencyAlert: false
 
-    property int speedLimitValue: vehicleDataAvailable && vehicleData.speedLimit ? Math.round(vehicleData.speedLimit) : 120
+    property int speedLimitValue: 0
+	property bool speedLimitActive: false
     property real currentSpeed: vehicleDataAvailable && vehicleData.speed ? vehicleData.speed : 0
     property int stm32Battery: vehicleDataAvailable && vehicleData.stm32Battery !== undefined ? vehicleData.stm32Battery : 0
     property int rpiBattery: vehicleDataAvailable && vehicleData.rpiBattery !== undefined ? vehicleData.rpiBattery : 0
@@ -242,14 +244,25 @@ Rectangle {
                                 spacing: 14 * root.s
 
                                 SpeedLimitIndicator {
-                                    Layout.preferredWidth: 120 * root.s
-                                    Layout.preferredHeight: 120 * root.s
-                                    Layout.alignment: Qt.AlignVCenter
-                                    z: 1
-                                    vehicleDataAvailable: root.vehicleDataAvailable
-                                    speedLimitValue: root.speedLimitValue
-                                    s: root.s
-                                }
+									Layout.preferredWidth: 105 * root.s
+									Layout.preferredHeight: 105 * root.s
+									Layout.alignment: Qt.AlignVCenter
+									z: 1
+
+									visible: root.speedLimitActive
+									opacity: root.speedLimitActive ? 1.0 : 0.0
+
+									vehicleDataAvailable: root.vehicleDataAvailable
+									speedLimitValue: root.speedLimitValue
+									s: root.s
+
+									Behavior on opacity {
+										NumberAnimation {
+											duration: 180
+											easing.type: Easing.OutQuad
+										}
+									}
+								}
                                 Item { Layout.fillWidth: true }
                             }
                         }
@@ -310,53 +323,204 @@ Rectangle {
         }
     }
 
+	function adasSign(fileName) {
+		return Qt.resolvedUrl("../../../assets/adas-signs/" + fileName);
+	}
+
+	function showAdasSign(fileName, priorityLevel, message) {
+		root.emergencyIconSource = adasSign(fileName);
+		root.emergencyMessage = message || "";
+		root.emergencyPriorityLevel = priorityLevel;
+		root.emergencyPriorityActive = true;
+
+		console.log("[ClusterScreen] ADAS SIGN ALERT:",
+					fileName,
+					root.emergencyIconSource,
+					"priority=",
+					priorityLevel,
+					"message=",
+					root.emergencyMessage);
+
+		emergencyTimeoutTimer.restart();
+	}
+
+	function showSpeedLimit(limitValue) {
+		root.speedLimitValue = limitValue;
+		root.speedLimitActive = true;
+
+		console.log("[ClusterScreen] SPEED LIMIT ALERT:", limitValue);
+
+		speedLimitTimeoutTimer.restart();
+	}
+
+	function showTextAlert(message, priorityLevel) {
+		root.emergencyIconSource = "";
+		root.emergencyMessage = message;
+		root.emergencyPriorityLevel = priorityLevel;
+		root.emergencyPriorityActive = true;
+
+		console.log("[ClusterScreen] TEXT ALERT:",
+					message,
+					"priority=",
+					priorityLevel);
+
+		emergencyTimeoutTimer.restart();
+	}
+
+	function clearAlert() {
+		root.emergencyIconSource = "";
+		root.emergencyMessage = "";
+		root.emergencyPriorityLevel = 0;
+		root.emergencyPriorityActive = false;
+	}
+
     // ==========================================================
     // BACKEND SIGNAL CONNECTIONS (C++ to QML Bridge)
     // ==========================================================
     Connections {
-        target: vehicleData
-        enabled: vehicleDataAvailable
+		target: vehicleData
+		enabled: vehicleDataAvailable
 
-        function onEmergencyAlertChanged(priorityLevel) {
-            console.log("[ClusterScreen] V2X Emergency Alert Received. Priority:", priorityLevel);
+		function onEmergencyAlertChanged(priorityLevel) {
+			console.log("[ClusterScreen] V2X Emergency Alert Received. Priority:", priorityLevel);
 
-            if (priorityLevel > 0) {
-                root.emergencyPriorityLevel = priorityLevel;
-                root.emergencyPriorityActive = true;
-                emergencyTimeoutTimer.restart(); // Inicia countdown de segurança
-            } else {
-                root.emergencyPriorityLevel = 0;
-                root.emergencyPriorityActive = false;
-                emergencyTimeoutTimer.stop();
-            }
-        }
-    }
+			if (priorityLevel >= 2) {
+				showTextAlert("PULL OVER - EMERGENCY", 2);
+				return;
+			}
+
+			if (priorityLevel === 1) {
+				showTextAlert("EMERGENCY VEHICLE AHEAD", 1);
+				return;
+			}
+
+			clearAlert();
+			emergencyTimeoutTimer.stop();
+		}
+
+		function onTrafficSignChanged(classId) {
+			console.log("[ClusterScreen] Traffic Sign/Obstacle ID:", classId);
+
+			// 0 = Clear.
+			// Do not clear immediately because the model can publish Clear very often.
+			if (classId === 0) {
+				return;
+			}
+
+			// 1 = 50_sign
+			if (classId === 1) {
+				showSpeedLimit(50);
+				return;
+			}
+
+			// 2 = 80_sign
+			if (classId === 2) {
+				showSpeedLimit(80);
+				return;
+			}
+
+			// 3 = gate
+			if (classId === 3) {
+				showAdasSign("gate-sign.png", 1, "GATE AHEAD");
+				return;
+			}
+
+			// 4 = crosswalk_sign
+			if (classId === 4) {
+				showAdasSign("crosswalk-sign.png", 1, "CROSSWALK AHEAD");
+				return;
+			}
+
+			// 5 = stop_sign
+			if (classId === 5) {
+				showAdasSign("stop-sign.png", 2, "STOP SIGN");
+				return;
+			}
+
+			// 6 = yield_sign
+			if (classId === 6) {
+				showAdasSign("yield-sign.svg", 1, "YIELD SIGN");
+				return;
+			}
+
+			// 7 = car
+			if (classId === 7) {
+				showAdasSign("obstacle-sign.png", 2, "CAR AHEAD");
+				return;
+			}
+
+			// 8 = danger_sign
+			if (classId === 8) {
+				showAdasSign("danger-sign.png", 1, "DANGER SIGN");
+				return;
+			}
+
+			// 9 = obstacle
+			if (classId === 9) {
+				showAdasSign("obstacle-sign.png", 2, "OBSTACLE AHEAD");
+				return;
+			}
+
+			// 10 = traffic_light_green
+			if (classId === 10) {
+				showAdasSign("traffic-light-green.svg", 1, "GREEN LIGHT");
+				return;
+			}
+
+			// 11 = traffic_light_off
+			if (classId === 11) {
+				showAdasSign("traffic-light-off.svg", 1, "TRAFFIC LIGHT OFF");
+				return;
+			}
+
+			// 12 = traffic_light_red
+			if (classId === 12) {
+				showAdasSign("traffic-light-red.svg", 2, "RED LIGHT");
+				return;
+			}
+
+			// 13 = traffic_light_yellow
+			if (classId === 13) {
+				showAdasSign("traffic-light-yellow.svg", 1, "YELLOW LIGHT");
+				return;
+			}
+		}
+	}
 
     Timer {
         id: emergencyTimeoutTimer
-        interval: 15000
+        interval: 3000
         running: false
         repeat: false
         onTriggered: {
-            console.log("[ClusterScreen] V2X Emergency Alert Auto-Cleared (Timeout)");
-            root.emergencyPriorityLevel = 0;
-            root.emergencyPriorityActive = false;
-        }
+			console.log("[ClusterScreen] ADAS / V2X Alert Auto-Cleared (Timeout)");
+			clearAlert();
+		}
     }
+	Timer {
+		id: speedLimitTimeoutTimer
+		interval: 3000
+		running: false
+		repeat: false
 
+		onTriggered: {
+			console.log("[ClusterScreen] Speed limit auto-cleared");
+			root.speedLimitActive = false;
+			root.speedLimitValue = 0;
+		}
+	}
     // ==========================================================
     // V2X EMERGENCY OVERLAY
     // ==========================================================
     EmergencyAlert {
-        id: v2xEmergencyAlert
-        z: 2000
-        s: root.s
-        isActive: root.emergencyPriorityActive
-
-        priorityLevel: root.emergencyPriorityLevel
-
-        alertMessage: root.emergencyPriorityLevel >= 2 ? "PULL OVER - EMERGENCY" : "EMERGENCY VEHICLE AHEAD"
-    }
+		id: adasEmergencyAlert
+		z: 2000
+		s: root.s
+		isActive: root.emergencyPriorityActive
+		priorityLevel: root.emergencyPriorityLevel
+		alertMessage: root.emergencyMessage
+		iconSource: root.emergencyIconSource
+	}
 
     BatteryPopup {
         id: batteryPopup

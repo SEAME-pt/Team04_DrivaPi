@@ -29,6 +29,7 @@ static constexpr const char* PATH_STM32_HUM    = "Vehicle.ControlUnit.STM32.Heal
 static constexpr const char* PATH_RPI_BATTERY_PERCENT = "Vehicle.ControlUnit.Central.Health.Resources.BatteryLevel";
 static constexpr const char* PATH_RPI_BATTERY_VOLTAGE = "Vehicle.ControlUnit.Central.Health.Resources.BatteryVoltage";
 static constexpr const char* PATH_RPI_BATTERY_CURRENT = "Vehicle.ControlUnit.Central.Health.Resources.BatteryCurrent";
+static constexpr const char* PATH_TRAFFIC_SIGN = "Vehicle.ADAS.TrafficSignRecognition.CurrentSign";
 
 static constexpr const char* PATH_V2X_EMERGENCY_PRIORITY= "Vehicle.ADAS.V2X.EmergencyPriority";
 
@@ -131,7 +132,7 @@ void KuksaReader::start()
     const std::vector<std::string> allPaths = {
         PATH_SPEED, PATH_BATTERY_PERCENT, PATH_BATTERY_VOLT, PATH_CURRENT_GEAR,
         PATH_STM32_TEMP, PATH_STM32_HUM, PATH_RPI_BATTERY_PERCENT, PATH_RPI_BATTERY_VOLTAGE,
-        PATH_RPI_BATTERY_CURRENT, PATH_V2X_EMERGENCY_PRIORITY
+        PATH_RPI_BATTERY_CURRENT, PATH_V2X_EMERGENCY_PRIORITY, PATH_TRAFFIC_SIGN
     };
 
     while (!m_stopRequested.load()) {
@@ -204,7 +205,13 @@ bool KuksaReader::subscribeLoop(const std::vector<std::string>& paths)
         if (auto it = entries.find(PATH_RPI_BATTERY_CURRENT); it != entries.end()) {
             emit rpiBatteryCurrentReceived(static_cast<double>(readFloat(it->second, 0.0f)));
         }
+		if (auto it = entries.find(PATH_TRAFFIC_SIGN); it != entries.end()) {
+			int classId = static_cast<int>(readInt(it->second, 0));
+			qInfo("[KUKSA] ADAS CurrentSign received: %d", classId);
+		    emit trafficSignReceived(classId);
+		}
         if (auto it = entries.find(PATH_V2X_EMERGENCY_PRIORITY); it != entries.end()) {
+			qInfo("[KUKSA] V2X EmergencyPriority received: %d", static_cast<int>(readFloat(it->second, 0.0f)));
             emit emergencyAlertReceived(static_cast<int>(readFloat(it->second, 0.0f)));
         }
     }

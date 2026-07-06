@@ -46,6 +46,7 @@ VehicleData::VehicleData(QObject *parent)
     , m_autonomousMode(false)
     , m_settings(new QSettings(this))
     , m_watchdogTimer(new QTimer(this))
+    , m_trafficSignClassId(0)
 {
     loadOdometerFromSettings();
 
@@ -73,6 +74,8 @@ int VehicleData::getOdometer() const { return m_odometer; }
 int VehicleData::getTemperature() const { return m_temperature; }
 QString VehicleData::getGear() const { return m_gear; }
 bool VehicleData::getAutonomousMode() const { return m_autonomousMode; }
+
+int VehicleData::getTrafficSignClassId() const { return m_trafficSignClassId; }
 
 // ===== Setters =====
 
@@ -210,6 +213,17 @@ void VehicleData::requestOdometerReset()
     setOdometer(0);
 }
 
+void VehicleData::setTrafficSignClassId(int classId) {
+    if (m_trafficSignClassId != classId) {
+        m_trafficSignClassId = classId;
+        emit trafficSignClassIdChanged();
+    }
+}
+
+void VehicleData::updateTrafficSign(int classId) {
+    setTrafficSignClassId(classId);
+    emit trafficSignChanged(classId); // For QML binding to react to traffic sign changes
+}
 
 // ===== QML methods =====
 void VehicleData::toggleAutonomousMode()

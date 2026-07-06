@@ -46,6 +46,7 @@ class VehicleData : public QObject
     Q_PROPERTY(int temperature READ getTemperature WRITE setTemperature NOTIFY temperatureChanged)
 
     Q_PROPERTY(int odometer READ getOdometer NOTIFY odometerChanged)
+	Q_PROPERTY(int trafficSignClassId READ getTrafficSignClassId WRITE setTrafficSignClassId NOTIFY trafficSignClassIdChanged)
 
 public:
     /// @brief Construct VehicleData.
@@ -70,6 +71,7 @@ public:
     int     getTemperature() const;
     QString getGear() const;
     bool    getAutonomousMode() const;
+    int     getTrafficSignClassId() const;
 
     // ===== Setters =====
     void    setSpeed(float mps);
@@ -101,6 +103,8 @@ public slots:
     /// @brief Process CAN frame and update vehicle data.
     void handleCanMessage(const QByteArray &payload, uint32_t canId);
 	void updateEmergencyAlert(int priorityLevel);
+    void setTrafficSignClassId(int classId);
+    void updateTrafficSign(int classId);
 
 signals:
     void speedChanged();
@@ -121,6 +125,9 @@ signals:
     void autonomousModeChanged();
 
 	void emergencyAlertChanged(int priorityLevel);
+
+    void trafficSignClassIdChanged();
+	void trafficSignChanged(int classId);
 
 private slots:
     /// @brief Check all properties for staleness (timestamps exceed threshold).
@@ -144,6 +151,8 @@ private:
     QString m_gear;
     int     m_temperature;
     bool    m_autonomousMode;
+
+    int     m_trafficSignClassId = 0;
 
     // ===== Persistence =====
     QSettings *m_settings;
