@@ -33,6 +33,10 @@ static constexpr const char* PATH_TRAFFIC_SIGN = "Vehicle.ADAS.TrafficSignRecogn
 
 static constexpr const char* PATH_V2X_EMERGENCY_PRIORITY= "Vehicle.ADAS.V2X.EmergencyPriority";
 
+// Lane Detection
+static constexpr const char* PATH_LANE_OFFSET = "Vehicle.ADAS.LaneKeepAssist.Offset";
+static constexpr const char* PATH_LANE_HEADING = "Vehicle.ADAS.LaneKeepAssist.Heading";
+
 KuksaReader::KuksaReader(QObject *parent)
     : QObject(parent)
 {}
@@ -132,7 +136,7 @@ void KuksaReader::start()
     const std::vector<std::string> allPaths = {
         PATH_SPEED, PATH_BATTERY_PERCENT, PATH_BATTERY_VOLT, PATH_CURRENT_GEAR,
         PATH_STM32_TEMP, PATH_STM32_HUM, PATH_RPI_BATTERY_PERCENT, PATH_RPI_BATTERY_VOLTAGE,
-        PATH_RPI_BATTERY_CURRENT, PATH_V2X_EMERGENCY_PRIORITY, PATH_TRAFFIC_SIGN
+        PATH_RPI_BATTERY_CURRENT, PATH_V2X_EMERGENCY_PRIORITY, PATH_TRAFFIC_SIGN, PATH_LANE_OFFSET, PATH_LANE_HEADING
     };
 
     while (!m_stopRequested.load()) {
@@ -214,6 +218,13 @@ bool KuksaReader::subscribeLoop(const std::vector<std::string>& paths)
 			qInfo("[KUKSA] V2X EmergencyPriority received: %d", static_cast<int>(readFloat(it->second, 0.0f)));
             emit emergencyAlertReceived(static_cast<int>(readFloat(it->second, 0.0f)));
         }
+		// Lane detection
+		if (auto it = entries.find(PATH_LANE_OFFSET); it != entries.end()) {
+			emit laneOffsetReceived(readFloat(it->second, 0.0f));
+		}
+		if (auto it = entries.find(PATH_LANE_HEADING); it != entries.end()) {
+			emit laneHeadingReceived(readFloat(it->second, 0.0f));
+		}
     }
 
     grpc::Status status = reader->Finish();
