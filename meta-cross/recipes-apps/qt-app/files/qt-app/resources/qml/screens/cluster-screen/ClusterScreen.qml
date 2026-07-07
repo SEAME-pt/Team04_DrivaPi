@@ -34,15 +34,7 @@ Rectangle {
     // ISO 26262 Fail-Safe: Null/Invalid Data Handling
     property bool vehicleDataAvailable: vehicleData !== null && vehicleData !== undefined
 
-    // V2X Emergency State
-    property bool emergencyPriorityActive: false
-    property int emergencyPriorityLevel: 0
-	property string emergencyMessage: ""
-	property url emergencyIconSource: ""
     property bool demoEmergencyAlert: false
-
-    property int speedLimitValue: 0
-	property bool speedLimitActive: false
     property real currentSpeed: vehicleDataAvailable && vehicleData.speed ? vehicleData.speed : 0
     property int stm32Battery: vehicleDataAvailable && vehicleData.stm32Battery !== undefined ? vehicleData.stm32Battery : 0
     property int rpiBattery: vehicleDataAvailable && vehicleData.rpiBattery !== undefined ? vehicleData.rpiBattery : 0
@@ -249,11 +241,11 @@ Rectangle {
 									Layout.alignment: Qt.AlignVCenter
 									z: 1
 
-									visible: root.speedLimitActive
-									opacity: root.speedLimitActive ? 1.0 : 0.0
+                                    visible: root.vehicleDataAvailable && vehicleData.speedLimitActive
+                                    opacity: root.vehicleDataAvailable && vehicleData.speedLimitActive ? 1.0 : 0.0
 
 									vehicleDataAvailable: root.vehicleDataAvailable
-									speedLimitValue: root.speedLimitValue
+                                    speedLimitValue: root.vehicleDataAvailable ? vehicleData.speedLimitValue : 0
 									s: root.s
 
 									Behavior on opacity {
@@ -323,192 +315,6 @@ Rectangle {
         }
     }
 
-	function adasSign(fileName) {
-		return Qt.resolvedUrl("../../../assets/adas-signs/" + fileName);
-	}
-
-	function showAdasSign(fileName, priorityLevel, message) {
-		root.emergencyIconSource = adasSign(fileName);
-		root.emergencyMessage = message || "";
-		root.emergencyPriorityLevel = priorityLevel;
-		root.emergencyPriorityActive = true;
-
-		console.log("[ClusterScreen] ADAS SIGN ALERT:",
-					fileName,
-					root.emergencyIconSource,
-					"priority=",
-					priorityLevel,
-					"message=",
-					root.emergencyMessage);
-
-		emergencyTimeoutTimer.restart();
-	}
-
-	function showSpeedLimit(limitValue) {
-		root.speedLimitValue = limitValue;
-		root.speedLimitActive = true;
-
-		console.log("[ClusterScreen] SPEED LIMIT ALERT:", limitValue);
-
-		speedLimitTimeoutTimer.restart();
-	}
-
-	function showTextAlert(message, priorityLevel) {
-		root.emergencyIconSource = "";
-		root.emergencyMessage = message;
-		root.emergencyPriorityLevel = priorityLevel;
-		root.emergencyPriorityActive = true;
-
-		console.log("[ClusterScreen] TEXT ALERT:",
-					message,
-					"priority=",
-					priorityLevel);
-
-		emergencyTimeoutTimer.restart();
-	}
-
-	function clearAlert() {
-		root.emergencyIconSource = "";
-		root.emergencyMessage = "";
-		root.emergencyPriorityLevel = 0;
-		root.emergencyPriorityActive = false;
-	}
-
-    // ==========================================================
-    // BACKEND SIGNAL CONNECTIONS (C++ to QML Bridge)
-    // ==========================================================
-    Connections {
-		target: vehicleData
-		enabled: vehicleDataAvailable
-
-		function onEmergencyAlertChanged(priorityLevel) {
-			console.log("[ClusterScreen] V2X Emergency Alert Received. Priority:", priorityLevel);
-
-			if (priorityLevel >= 2) {
-				showTextAlert("PULL OVER - EMERGENCY", 2);
-				return;
-			}
-
-			if (priorityLevel === 1) {
-				showTextAlert("EMERGENCY VEHICLE AHEAD", 1);
-				return;
-			}
-
-			clearAlert();
-			emergencyTimeoutTimer.stop();
-		}
-
-		function onTrafficSignChanged(classId) {
-			console.log("[ClusterScreen] Traffic Sign/Obstacle ID:", classId);
-
-			// 0 = Clear.
-			// Do not clear immediately because the model can publish Clear very often.
-			if (classId === 0) {
-				return;
-			}
-
-			// 1 = 50_sign
-			if (classId === 1) {
-				showSpeedLimit(50);
-				return;
-			}
-
-			// 2 = 80_sign
-			if (classId === 2) {
-				showSpeedLimit(80);
-				return;
-			}
-
-			// 3 = gate
-			if (classId === 3) {
-				showAdasSign("gate-sign.png", 1, "GATE AHEAD");
-				return;
-			}
-
-			// 4 = crosswalk_sign
-			if (classId === 4) {
-				showAdasSign("crosswalk-sign.png", 1, "CROSSWALK AHEAD");
-				return;
-			}
-
-			// 5 = stop_sign
-			if (classId === 5) {
-				showAdasSign("stop-sign.png", 2, "STOP SIGN");
-				return;
-			}
-
-			// 6 = yield_sign
-			if (classId === 6) {
-				showAdasSign("yield-sign.svg", 1, "YIELD SIGN");
-				return;
-			}
-
-			// 7 = car
-			if (classId === 7) {
-				showAdasSign("obstacle-sign.png", 2, "CAR AHEAD");
-				return;
-			}
-
-			// 8 = danger_sign
-			if (classId === 8) {
-				showAdasSign("danger-sign.png", 1, "DANGER SIGN");
-				return;
-			}
-
-			// 9 = obstacle
-			if (classId === 9) {
-				showAdasSign("obstacle-sign.png", 2, "OBSTACLE AHEAD");
-				return;
-			}
-
-			// 10 = traffic_light_green
-			if (classId === 10) {
-				showAdasSign("traffic-light-green.svg", 1, "GREEN LIGHT");
-				return;
-			}
-
-			// 11 = traffic_light_off
-			if (classId === 11) {
-				showAdasSign("traffic-light-off.svg", 1, "TRAFFIC LIGHT OFF");
-				return;
-			}
-
-			// 12 = traffic_light_red
-			if (classId === 12) {
-				showAdasSign("traffic-light-red.svg", 2, "RED LIGHT");
-				return;
-			}
-
-			// 13 = traffic_light_yellow
-			if (classId === 13) {
-				showAdasSign("traffic-light-yellow.svg", 1, "YELLOW LIGHT");
-				return;
-			}
-		}
-	}
-
-    Timer {
-        id: emergencyTimeoutTimer
-        interval: 3000
-        running: false
-        repeat: false
-        onTriggered: {
-			console.log("[ClusterScreen] ADAS / V2X Alert Auto-Cleared (Timeout)");
-			clearAlert();
-		}
-    }
-	Timer {
-		id: speedLimitTimeoutTimer
-		interval: 3000
-		running: false
-		repeat: false
-
-		onTriggered: {
-			console.log("[ClusterScreen] Speed limit auto-cleared");
-			root.speedLimitActive = false;
-			root.speedLimitValue = 0;
-		}
-	}
     // ==========================================================
     // V2X EMERGENCY OVERLAY
     // ==========================================================
@@ -516,10 +322,10 @@ Rectangle {
 		id: adasEmergencyAlert
 		z: 2000
 		s: root.s
-		isActive: root.emergencyPriorityActive
-		priorityLevel: root.emergencyPriorityLevel
-		alertMessage: root.emergencyMessage
-		iconSource: root.emergencyIconSource
+        isActive: root.vehicleDataAvailable ? vehicleData.emergencyPriorityActive : false
+        priorityLevel: root.vehicleDataAvailable ? vehicleData.emergencyPriorityLevel : 0
+        alertMessage: root.vehicleDataAvailable ? vehicleData.emergencyMessage : ""
+        iconSource: root.vehicleDataAvailable ? vehicleData.emergencyIconSource : ""
 	}
 
     BatteryPopup {

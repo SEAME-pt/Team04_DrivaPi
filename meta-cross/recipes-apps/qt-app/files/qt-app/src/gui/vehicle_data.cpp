@@ -46,6 +46,12 @@ VehicleData::VehicleData(QObject *parent)
     , m_autonomousMode(false)
     , m_settings(new QSettings(this))
     , m_watchdogTimer(new QTimer(this))
+    , m_emergencyPriorityActive(false)
+    , m_emergencyPriorityLevel(0)
+    , m_speedLimitValue(0)
+    , m_speedLimitActive(false)
+    , m_emergencyTimeoutTimer(new QTimer(this))
+    , m_speedLimitTimeoutTimer(new QTimer(this))
     , m_trafficSignClassId(0)
 	, m_laneOffset(0.0f)
 	, m_laneHeading(0.0f)
@@ -55,6 +61,14 @@ VehicleData::VehicleData(QObject *parent)
     m_watchdogTimer->setInterval(200);
     connect(m_watchdogTimer, &QTimer::timeout, this, &VehicleData::checkStaleProperties);
     m_watchdogTimer->start();
+
+    m_emergencyTimeoutTimer->setSingleShot(true);
+    m_emergencyTimeoutTimer->setInterval(3000);
+    connect(m_emergencyTimeoutTimer, &QTimer::timeout, this, &VehicleData::clearAlert);
+
+    m_speedLimitTimeoutTimer->setSingleShot(true);
+    m_speedLimitTimeoutTimer->setInterval(3000);
+    connect(m_speedLimitTimeoutTimer, &QTimer::timeout, this, &VehicleData::clearSpeedLimit);
 }
 
 VehicleData::~VehicleData() = default;
@@ -78,6 +92,12 @@ QString VehicleData::getGear() const { return m_gear; }
 bool VehicleData::getAutonomousMode() const { return m_autonomousMode; }
 
 int VehicleData::getTrafficSignClassId() const { return m_trafficSignClassId; }
+bool VehicleData::getEmergencyPriorityActive() const { return m_emergencyPriorityActive; }
+int VehicleData::getEmergencyPriorityLevel() const { return m_emergencyPriorityLevel; }
+QString VehicleData::getEmergencyMessage() const { return m_emergencyMessage; }
+QString VehicleData::getEmergencyIconSource() const { return m_emergencyIconSource; }
+int VehicleData::getSpeedLimitValue() const { return m_speedLimitValue; }
+bool VehicleData::getSpeedLimitActive() const { return m_speedLimitActive; }
 float VehicleData::getLaneOffset() const { return m_laneOffset; }
 float VehicleData::getLaneHeading() const { return m_laneHeading; }
 
@@ -226,7 +246,56 @@ void VehicleData::setTrafficSignClassId(int classId) {
 
 void VehicleData::updateTrafficSign(int classId) {
     setTrafficSignClassId(classId);
-    emit trafficSignChanged(classId); // For QML binding to react to traffic sign changes
+    emit trafficSignChanged(classId);
+
+    // classId 0 means clear from detector stream; ignore to avoid rapid flicker.
+    if (classId == 0) {
+        return;
+    }
+
+    switch (classId) {
+    case 1: // 50_sign
+        showSpeedLimit(50);
+        return;
+    case 2: // 80_sign
+        showSpeedLimit(80);
+        return;
+    case 3: // gate
+        showAdasSign("gate-sign.png", 1, "GATE AHEAD");
+        return;
+    case 4: // crosswalk_sign
+        showAdasSign("crosswalk-sign.png", 1, "CROSSWALK AHEAD");
+        return;
+    case 5: // stop_sign
+        showAdasSign("stop-sign.png", 2, "STOP SIGN");
+        return;
+    case 6: // yield_sign
+        showAdasSign("yield-sign.svg", 1, "YIELD SIGN");
+        return;
+    case 7: // car
+        showAdasSign("obstacle-sign.png", 2, "CAR AHEAD");
+        return;
+    case 8: // danger_sign
+        showAdasSign("danger-sign.png", 1, "DANGER SIGN");
+        return;
+    case 9: // obstacle
+        showAdasSign("obstacle-sign.png", 2, "OBSTACLE AHEAD");
+        return;
+    case 10: // traffic_light_green
+        showAdasSign("traffic-light-green.svg", 1, "GREEN LIGHT");
+        return;
+    case 11: // traffic_light_off
+        showAdasSign("traffic-light-off.svg", 1, "TRAFFIC LIGHT OFF");
+        return;
+    case 12: // traffic_light_red
+        showAdasSign("traffic-light-red.svg", 2, "RED LIGHT");
+        return;
+    case 13: // traffic_light_yellow
+        showAdasSign("traffic-light-yellow.svg", 1, "YELLOW LIGHT");
+        return;
+    default:
+        return;
+    }
 }
 
 void VehicleData::setLaneOffset(float offset) {
@@ -329,8 +398,112 @@ void VehicleData::handleCanMessage(const QByteArray &payload, uint32_t canId)
 }
 void VehicleData::updateEmergencyAlert(int priorityLevel)
 {
-    // priorityLevel: 0 = Clear, 1 = Warning, 2 = High Priority (e.g., ambulance)
     emit emergencyAlertChanged(priorityLevel);
+
+    if (priorityLevel >= 2) {
+        showTextAlert("PULL OVER - EMERGENCY", 2);
+        return;
+    }
+
+    if (priorityLevel == 1) {
+        showTextAlert("EMERGENCY VEHICLE AHEAD", 1);
+        return;
+    }
+
+    clearAlert();
+    m_emergencyTimeoutTimer->stop();
+}
+
+void VehicleData::showAdasSign(const QString &fileName, int priorityLevel, const QString &message)
+{
+    const QString icon_source = QStringLiteral("qrc:/assets/adas-signs/") + fileName;
+
+    if (m_emergencyIconSource != icon_source) {
+        m_emergencyIconSource = icon_source;
+        emit emergencyIconSourceChanged();
+    }
+    if (m_emergencyMessage != message) {
+        m_emergencyMessage = message;
+        emit emergencyMessageChanged();
+    }
+    if (m_emergencyPriorityLevel != priorityLevel) {
+        m_emergencyPriorityLevel = priorityLevel;
+        emit emergencyPriorityLevelChanged();
+    }
+    if (!m_emergencyPriorityActive) {
+        m_emergencyPriorityActive = true;
+        emit emergencyPriorityActiveChanged();
+    }
+
+    m_emergencyTimeoutTimer->start();
+}
+
+void VehicleData::showSpeedLimit(int limitValue)
+{
+    if (m_speedLimitValue != limitValue) {
+        m_speedLimitValue = limitValue;
+        emit speedLimitValueChanged();
+    }
+    if (!m_speedLimitActive) {
+        m_speedLimitActive = true;
+        emit speedLimitActiveChanged();
+    }
+
+    m_speedLimitTimeoutTimer->start();
+}
+
+void VehicleData::showTextAlert(const QString &message, int priorityLevel)
+{
+    if (!m_emergencyIconSource.isEmpty()) {
+        m_emergencyIconSource.clear();
+        emit emergencyIconSourceChanged();
+    }
+    if (m_emergencyMessage != message) {
+        m_emergencyMessage = message;
+        emit emergencyMessageChanged();
+    }
+    if (m_emergencyPriorityLevel != priorityLevel) {
+        m_emergencyPriorityLevel = priorityLevel;
+        emit emergencyPriorityLevelChanged();
+    }
+    if (!m_emergencyPriorityActive) {
+        m_emergencyPriorityActive = true;
+        emit emergencyPriorityActiveChanged();
+    }
+
+    m_emergencyTimeoutTimer->start();
+}
+
+void VehicleData::clearAlert()
+{
+    if (!m_emergencyIconSource.isEmpty()) {
+        m_emergencyIconSource.clear();
+        emit emergencyIconSourceChanged();
+    }
+    if (!m_emergencyMessage.isEmpty()) {
+        m_emergencyMessage.clear();
+        emit emergencyMessageChanged();
+    }
+    if (m_emergencyPriorityLevel != 0) {
+        m_emergencyPriorityLevel = 0;
+        emit emergencyPriorityLevelChanged();
+    }
+    if (m_emergencyPriorityActive) {
+        m_emergencyPriorityActive = false;
+        emit emergencyPriorityActiveChanged();
+    }
+}
+
+void VehicleData::clearSpeedLimit()
+{
+    if (m_speedLimitActive) {
+        m_speedLimitActive = false;
+        emit speedLimitActiveChanged();
+    }
+    if (m_speedLimitValue != 0) {
+        m_speedLimitValue = 0;
+        emit speedLimitValueChanged();
+    }
 }
 
 // ===== Persistence =====
