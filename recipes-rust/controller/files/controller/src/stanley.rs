@@ -34,7 +34,7 @@ pub struct StanleyConfig {
 impl Default for StanleyConfig {
     fn default() -> Self {
         Self {
-            k: 0.5,
+            k: 0.2,
             k_soft: 0.15,
             wheelbase_m: 0.15,
             max_steer_rad: 0.5,
