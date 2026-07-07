@@ -47,6 +47,12 @@ class VehicleData : public QObject
 
     Q_PROPERTY(int odometer READ getOdometer NOTIFY odometerChanged)
 	Q_PROPERTY(int trafficSignClassId READ getTrafficSignClassId WRITE setTrafficSignClassId NOTIFY trafficSignClassIdChanged)
+    Q_PROPERTY(bool emergencyPriorityActive READ getEmergencyPriorityActive NOTIFY emergencyPriorityActiveChanged)
+    Q_PROPERTY(int emergencyPriorityLevel READ getEmergencyPriorityLevel NOTIFY emergencyPriorityLevelChanged)
+    Q_PROPERTY(QString emergencyMessage READ getEmergencyMessage NOTIFY emergencyMessageChanged)
+    Q_PROPERTY(QString emergencyIconSource READ getEmergencyIconSource NOTIFY emergencyIconSourceChanged)
+    Q_PROPERTY(int speedLimitValue READ getSpeedLimitValue NOTIFY speedLimitValueChanged)
+    Q_PROPERTY(bool speedLimitActive READ getSpeedLimitActive NOTIFY speedLimitActiveChanged)
 
 public:
     /// @brief Construct VehicleData.
@@ -72,6 +78,12 @@ public:
     QString getGear() const;
     bool    getAutonomousMode() const;
     int     getTrafficSignClassId() const;
+    bool    getEmergencyPriorityActive() const;
+    int     getEmergencyPriorityLevel() const;
+    QString getEmergencyMessage() const;
+    QString getEmergencyIconSource() const;
+    int     getSpeedLimitValue() const;
+    bool    getSpeedLimitActive() const;
 
     // ===== Setters =====
     void    setSpeed(float mps);
@@ -125,6 +137,12 @@ signals:
     void autonomousModeChanged();
 
 	void emergencyAlertChanged(int priorityLevel);
+    void emergencyPriorityActiveChanged();
+    void emergencyPriorityLevelChanged();
+    void emergencyMessageChanged();
+    void emergencyIconSourceChanged();
+    void speedLimitValueChanged();
+    void speedLimitActiveChanged();
 
     void trafficSignClassIdChanged();
 	void trafficSignChanged(int classId);
@@ -132,6 +150,8 @@ signals:
 private slots:
     /// @brief Check all properties for staleness (timestamps exceed threshold).
     void checkStaleProperties();
+    void clearAlert();
+    void clearSpeedLimit();
 
 private:
     // ===== Member Variables =====
@@ -154,6 +174,16 @@ private:
 
     int     m_trafficSignClassId = 0;
 
+    bool    m_emergencyPriorityActive;
+    int     m_emergencyPriorityLevel;
+    QString m_emergencyMessage;
+    QString m_emergencyIconSource;
+    int     m_speedLimitValue;
+    bool    m_speedLimitActive;
+
+    QTimer *m_emergencyTimeoutTimer;
+    QTimer *m_speedLimitTimeoutTimer;
+
     // ===== Persistence =====
     QSettings *m_settings;
     void loadOdometerFromSettings();
@@ -163,6 +193,9 @@ private:
     void    updateTimestamp(const QString &propName);
     qint64  lastUpdate(const QString &propName) const;
     void    markPropertyStale(const QString &propName);
+    void    showAdasSign(const QString &fileName, int priorityLevel, const QString &message);
+    void    showSpeedLimit(int limitValue);
+    void    showTextAlert(const QString &message, int priorityLevel);
 
     QHash<QString, qint64> m_lastUpdateMs;  ///< Property → last update time (ms).
     QTimer *m_watchdogTimer;                 ///< Stale detection timer.
