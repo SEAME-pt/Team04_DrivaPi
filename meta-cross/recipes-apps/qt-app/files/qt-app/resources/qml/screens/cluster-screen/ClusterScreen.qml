@@ -14,9 +14,11 @@ Rectangle {
     id: root
 
     property real motionPhase: 0
+    property bool demoLaneAnimation: false
+    property real demoMotionSpeedKmh: 8
 
     // Speed used by motion simulation (supports reverse if negative)
-    readonly property real motionSpeedKmh: currentSpeed
+    readonly property real motionSpeedKmh: demoLaneAnimation ? demoMotionSpeedKmh : currentSpeed
     readonly property real motionSpeedAbs: Math.abs(motionSpeedKmh)
     readonly property real motionDir: {
         if (currentGear === "R") return -1;
@@ -150,6 +152,43 @@ Rectangle {
                         var normalizedSpeed = root.clamp(root.motionSpeedAbs / root.realMaxSpeedKmh, 0, 1);
                         var step = (interval / 1000.0) * normalizedSpeed * 2.0;
                         root.motionPhase = root.wrap01(root.motionPhase + root.motionDir * step);
+                    }
+                }
+
+                Rectangle {
+                    id: demoToggle
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                    anchors.topMargin: 16 * root.sy
+                    anchors.rightMargin: 16 * root.s
+                    width: 144 * root.s
+                    height: 40 * root.sy
+                    radius: height / 2
+                    z: 200
+                    color: root.demoLaneAnimation ? AppTheme.colors.primary : AppTheme.colors.surfaceElevated
+                    border.width: 1
+                    border.color: root.demoLaneAnimation ? AppTheme.colors.primary : AppTheme.colors.border
+
+                    Behavior on color {
+                        ColorAnimation { duration: 180 }
+                    }
+
+                    Behavior on border.color {
+                        ColorAnimation { duration: 180 }
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: root.demoLaneAnimation ? "Demo ON" : "Simular faixas"
+                        color: root.demoLaneAnimation ? AppTheme.colors.surface : AppTheme.colors.text
+                        font.pixelSize: 14 * root.s
+                        font.weight: Font.DemiBold
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.demoLaneAnimation = !root.demoLaneAnimation
                     }
                 }
 
