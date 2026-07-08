@@ -211,6 +211,8 @@ Rectangle {
                         }
                 }
 
+                }
+
                 Image {
                     source: "qrc:/assets/cluster/car-glow.svg"
                     anchors.horizontalCenter: parent.horizontalCenter
