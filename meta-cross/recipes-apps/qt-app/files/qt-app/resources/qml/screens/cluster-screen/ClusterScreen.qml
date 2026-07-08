@@ -317,11 +317,7 @@ Rectangle {
                             anchors.bottomMargin: -50 * root.sy
                             opacity: 1.0
                             transform: [
-                                Translate { y: Math.sin(root.motionPhase * 6.28318530718 * 2.0) * (1.2 * root.sy) * root.motionIntensity
-									Behavior on x {
-                                        NumberAnimation { duration: 150; easing.type: Easing.OutSine }
-                                    }
-								},
+                                Translate { y: Math.sin(root.motionPhase * 6.28318530718 * 2.0) * (1.2 * root.sy) * root.motionIntensity },
                                 Rotation {
                                     origin.x: carImg.width / 2; origin.y: carImg.height / 2
                                     angle: Math.sin(root.motionPhase * 6.28318530718) * (0.35 * root.motionIntensity) * root.motionDir
