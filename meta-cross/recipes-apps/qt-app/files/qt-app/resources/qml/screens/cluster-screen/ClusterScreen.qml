@@ -161,6 +161,15 @@ Rectangle {
                     sourceSize.width: 1200
                     opacity: AppTheme.isDark ? 0.55 : 0.15
                     z: 1
+
+				transform: Rotation {
+                        origin.x: width / 2; origin.y: height
+                        // if laneHeading is available, use it to rotate the floor grid; otherwise, keep it at 0 degrees
+                        angle: (root.vehicleDataAvailable && vehicleData.laneHeading !== undefined) ? (vehicleData.laneHeading * 50) : 0
+
+                        Behavior on angle {
+                            NumberAnimation { duration: 150; easing.type: Easing.OutSine }
+                        }
                 }
 
                 Image {
@@ -269,7 +278,11 @@ Rectangle {
                             anchors.bottomMargin: -50 * root.sy
                             opacity: 1.0
                             transform: [
-                                Translate { y: Math.sin(root.motionPhase * 6.28318530718 * 2.0) * (1.2 * root.sy) * root.motionIntensity },
+                                Translate { y: Math.sin(root.motionPhase * 6.28318530718 * 2.0) * (1.2 * root.sy) * root.motionIntensity
+									Behavior on x {
+                                        NumberAnimation { duration: 150; easing.type: Easing.OutSine }
+                                    }
+								},
                                 Rotation {
                                     origin.x: carImg.width / 2; origin.y: carImg.height / 2
                                     angle: Math.sin(root.motionPhase * 6.28318530718) * (0.35 * root.motionIntensity) * root.motionDir
