@@ -41,7 +41,7 @@ Item {
         source: "qrc:/assets/cluster/road.png"
         fillMode: Image.PreserveAspectCrop
         smooth: true
-        opacity: 0.95
+        opacity: roadWindow.laneMaskActive ? 0.0 : 0.95
     }
 
     Image {
@@ -72,7 +72,7 @@ Item {
             var outerHalfWidth = roadWindow.roadW * 0.28;
             var controlY = horizonY + (bottomY - horizonY) * 0.58;
 
-            function fillLaneMask(halfWidth, topAlpha, bottomAlpha, strokeAlpha) {
+            function drawLaneBand(halfWidth, bandColor, coreAlpha, glowAlpha, bandWidth) {
                 var leftTop = centerX + offsetPx - halfWidth;
                 var rightTop = centerX + offsetPx + halfWidth;
                 var leftBottom = centerX + offsetPx - halfWidth + curvePx * 0.95;
@@ -80,63 +80,38 @@ Item {
                 var leftCtrl = centerX + offsetPx - halfWidth + curvePx * 0.45;
                 var rightCtrl = centerX + offsetPx + halfWidth + curvePx * 0.45;
 
-                var fill = ctx.createLinearGradient(0, horizonY, 0, bottomY);
-                fill.addColorStop(0.0, AppTheme.alpha(AppTheme.colors.primary, topAlpha));
-                fill.addColorStop(0.45, AppTheme.alpha(AppTheme.colors.primary, (topAlpha + bottomAlpha) * 0.5));
-                fill.addColorStop(1.0, AppTheme.alpha(AppTheme.colors.primary, bottomAlpha));
-
+                ctx.save();
+                ctx.shadowColor = AppTheme.alpha(bandColor, glowAlpha);
+                ctx.shadowBlur = bandWidth * 1.4;
+                ctx.strokeStyle = AppTheme.alpha(bandColor, glowAlpha);
+                ctx.lineCap = "round";
+                ctx.lineJoin = "round";
+                ctx.lineWidth = bandWidth * 1.35;
                 ctx.beginPath();
                 ctx.moveTo(leftTop, horizonY);
                 ctx.quadraticCurveTo(leftCtrl, controlY, leftBottom, bottomY);
-                ctx.lineTo(rightBottom, bottomY);
-                ctx.quadraticCurveTo(rightCtrl, controlY, rightTop, horizonY);
-                ctx.closePath();
-
-                ctx.fillStyle = fill;
-                ctx.fill();
-
-                ctx.lineWidth = 2.2 * root.s;
-                ctx.strokeStyle = AppTheme.alpha(AppTheme.colors.primary, strokeAlpha);
+                ctx.moveTo(rightTop, horizonY);
+                ctx.quadraticCurveTo(rightCtrl, controlY, rightBottom, bottomY);
                 ctx.stroke();
+                ctx.restore();
+
+                ctx.save();
+                ctx.strokeStyle = AppTheme.alpha(bandColor, coreAlpha);
+                ctx.lineCap = "round";
+                ctx.lineJoin = "round";
+                ctx.lineWidth = bandWidth;
+                ctx.beginPath();
+                ctx.moveTo(leftTop, horizonY);
+                ctx.quadraticCurveTo(leftCtrl, controlY, leftBottom, bottomY);
+                ctx.moveTo(rightTop, horizonY);
+                ctx.quadraticCurveTo(rightCtrl, controlY, rightBottom, bottomY);
+                ctx.stroke();
+                ctx.restore();
             }
 
-            ctx.save();
-            ctx.shadowColor = AppTheme.alpha(AppTheme.colors.primary, 0.30);
-            ctx.shadowBlur = 22 * root.s;
-            fillLaneMask(outerHalfWidth, 0.05, 0.14, 0.12);
-            ctx.restore();
-
-            ctx.save();
-            ctx.shadowColor = AppTheme.alpha(AppTheme.colors.primary, 0.18);
-            ctx.shadowBlur = 10 * root.s;
-            fillLaneMask(laneHalfWidth, 0.10, 0.26, 0.20);
-            ctx.restore();
-
-            ctx.save();
-            ctx.setLineDash([16 * root.s, 14 * root.s]);
-            ctx.lineDashOffset = -root.motionPhase * 220 * root.s;
-            ctx.lineCap = "round";
-            ctx.lineWidth = 4.5 * root.s;
-            ctx.strokeStyle = AppTheme.alpha(AppTheme.colors.surface, 0.65);
-            ctx.beginPath();
-            ctx.moveTo(centerX + offsetPx, horizonY);
-            ctx.quadraticCurveTo(centerX + offsetPx + curvePx * 0.45, controlY, centerX + offsetPx + curvePx * 0.95, bottomY);
-            ctx.stroke();
-            ctx.restore();
-
-            ctx.beginPath();
-            ctx.moveTo(centerX + offsetPx - laneHalfWidth, horizonY);
-            ctx.quadraticCurveTo(centerX + offsetPx - laneHalfWidth + curvePx * 0.45, controlY, centerX + offsetPx - laneHalfWidth + curvePx * 0.95, bottomY);
-            ctx.strokeStyle = AppTheme.alpha(AppTheme.colors.text, 0.16);
-            ctx.lineWidth = 1.5 * root.s;
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.moveTo(centerX + offsetPx + laneHalfWidth, horizonY);
-            ctx.quadraticCurveTo(centerX + offsetPx + laneHalfWidth + curvePx * 0.45, controlY, centerX + offsetPx + laneHalfWidth + curvePx * 0.95, bottomY);
-            ctx.strokeStyle = AppTheme.alpha(AppTheme.colors.text, 0.16);
-            ctx.lineWidth = 1.5 * root.s;
-            ctx.stroke();
+            drawLaneBand(outerHalfWidth, "#41ff3d", 0.90, 0.38, 11 * root.s);
+            drawLaneBand(laneHalfWidth, "#ffe82a", 0.92, 0.40, 12 * root.s);
+            drawLaneBand(outerHalfWidth + 0.06 * roadWindow.roadW, "#ff3a1c", 0.88, 0.36, 10 * root.s);
         }
 
         Connections {
@@ -169,6 +144,7 @@ Item {
         height: roadWindow.anchors.topMargin + 180 * root.sy
         clip: true
         z: 4
+        visible: !roadWindow.laneMaskActive
 
         Image {
             x: roadImg1.x
@@ -211,5 +187,6 @@ Item {
         height: roadWindow.anchors.topMargin + 180 * root.sy
         topProtectionHeight: roadWindow.anchors.topMargin
         z: 5
+        visible: !roadWindow.laneMaskActive
     }
 }
