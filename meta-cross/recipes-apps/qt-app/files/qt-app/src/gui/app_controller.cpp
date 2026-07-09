@@ -224,7 +224,7 @@ int AppController::run(QGuiApplication& app)
         if (rootObj) {
             QWindow* window = qobject_cast<QWindow*>(rootObj);
             if (window) {
-                window->showFullScreen();
+                //window->showFullScreen();
             } else {
                 qWarning() << "Root QML object is not a QWindow — showFullScreen() skipped."
                            << "Ensure main.qml has a Window or ApplicationWindow as its root.";
