@@ -21,6 +21,9 @@ struct RunConfig {
     /// @brief Use KUKSA as data source (default: true).
     bool useKuksa{true};
 
+    /// @brief Inject synthetic laneOffset/laneHeading data for visual demo mode.
+    bool demoLanes{false};
+
     /// @brief CAN interface name (e.g., "can0"). Used if useKuksa is false.
     QString canInterface{QStringLiteral("can0")};
 

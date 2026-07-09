@@ -23,9 +23,12 @@
 #include <QWindow>
 #include <QCoreApplication>
 #include <QDebug>
+#include <QDateTime>
 #include <QUrl>
 #include <QMetaObject>
 #include <QFileInfo>
+#include <QTimer>
+#include <QtMath>
 
 namespace drivaui {
 
@@ -69,6 +72,7 @@ int AppController::run(QGuiApplication& app)
 
     QThread* workerThread = new QThread(); // no parent — we manage lifetime in aboutToQuit
     kuksa::KuksaReader* kuksaReader = nullptr;
+    QTimer* demoLaneTimer = nullptr;
 
 #ifdef ENABLE_CAN_MODE
     CanReader* canReader = nullptr;
@@ -80,6 +84,31 @@ int AppController::run(QGuiApplication& app)
     piHealth->start();
 
     drivaui::PiHealthReader* piHealthRaw = piHealth.get();
+
+    if (config_.demoLanes) {
+        qInfo() << "Starting synthetic lane demo injection (--demo-lanes)";
+        demoLaneTimer = new QTimer(vehicleData.get());
+        demoLaneTimer->setInterval(33);
+        demoLaneTimer->setTimerType(Qt::PreciseTimer);
+
+        const qint64 demoStartMs = QDateTime::currentMSecsSinceEpoch();
+
+        QObject::connect(demoLaneTimer, &QTimer::timeout, vehicleData.get(), [vehicleDataRaw = vehicleData.get(), demoStartMs]() {
+            const double t = (QDateTime::currentMSecsSinceEpoch() - demoStartMs) / 1000.0;
+            const float speed = 8.0f + 2.5f * static_cast<float>(qSin(t * 0.55));
+            const float laneOffset = 0.22f * static_cast<float>(qSin(t * 0.42))
+                                   + 0.07f * static_cast<float>(qSin(t * 1.70 + 0.8));
+            const float laneHeading = 0.28f * static_cast<float>(qSin(t * 0.31 + 1.1))
+                                    + 0.05f * static_cast<float>(qSin(t * 1.25));
+
+            vehicleDataRaw->setSpeed(speed);
+            vehicleDataRaw->setGear(QStringLiteral("D"));
+            vehicleDataRaw->setLaneOffset(laneOffset);
+            vehicleDataRaw->setLaneHeading(laneHeading);
+        });
+
+        demoLaneTimer->start();
+    }
 
     if (config_.useKuksa) {
         qInfo() << "Starting in KUKSA mode (default)";
@@ -133,13 +162,15 @@ int AppController::run(QGuiApplication& app)
                          vehicleData.get(), &VehicleData::updateEmergencyAlert,
                          Qt::QueuedConnection);
 
-		QObject::connect(kuksaReader, &kuksa::KuksaReader::laneOffsetReceived,
-						vehicleData.get(), &VehicleData::setLaneOffset,
-						Qt::QueuedConnection);
+        if (!config_.demoLanes) {
+            QObject::connect(kuksaReader, &kuksa::KuksaReader::laneOffsetReceived,
+                            vehicleData.get(), &VehicleData::setLaneOffset,
+                            Qt::QueuedConnection);
 
-		QObject::connect(kuksaReader, &kuksa::KuksaReader::laneHeadingReceived,
-						vehicleData.get(), &VehicleData::setLaneHeading,
-						Qt::QueuedConnection);
+            QObject::connect(kuksaReader, &kuksa::KuksaReader::laneHeadingReceived,
+                            vehicleData.get(), &VehicleData::setLaneHeading,
+                            Qt::QueuedConnection);
+        }
 
         QObject::connect(kuksaReader, &kuksa::KuksaReader::errorOccurred,
                          [](const QString& err) { qCritical() << "[KUKSA]" << err; });
@@ -165,9 +196,13 @@ int AppController::run(QGuiApplication& app)
 #ifdef ENABLE_CAN_MODE
         canReader,
 #endif
-        kuksaReader]() {
+    kuksaReader,
+    demoLaneTimer]() {
         // Stop Pi health polling first so no timer fires during teardown
         if (piHealthRaw) piHealthRaw->stop();
+    if (demoLaneTimer) {
+        demoLaneTimer->stop();
+    }
 #ifdef ENABLE_CAN_MODE
         if (canReader) {
             QMetaObject::invokeMethod(canReader, "stop", Qt::DirectConnection);
