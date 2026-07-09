@@ -21,11 +21,16 @@ Item {
     readonly property bool laneDataAvailable: root.vehicleDataAvailable
                                          && vehicleData.laneOffset !== undefined
                                          && vehicleData.laneHeading !== undefined
+    readonly property bool laneMaskActive: laneDataAvailable || root.demoLaneAnimation
 
     readonly property real laneOffsetGain: 2.4
     readonly property real laneHeadingGain: 3.0
-    readonly property real laneOffsetVisual: laneDataAvailable ? root.clamp(vehicleData.laneOffset * laneOffsetGain, -1.0, 1.0) : 0.0
-    readonly property real laneHeadingVisual: laneDataAvailable ? root.clamp(vehicleData.laneHeading * laneHeadingGain, -1.0, 1.0) : 0.0
+    readonly property real laneOffsetVisual: laneDataAvailable
+                                            ? root.clamp(vehicleData.laneOffset * laneOffsetGain, -1.0, 1.0)
+                                            : (root.demoLaneAnimation ? Math.sin(root.motionPhase * 6.28318530718) * 0.35 : 0.0)
+    readonly property real laneHeadingVisual: laneDataAvailable
+                                             ? root.clamp(vehicleData.laneHeading * laneHeadingGain, -1.0, 1.0)
+                                             : (root.demoLaneAnimation ? Math.sin((root.motionPhase * 6.28318530718) + 1.2) * 0.45 : 0.0)
 
     Image {
         id: roadImg1
@@ -55,7 +60,7 @@ Item {
             var ctx = getContext("2d");
             ctx.clearRect(0, 0, width, height);
 
-            if (!roadWindow.laneDataAvailable)
+            if (!roadWindow.laneMaskActive)
                 return;
 
             var horizonY = roadWindow.anchors.topMargin + 98 * root.sy;
@@ -109,6 +114,7 @@ Item {
 
             ctx.save();
             ctx.setLineDash([16 * root.s, 14 * root.s]);
+            ctx.lineDashOffset = -root.motionPhase * 220 * root.s;
             ctx.lineCap = "round";
             ctx.lineWidth = 4.5 * root.s;
             ctx.strokeStyle = AppTheme.alpha(AppTheme.colors.surface, 0.65);
@@ -137,6 +143,16 @@ Item {
             target: root.vehicleDataAvailable ? vehicleData : null
             function onLaneOffsetChanged() { laneMaskCanvas.requestPaint(); }
             function onLaneHeadingChanged() { laneMaskCanvas.requestPaint(); }
+        }
+
+        Connections {
+            target: root
+            function onMotionPhaseChanged() {
+                if (roadWindow.laneMaskActive)
+                    laneMaskCanvas.requestPaint();
+            }
+            function onDemoLaneAnimationChanged() { laneMaskCanvas.requestPaint(); }
+            function onVehicleDataAvailableChanged() { laneMaskCanvas.requestPaint(); }
         }
 
         Component.onCompleted: requestPaint()
