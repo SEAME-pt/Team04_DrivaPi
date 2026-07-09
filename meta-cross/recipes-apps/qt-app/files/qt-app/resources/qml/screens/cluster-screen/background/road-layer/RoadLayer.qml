@@ -22,8 +22,10 @@ Item {
                                          && vehicleData.laneOffset !== undefined
                                          && vehicleData.laneHeading !== undefined
 
-    readonly property real laneOffsetVisual: laneDataAvailable ? root.clamp(vehicleData.laneOffset, -1.0, 1.0) : 0.0
-    readonly property real laneHeadingVisual: laneDataAvailable ? root.clamp(vehicleData.laneHeading, -1.0, 1.0) : 0.0
+    readonly property real laneOffsetGain: 2.4
+    readonly property real laneHeadingGain: 3.0
+    readonly property real laneOffsetVisual: laneDataAvailable ? root.clamp(vehicleData.laneOffset * laneOffsetGain, -1.0, 1.0) : 0.0
+    readonly property real laneHeadingVisual: laneDataAvailable ? root.clamp(vehicleData.laneHeading * laneHeadingGain, -1.0, 1.0) : 0.0
 
     Image {
         id: roadImg1
@@ -44,7 +46,7 @@ Item {
     }
 
     Canvas {
-        id: laneCurveCanvas
+        id: laneMaskCanvas
         anchors.fill: parent
         z: 2
         antialiasing: true
@@ -56,41 +58,85 @@ Item {
             if (!roadWindow.laneDataAvailable)
                 return;
 
-            var horizonY = roadWindow.anchors.topMargin + 110 * root.sy;
-            var bottomY = height + 10 * root.sy;
+            var horizonY = roadWindow.anchors.topMargin + 98 * root.sy;
+            var bottomY = height + 12 * root.sy;
             var centerX = width / 2;
-            var offsetPx = roadWindow.laneOffsetVisual * roadWindow.roadW * 0.18;
-            var curvePx = roadWindow.laneHeadingVisual * roadWindow.roadW * 0.22;
-            var laneHalfWidth = roadWindow.roadW * 0.22;
+            var offsetPx = roadWindow.laneOffsetVisual * roadWindow.roadW * 0.24;
+            var curvePx = roadWindow.laneHeadingVisual * roadWindow.roadW * 0.34;
+            var laneHalfWidth = roadWindow.roadW * 0.19;
+            var outerHalfWidth = roadWindow.roadW * 0.28;
+            var controlY = horizonY + (bottomY - horizonY) * 0.58;
 
-            function drawLane(xShift, alpha, lineWidth, dashPattern) {
-                var startX = centerX + offsetPx + xShift;
-                var endX = centerX + offsetPx + xShift + curvePx;
-                var controlX = centerX + offsetPx + xShift + curvePx * 0.55;
-                var controlY = horizonY + (bottomY - horizonY) * 0.55;
+            function fillLaneMask(halfWidth, topAlpha, bottomAlpha, strokeAlpha) {
+                var leftTop = centerX + offsetPx - halfWidth;
+                var rightTop = centerX + offsetPx + halfWidth;
+                var leftBottom = centerX + offsetPx - halfWidth + curvePx * 0.95;
+                var rightBottom = centerX + offsetPx + halfWidth + curvePx * 0.95;
+                var leftCtrl = centerX + offsetPx - halfWidth + curvePx * 0.45;
+                var rightCtrl = centerX + offsetPx + halfWidth + curvePx * 0.45;
+
+                var fill = ctx.createLinearGradient(0, horizonY, 0, bottomY);
+                fill.addColorStop(0.0, AppTheme.alpha(AppTheme.colors.primary, topAlpha));
+                fill.addColorStop(0.45, AppTheme.alpha(AppTheme.colors.primary, (topAlpha + bottomAlpha) * 0.5));
+                fill.addColorStop(1.0, AppTheme.alpha(AppTheme.colors.primary, bottomAlpha));
 
                 ctx.beginPath();
-                ctx.moveTo(startX, horizonY);
-                ctx.quadraticCurveTo(controlX, controlY, endX, bottomY);
-                ctx.strokeStyle = AppTheme.alpha(AppTheme.colors.primary, alpha);
-                ctx.lineWidth = lineWidth;
-                ctx.lineCap = "round";
-                if (dashPattern)
-                    ctx.setLineDash(dashPattern);
-                else
-                    ctx.setLineDash([]);
+                ctx.moveTo(leftTop, horizonY);
+                ctx.quadraticCurveTo(leftCtrl, controlY, leftBottom, bottomY);
+                ctx.lineTo(rightBottom, bottomY);
+                ctx.quadraticCurveTo(rightCtrl, controlY, rightTop, horizonY);
+                ctx.closePath();
+
+                ctx.fillStyle = fill;
+                ctx.fill();
+
+                ctx.lineWidth = 2.2 * root.s;
+                ctx.strokeStyle = AppTheme.alpha(AppTheme.colors.primary, strokeAlpha);
                 ctx.stroke();
             }
 
-            drawLane(-laneHalfWidth, 0.38, 7 * root.s, []);
-            drawLane( laneHalfWidth, 0.38, 7 * root.s, []);
-            drawLane(0, 0.85, 3 * root.s, [18 * root.s, 14 * root.s]);
+            ctx.save();
+            ctx.shadowColor = AppTheme.alpha(AppTheme.colors.primary, 0.30);
+            ctx.shadowBlur = 22 * root.s;
+            fillLaneMask(outerHalfWidth, 0.05, 0.14, 0.12);
+            ctx.restore();
+
+            ctx.save();
+            ctx.shadowColor = AppTheme.alpha(AppTheme.colors.primary, 0.18);
+            ctx.shadowBlur = 10 * root.s;
+            fillLaneMask(laneHalfWidth, 0.10, 0.26, 0.20);
+            ctx.restore();
+
+            ctx.save();
+            ctx.setLineDash([16 * root.s, 14 * root.s]);
+            ctx.lineCap = "round";
+            ctx.lineWidth = 4.5 * root.s;
+            ctx.strokeStyle = AppTheme.alpha(AppTheme.colors.surface, 0.65);
+            ctx.beginPath();
+            ctx.moveTo(centerX + offsetPx, horizonY);
+            ctx.quadraticCurveTo(centerX + offsetPx + curvePx * 0.45, controlY, centerX + offsetPx + curvePx * 0.95, bottomY);
+            ctx.stroke();
+            ctx.restore();
+
+            ctx.beginPath();
+            ctx.moveTo(centerX + offsetPx - laneHalfWidth, horizonY);
+            ctx.quadraticCurveTo(centerX + offsetPx - laneHalfWidth + curvePx * 0.45, controlY, centerX + offsetPx - laneHalfWidth + curvePx * 0.95, bottomY);
+            ctx.strokeStyle = AppTheme.alpha(AppTheme.colors.text, 0.16);
+            ctx.lineWidth = 1.5 * root.s;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(centerX + offsetPx + laneHalfWidth, horizonY);
+            ctx.quadraticCurveTo(centerX + offsetPx + laneHalfWidth + curvePx * 0.45, controlY, centerX + offsetPx + laneHalfWidth + curvePx * 0.95, bottomY);
+            ctx.strokeStyle = AppTheme.alpha(AppTheme.colors.text, 0.16);
+            ctx.lineWidth = 1.5 * root.s;
+            ctx.stroke();
         }
 
         Connections {
             target: root.vehicleDataAvailable ? vehicleData : null
-            function onLaneOffsetChanged() { laneCurveCanvas.requestPaint(); }
-            function onLaneHeadingChanged() { laneCurveCanvas.requestPaint(); }
+            function onLaneOffsetChanged() { laneMaskCanvas.requestPaint(); }
+            function onLaneHeadingChanged() { laneMaskCanvas.requestPaint(); }
         }
 
         Component.onCompleted: requestPaint()
@@ -99,7 +145,6 @@ Item {
     }
 
     // ===== Horizon integration: blur + fade (top only) =====
-    // Simplified horizon blend without MultiEffect
     Item {
         id: horizonBlend
         anchors.left: parent.left
@@ -109,7 +154,6 @@ Item {
         clip: true
         z: 4
 
-        // Blurred road image (using opacity/scale for subtle effect)
         Image {
             x: roadImg1.x
             y: roadImg1.y
@@ -119,247 +163,31 @@ Item {
             fillMode: Image.PreserveAspectCrop
             smooth: true
             opacity: 0.15
-            scale: 1.05  // Slightly enlarged for blur effect
+            scale: 1.05
         }
 
         Rectangle {
             anchors.fill: parent
             gradient: Gradient {
-                GradientStop {
-                    position: 0.00
-                    color: AppTheme.alpha(AppTheme.colors.surface, 1.0)
-                }
-                GradientStop {
-                    position: 0.35
-                    color: AppTheme.alpha(AppTheme.colors.surface, 0.8)
-                }
-                GradientStop {
-                    position: 0.70
-                    color: AppTheme.alpha(AppTheme.colors.surface, 0.88)
-                }
-                GradientStop {
-                    position: 1.00
-                    color: AppTheme.alpha(AppTheme.colors.surface, 0.0)
-                }
+                GradientStop { position: 0.00; color: AppTheme.alpha(AppTheme.colors.surface, 1.0) }
+                GradientStop { position: 0.35; color: AppTheme.alpha(AppTheme.colors.surface, 0.8) }
+                GradientStop { position: 0.70; color: AppTheme.alpha(AppTheme.colors.surface, 0.88) }
+                GradientStop { position: 1.00; color: AppTheme.alpha(AppTheme.colors.surface, 0.0) }
             }
         }
 
         Rectangle {
             anchors.fill: parent
             gradient: Gradient {
-                GradientStop {
-                    position: 0.00
-                    color: AppTheme.alpha(AppTheme.colors.surface, 1.0)
-                }
-                GradientStop {
-                    position: 0.55
-                    color: AppTheme.alpha(AppTheme.colors.surface, 0.56)
-                }
-                GradientStop {
-                    position: 1.00
-                    color: AppTheme.alpha(AppTheme.colors.surface, 0.0)
-                }
+                GradientStop { position: 0.00; color: AppTheme.alpha(AppTheme.colors.surface, 1.0) }
+                GradientStop { position: 0.55; color: AppTheme.alpha(AppTheme.colors.surface, 0.56) }
+                GradientStop { position: 1.00; color: AppTheme.alpha(AppTheme.colors.surface, 0.0) }
             }
             opacity: 0.55
         }
     }
 
-    // ===== Center dashed lane line =====
-    Item {
-        id: laneLines
-        width: roadWindow.roadW
-        x: (parent.width - width) / 2
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        z: 3
-        visible: true
-        clip: true
-
-        readonly property real startY: roadWindow.anchors.topMargin + 120 * root.sy
-        readonly property int dashCount: 12
-        readonly property real dashBaseH: 26 * root.sy
-        readonly property real travel: (height - startY) + dashBaseH * 2
-
-        function dashY(i) {
-            return startY - dashBaseH + root.wrap01(root.motionPhase + (i / dashCount)) * travel;
-        }
-        function tForY(y) {
-            return root.clamp((y - startY + dashBaseH) / travel, 0, 1);
-        }
-        function dashW(y) {
-            var t = tForY(y);
-            return (2.0 + 8.0 * t) * root.s;
-        }
-        function dashH(y) {
-            var t = tForY(y);
-            return dashBaseH * (0.30 + 0.70 * t);
-        }
-        function dashOpacity(y) {
-            var t = tForY(y);
-            var baseOpacity = 0.12 + 0.18 * root.motionIntensity;
-            return baseOpacity * Math.pow(t, 1.35);
-        }
-
-        Repeater {
-            model: laneLines.dashCount
-            Rectangle {
-                property real yy: laneLines.dashY(index)
-                y: yy
-                width: laneLines.dashW(yy)
-                height: laneLines.dashH(yy)
-                x: (parent.width - width) / 2
-                radius: width / 2
-                color: AppTheme.colors.primary
-                opacity: laneLines.dashOpacity(yy)
-            }
-        }
-    }
-
-    // ===== Two faint "flow lines" =====
-    Item {
-        id: laneFlow
-        width: roadWindow.roadW * 0.45
-        x: (parent.width - width) / 2
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        z: 3
-        visible: true
-        clip: true
-
-        readonly property real startY: roadWindow.anchors.topMargin + 140 * root.sy
-        readonly property int streakCount: 8
-        readonly property real baseLen: 80 * root.sy
-        readonly property real travel: (height - startY) + baseLen * 2
-
-        function yFor(i) {
-            return startY - baseLen + root.wrap01(root.motionPhase + (i / streakCount)) * travel;
-        }
-        function tForY(y) {
-            return root.clamp((y - startY + baseLen) / travel, 0, 1);
-        }
-        function xOffset(t) {
-            return (8 + 20 * t) * root.s;
-        }
-
-        Repeater {
-            model: laneFlow.streakCount
-            Item {
-                property real yy: laneFlow.yFor(index)
-                readonly property real t: laneFlow.tForY(yy)
-
-                y: yy
-                width: parent.width
-                height: laneFlow.baseLen * (0.4 + 0.8 * t) * (0.6 + 0.6 * root.motionIntensity)
-
-                readonly property real a: (0.15 + 0.25 * root.motionIntensity) * Math.pow(t, 1.2)
-                readonly property real w: (2.0 + 4.0 * t) * root.s
-
-                Rectangle {
-                    x: (parent.width / 2) - laneFlow.xOffset(parent.t) - (parent.w / 2)
-                    width: parent.w
-                    height: parent.height
-                    radius: width / 2
-                    color: AppTheme.colors.primary
-                    opacity: parent.a
-                }
-
-                Rectangle {
-                    x: (parent.width / 2) + laneFlow.xOffset(parent.t) - (parent.w / 2)
-                    width: parent.w
-                    height: parent.height
-                    radius: width / 2
-                    color: AppTheme.colors.primary
-                    opacity: parent.a
-                }
-            }
-        }
-    }
-
-    // --- Motion Shadows (3 bands) ---
-    Item {
-        id: motionShadows
-        anchors.fill: parent
-        z: 2
-
-        readonly property real bandH: Math.max(40 * root.sy, parent.height * 0.22)
-        readonly property real travel: parent.height + bandH * 2
-
-        function bandY(offset) {
-            return -bandH + root.wrap01(root.motionPhase + offset) * travel;
-        }
-
-        Rectangle {
-            width: roadWindow.roadW * 0.98
-            height: motionShadows.bandH
-            x: (parent.width - width) / 2
-            y: motionShadows.bandY(0.00)
-            radius: 22 * root.s
-            opacity: 0.08 + 0.18 * root.motionIntensity
-            gradient: Gradient {
-                GradientStop {
-                    position: 0.0
-                    color: AppTheme.alpha(AppTheme.colors.text, 0.0)
-                }
-                GradientStop {
-                    position: 0.5
-                    color: AppTheme.colors.text
-                }
-                GradientStop {
-                    position: 1.0
-                    color: AppTheme.alpha(AppTheme.colors.text, 0.0)
-                }
-            }
-        }
-
-        Rectangle {
-            width: roadWindow.roadW * 0.95
-            height: motionShadows.bandH * 0.85
-            x: (parent.width - width) / 2
-            y: motionShadows.bandY(0.33)
-            radius: 22 * root.s
-            opacity: 0.06 + 0.14 * root.motionIntensity
-            gradient: Gradient {
-                GradientStop {
-                    position: 0.0
-                    color: AppTheme.alpha(AppTheme.colors.text, 0.0)
-                }
-                GradientStop {
-                    position: 0.5
-                    color: AppTheme.colors.text
-                }
-                GradientStop {
-                    position: 1.0
-                    color: AppTheme.alpha(AppTheme.colors.text, 0.0)
-                }
-            }
-        }
-
-        Rectangle {
-            width: roadWindow.roadW * 0.92
-            height: motionShadows.bandH * 0.75
-            x: (parent.width - width) / 2
-            y: motionShadows.bandY(0.66)
-            radius: 22 * root.s
-            opacity: 0.05 + 0.10 * root.motionIntensity
-            gradient: Gradient {
-                GradientStop {
-                    position: 0.0
-                    color: AppTheme.alpha(AppTheme.colors.text, 0.0)
-                }
-                GradientStop {
-                    position: 0.5
-                    color: AppTheme.colors.text
-                }
-                GradientStop {
-                    position: 1.0
-                    color: AppTheme.alpha(AppTheme.colors.text, 0.0)
-                }
-            }
-        }
-    }
-
-    //===== FOG GRADIENT OVERLAYS =====
-    //Fog cap: subtle horizon fade
+    // ===== FOG GRADIENT OVERLAYS =====
     FogLayer {
         anchors.left: parent.left
         anchors.right: parent.right
