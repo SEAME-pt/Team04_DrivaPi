@@ -18,6 +18,13 @@ Item {
     property real roadH: height * root.roadHeightFactor
     property real baseY: -height * Math.abs(root.roadBaseOffset)
 
+    readonly property bool laneDataAvailable: root.vehicleDataAvailable
+                                         && vehicleData.laneOffset !== undefined
+                                         && vehicleData.laneHeading !== undefined
+
+    readonly property real laneOffsetVisual: laneDataAvailable ? root.clamp(vehicleData.laneOffset, -1.0, 1.0) : 0.0
+    readonly property real laneHeadingVisual: laneDataAvailable ? root.clamp(vehicleData.laneHeading, -1.0, 1.0) : 0.0
+
     Image {
         id: roadImg1
         anchors.horizontalCenter: parent.horizontalCenter
@@ -34,6 +41,61 @@ Item {
         id: roadImg2
         visible: false
         source: "qrc:/assets/cluster/road.png"
+    }
+
+    Canvas {
+        id: laneCurveCanvas
+        anchors.fill: parent
+        z: 2
+        antialiasing: true
+
+        onPaint: {
+            var ctx = getContext("2d");
+            ctx.clearRect(0, 0, width, height);
+
+            if (!roadWindow.laneDataAvailable)
+                return;
+
+            var horizonY = roadWindow.anchors.topMargin + 110 * root.sy;
+            var bottomY = height + 10 * root.sy;
+            var centerX = width / 2;
+            var offsetPx = roadWindow.laneOffsetVisual * roadWindow.roadW * 0.18;
+            var curvePx = roadWindow.laneHeadingVisual * roadWindow.roadW * 0.22;
+            var laneHalfWidth = roadWindow.roadW * 0.22;
+
+            function drawLane(xShift, alpha, lineWidth, dashPattern) {
+                var startX = centerX + offsetPx + xShift;
+                var endX = centerX + offsetPx + xShift + curvePx;
+                var controlX = centerX + offsetPx + xShift + curvePx * 0.55;
+                var controlY = horizonY + (bottomY - horizonY) * 0.55;
+
+                ctx.beginPath();
+                ctx.moveTo(startX, horizonY);
+                ctx.quadraticCurveTo(controlX, controlY, endX, bottomY);
+                ctx.strokeStyle = AppTheme.alpha(AppTheme.colors.primary, alpha);
+                ctx.lineWidth = lineWidth;
+                ctx.lineCap = "round";
+                if (dashPattern)
+                    ctx.setLineDash(dashPattern);
+                else
+                    ctx.setLineDash([]);
+                ctx.stroke();
+            }
+
+            drawLane(-laneHalfWidth, 0.38, 7 * root.s, []);
+            drawLane( laneHalfWidth, 0.38, 7 * root.s, []);
+            drawLane(0, 0.85, 3 * root.s, [18 * root.s, 14 * root.s]);
+        }
+
+        Connections {
+            target: root.vehicleDataAvailable ? vehicleData : null
+            function onLaneOffsetChanged() { laneCurveCanvas.requestPaint(); }
+            function onLaneHeadingChanged() { laneCurveCanvas.requestPaint(); }
+        }
+
+        Component.onCompleted: requestPaint()
+        onWidthChanged: requestPaint()
+        onHeightChanged: requestPaint()
     }
 
     // ===== Horizon integration: blur + fade (top only) =====
