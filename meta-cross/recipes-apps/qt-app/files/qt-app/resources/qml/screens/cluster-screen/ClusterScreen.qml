@@ -170,9 +170,9 @@ Rectangle {
                     id: roadContainer
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 26 * root.sy
+                    anchors.bottomMargin: -10 * root.sy // Descido para preencher a zona rosa
                     width: 1200 * root.sx
-                    height: 350 * root.sy
+                    height: 380 * root.sy // Ligeiramente mais alto
                     z: 1
 
                     // Calculamos a distorção do horizonte usando a curva e o offset
@@ -218,35 +218,35 @@ Rectangle {
                                 GradientStop { position: 1.0; color: "transparent" }
                             }
 
-                            // BASE FIXA ESQUERDA
-                            startX: (roadContainer.width / 2) - (350 * root.sx)
+                            // BASE FIXA ESQUERDA (Mais larga - 500px do centro)
+                            startX: (roadContainer.width / 2) - (500 * root.sx)
                             startY: roadContainer.height
 
                             // HORIZONTE ESQUERDO (Converge para o centro)
                             PathQuad {
-                                x: (roadContainer.width / 2) - (15 * root.sx) + roadContainer.currentCurveOffset + roadContainer.currentLateralOffset
-                                y: roadContainer.height * 0.25
-                                controlX: (roadContainer.width / 2) - (150 * root.sx) + (roadContainer.currentCurveOffset * 0.7) + (roadContainer.currentLateralOffset * 0.4)
-                                controlY: roadContainer.height * 0.6
+                                x: (roadContainer.width / 2) - (20 * root.sx) + roadContainer.currentCurveOffset + roadContainer.currentLateralOffset
+                                y: roadContainer.height * 0.35 // Horizonte ligeiramente mais abaixo
+                                controlX: (roadContainer.width / 2) - (200 * root.sx) + (roadContainer.currentCurveOffset * 0.7) + (roadContainer.currentLateralOffset * 0.5)
+                                controlY: roadContainer.height * 0.7
                             }
 
                             // HORIZONTE DIREITO (A união no topo)
                             PathLine {
-                                x: (roadContainer.width / 2) + (15 * root.sx) + roadContainer.currentCurveOffset + roadContainer.currentLateralOffset
-                                y: roadContainer.height * 0.25
+                                x: (roadContainer.width / 2) + (20 * root.sx) + roadContainer.currentCurveOffset + roadContainer.currentLateralOffset
+                                y: roadContainer.height * 0.35
                             }
 
-                            // BASE FIXA DIREITA
+                            // BASE FIXA DIREITA (Mais larga - 500px do centro)
                             PathQuad {
-                                x: (roadContainer.width / 2) + (350 * root.sx)
+                                x: (roadContainer.width / 2) + (500 * root.sx)
                                 y: roadContainer.height
-                                controlX: (roadContainer.width / 2) + (150 * root.sx) + (roadContainer.currentCurveOffset * 0.7) + (roadContainer.currentLateralOffset * 0.4)
-                                controlY: roadContainer.height * 0.6
+                                controlX: (roadContainer.width / 2) + (200 * root.sx) + (roadContainer.currentCurveOffset * 0.7) + (roadContainer.currentLateralOffset * 0.5)
+                                controlY: roadContainer.height * 0.7
                             }
 
                             // Fechar o tapete na base
                             PathLine {
-                                x: (roadContainer.width / 2) - (350 * root.sx)
+                                x: (roadContainer.width / 2) - (500 * root.sx)
                                 y: roadContainer.height
                             }
                         }
@@ -258,16 +258,16 @@ Rectangle {
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap
 
-                            // Base FIXA Esquerda
-                            startX: (roadContainer.width / 2) - (350 * root.sx)
+                            // Base FIXA Esquerda (Larga)
+                            startX: (roadContainer.width / 2) - (500 * root.sx)
                             startY: roadContainer.height
 
                             // Horizonte (Deslocado pela curva e offset)
                             PathQuad {
-                                x: (roadContainer.width / 2) - (15 * root.sx) + roadContainer.currentCurveOffset + roadContainer.currentLateralOffset
-                                y: roadContainer.height * 0.25
-                                controlX: (roadContainer.width / 2) - (150 * root.sx) + (roadContainer.currentCurveOffset * 0.7) + (roadContainer.currentLateralOffset * 0.4)
-                                controlY: roadContainer.height * 0.6
+                                x: (roadContainer.width / 2) - (20 * root.sx) + roadContainer.currentCurveOffset + roadContainer.currentLateralOffset
+                                y: roadContainer.height * 0.35
+                                controlX: (roadContainer.width / 2) - (200 * root.sx) + (roadContainer.currentCurveOffset * 0.7) + (roadContainer.currentLateralOffset * 0.5)
+                                controlY: roadContainer.height * 0.7
                             }
                         }
 
@@ -278,16 +278,16 @@ Rectangle {
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap
 
-                            // Base FIXA Direita
-                            startX: (roadContainer.width / 2) + (350 * root.sx)
+                            // Base FIXA Direita (Larga)
+                            startX: (roadContainer.width / 2) + (500 * root.sx)
                             startY: roadContainer.height
 
                             // Horizonte (Deslocado pela curva e offset)
                             PathQuad {
-                                x: (roadContainer.width / 2) + (15 * root.sx) + roadContainer.currentCurveOffset + roadContainer.currentLateralOffset
-                                y: roadContainer.height * 0.25
-                                controlX: (roadContainer.width / 2) + (150 * root.sx) + (roadContainer.currentCurveOffset * 0.7) + (roadContainer.currentLateralOffset * 0.4)
-                                controlY: roadContainer.height * 0.6
+                                x: (roadContainer.width / 2) + (20 * root.sx) + roadContainer.currentCurveOffset + roadContainer.currentLateralOffset
+                                y: roadContainer.height * 0.35
+                                controlX: (roadContainer.width / 2) + (200 * root.sx) + (roadContainer.currentCurveOffset * 0.7) + (roadContainer.currentLateralOffset * 0.5)
+                                controlY: roadContainer.height * 0.7
                             }
                         }
                     }
