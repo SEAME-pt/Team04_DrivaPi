@@ -85,10 +85,10 @@ int AppController::run(QGuiApplication& app)
 
     drivaui::PiHealthReader* piHealthRaw = piHealth.get();
 
-    if (config_.demoLanes) {
+   if (config_.demoLanes) {
         qInfo() << "Starting synthetic lane demo injection (--demo-lanes)";
         demoLaneTimer = new QTimer(vehicleData.get());
-        demoLaneTimer->setInterval(33);
+        demoLaneTimer->setInterval(33); // ~30 FPS para testar a suavização da UI
         demoLaneTimer->setTimerType(Qt::PreciseTimer);
 
         const qint64 demoStartMs = QDateTime::currentMSecsSinceEpoch();
@@ -96,10 +96,14 @@ int AppController::run(QGuiApplication& app)
         QObject::connect(demoLaneTimer, &QTimer::timeout, vehicleData.get(), [vehicleDataRaw = vehicleData.get(), demoStartMs]() {
             const double t = (QDateTime::currentMSecsSinceEpoch() - demoStartMs) / 1000.0;
             const float speed = 8.0f + 2.5f * static_cast<float>(qSin(t * 0.55));
-            const float laneOffset = 0.22f * static_cast<float>(qSin(t * 0.42))
-                                   + 0.07f * static_cast<float>(qSin(t * 1.70 + 0.8));
-            const float laneHeading = 0.28f * static_cast<float>(qSin(t * 0.31 + 1.1))
-                                    + 0.05f * static_cast<float>(qSin(t * 1.25));
+
+            // Stanley Offset vem em píxeis reais da imagem (ex: -150 a +150)
+            const float laneOffset = 120.0f * static_cast<float>(qSin(t * 0.42))
+                                   + 30.0f * static_cast<float>(qSin(t * 1.70 + 0.8));
+
+            // Stanley Heading vem em radianos da trigonometria atan2 (ex: -0.4 a +0.4)
+            const float laneHeading = 0.35f * static_cast<float>(qSin(t * 0.31 + 1.1))
+                                    + 0.08f * static_cast<float>(qSin(t * 1.25));
 
             vehicleDataRaw->setSpeed(speed);
             vehicleDataRaw->setGear(QStringLiteral("D"));
