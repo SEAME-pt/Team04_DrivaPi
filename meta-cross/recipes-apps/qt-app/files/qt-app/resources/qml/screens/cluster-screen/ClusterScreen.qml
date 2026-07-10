@@ -1,7 +1,8 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick.Shapes // NOVO: Permite desenhar linhas de faixa dinâmicas vetorizadas!
+import Qt5Compat.GraphicalEffects as Effects
 import "../../components/cluster"
 import "../../components/battery"
 import "../../theme"
@@ -14,11 +15,9 @@ Rectangle {
     id: root
 
     property real motionPhase: 0
-    property bool demoLaneAnimation: false
-    property real demoMotionSpeedKmh: 8
 
     // Speed used by motion simulation (supports reverse if negative)
-    readonly property real motionSpeedKmh: demoLaneAnimation ? demoMotionSpeedKmh : currentSpeed
+    readonly property real motionSpeedKmh: currentSpeed
     readonly property real motionSpeedAbs: Math.abs(motionSpeedKmh)
     readonly property real motionDir: {
         if (currentGear === "R") return -1;
@@ -37,6 +36,15 @@ Rectangle {
     property bool vehicleDataAvailable: vehicleData !== null && vehicleData !== undefined
 
     property bool demoEmergencyAlert: false
+
+    // V2X & ADAS Emergency State
+    property bool emergencyPriorityActive: false
+    property int emergencyPriorityLevel: 0
+    property string emergencyMessage: ""
+    property url emergencyIconSource: ""
+
+    property int speedLimitValue: 0
+    property bool speedLimitActive: false
     property real currentSpeed: vehicleDataAvailable && vehicleData.speed ? vehicleData.speed : 0
     property int stm32Battery: vehicleDataAvailable && vehicleData.stm32Battery !== undefined ? vehicleData.stm32Battery : 0
     property int rpiBattery: vehicleDataAvailable && vehicleData.rpiBattery !== undefined ? vehicleData.rpiBattery : 0
@@ -155,63 +163,110 @@ Rectangle {
                     }
                 }
 
-                Rectangle {
-                    id: demoToggle
-                    anchors.top: parent.top
-                    anchors.right: parent.right
-                    anchors.topMargin: 16 * root.sy
-                    anchors.rightMargin: 16 * root.s
-                    width: 144 * root.s
-                    height: 40 * root.sy
-                    radius: height / 2
-                    z: 200
-                    color: root.demoLaneAnimation ? AppTheme.colors.primary : AppTheme.colors.surfaceElevated
-                    border.width: 1
-                    border.color: root.demoLaneAnimation ? AppTheme.colors.primary : AppTheme.colors.border
-
-                    Behavior on color {
-                        ColorAnimation { duration: 180 }
-                    }
-
-                    Behavior on border.color {
-                        ColorAnimation { duration: 180 }
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: root.demoLaneAnimation ? "Demo ON" : "Simular faixas"
-                        color: root.demoLaneAnimation ? AppTheme.colors.surface : AppTheme.colors.text
-                        font.pixelSize: 14 * root.s
-                        font.weight: Font.DemiBold
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.demoLaneAnimation = !root.demoLaneAnimation
-                    }
-                }
-
-                Image {
-                    source: "qrc:/assets/cluster/floor-grid.svg"
+                // =========================================================
+                // ROAD CONTAINER: Grelha e Linhas da Faixa Dinâmicas
+                // =========================================================
+                Item {
+                    id: roadContainer
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: 26 * root.sy
-                    sourceSize.width: 1200
-                    opacity: AppTheme.isDark ? 0.55 : 0.15
+                    width: 1200 * root.sx
+                    height: 350 * root.sy
                     z: 1
 
-				transform: Rotation {
-                        origin.x: width / 2; origin.y: height
-                        // if laneHeading is available, use it to rotate the floor grid; otherwise, keep it at 0 degrees
+                    // Rotação suave baseada no laneHeading do Stanley
+                    transform: Rotation {
+                        origin.x: roadContainer.width / 2; origin.y: roadContainer.height
                         angle: (root.vehicleDataAvailable && vehicleData.laneHeading !== undefined) ? (vehicleData.laneHeading * 50) : 0
 
                         Behavior on angle {
                             NumberAnimation { duration: 150; easing.type: Easing.OutSine }
                         }
-                }
+                    }
 
+                    Image {
+                        source: "qrc:/assets/cluster/floor-grid.svg"
+                        anchors.fill: parent
+                        opacity: AppTheme.isDark ? 0.55 : 0.15
+                    }
+
+                    // Desenho vetorial dinâmico das faixas
+                    Shape {
+                        anchors.fill: parent
+
+                        // Efeito de Brilho Neon para as linhas
+                        layer.enabled: true
+                        layer.effect: Effects.DropShadow {
+                            transparentBorder: true
+                            color: AppTheme.colors.primary
+                            radius: 12 * root.s
+                            samples: 25
+                        }
+
+                        // 1. "Tapete" Virtual (Área de condução segura)
+                        ShapePath {
+                            strokeWidth: 0
+                            fillGradient: LinearGradient {
+                                y1: 0; y2: roadContainer.height
+                                GradientStop { position: 0.0; color: "transparent" }
+                                GradientStop { position: 0.8; color: Qt.rgba(AppTheme.colors.primary.r, AppTheme.colors.primary.g, AppTheme.colors.primary.b, 0.15) }
+                                GradientStop { position: 1.0; color: "transparent" }
+                            }
+
+                            startX: (roadContainer.width / 2) - (80 * root.sx)
+                            startY: roadContainer.height * 0.25
+
+                            PathLine { x: (roadContainer.width / 2) + (80 * root.sx); y: roadContainer.height * 0.25 }
+                            PathQuad {
+                                x: (roadContainer.width / 2) + (350 * root.sx); y: roadContainer.height
+                                controlX: (roadContainer.width / 2) + (150 * root.sx); controlY: roadContainer.height * 0.6
+                            }
+                            PathLine { x: (roadContainer.width / 2) - (350 * root.sx); y: roadContainer.height }
+                            PathQuad {
+                                x: (roadContainer.width / 2) - (80 * root.sx); y: roadContainer.height * 0.25
+                                controlX: (roadContainer.width / 2) - (150 * root.sx); controlY: roadContainer.height * 0.6
+                            }
+                        }
+
+                        // 2. Linha Lateral Esquerda
+                        ShapePath {
+                            strokeWidth: 6 * root.s
+                            strokeColor: AppTheme.colors.primary
+                            fillColor: "transparent"
+                            capStyle: ShapePath.RoundCap
+
+                            startX: (roadContainer.width / 2) - (350 * root.sx)
+                            startY: roadContainer.height
+
+                            PathQuad {
+                                x: (roadContainer.width / 2) - (80 * root.sx)
+                                y: roadContainer.height * 0.25
+                                controlX: (roadContainer.width / 2) - (150 * root.sx)
+                                controlY: roadContainer.height * 0.6
+                            }
+                        }
+
+                        // 3. Linha Lateral Direita
+                        ShapePath {
+                            strokeWidth: 6 * root.s
+                            strokeColor: AppTheme.colors.primary
+                            fillColor: "transparent"
+                            capStyle: ShapePath.RoundCap
+
+                            startX: (roadContainer.width / 2) + (350 * root.sx)
+                            startY: roadContainer.height
+
+                            PathQuad {
+                                x: (roadContainer.width / 2) + (80 * root.sx)
+                                y: roadContainer.height * 0.25
+                                controlX: (roadContainer.width / 2) + (150 * root.sx)
+                                controlY: roadContainer.height * 0.6
+                            }
+                        }
+                    }
                 }
+                // =========================================================
 
                 Image {
                     source: "qrc:/assets/cluster/car-glow.svg"
@@ -286,29 +341,30 @@ Rectangle {
                                 spacing: 14 * root.s
 
                                 SpeedLimitIndicator {
-									Layout.preferredWidth: 105 * root.s
-									Layout.preferredHeight: 105 * root.s
-									Layout.alignment: Qt.AlignVCenter
-									z: 1
+                                    Layout.preferredWidth: 105 * root.s
+                                    Layout.preferredHeight: 105 * root.s
+                                    Layout.alignment: Qt.AlignVCenter
+                                    z: 1
 
-                                    visible: root.vehicleDataAvailable && vehicleData.speedLimitActive
-                                    opacity: root.vehicleDataAvailable && vehicleData.speedLimitActive ? 1.0 : 0.0
+                                    visible: root.speedLimitActive
+                                    opacity: root.speedLimitActive ? 1.0 : 0.0
 
-									vehicleDataAvailable: root.vehicleDataAvailable
-                                    speedLimitValue: root.vehicleDataAvailable ? vehicleData.speedLimitValue : 0
-									s: root.s
+                                    vehicleDataAvailable: root.vehicleDataAvailable
+                                    speedLimitValue: root.speedLimitValue
+                                    s: root.s
 
-									Behavior on opacity {
-										NumberAnimation {
-											duration: 180
-											easing.type: Easing.OutQuad
-										}
-									}
-								}
+                                    Behavior on opacity {
+                                        NumberAnimation {
+                                            duration: 180
+                                            easing.type: Easing.OutQuad
+                                        }
+                                    }
+                                }
                                 Item { Layout.fillWidth: true }
                             }
                         }
 
+                        // CARRO (Movimento Lateral Suave com laneOffset)
                         Image {
                             id: carImg
                             source: "qrc:/assets/cluster/car.png"
@@ -318,8 +374,18 @@ Rectangle {
                             anchors.bottom: parent.bottom
                             anchors.bottomMargin: -50 * root.sy
                             opacity: 1.0
+
                             transform: [
-                                Translate { y: Math.sin(root.motionPhase * 6.28318530718 * 2.0) * (1.2 * root.sy) * root.motionIntensity },
+                                Translate {
+                                    // Interpola a posição horizontal do carro consoante o offset
+                                    x: (root.vehicleDataAvailable && vehicleData.laneOffset !== undefined) ? (vehicleData.laneOffset * -250) : 0
+                                    y: Math.sin(root.motionPhase * 6.28318530718 * 2.0) * (1.2 * root.sy) * root.motionIntensity
+
+                                    // Isto é o que garante os 60 FPS fluídos sem saltos
+                                    Behavior on x {
+                                        NumberAnimation { duration: 150; easing.type: Easing.OutSine }
+                                    }
+                                },
                                 Rotation {
                                     origin.x: carImg.width / 2; origin.y: carImg.height / 2
                                     angle: Math.sin(root.motionPhase * 6.28318530718) * (0.35 * root.motionIntensity) * root.motionDir
@@ -365,18 +431,179 @@ Rectangle {
         }
     }
 
+    function adasSign(fileName) {
+        return Qt.resolvedUrl("../../../assets/adas-signs/" + fileName);
+    }
+
+    function showAdasSign(fileName, priorityLevel, message) {
+        root.emergencyIconSource = adasSign(fileName);
+        root.emergencyMessage = message || "";
+        root.emergencyPriorityLevel = priorityLevel;
+        root.emergencyPriorityActive = true;
+
+        console.log("[ClusterScreen] ADAS SIGN ALERT:",
+                    fileName,
+                    root.emergencyIconSource,
+                    "priority=",
+                    priorityLevel,
+                    "message=",
+                    root.emergencyMessage);
+
+        emergencyTimeoutTimer.restart();
+    }
+
+    function showSpeedLimit(limitValue) {
+        root.speedLimitValue = limitValue;
+        root.speedLimitActive = true;
+
+        console.log("[ClusterScreen] SPEED LIMIT ALERT:", limitValue);
+
+        speedLimitTimeoutTimer.restart();
+    }
+
+    function showTextAlert(message, priorityLevel) {
+        root.emergencyIconSource = "";
+        root.emergencyMessage = message;
+        root.emergencyPriorityLevel = priorityLevel;
+        root.emergencyPriorityActive = true;
+
+        console.log("[ClusterScreen] TEXT ALERT:",
+                    message,
+                    "priority=",
+                    priorityLevel);
+
+        emergencyTimeoutTimer.restart();
+    }
+
+    function clearAlert() {
+        root.emergencyIconSource = "";
+        root.emergencyMessage = "";
+        root.emergencyPriorityLevel = 0;
+        root.emergencyPriorityActive = false;
+    }
+
+    // ==========================================================
+    // BACKEND SIGNAL CONNECTIONS (C++ to QML Bridge)
+    // ==========================================================
+    Connections {
+        target: vehicleData
+        enabled: vehicleDataAvailable
+
+        function onEmergencyAlertChanged(priorityLevel) {
+            console.log("[ClusterScreen] V2X Emergency Alert Received. Priority:", priorityLevel);
+
+            if (priorityLevel >= 2) {
+                showTextAlert("PULL OVER - EMERGENCY", 2);
+                return;
+            }
+
+            if (priorityLevel === 1) {
+                showTextAlert("EMERGENCY VEHICLE AHEAD", 1);
+                return;
+            }
+
+            clearAlert();
+            emergencyTimeoutTimer.stop();
+        }
+
+        function onTrafficSignChanged(classId) {
+            console.log("[ClusterScreen] Traffic Sign/Obstacle ID:", classId);
+
+            // 0 = Clear.
+            if (classId === 0) {
+                return;
+            }
+
+            if (classId === 1) {
+                showSpeedLimit(50);
+                return;
+            }
+            if (classId === 2) {
+                showSpeedLimit(80);
+                return;
+            }
+            if (classId === 3) {
+                showAdasSign("gate-sign.png", 1, "GATE AHEAD");
+                return;
+            }
+            if (classId === 4) {
+                showAdasSign("crosswalk-sign.png", 1, "CROSSWALK AHEAD");
+                return;
+            }
+            if (classId === 5) {
+                showAdasSign("stop-sign.png", 2, "STOP SIGN");
+                return;
+            }
+            if (classId === 6) {
+                showAdasSign("yield-sign.svg", 1, "YIELD SIGN");
+                return;
+            }
+            if (classId === 7) {
+                showAdasSign("obstacle-sign.png", 2, "CAR AHEAD");
+                return;
+            }
+            if (classId === 8) {
+                showAdasSign("danger-sign.png", 1, "DANGER SIGN");
+                return;
+            }
+            if (classId === 9) {
+                showAdasSign("obstacle-sign.png", 2, "OBSTACLE AHEAD");
+                return;
+            }
+            if (classId === 10) {
+                showAdasSign("traffic-light-green.svg", 1, "GREEN LIGHT");
+                return;
+            }
+            if (classId === 11) {
+                showAdasSign("traffic-light-off.svg", 1, "TRAFFIC LIGHT OFF");
+                return;
+            }
+            if (classId === 12) {
+                showAdasSign("traffic-light-red.svg", 2, "RED LIGHT");
+                return;
+            }
+            if (classId === 13) {
+                showAdasSign("traffic-light-yellow.svg", 1, "YELLOW LIGHT");
+                return;
+            }
+        }
+    }
+
+    Timer {
+        id: emergencyTimeoutTimer
+        interval: 3000
+        running: false
+        repeat: false
+        onTriggered: {
+            console.log("[ClusterScreen] ADAS / V2X Alert Auto-Cleared (Timeout)");
+            clearAlert();
+        }
+    }
+    Timer {
+        id: speedLimitTimeoutTimer
+        interval: 3000
+        running: false
+        repeat: false
+
+        onTriggered: {
+            console.log("[ClusterScreen] Speed limit auto-cleared");
+            root.speedLimitActive = false;
+            root.speedLimitValue = 0;
+        }
+    }
+
     // ==========================================================
     // V2X EMERGENCY OVERLAY
     // ==========================================================
     EmergencyAlert {
-		id: adasEmergencyAlert
-		z: 2000
-		s: root.s
-        isActive: root.vehicleDataAvailable ? vehicleData.emergencyPriorityActive : false
-        priorityLevel: root.vehicleDataAvailable ? vehicleData.emergencyPriorityLevel : 0
-        alertMessage: root.vehicleDataAvailable ? vehicleData.emergencyMessage : ""
-        iconSource: root.vehicleDataAvailable ? vehicleData.emergencyIconSource : ""
-	}
+        id: adasEmergencyAlert
+        z: 2000
+        s: root.s
+        isActive: root.emergencyPriorityActive
+        priorityLevel: root.emergencyPriorityLevel
+        alertMessage: root.emergencyMessage
+        iconSource: root.emergencyIconSource
+    }
 
     BatteryPopup {
         id: batteryPopup
