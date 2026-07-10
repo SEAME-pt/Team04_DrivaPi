@@ -164,24 +164,34 @@ Rectangle {
                 }
 
                 // =========================================================
-                // ROAD CONTAINER: Convergência Central e Ponto de Fuga
+                // ROAD CONTAINER: Convergência Central Restrita à "Zona Rosa"
                 // =========================================================
                 Item {
                     id: roadContainer
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottom: parent.bottom
-                    anchors.bottomMargin: -10 * root.sy // Descido para preencher a zona rosa
+                    anchors.bottomMargin: -10 * root.sy
                     width: 1200 * root.sx
-                    height: 380 * root.sy // Ligeiramente mais alto
+                    height: 380 * root.sy
                     z: 1
 
-                    // Calculamos a distorção do horizonte usando a curva e o offset
+                    // Captura dos dados en bruto do Stanley
                     property real currentLateralOffset: (root.vehicleDataAvailable && vehicleData.laneOffset !== undefined) ? (vehicleData.laneOffset * -1.5 * root.sx) : 0
                     property real currentCurveOffset: (root.vehicleDataAvailable && vehicleData.laneHeading !== undefined) ? (vehicleData.laneHeading * -400 * root.sx) : 0
 
                     // A animação garante a fluidez a 60 FPS
                     Behavior on currentLateralOffset { NumberAnimation { duration: 150; easing.type: Easing.OutSine } }
                     Behavior on currentCurveOffset { NumberAnimation { duration: 150; easing.type: Easing.OutSine } }
+
+                    // =========================================================================
+                    // MATEMÁTICA DE BLOQUEIO (Clamping)
+                    // Garante que o horizonte (a zona rosa) nunca foge do centro!
+                    // =========================================================================
+                    property real horizonXShift: Math.max(-40 * root.sx, Math.min(40 * root.sx, (currentCurveOffset * 0.1) + (currentLateralOffset * 0.1)))
+                    property real horizonY: roadContainer.height * 0.65 // 65% para baixo, impedindo-o de ir "acima"
+
+                    // Apenas a "barriga" das linhas (o meio da curva) se deforma agressivamente
+                    property real curveBellyShift: (currentCurveOffset * 0.8) + (currentLateralOffset * 0.6)
 
                     Image {
                         source: "qrc:/assets/cluster/floor-grid.svg"
@@ -218,30 +228,30 @@ Rectangle {
                                 GradientStop { position: 1.0; color: "transparent" }
                             }
 
-                            // BASE FIXA ESQUERDA (Mais larga - 500px do centro)
+                            // BASE FIXA ESQUERDA
                             startX: (roadContainer.width / 2) - (500 * root.sx)
                             startY: roadContainer.height
 
-                            // HORIZONTE ESQUERDO (Converge para o centro)
+                            // HORIZONTE ESQUERDO (Bloqueado à zona rosa)
                             PathQuad {
-                                x: (roadContainer.width / 2) - (20 * root.sx) + roadContainer.currentCurveOffset + roadContainer.currentLateralOffset
-                                y: roadContainer.height * 0.35 // Horizonte ligeiramente mais abaixo
-                                controlX: (roadContainer.width / 2) - (200 * root.sx) + (roadContainer.currentCurveOffset * 0.7) + (roadContainer.currentLateralOffset * 0.5)
-                                controlY: roadContainer.height * 0.7
+                                x: (roadContainer.width / 2) - (15 * root.sx) + roadContainer.horizonXShift
+                                y: roadContainer.horizonY
+                                controlX: (roadContainer.width / 2) - (200 * root.sx) + roadContainer.curveBellyShift
+                                controlY: roadContainer.height * 0.8
                             }
 
-                            // HORIZONTE DIREITO (A união no topo)
+                            // HORIZONTE DIREITO (Bloqueado à zona rosa)
                             PathLine {
-                                x: (roadContainer.width / 2) + (20 * root.sx) + roadContainer.currentCurveOffset + roadContainer.currentLateralOffset
-                                y: roadContainer.height * 0.35
+                                x: (roadContainer.width / 2) + (15 * root.sx) + roadContainer.horizonXShift
+                                y: roadContainer.horizonY
                             }
 
-                            // BASE FIXA DIREITA (Mais larga - 500px do centro)
+                            // BASE FIXA DIREITA
                             PathQuad {
                                 x: (roadContainer.width / 2) + (500 * root.sx)
                                 y: roadContainer.height
-                                controlX: (roadContainer.width / 2) + (200 * root.sx) + (roadContainer.currentCurveOffset * 0.7) + (roadContainer.currentLateralOffset * 0.5)
-                                controlY: roadContainer.height * 0.7
+                                controlX: (roadContainer.width / 2) + (200 * root.sx) + roadContainer.curveBellyShift
+                                controlY: roadContainer.height * 0.8
                             }
 
                             // Fechar o tapete na base
@@ -258,16 +268,16 @@ Rectangle {
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap
 
-                            // Base FIXA Esquerda (Larga)
+                            // Base FIXA Esquerda
                             startX: (roadContainer.width / 2) - (500 * root.sx)
                             startY: roadContainer.height
 
-                            // Horizonte (Deslocado pela curva e offset)
+                            // Horizonte (Bloqueado à zona rosa)
                             PathQuad {
-                                x: (roadContainer.width / 2) - (20 * root.sx) + roadContainer.currentCurveOffset + roadContainer.currentLateralOffset
-                                y: roadContainer.height * 0.35
-                                controlX: (roadContainer.width / 2) - (200 * root.sx) + (roadContainer.currentCurveOffset * 0.7) + (roadContainer.currentLateralOffset * 0.5)
-                                controlY: roadContainer.height * 0.7
+                                x: (roadContainer.width / 2) - (15 * root.sx) + roadContainer.horizonXShift
+                                y: roadContainer.horizonY
+                                controlX: (roadContainer.width / 2) - (200 * root.sx) + roadContainer.curveBellyShift
+                                controlY: roadContainer.height * 0.8
                             }
                         }
 
@@ -278,16 +288,16 @@ Rectangle {
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap
 
-                            // Base FIXA Direita (Larga)
+                            // Base FIXA Direita
                             startX: (roadContainer.width / 2) + (500 * root.sx)
                             startY: roadContainer.height
 
-                            // Horizonte (Deslocado pela curva e offset)
+                            // Horizonte (Bloqueado à zona rosa)
                             PathQuad {
-                                x: (roadContainer.width / 2) + (20 * root.sx) + roadContainer.currentCurveOffset + roadContainer.currentLateralOffset
-                                y: roadContainer.height * 0.35
-                                controlX: (roadContainer.width / 2) + (200 * root.sx) + (roadContainer.currentCurveOffset * 0.7) + (roadContainer.currentLateralOffset * 0.5)
-                                controlY: roadContainer.height * 0.7
+                                x: (roadContainer.width / 2) + (15 * root.sx) + roadContainer.horizonXShift
+                                y: roadContainer.horizonY
+                                controlX: (roadContainer.width / 2) + (200 * root.sx) + roadContainer.curveBellyShift
+                                controlY: roadContainer.height * 0.8
                             }
                         }
                     }
