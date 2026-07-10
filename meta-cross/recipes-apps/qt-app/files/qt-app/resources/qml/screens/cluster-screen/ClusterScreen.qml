@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
-import QtQuick.Shapes // NOVO: Permite desenhar linhas de faixa dinâmicas vetorizadas!
+import QtQuick.Shapes // Essencial para desenhar a geometria vetorial
 import Qt5Compat.GraphicalEffects as Effects
 import "../../components/cluster"
 import "../../components/battery"
@@ -164,7 +164,7 @@ Rectangle {
                 }
 
                 // =========================================================
-                // ROAD CONTAINER: Grelha e Linhas da Faixa Dinâmicas
+                // ROAD CONTAINER: Linhas Geométricas com Curvatura 3D
                 // =========================================================
                 Item {
                     id: roadContainer
@@ -175,92 +175,119 @@ Rectangle {
                     height: 350 * root.sy
                     z: 1
 
-                    // Rotação suave baseada no laneHeading do Stanley
-                    transform: Rotation {
-                        origin.x: roadContainer.width / 2; origin.y: roadContainer.height
-                        angle: (root.vehicleDataAvailable && vehicleData.laneHeading !== undefined) ? (vehicleData.laneHeading * 50) : 0
+                    // Em vez de rodar, vamos deslocar os pontos do topo das linhas da estrada.
+                    // Multiplicador exagerado para a curvatura ser notória (ajusta o 400 se necessário)
+                    property real currentCurveOffset: (root.vehicleDataAvailable && vehicleData.laneHeading !== undefined) ? (vehicleData.laneHeading * -400 * root.sx) : 0
 
-                        Behavior on angle {
-                            NumberAnimation { duration: 150; easing.type: Easing.OutSine }
-                        }
+                    // Interpola a deformação para garantir os 60 FPS
+                    Behavior on currentCurveOffset {
+                        NumberAnimation { duration: 150; easing.type: Easing.OutSine }
                     }
 
                     Image {
                         source: "qrc:/assets/cluster/floor-grid.svg"
                         anchors.fill: parent
-                        opacity: AppTheme.isDark ? 0.55 : 0.15
+                        opacity: AppTheme.isDark ? 0.35 : 0.10
+
+                        // O tapete base também deforma ligeiramente com a curva para dar ilusão
+                        transform: Rotation {
+                            origin.x: roadContainer.width / 2; origin.y: roadContainer.height
+                            angle: (roadContainer.currentCurveOffset / 20)
+                        }
                     }
 
-                    // Desenho vetorial dinâmico das faixas
+                    // Desenho vetorial dinâmico das faixas (Curvas de Bézier)
                     Shape {
                         anchors.fill: parent
 
-                        // Efeito de Brilho Neon para as linhas
                         layer.enabled: true
                         layer.effect: Effects.DropShadow {
                             transparentBorder: true
-                            color: AppTheme.colors.primary
-                            radius: 12 * root.s
-                            samples: 25
+                            color: "#000000" // Sombra escura para destacar as cores neon
+                            radius: 8 * root.s
+                            samples: 17
+                            verticalOffset: 2
                         }
 
-                        // 1. "Tapete" Virtual (Área de condução segura)
+                        // 1. "Tapete" Virtual (Área de condução segura semi-transparente)
                         ShapePath {
                             strokeWidth: 0
                             fillGradient: LinearGradient {
                                 y1: 0; y2: roadContainer.height
                                 GradientStop { position: 0.0; color: "transparent" }
-                                GradientStop { position: 0.8; color: Qt.rgba(AppTheme.colors.primary.r, AppTheme.colors.primary.g, AppTheme.colors.primary.b, 0.15) }
+                                GradientStop { position: 0.8; color: Qt.rgba(0.2, 0.6, 1.0, 0.15) } // Azul suave
                                 GradientStop { position: 1.0; color: "transparent" }
                             }
 
-                            startX: (roadContainer.width / 2) - (80 * root.sx)
-                            startY: roadContainer.height * 0.25
-
-                            PathLine { x: (roadContainer.width / 2) + (80 * root.sx); y: roadContainer.height * 0.25 }
-                            PathQuad {
-                                x: (roadContainer.width / 2) + (350 * root.sx); y: roadContainer.height
-                                controlX: (roadContainer.width / 2) + (150 * root.sx); controlY: roadContainer.height * 0.6
-                            }
-                            PathLine { x: (roadContainer.width / 2) - (350 * root.sx); y: roadContainer.height }
-                            PathQuad {
-                                x: (roadContainer.width / 2) - (80 * root.sx); y: roadContainer.height * 0.25
-                                controlX: (roadContainer.width / 2) - (150 * root.sx); controlY: roadContainer.height * 0.6
-                            }
-                        }
-
-                        // 2. Linha Lateral Esquerda
-                        ShapePath {
-                            strokeWidth: 6 * root.s
-                            strokeColor: AppTheme.colors.primary
-                            fillColor: "transparent"
-                            capStyle: ShapePath.RoundCap
-
+                            // Começa no canto inferior esquerdo
                             startX: (roadContainer.width / 2) - (350 * root.sx)
                             startY: roadContainer.height
 
+                            // Curva para o canto superior esquerdo (ControlX deformado pela curva)
                             PathQuad {
-                                x: (roadContainer.width / 2) - (80 * root.sx)
+                                x: (roadContainer.width / 2) - (80 * root.sx) + roadContainer.currentCurveOffset
                                 y: roadContainer.height * 0.25
-                                controlX: (roadContainer.width / 2) - (150 * root.sx)
+                                controlX: (roadContainer.width / 2) - (150 * root.sx) + (roadContainer.currentCurveOffset * 0.6)
+                                controlY: roadContainer.height * 0.6
+                            }
+
+                            // Linha a unir o topo esquerdo com o topo direito
+                            PathLine {
+                                x: (roadContainer.width / 2) + (80 * root.sx) + roadContainer.currentCurveOffset
+                                y: roadContainer.height * 0.25
+                            }
+
+                            // Curva para o canto inferior direito
+                            PathQuad {
+                                x: (roadContainer.width / 2) + (350 * root.sx)
+                                y: roadContainer.height
+                                controlX: (roadContainer.width / 2) + (150 * root.sx) + (roadContainer.currentCurveOffset * 0.6)
+                                controlY: roadContainer.height * 0.6
+                            }
+
+                            // Fecha o polígono em baixo
+                            PathLine {
+                                x: (roadContainer.width / 2) - (350 * root.sx)
+                                y: roadContainer.height
+                            }
+                        }
+
+                        // 2. Linha Lateral Esquerda (Verde Néon da Máscara)
+                        ShapePath {
+                            strokeWidth: 8 * root.s
+                            strokeColor: "#39FF14" // Verde Néon
+                            fillColor: "transparent"
+                            capStyle: ShapePath.RoundCap
+
+                            // Base esquerda
+                            startX: (roadContainer.width / 2) - (350 * root.sx)
+                            startY: roadContainer.height
+
+                            // Topo esquerdo curvo
+                            PathQuad {
+                                x: (roadContainer.width / 2) - (80 * root.sx) + roadContainer.currentCurveOffset
+                                y: roadContainer.height * 0.25
+                                controlX: (roadContainer.width / 2) - (150 * root.sx) + (roadContainer.currentCurveOffset * 0.6)
                                 controlY: roadContainer.height * 0.6
                             }
                         }
 
-                        // 3. Linha Lateral Direita
+                        // 3. Linha Lateral Direita (Amarelo Néon da Máscara)
                         ShapePath {
-                            strokeWidth: 6 * root.s
-                            strokeColor: AppTheme.colors.primary
+                            strokeWidth: 8 * root.s
+                            strokeColor: "#FFD700" // Amarelo Néon
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap
 
+                            // Base direita
                             startX: (roadContainer.width / 2) + (350 * root.sx)
                             startY: roadContainer.height
 
+                            // Topo direito curvo
                             PathQuad {
-                                x: (roadContainer.width / 2) + (80 * root.sx)
+                                x: (roadContainer.width / 2) + (80 * root.sx) + roadContainer.currentCurveOffset
                                 y: roadContainer.height * 0.25
-                                controlX: (roadContainer.width / 2) + (150 * root.sx)
+                                controlX: (roadContainer.width / 2) + (150 * root.sx) + (roadContainer.currentCurveOffset * 0.6)
                                 controlY: roadContainer.height * 0.6
                             }
                         }
@@ -377,11 +404,10 @@ Rectangle {
 
                             transform: [
                                 Translate {
-                                    // Interpola a posição horizontal do carro consoante o offset
+                                    // Move horizontalmente o carro no ecrã consoante o desvio lateral
                                     x: (root.vehicleDataAvailable && vehicleData.laneOffset !== undefined) ? (vehicleData.laneOffset * -250) : 0
                                     y: Math.sin(root.motionPhase * 6.28318530718 * 2.0) * (1.2 * root.sy) * root.motionIntensity
 
-                                    // Isto é o que garante os 60 FPS fluídos sem saltos
                                     Behavior on x {
                                         NumberAnimation { duration: 150; easing.type: Easing.OutSine }
                                     }
