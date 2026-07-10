@@ -34,11 +34,11 @@ pub struct StanleyConfig {
 impl Default for StanleyConfig {
     fn default() -> Self {
         Self {
-            k: 0.2,
-            k_soft: 0.15,
+            k: 0.4,
+            k_soft: 0.25,
             wheelbase_m: 0.15,
             max_steer_rad: 0.5,
-            max_steer_rate: 2.0,
+            max_steer_rate: 2.5,
             steer_to_servo_gain: 45.0,
         }
     }
@@ -67,7 +67,10 @@ pub fn compute_steering(
 
     let angle_raw = observation.heading_error_rad + crosstrack_error;
 
-    let angle = angle_raw.clamp(-cfg.max_steer_rad, cfg.max_steer_rad);
+    let max_change = cfg.max_steer_rate * dt;
+    let rate_limited_angle = angle_raw.clamp(prev_delta - max_change, prev_delta + max_change);
+
+    let angle = rate_limited_angle.clamp(-cfg.max_steer_rad, cfg.max_steer_rad);
 
     println!(
         "[STANLEY] cte={:.4} heading={:.6} angle={:.4}",

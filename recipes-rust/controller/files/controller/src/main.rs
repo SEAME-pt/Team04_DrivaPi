@@ -43,6 +43,11 @@ const JS_EVENT_BUTTON: u8 = 0x01;
 const JS_EVENT_AXIS: u8 = 0x02;
 const JS_EVENT_INIT: u8 = 0x80;
 
+/* EMA Constants */
+const MAX_ALLOWED_CTE: f64 = 1.5;
+const SPIKE_THRESHOLD_RAD: f64 = 0.15;
+const ALPHA: f64 = 0.25;
+
 #[derive(Default, Debug, Clone, Copy)]
 pub struct Vector2f {
     x: f64,
@@ -527,6 +532,14 @@ fn run_autonomous_mode(
 
     controller.send_motor_command(10, FORWARD)?;
     let speed_mps = 10.0 * (100.0 / 3600.0);
+
+
+// =================================================================================
+
+    
+// =================================================================================
+//                      AUTONOMOUS LOOP
+    
     loop {
         // OVERRIDE: if human move joystick it overrides
         if let Some(input) = recv_latest_input(input_rx, Duration::from_millis(10)) {
@@ -565,35 +578,70 @@ fn run_autonomous_mode(
         
 
         if perception.valid == 1 {
+
+            let mut raw_cte = perception.closest_front_point as f64;
             println!(
                 "[PERCEPTION] cte={:.5} heading={:.5} speed={speed_mps}",
-                perception.closest_front_point,
+                raw_cte,
                 perception.heading_error
             );
+
+            if raw_cte.abs() > MAX_ALLOWED_CTE {
+                raw_cte = raw_cte.clamp(-MAX_ALLOWED_CTE, MAX_ALLOWED_CTE);
+            }
+
             let observation = stanley::CameraLaneObservation {
-                closest_front_point_m: perception.closest_front_point as f64,
+                closest_front_point_m: raw_cte,
                 heading_error_rad: stanley::normalize_heading(perception.heading_error as f64),
-                // heading_error_rad: perception.heading_error as f64,
                 confidence: perception.confidence as f64,
             };
             
-            let angle = stanley::compute_steering(
+            let raw_angle = stanley::compute_steering(
                 &observation,
                 speed_mps, // speed
                 prev_delta,
                 dt,
                 &config
             );
-            prev_delta = angle;
-            
-            let servo_deg = stanley::steering_to_servo_deg(angle, &config) as u32;
 
-            if last_servo != Some(servo_deg) {
-                controller.send_servo_command(servo_deg)?;
-                last_servo = Some(servo_deg);
-            
+
+            let mut skip_frame = false;
+            if let Some(prev_angle) = filtered_angle{
+                if (raw_angle - prev_angle).abs() > SPIKE_THRESHOLD_RAD{
+                    skip_frame = true;
+                }
             }
-            println!("[CAN] servo={}", servo_deg);
+
+
+            if !skip_frame {
+                let angle = match filtered_angle {
+                    None => {
+                        filtered_angle = Some(raw_angle);
+                        raw_angle
+                    }
+                    Some => {
+                        let smoothed_value = (ALPHA * raw_angle) + ((1.0 - ALPHA) * prev_angle);
+                        filtered_angle = Some(smoothed_value);
+                        smoothed_value
+                    }
+                };
+
+                prev_delta = angle;
+                
+                let servo_deg = stanley::steering_to_servo_deg(angle, &config) as u32;
+
+                if last_servo != Some(servo_deg) {
+                    controller.send_servo_command(servo_deg)?;
+                    last_servo = Some(servo_deg);
+                
+                }
+                println!("[CAN] servo={}", servo_deg);
+            } else {
+                if let Some(prev_angle) = filtered_angle {
+                    filtered_angle = Some(prev_angle * 0.95);
+                    prev_delta = prev_angle * 0.95;
+                }
+            }
         }
         // } else {
             // Low confidence or invalid detection
