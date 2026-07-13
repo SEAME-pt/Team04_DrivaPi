@@ -6,9 +6,7 @@ static unsigned char	send_buf[512];
 static unsigned char	recv_buf[512];
 static MQTTClient 		client;
 static Network			n;
-uint8_t sub_done = 0;
-int32_t mqtt_tls_id = 0;
-
+int32_t 				mqtt_tls_id = 0;
 
 
 void mqtt_init(void)
@@ -17,7 +15,7 @@ void mqtt_init(void)
     if (wifi_ptr == NULL)
     {
         if (MX_WIFI_DEBUG)
-        UartPrint("[FATAL] WIFI NULL");
+        	UartPrint("[FATAL] WIFI NULL");
         Error_Handler();
     }
 
@@ -95,15 +93,14 @@ void mqtt_thread_fc(ULONG thread_input)
     if (MX_WIFI_DEBUG)
         UartPrint("\r\n===== MQTT START =====");
     tx_thread_sleep(500);
-
     mqtt_init();
-
     while (1)
     {
-        if (tx_event_flags_get(&g_eventFlags, FLAG_CAN_EMERGENCY_CMD, TX_OR_CLEAR, &actual_flags, TX_NO_WAIT) == TX_SUCCESS)
+		if (tx_event_flags_get(&g_eventFlags, FLAG_CAN_EMERGENCY_CMD, TX_OR_CLEAR, &actual_flags, TX_NO_WAIT) == TX_SUCCESS)
 		{
 			while (tx_queue_receive(&g_queueEmergencyCmd, &msg, TX_NO_WAIT) == TX_SUCCESS)
 			{
+				UartPrintf("[DEBUG CAN] Valor bruto na Queue: %d\r\n", msg.data[0]);
 				memcpy(&g_emergency_cmd, msg.data , sizeof(uint8_t));
 
 			}
@@ -113,16 +110,13 @@ void mqtt_thread_fc(ULONG thread_input)
         {
             if (MX_WIFI_DEBUG)
                 UartPrint("[MQTT] Disconnected! Trying to reconnect...\r\n");
-
-            sub_done = 0;
             tx_thread_sleep(500);
             continue;
         }
-        UartPrintf("emergency%d\r\n", g_emergency_cmd);
+        if (MX_WIFI_DEBUG)
+        	UartPrintf("emergency%d\r\n", g_emergency_cmd);
         if (g_emergency_cmd == 1)
         {
-            sub_done = 0;
-
             MQTTMessage msg;
             char payload[64];
 
@@ -146,45 +140,52 @@ void mqtt_thread_fc(ULONG thread_input)
             }
             else
             {
-                if (MX_WIFI_DEBUG)
+               if (MX_WIFI_DEBUG)
                     UartPrintf("Success Send: %s\r\n", payload);
             }
 
-            tx_thread_sleep(200);
-        }
+			__HAL_TIM_SET_AUTORELOAD(&htim3, 1040);
+			__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 520);
+			HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
+			tx_thread_sleep(40);
+
+			__HAL_TIM_SET_AUTORELOAD(&htim3, 1538);
+			__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 769);
+			HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
+			tx_thread_sleep(40);
+			}
 
         else
         {
-            if (!sub_done)
-            {
-                if (MX_WIFI_DEBUG)
-                    UartPrint("[MQTT] Subscribing to vehicles/emergency...\r\n");
+        	HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_3);
 
-                int rc = MQTTSubscribe(&client, "vehicles/emergency", QOS1, stm32_emergency_callback);
+            MQTTMessage msg;
+            char payload[64];
 
-                if (rc == 0)
-                {
-                    sub_done = 1;
-                    if (MX_WIFI_DEBUG)
-                        UartPrint("[MQTT] Subscription Successful!\r\n");
-                }
-                else
-                {
-                    if (MX_WIFI_DEBUG)
-                        UartPrintf("[ERROR] Subscribe fail (rc=%d)\r\n", rc);
-                    tx_thread_sleep(100);
-                    continue;
-                }
-            }
+            sprintf(payload, "EMERGENCY_N_ACTIVE");
 
-            int rc = MQTTYield(&client, 200);
+            msg.qos = 1;
+            msg.retained = 0;
+            msg.dup = 0;
+            msg.payload = payload;
+            msg.payloadlen = strlen(payload);
+
+            if (MX_WIFI_DEBUG)
+                UartPrint("[MQTT] Publishing emergency alarm...\r\n");
+
+            int rc = MQTTPublish(&client, "vehicles/emergency", &msg);
+
             if (rc != 0)
             {
                 if (MX_WIFI_DEBUG)
-                    UartPrint("[MQTT] Yield error (connection lost?)\r\n");
+                    UartPrintf("[MQTT] Emergency publish fail (rc=%d)\r\n", rc);
             }
-
-            tx_thread_sleep(10);
+            else
+            {
+               if (MX_WIFI_DEBUG)
+                    UartPrintf("Success Send: %s\r\n", payload);
+            }
+            tx_thread_sleep(50);
         }
     }
     }
@@ -219,28 +220,10 @@ int stm32_mqtt_recv(Network* n, unsigned char* buffer, int len, int timeout_ms)
                 UartPrintf("[RECV] Successfully read %d bytes. Progress: %d/%d\r\n", rc, bytes_read, len);
         }
         else if (rc < 0)
-        {
             break;
-        }
         else
-        {
             tx_thread_sleep(2);
-        }
     }
 
     return bytes_read;
-}
-
-void stm32_emergency_callback(MessageData* data)
-{
-    MQTTMessage* msg = data->message;
-
-    char received_payload[64];
-    int len = (msg->payloadlen < 63) ? msg->payloadlen : 63;
-    memcpy(received_payload, msg->payload, len);
-    received_payload[len] = '\0';
-
-
-    UartPrintf("\r\n⚠️ [ALERT RECEIVED] Topic: %.*s | Msg: %s\r\n", data->topicName->lenstring.len, data->topicName->lenstring.data,
-    received_payload);
 }

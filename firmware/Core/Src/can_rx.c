@@ -52,18 +52,20 @@ void CanRx(ULONG initial_input)
 			received = CanReceive(&msg);
 			tx_mutex_put(&g_canMutex);
 		}
-
 		if (received)
 		{
-			if (msg.id == CMD_SPEED){
+			if (msg.id == CMD_SPEED)
+			{
 				tx_queue_send(&g_queueSpeedCmd, &msg, TX_NO_WAIT);
 				tx_event_flags_set(&g_eventFlags, FLAG_CAN_SPEED_CMD, TX_OR);
 			}
-			if (msg.id == CMD_STEERING){
+			if (msg.id == CMD_STEERING)
+			{
 				tx_queue_send(&g_queueSteerCmd, &msg, TX_NO_WAIT);
 				tx_event_flags_set(&g_eventFlags, FLAG_CAN_STEER_CMD, TX_OR);
 			}
-			if (msg.id == CMD_EMERGENCY){
+			if (msg.id == CMD_EMERGENCY)
+			{
 				tx_queue_send(&g_queueEmergencyCmd, &msg, TX_NO_WAIT);
 				tx_event_flags_set(&g_eventFlags, FLAG_CAN_EMERGENCY_CMD, TX_OR);
 			}

@@ -1,0 +1,13 @@
+../Core/Src/sensors.c:53:6:SensorsInit	1
+../Core/Src/sensors.c:76:26:SensorI2cMemRead	10
+../Core/Src/sensors.c:121:26:SensorI2cMemWrite	8
+../Core/Src/sensors.c:160:26:HTS221WriteReg	1
+../Core/Src/sensors.c:171:26:HTS221ReadCalibration	2
+../Core/Src/sensors.c:201:19:Hts221Init	5
+../Core/Src/sensors.c:230:19:HTS221ReadBoth	10
+../Core/Src/sensors.c:283:16:BatteryPercentFrom2SVoltage	6
+../Core/Src/sensors.c:311:19:BatteryInit	2
+../Core/Src/sensors.c:331:19:Battery_Read	8
+../Core/Src/sensors.c:373:19:Battery_ReadCurrent	6
+../Core/Src/sensors.c:445:6:SensorHTS221Thread	14
+../Core/Src/sensors.c:551:6:SensorBatteryThread	10

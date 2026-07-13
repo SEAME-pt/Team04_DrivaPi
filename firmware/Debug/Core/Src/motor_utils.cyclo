@@ -1,0 +1,3 @@
+../Core/Src/motor_utils.c:16:6:UartPrintf	1
+../Core/Src/motor_utils.c:32:6:UartPrint	1
+../Core/Src/motor_utils.c:43:6:SoftwareDelay	2

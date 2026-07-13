@@ -31,14 +31,11 @@ void WIFIStartup(void)
 	uint8_t             flow_seen_high = 0;
 	uint8_t             notify_seen_high = 0;
 
-	/* Board-specific rail enable used during Wi-Fi bring-up. */
 	HAL_GPIO_WritePin(UCPD_PWR_GPIO_Port, UCPD_PWR_Pin, GPIO_PIN_SET);
 	tx_thread_sleep(50);
 	snprintf(status_msg, sizeof(status_msg), "[GPIO] UCPD_PWR=%d", (int)HAL_GPIO_ReadPin(UCPD_PWR_GPIO_Port, UCPD_PWR_Pin));
 	if (MX_WIFI_DEBUG)
     	UartPrint(status_msg);
-
-	/* WKUP_B is module-driven: keep MCU pin as input (Hi-Z). */
 	{
 		GPIO_InitTypeDef gpio_cfg = {0};
 		gpio_cfg.Pin = WRLS_WKUP_B_Pin;
@@ -49,7 +46,6 @@ void WIFIStartup(void)
 	if (MX_WIFI_DEBUG)
     	UartPrint("[GPIO] WKUP_B set to input (Hi-Z)");
 
-	/* Keep module awake before probe/init handshakes. */
 	if (MX_WIFI_DEBUG)
     	UartPrint("[INIT] Enabling WiFi wake pin (WKUP_W=1)...");
 	HAL_GPIO_WritePin(WRLS_WKUP_W_GPIO_Port, WRLS_WKUP_W_Pin, GPIO_PIN_SET);
@@ -152,7 +148,6 @@ void WIFIStartup(void)
 		{
 			GPIO_InitTypeDef gpio_cfg = {0};
 
-			/* Recovery path for modules that do not toggle handshake lines. */
 			if (MX_WIFI_DEBUG)
 				UartPrint("[INIT] Fallback: force WKUP_B high and retry");
 			gpio_cfg.Pin = WRLS_WKUP_B_Pin;

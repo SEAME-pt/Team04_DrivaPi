@@ -1,0 +1,6 @@
+../Middlewares/Mx_WIFI/core/mx_rtos_abs.c:92:9:noos_sem_signal	3
+../Middlewares/Mx_WIFI/core/mx_rtos_abs.c:105:9:noos_sem_wait	12
+../Middlewares/Mx_WIFI/core/mx_rtos_abs.c:161:9:noos_fifo_init	5
+../Middlewares/Mx_WIFI/core/mx_rtos_abs.c:198:6:noos_fifo_deinit	2
+../Middlewares/Mx_WIFI/core/mx_rtos_abs.c:208:9:noos_fifo_push	12
+../Middlewares/Mx_WIFI/core/mx_rtos_abs.c:263:7:noos_fifo_pop	12

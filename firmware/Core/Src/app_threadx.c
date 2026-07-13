@@ -102,6 +102,10 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
 	memory_ptr, QUEUE_SIZE * sizeof(t_can_message));
 	memory_ptr += QUEUE_SIZE * sizeof(t_can_message);
 
+	tx_queue_create(&g_queueEmergencyCmd, "Emergency Queue", sizeof(t_can_message)/sizeof(ULONG),
+	memory_ptr, QUEUE_SIZE * sizeof(t_can_message));
+	memory_ptr += QUEUE_SIZE * sizeof(t_can_message);
+
 	tx_event_flags_create(&g_eventFlags, "System Events");
 
 	tx_mutex_create(&g_speedDataMutex, "Speed Data Mutex", TX_INHERIT);

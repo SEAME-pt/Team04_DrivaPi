@@ -9,13 +9,13 @@ extern "C" {
 #include "MQTTClient.h"
 #include "mx_address.h"
 
-int stm32_mqtt_send(Network* n, unsigned char* buffer, int len, int timeout_ms);
-int stm32_mqtt_recv(Network* n, unsigned char* buffer, int len, int timeout_ms);
-void mqtt_thread_fc(ULONG thread_input);
-void stm32_emergency_callback(MessageData* data);
+int		stm32_mqtt_send(Network* n, unsigned char* buffer, int len, int timeout_ms);
+int 	stm32_mqtt_recv(Network* n, unsigned char* buffer, int len, int timeout_ms);
+void	mqtt_thread_fc(ULONG thread_input);
+void	stm32_emergency_callback(MessageData* data);
 
-extern uint8_t g_emergency_cmd;
-
+extern uint8_t 				g_emergency_cmd;
+extern TIM_HandleTypeDef	htim3;
 #ifndef MX_WIFI_DEBUG
 #define MX_WIFI_DEBUG	(0)
 #endif
