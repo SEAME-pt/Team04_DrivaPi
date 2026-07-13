@@ -109,14 +109,14 @@ void mqtt_thread_fc(ULONG thread_input)
     g_emergency_cmd = 0;
 
     while (WIFIStartup() != 0)
-    	tx_thread_sleep(500);
+        tx_thread_sleep(500);
 
     if (MX_WIFI_DEBUG)
-    	UartPrint("\r\n===== MQTT APPLICATION START =====\r\n");
+        UartPrint("\r\n===== MQTT APPLICATION START =====\r\n");
     tx_thread_sleep(500);
 
     while (mqtt_init() != 0)
-    	 tx_thread_sleep(500);
+        tx_thread_sleep(500);
 
     while (1)
     {
@@ -125,7 +125,7 @@ void mqtt_thread_fc(ULONG thread_input)
             while (tx_queue_receive(&g_queueEmergencyCmd, &msg, TX_NO_WAIT) == TX_SUCCESS)
             {
                 if (MX_WIFI_DEBUG)
-                	UartPrintf("[DEBUG CAN] Raw Queue Value: %d\r\n", msg.data[0]);
+                    UartPrintf("[DEBUG CAN] Raw Queue Value: %d\r\n", msg.data[0]);
                 memcpy(&g_emergency_cmd, msg.data, sizeof(uint8_t));
             }
         }
@@ -133,13 +133,13 @@ void mqtt_thread_fc(ULONG thread_input)
         if (!MQTTIsConnected(&client))
         {
             if (MX_WIFI_DEBUG)
-            	UartPrint("[MQTT] Disconnected! Attempting to reconnect...\r\n");
+                UartPrint("[MQTT] Disconnected! Attempting to reconnect...\r\n");
             tx_thread_sleep(500);
             continue;
         }
 
         if (MX_WIFI_DEBUG)
-        	UartPrintf("emergency%d\r\n", g_emergency_cmd);
+            UartPrintf("emergency%d\r\n", g_emergency_cmd);
 
         if (g_emergency_cmd == 1)
         {
@@ -173,9 +173,9 @@ void mqtt_thread_fc(ULONG thread_input)
  * @param timeout_ms Connection timeout duration.
  * @return int Total bytes transmitted, or negative error code.
  */
-int stm32_mqtt_send(Network* n, unsigned char* buffer, int len, int timeout_ms)
+int stm32_mqtt_send(Network* net, unsigned char* buffer, int len, int timeout_ms)
 {
-    return MX_WIFI_TLS_send(WIFI_Get_Object(), (mtls_t)(intptr_t)n->my_socket, buffer, len);
+    return MX_WIFI_TLS_send(WIFI_Get_Object(), (mtls_t)(intptr_t)net->my_socket, buffer, len);
 }
 
 /**
@@ -187,7 +187,7 @@ int stm32_mqtt_send(Network* n, unsigned char* buffer, int len, int timeout_ms)
  * @param timeout_ms Maximum time to wait for data arrival.
  * @return int Total bytes successfully read into the buffer.
  */
-int stm32_mqtt_recv(Network* n, unsigned char* buffer, int len, int timeout_ms)
+int stm32_mqtt_recv(Network* net, unsigned char* buffer, int len, int timeout_ms)
 {
     int			bytes_read = 0;
     uint32_t	start_time = tx_time_get();
@@ -199,17 +199,17 @@ int stm32_mqtt_recv(Network* n, unsigned char* buffer, int len, int timeout_ms)
         if (elapsed >= (uint32_t)timeout_ms)
         {
             if (MX_WIFI_DEBUG)
-            	UartPrint("[RECV] Timeout reached.\r\n");
+                UartPrint("[RECV] Timeout reached.\r\n");
             break;
         }
 
-        int rc = MX_WIFI_TLS_recv(WIFI_Get_Object(), (mtls_t)(intptr_t)n->my_socket, buffer + bytes_read, len - bytes_read);
+        int rc = MX_WIFI_TLS_recv(WIFI_Get_Object(), (mtls_t)(intptr_t)net->my_socket, buffer + bytes_read, len - bytes_read);
 
         if (rc > 0)
         {
             bytes_read += rc;
             if (MX_WIFI_DEBUG)
-            	UartPrintf("[RECV] Read %d bytes. (%d/%d)\r\n", rc, bytes_read, len);
+                UartPrintf("[RECV] Read %d bytes. (%d/%d)\r\n", rc, bytes_read, len);
         }
         else if (rc < 0)
         {
@@ -244,16 +244,16 @@ static int publish_emergency_status(uint8_t status)
     msg.payloadlen = strlen(payload);
 
     if (MX_WIFI_DEBUG)
-    	UartPrint("[MQTT] Publishing emergency alarm...\r\n");
+        UartPrint("[MQTT] Publishing emergency alarm...\r\n");
 
     int rc = MQTTPublish(&client, "vehicles/emergency", &msg);
 
     if (MX_WIFI_DEBUG)
     {
         if (rc != 0)
-        	UartPrintf("[MQTT] Emergency publish fail (rc=%d)\r\n", rc);
+            UartPrintf("[MQTT] Emergency publish fail (rc=%d)\r\n", rc);
         else
-        	UartPrintf("Success Send: %s\r\n", payload);
+            UartPrintf("Success Send: %s\r\n", payload);
     }
 
     return rc;
