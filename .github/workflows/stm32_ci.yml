@@ -43,20 +43,34 @@ jobs:
           M_USER="${{ secrets.MQTT_USERNAME }}"
           M_PASS="${{ secrets.MQTT_PASSWORD }}"
 
+          # Fallbacks para credenciais normais
           [ -z "$W_SSID" ] && W_SSID="dummy_ssid"
           [ -z "$W_PASS" ] && W_PASS="dummy_password"
-          
-          [ -z "$W_IP" ]   && W_IP="{0}"
-          [ -z "$W_MASK" ] && W_MASK="{0}"
-          [ -z "$W_GATE" ] && W_GATE="{0}"
-          [ -z "$W_DNS" ]  && W_DNS="{0}"
+          [ -z "$M_USER" ] && M_USER="dummy_user"
+          [ -z "$M_PASS" ] && M_PASS="dummy_password"
           
           [ -z "$M_IP0" ]  && M_IP0="0"
           [ -z "$M_IP1" ]  && M_IP1="0"
           [ -z "$M_IP2" ]  && M_IP2="0"
           [ -z "$M_IP3" ]  && M_IP3="0"
-          [ -z "$M_USER" ] && M_USER="dummy_user"
-          [ -z "$M_PASS" ] && M_PASS="dummy_password"
+
+          # Função para converter "192.168.1.25" em "{192,168,1,25}" ou usar "{0}" se estiver vazio
+          format_ip() {
+            local ip="$1"
+            if [ -z "$ip" ]; then
+              echo "{0}"
+            elif [[ "$ip" == *.* ]]; then
+              echo "{"$(echo "$ip" | tr '.' ',')"\}"
+            else
+              echo "$ip"
+            fi
+          }
+
+          # Formata os IPs do Wi-Fi para sintaxe C
+          W_IP=$(format_ip "$W_IP")
+          W_MASK=$(format_ip "$W_MASK")
+          W_GATE=$(format_ip "$W_GATE")
+          W_DNS=$(format_ip "$W_DNS")
 
           cat <<EOF > firmware/Core/Inc/MX_WIFI/wifi_credentials.h
           #ifndef WIFI_CREDENTIALS_H
@@ -80,7 +94,7 @@ jobs:
           EOF
           
           grep -q 'MX_WIFI/wifi_credentials.h' firmware/Core/Inc/main.h || echo '#include "MX_WIFI/wifi_credentials.h"' >> firmware/Core/Inc/main.h
-
+      
       - name: Build project (full STM32 firmware)
         working-directory: firmware/Debug
         run: |
