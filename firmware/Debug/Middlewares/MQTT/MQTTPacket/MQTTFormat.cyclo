@@ -1,8 +1,0 @@
-../Middlewares/MQTT/MQTTPacket/MQTTFormat.c:31:13:MQTTPacket_getName	1
-../Middlewares/MQTT/MQTTPacket/MQTTFormat.c:37:5:MQTTStringFormat_connect	6
-../Middlewares/MQTT/MQTTPacket/MQTTFormat.c:61:5:MQTTStringFormat_connack	1
-../Middlewares/MQTT/MQTTPacket/MQTTFormat.c:68:5:MQTTStringFormat_publish	1
-../Middlewares/MQTT/MQTTPacket/MQTTFormat.c:80:5:MQTTStringFormat_ack	2
-../Middlewares/MQTT/MQTTPacket/MQTTFormat.c:89:5:MQTTStringFormat_subscribe	1
-../Middlewares/MQTT/MQTTPacket/MQTTFormat.c:100:5:MQTTStringFormat_suback	1
-../Middlewares/MQTT/MQTTPacket/MQTTFormat.c:107:5:MQTTStringFormat_unsubscribe	1

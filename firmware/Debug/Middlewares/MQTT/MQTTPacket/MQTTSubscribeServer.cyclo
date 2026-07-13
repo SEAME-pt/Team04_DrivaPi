@@ -1,2 +1,0 @@
-../Middlewares/MQTT/MQTTPacket/MQTTSubscribeServer.c:35:5:MQTTDeserialize_subscribe	7
-../Middlewares/MQTT/MQTTPacket/MQTTSubscribeServer.c:88:5:MQTTSerialize_suback	3

@@ -1,6 +1,0 @@
-../Middlewares/MQTT/MQTTPacket/MQTTSerializePublish.c:31:5:MQTTSerialize_publishLength	2
-../Middlewares/MQTT/MQTTPacket/MQTTSerializePublish.c:55:5:MQTTSerialize_publish	3
-../Middlewares/MQTT/MQTTPacket/MQTTSerializePublish.c:104:5:MQTTSerialize_ack	2
-../Middlewares/MQTT/MQTTPacket/MQTTSerializePublish.c:137:5:MQTTSerialize_puback	1
-../Middlewares/MQTT/MQTTPacket/MQTTSerializePublish.c:151:5:MQTTSerialize_pubrel	1
-../Middlewares/MQTT/MQTTPacket/MQTTSerializePublish.c:164:5:MQTTSerialize_pubcomp	1

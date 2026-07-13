@@ -1,4 +1,0 @@
-../Core/Src/dc_motor.c:18:6:MoveMotors	3
-../Core/Src/dc_motor.c:45:6:MotorCoast	1
-../Core/Src/dc_motor.c:64:6:StopMotors	1
-../Core/Src/dc_motor.c:82:6:DcMotor	6
