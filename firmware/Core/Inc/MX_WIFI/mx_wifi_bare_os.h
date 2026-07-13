@@ -71,7 +71,7 @@ static inline mx_buf_t *mx_buf_alloc(uint32_t len)
   do                     \
   {                      \
     ((void)0);           \
-  } while((A) != true)     /* ; */
+  } while((A) != true)
 
 
 #define LOCK_DECLARE(A)                                   \
