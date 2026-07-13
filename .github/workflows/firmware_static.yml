@@ -47,7 +47,6 @@ jobs:
 
       - name: Generate Secrets Header
         run: |
-          # Criar a pasta MX_WIFI caso ela não exista no runner
           mkdir -p firmware/Core/Inc/MX_WIFI
           
           # Captura os secrets em variáveis Bash
@@ -65,11 +64,9 @@ jobs:
           M_USER="${{ secrets.MQTT_USERNAME }}"
           M_PASS="${{ secrets.MQTT_PASSWORD }}"
 
-          # Se os secrets estiverem vazios (comum no CodeQL/PRs), define fallbacks válidos para o compilador C
           [ -z "$W_SSID" ] && W_SSID="dummy_ssid"
           [ -z "$W_PASS" ] && W_PASS="dummy_password"
           
-          # Usar {0} é um wildcard seguro em C para inicializar arrays/structs/inteiros vazios
           [ -z "$W_IP" ]   && W_IP="{0}"
           [ -z "$W_MASK" ] && W_MASK="{0}"
           [ -z "$W_GATE" ] && W_GATE="{0}"
@@ -82,7 +79,6 @@ jobs:
           [ -z "$M_USER" ] && M_USER="dummy_user"
           [ -z "$M_PASS" ] && M_PASS="dummy_password"
 
-          # Escreve o ficheiro final com garantias de preenchimento
           cat <<EOF > firmware/Core/Inc/MX_WIFI/wifi_credentials.h
           #ifndef WIFI_CREDENTIALS_H
           #define WIFI_CREDENTIALS_H
@@ -103,8 +99,7 @@ jobs:
 
           #endif
           EOF
-          
-          # Injeta o ficheiro com o subcaminho correto no main.h caso não esteja lá
+
           grep -q 'MX_WIFI/wifi_credentials.h' firmware/Core/Inc/main.h || echo '#include "MX_WIFI/wifi_credentials.h"' >> firmware/Core/Inc/main.h
 
       - name: Build project for CodeQL
