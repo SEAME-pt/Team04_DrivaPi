@@ -178,4 +178,4 @@ ADAS/obstacle-detection/*.onnx
 ADAS/obstacle-detection/inference/*.hef
 
 # Wi-Fi credentials
-Core/Inc/wifi_credentials.h
+wifi_credentials.h

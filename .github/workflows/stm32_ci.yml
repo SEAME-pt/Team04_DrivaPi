@@ -27,9 +27,9 @@ jobs:
 
       - name: Generate Secrets Header
         run: |
-          cat <<EOF > firmware/Core/Inc/app_secrets.h
-          #ifndef APP_SECRETS_H
-          #define APP_SECRETS_H
+          cat <<EOF > firmware/Core/Inc/wifi_credentials.h
+          #ifndef WIFI_CREDENTIALS_H
+          #define WIFI_CREDENTIALS_H
 
           #define WIFI_SSID           "${{ secrets.WIFI_SSID }}"
           #define WIFI_PASSWORD       "${{ secrets.WIFI_PASSWORD }}"
@@ -49,7 +49,7 @@ jobs:
           EOF
           
           # Injeta o ficheiro de segredos no main.h para o tornar global na CI
-          echo '#include "app_secrets.h"' >> firmware/Core/Inc/main.h
+          echo '#include "wifi_credentials.h"' >> firmware/Core/Inc/main.h
 
       - name: Build project (full STM32 firmware)
         working-directory: firmware/Debug
