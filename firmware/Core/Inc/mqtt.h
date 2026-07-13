@@ -5,9 +5,9 @@
 extern "C" {
 #endif
 
-#include "wifi_startup.h"
+#include <MX_WIFI/wifi_startup.h>
 #include "MQTTClient.h"
-#include "mx_address.h"
+#include "../../Middlewares/MX_WIFI/core/mx_address.h"
 
 int		stm32_mqtt_send(Network* n, unsigned char* buffer, int len, int timeout_ms);
 int 	stm32_mqtt_recv(Network* n, unsigned char* buffer, int len, int timeout_ms);

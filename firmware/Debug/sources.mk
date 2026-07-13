@@ -28,9 +28,9 @@ Core/Startup \
 Drivers/STM32U5xx_HAL_Driver/Src \
 Middlewares/MQTT/MQTTClient \
 Middlewares/MQTT/MQTTPacket \
-Middlewares/Mx_WIFI/core \
-Middlewares/Mx_WIFI/io_pattern \
-Middlewares/Mx_WIFI \
+Middlewares/MX_WIFI/core \
+Middlewares/MX_WIFI/io_pattern \
+Middlewares/MX_WIFI \
 Middlewares/ST/threadx/common/src \
 Middlewares/ST/threadx/ports/cortex_m33/gnu/src \
 Middlewares/SystemView \

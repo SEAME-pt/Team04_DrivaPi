@@ -1,0 +1,2 @@
+../Core/Src/thread_init.c:17:6:sysview_register_thread	3
+../Core/Src/thread_init.c:29:6:ThreadInit	18

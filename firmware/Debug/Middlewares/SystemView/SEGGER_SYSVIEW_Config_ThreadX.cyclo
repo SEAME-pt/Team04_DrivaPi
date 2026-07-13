@@ -1,0 +1,2 @@
+../Middlewares/SystemView/SEGGER_SYSVIEW_Config_ThreadX.c:77:13:_cbSendSystemDesc	1
+../Middlewares/SystemView/SEGGER_SYSVIEW_Config_ThreadX.c:88:6:SEGGER_SYSVIEW_Conf	1

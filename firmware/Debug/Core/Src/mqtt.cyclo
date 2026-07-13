@@ -1,0 +1,5 @@
+../Core/Src/mqtt.c:34:5:mqtt_init	4
+../Core/Src/mqtt.c:105:6:mqtt_thread_fc	7
+../Core/Src/mqtt.c:176:5:stm32_mqtt_send	1
+../Core/Src/mqtt.c:190:5:stm32_mqtt_recv	5
+../Core/Src/mqtt.c:233:12:publish_emergency_status	2

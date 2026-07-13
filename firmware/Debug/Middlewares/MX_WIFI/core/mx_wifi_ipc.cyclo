@@ -1,0 +1,14 @@
+../Middlewares/MX_WIFI/core/mx_wifi_ipc.c:79:17:byte_pointer_add_signed_offset	1
+../Middlewares/MX_WIFI/core/mx_wifi_ipc.c:86:17:get_new_req_id	1
+../Middlewares/MX_WIFI/core/mx_wifi_ipc.c:93:17:mpic_get_req_id	1
+../Middlewares/MX_WIFI/core/mx_wifi_ipc.c:99:17:mpic_get_api_id	1
+../Middlewares/MX_WIFI/core/mx_wifi_ipc.c:105:13:mipc_event	16
+../Middlewares/MX_WIFI/core/mx_wifi_ipc.c:199:9:mipc_init	1
+../Middlewares/MX_WIFI/core/mx_wifi_ipc.c:212:9:mipc_deinit	1
+../Middlewares/MX_WIFI/core/mx_wifi_ipc.c:224:9:mipc_request	10
+../Middlewares/MX_WIFI/core/mx_wifi_ipc.c:328:6:mipc_poll	3
+../Middlewares/MX_WIFI/core/mx_wifi_ipc.c:355:9:mipc_echo	5
+../Middlewares/MX_WIFI/core/mx_wifi_ipc.c:377:6:mapi_reboot_event_callback	2
+../Middlewares/MX_WIFI/core/mx_wifi_ipc.c:387:6:mapi_fota_status_event_callback	4
+../Middlewares/MX_WIFI/core/mx_wifi_ipc.c:415:6:mapi_wifi_status_event_callback	6
+../Middlewares/MX_WIFI/core/mx_wifi_ipc.c:461:6:mapi_wifi_netlink_input_callback	4
