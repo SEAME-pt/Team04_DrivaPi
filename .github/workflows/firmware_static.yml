@@ -47,6 +47,9 @@ jobs:
 
       - name: Generate Secrets Header
         run: |
+          # Criar a pasta MX_WIFI caso ela não exista no runner antes de gerar o ficheiro
+          mkdir -p firmware/Core/Inc/MX_WIFI
+          
           cat <<EOF > firmware/Core/Inc/MX_WIFI/wifi_credentials.h
           #ifndef WIFI_CREDENTIALS_H
           #define WIFI_CREDENTIALS_H
@@ -68,8 +71,8 @@ jobs:
           #endif
           EOF
           
-          # Injeta o ficheiro de segredos no main.h para o tornar global na CI
-          echo '#include "wifi_credentials.h"' >> firmware/Core/Inc/main.h
+          # Injeta o ficheiro com o subcaminho correto no main.h
+          echo '#include "MX_WIFI/wifi_credentials.h"' >> firmware/Core/Inc/main.h
 
       - name: Build project for CodeQL
         run: |
