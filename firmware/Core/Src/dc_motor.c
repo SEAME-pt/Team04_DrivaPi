@@ -96,14 +96,14 @@ VOID DcMotor(ULONG initial_input)
 			}
 		}
 
-//		tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
-//		if(g_emergencyBrake && g_motorControlState.direction == FORWARD)
-//		{
-//			tx_mutex_put(&g_emergencyMutex);
-//			tx_thread_sleep(10);
-//			continue ;
-//		}
-//		tx_mutex_put(&g_emergencyMutex);
+		tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
+		if(g_emergencyBrake && g_motorControlState.direction == FORWARD)
+		{
+			tx_mutex_put(&g_emergencyMutex);
+			tx_thread_sleep(10);
+			continue ;
+		}
+		tx_mutex_put(&g_emergencyMutex);
 
 		if (g_motorControlState.direction == FORWARD || g_motorControlState.direction == REVERSE)
 			UpdateMotorControl();
