@@ -1,6 +1,0 @@
-../Core/Src/soft_i2c.c:14:13:I2C_Delay	2
-../Core/Src/soft_i2c.c:25:6:Soft_I2C_Init	1
-../Core/Src/soft_i2c.c:36:6:Soft_I2C_Start	1
-../Core/Src/soft_i2c.c:48:6:Soft_I2C_Stop	1
-../Core/Src/soft_i2c.c:64:9:Soft_I2C_WriteByte	3
-../Core/Src/soft_i2c.c:101:9:Soft_I2C_ReadByte	4

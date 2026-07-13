@@ -1,7 +1,0 @@
-../Middlewares/MX_WIFI/core/mx_wifi_hci.c:58:13:mx_wifi_hci_pkt_verify	1
-../Middlewares/MX_WIFI/core/mx_wifi_hci.c:68:9:mx_wifi_hci_init	1
-../Middlewares/MX_WIFI/core/mx_wifi_hci.c:77:9:mx_wifi_hci_deinit	1
-../Middlewares/MX_WIFI/core/mx_wifi_hci.c:84:9:mx_wifi_hci_send	2
-../Middlewares/MX_WIFI/core/mx_wifi_hci.c:130:11:mx_wifi_hci_recv	1
-../Middlewares/MX_WIFI/core/mx_wifi_hci.c:147:6:mx_wifi_hci_free	2
-../Middlewares/MX_WIFI/core/mx_wifi_hci.c:161:6:mx_wifi_hci_input	6

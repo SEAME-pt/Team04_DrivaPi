@@ -1,3 +1,0 @@
-../Core/Src/speed_sensor.c:20:11:DetermineRNDGear	4
-../Core/Src/speed_sensor.c:41:7:ReadSpeedSensor	5
-../Core/Src/speed_sensor.c:81:6:SpeedSensor	3

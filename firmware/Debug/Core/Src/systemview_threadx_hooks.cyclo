@@ -1,5 +1,0 @@
-../Core/Src/systemview_threadx_hooks.c:17:6:_tx_execution_initialize	1
-../Core/Src/systemview_threadx_hooks.c:23:6:_tx_execution_thread_enter	2
-../Core/Src/systemview_threadx_hooks.c:38:6:_tx_execution_thread_exit	2
-../Core/Src/systemview_threadx_hooks.c:51:6:_tx_execution_isr_enter	1
-../Core/Src/systemview_threadx_hooks.c:60:6:_tx_execution_isr_exit	1

@@ -1,3 +1,0 @@
-../Core/Inc/MX_WIFI/mx_wifi_bare_os.h:50:25:mx_buf_alloc	2
-../Middlewares/MX_WIFI/core/mx_wifi_slip.c:56:10:slip_transfer	10
-../Middlewares/MX_WIFI/core/mx_wifi_slip.c:107:11:slip_input_byte	20

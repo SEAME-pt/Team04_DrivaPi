@@ -1,3 +1,0 @@
-../Middlewares/MQTT/MQTTPacket/MQTTConnectServer.c:30:5:MQTTPacket_checkVersion	5
-../Middlewares/MQTT/MQTTPacket/MQTTConnectServer.c:51:5:MQTTDeserialize_connect	16
-../Middlewares/MQTT/MQTTPacket/MQTTConnectServer.c:119:5:MQTTSerialize_connack	2

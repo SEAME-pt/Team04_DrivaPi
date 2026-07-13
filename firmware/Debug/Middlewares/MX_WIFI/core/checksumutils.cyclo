@@ -1,8 +1,0 @@
-../Middlewares/MX_WIFI/core/checksumutils.c:44:16:UpdateCRC8	3
-../Middlewares/MX_WIFI/core/checksumutils.c:66:6:CRC8_Init	1
-../Middlewares/MX_WIFI/core/checksumutils.c:72:6:CRC8_Update	2
-../Middlewares/MX_WIFI/core/checksumutils.c:85:6:CRC8_Final	1
-../Middlewares/MX_WIFI/core/checksumutils.c:219:17:UpdateCRC16	4
-../Middlewares/MX_WIFI/core/checksumutils.c:240:6:CRC16_Init	1
-../Middlewares/MX_WIFI/core/checksumutils.c:246:6:CRC16_Update	2
-../Middlewares/MX_WIFI/core/checksumutils.c:259:6:CRC16_Final	1
