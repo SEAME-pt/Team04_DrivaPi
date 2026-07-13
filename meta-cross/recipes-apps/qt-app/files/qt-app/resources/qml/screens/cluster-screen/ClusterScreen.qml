@@ -34,13 +34,7 @@ Rectangle {
     // ISO 26262 Fail-Safe: Null/Invalid Data Handling
     property bool vehicleDataAvailable: vehicleData !== null && vehicleData !== undefined
 
-    // V2X Emergency State
-    property bool emergencyPriorityActive: false
-    property int emergencyPriorityLevel: 0
-    // A flag de demo agora deve estar a false para produção
     property bool demoEmergencyAlert: false
-
-    property int speedLimitValue: vehicleDataAvailable && vehicleData.speedLimit ? Math.round(vehicleData.speedLimit) : 120
     property real currentSpeed: vehicleDataAvailable && vehicleData.speed ? vehicleData.speed : 0
     property int stm32Battery: vehicleDataAvailable && vehicleData.stm32Battery !== undefined ? vehicleData.stm32Battery : 0
     property int rpiBattery: vehicleDataAvailable && vehicleData.rpiBattery !== undefined ? vehicleData.rpiBattery : 0
@@ -242,14 +236,25 @@ Rectangle {
                                 spacing: 14 * root.s
 
                                 SpeedLimitIndicator {
-                                    Layout.preferredWidth: 120 * root.s
-                                    Layout.preferredHeight: 120 * root.s
-                                    Layout.alignment: Qt.AlignVCenter
-                                    z: 1
-                                    vehicleDataAvailable: root.vehicleDataAvailable
-                                    speedLimitValue: root.speedLimitValue
-                                    s: root.s
-                                }
+									Layout.preferredWidth: 105 * root.s
+									Layout.preferredHeight: 105 * root.s
+									Layout.alignment: Qt.AlignVCenter
+									z: 1
+
+                                    visible: root.vehicleDataAvailable && vehicleData.speedLimitActive
+                                    opacity: root.vehicleDataAvailable && vehicleData.speedLimitActive ? 1.0 : 0.0
+
+									vehicleDataAvailable: root.vehicleDataAvailable
+                                    speedLimitValue: root.vehicleDataAvailable ? vehicleData.speedLimitValue : 0
+									s: root.s
+
+									Behavior on opacity {
+										NumberAnimation {
+											duration: 180
+											easing.type: Easing.OutQuad
+										}
+									}
+								}
                                 Item { Layout.fillWidth: true }
                             }
                         }
@@ -311,52 +316,17 @@ Rectangle {
     }
 
     // ==========================================================
-    // BACKEND SIGNAL CONNECTIONS (C++ to QML Bridge)
-    // ==========================================================
-    Connections {
-        target: vehicleData
-        enabled: vehicleDataAvailable
-
-        function onEmergencyAlertChanged(priorityLevel) {
-            console.log("[ClusterScreen] V2X Emergency Alert Received. Priority:", priorityLevel);
-
-            if (priorityLevel > 0) {
-                root.emergencyPriorityLevel = priorityLevel;
-                root.emergencyPriorityActive = true;
-                emergencyTimeoutTimer.restart(); // Inicia countdown de segurança
-            } else {
-                root.emergencyPriorityLevel = 0;
-                root.emergencyPriorityActive = false;
-                emergencyTimeoutTimer.stop();
-            }
-        }
-    }
-
-    Timer {
-        id: emergencyTimeoutTimer
-        interval: 15000
-        running: false
-        repeat: false
-        onTriggered: {
-            console.log("[ClusterScreen] V2X Emergency Alert Auto-Cleared (Timeout)");
-            root.emergencyPriorityLevel = 0;
-            root.emergencyPriorityActive = false;
-        }
-    }
-
-    // ==========================================================
     // V2X EMERGENCY OVERLAY
     // ==========================================================
     EmergencyAlert {
-        id: v2xEmergencyAlert
-        z: 2000
-        s: root.s
-        isActive: root.emergencyPriorityActive
-
-        priorityLevel: root.emergencyPriorityLevel
-
-        alertMessage: root.emergencyPriorityLevel >= 2 ? "PULL OVER - EMERGENCY" : "EMERGENCY VEHICLE AHEAD"
-    }
+		id: adasEmergencyAlert
+		z: 2000
+		s: root.s
+        isActive: root.vehicleDataAvailable ? vehicleData.emergencyPriorityActive : false
+        priorityLevel: root.vehicleDataAvailable ? vehicleData.emergencyPriorityLevel : 0
+        alertMessage: root.vehicleDataAvailable ? vehicleData.emergencyMessage : ""
+        iconSource: root.vehicleDataAvailable ? vehicleData.emergencyIconSource : ""
+	}
 
     BatteryPopup {
         id: batteryPopup
