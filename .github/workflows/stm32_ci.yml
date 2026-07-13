@@ -85,6 +85,7 @@ jobs:
         working-directory: firmware/Debug
         run: |
           set -e
+          make -f makefile clean
           make -f makefile main-build -j"$(nproc)"
           if [ ! -f firmware.elf ]; then
             echo "Error: firmware.elf not found, build failed!"
