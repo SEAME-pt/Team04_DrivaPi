@@ -47,7 +47,7 @@ jobs:
 
       - name: Generate Secrets Header
         run: |
-          cat <<EOF > firmware/Core/Inc/wifi_credentials.h
+          cat <<EOF > firmware/Core/Inc/MX_WIFI/wifi_credentials.h
           #ifndef WIFI_CREDENTIALS_H
           #define WIFI_CREDENTIALS_H
 
