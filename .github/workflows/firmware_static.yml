@@ -38,12 +38,38 @@ jobs:
         run: arm-none-eabi-gcc --version
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+        uses: github/github-codeql-action/init@v4
         with:
           languages: cpp
           queries: security-and-quality
           build-mode: manual
           config-file: ./.github/codeql-config.yml
+
+      - name: Generate Secrets Header
+        run: |
+          cat <<EOF > firmware/Core/Inc/app_secrets.h
+          #ifndef APP_SECRETS_H
+          #define APP_SECRETS_H
+
+          #define WIFI_SSID           "${{ secrets.WIFI_SSID }}"
+          #define WIFI_PASSWORD       "${{ secrets.WIFI_PASSWORD }}"
+          #define WIFI_STATIC_IP      ${{ secrets.WIFI_STATIC_IP }}
+          #define WIFI_NETMASK        ${{ secrets.WIFI_NETMASK }}
+          #define WIFI_GATEWAY        ${{ secrets.WIFI_GATEWAY }}
+          #define WIFI_DNS_SERVER     ${{ secrets.WIFI_DNS_SERVER }}
+
+          #define MQTT_BROKER_IP_0    ${{ secrets.MQTT_BROKER_IP_0 }}
+          #define MQTT_BROKER_IP_1    ${{ secrets.MQTT_BROKER_IP_1 }}
+          #define MQTT_BROKER_IP_2    ${{ secrets.MQTT_BROKER_IP_2 }}
+          #define MQTT_BROKER_IP_3    ${{ secrets.MQTT_BROKER_IP_3 }}
+          #define MQTT_USERNAME       "${{ secrets.MQTT_USERNAME }}"
+          #define MQTT_PASSWORD       "${{ secrets.MQTT_PASSWORD }}"
+
+          #endif
+          EOF
+          
+          # Injeta o ficheiro de segredos no main.h para o tornar global na CI
+          echo '#include "app_secrets.h"' >> firmware/Core/Inc/main.h
 
       - name: Build project for CodeQL
         run: |
@@ -55,7 +81,7 @@ jobs:
           echo "✅ Build successful"
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
+        uses: github/github-codeql-action/analyze@v4
         with:
           category: '/language:cpp'
           output: results
@@ -110,6 +136,6 @@ jobs:
           path: sarif
 
       - name: Upload SARIF to GitHub Security
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/github-codeql-action/upload-sarif@v4
         with:
           sarif_file: sarif/cpp.sarif
