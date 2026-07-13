@@ -1,4 +1,0 @@
-../Middlewares/Mx_WIFI/wifi_startup.c:12:18:WIFI_Get_Object	1
-../Middlewares/Mx_WIFI/wifi_startup.c:17:6:WIFIStartup	21
-../Middlewares/Mx_WIFI/wifi_startup.c:233:6:HAL_GPIO_EXTI_Callback	3
-../Middlewares/Mx_WIFI/wifi_startup.c:247:6:HAL_GPIO_EXTI_Rising_Callback	1

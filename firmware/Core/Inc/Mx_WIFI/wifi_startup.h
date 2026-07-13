@@ -2,7 +2,7 @@
  * wifi_debug.h
  *
  *  Created on: Apr 2, 2026
- *      Author: hugofslopes
+ *      Author: TeamDrivaPi
  */
 
 #ifndef WIFI_STARTUP_H_
@@ -14,7 +14,7 @@
 #include "wifi_credentials.h"
 #include "app_threadx.h"
 
-void 				WIFIStartup(void);
+int 				WIFIStartup(void);
 MX_WIFIObject_t*	WIFI_Get_Object(void);
 
 extern UART_HandleTypeDef	huart1;
