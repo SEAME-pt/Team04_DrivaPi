@@ -273,14 +273,19 @@ def main(source, debug, record_path):
             raise RuntimeError(f"Could not open video source: {source}")
         def get_frame():
             ok, f = cap.read()
-            return f if ok else None
+            if not ok:
+                return None
+            return cv2.rotate(f, cv2.ROTATE_180) if ROTATE_180 else f
         release = cap.release
     else:
         import subprocess
-        proc = subprocess.Popen(
-            ["rpicam-vid", "-t", "0", "--codec", "yuv420", "--width", str(CAM_W),
-             "--height", str(CAM_H), "--framerate", "30", "-o", "-", "--nopreview"],
-            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        # hflip+vflip (= 180°) is applied by the sensor during readout, so frames
+        # arrive already rotated and the CPU never copies them.
+        cmd = ["rpicam-vid", "-t", "0", "--codec", "yuv420", "--width", str(CAM_W),
+               "--height", str(CAM_H), "--framerate", "30", "-o", "-", "--nopreview"]
+        if ROTATE_180:
+            cmd += ["--hflip", "--vflip"]
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
         time.sleep(0.5)
         nbytes = CAM_W * CAM_H * 3 // 2
 
@@ -314,8 +319,6 @@ def main(source, debug, record_path):
                         frame = get_frame()
                         if frame is None:
                             break
-                        if ROTATE_180:
-                            frame = cv2.rotate(frame, cv2.ROTATE_180)
                         h, w = frame.shape[:2]
 
                         raw = pipeline.infer({in_name: preprocess(frame)})
