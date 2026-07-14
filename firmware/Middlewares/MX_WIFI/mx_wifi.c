@@ -226,7 +226,7 @@ MX_WIFI_STATUS_T MX_WIFI_Init(MX_WIFIObject_t *Obj)
 				if (status > 0)
 				{
 				  if (MX_WIFI_DEBUG)
-					  UartPrintf("[WIFI REVISION] Versao Descodificada: V%" PRIu32 ".%" PRIu32 ".%" PRIu32 "\n", firmware_rev[0], firmware_rev[1], firmware_rev[2]);
+					  UartPrintf("[WIFI REVISION] Version: V%" PRIu32 ".%" PRIu32 ".%" PRIu32 "\n", firmware_rev[0], firmware_rev[1], firmware_rev[2]);
 				}
 
 				if (status <= 0)
