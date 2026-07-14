@@ -107,10 +107,6 @@ jobs:
           #ifndef __arm__
           typedef int SPI_HandleTypeDef;
           typedef int TX_SEMAPHORE;
-          typedef struct MessageData {
-              int topic;
-              int message;
-          } MessageData;
           #endif
 
           // ========================================================
