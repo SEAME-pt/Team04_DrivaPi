@@ -51,7 +51,7 @@ jobs:
           lcov --version
           gcovr --version
 
-      # Generate credentials & host-type shims in one go
+      # Generate credentials & only supplement the missing types
       - name: Generate Mock/Secrets Header & Type Shims
         run: |
           mkdir -p firmware/Core/Inc/MX_WIFI
@@ -115,26 +115,20 @@ jobs:
           #define MQTT_PASSWORD       "$M_PASS"
 
           /* Host Shims for Unit Testing */
+          /* Only supplementing types missing from your common/support/ mocks */
           #ifdef TEST
           #ifndef HOST_SHIMS_H
           #define HOST_SHIMS_H
 
-          // 1. STM32 HAL Hardware Handles
+          // Missing STM32 HAL Hardware Handles
           typedef int SPI_HandleTypeDef;
-          typedef int UART_HandleTypeDef;
-          typedef int USART_HandleTypeDef;
-          typedef int TIM_HandleTypeDef;
-          typedef int I2C_HandleTypeDef;
           typedef int DMA_HandleTypeDef;
+          typedef int USART_HandleTypeDef;
 
-          // 2. Azure RTOS ThreadX Handles
+          // Missing Azure RTOS ThreadX Handles
           typedef int TX_SEMAPHORE;
-          typedef int TX_MUTEX;
-          typedef int TX_QUEUE;
-          typedef int TX_THREAD;
-          typedef int TX_EVENT_FLAGS_GROUP;
 
-          // 3. MQTT Structs
+          // MQTT Structs
           typedef struct MessageData {
               int topic;
               int message;
@@ -152,20 +146,6 @@ jobs:
         run: |
           mkdir -p tests/unit/shims
           
-          # Shadow stm32u5xx_hal.h to satisfy mock generation
-          cat <<EOF > tests/unit/shims/stm32u5xx_hal.h
-          #ifndef STM32U5XX_HAL_H
-          #define STM32U5XX_HAL_H
-          #endif
-          EOF
-
-          # Shadow tx_api.h to satisfy mock generation
-          cat <<EOF > tests/unit/shims/tx_api.h
-          #ifndef TX_API_H
-          #define TX_API_H
-          #endif
-          EOF
-
           # Dummy MQTTClient.h to prevent missing file error
           cat <<EOF > tests/unit/shims/MQTTClient.h
           #ifndef MQTTCLIENT_H
