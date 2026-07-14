@@ -51,7 +51,7 @@ jobs:
           lcov --version
           gcovr --version
 
-      # --- UPDATED STEP: GENERATE CREDENTIALS & TYPE SHIMS ---
+      # Generate credentials & host-type shims in one go
       - name: Generate Mock/Secrets Header & Type Shims
         run: |
           mkdir -p firmware/Core/Inc/MX_WIFI
@@ -191,7 +191,7 @@ jobs:
             --min-line-rate 90.0
 
       - name: Upload Verification Artifacts (TSF)
-        uses: actions/always()
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: verification-artifacts
