@@ -43,7 +43,6 @@ jobs:
           M_USER="${{ secrets.MQTT_USERNAME }}"
           M_PASS="${{ secrets.MQTT_PASSWORD }}"
 
-          # Fallbacks para segurança
           [ -z "$W_SSID" ] && W_SSID="dummy_ssid"
           [ -z "$W_PASS" ] && W_PASS="dummy_password"
           [ -z "$M_USER" ] && M_USER="dummy_user"
@@ -54,7 +53,6 @@ jobs:
           [ -z "$M_IP2" ]  && M_IP2="0"
           [ -z "$M_IP3" ]  && M_IP3="0"
 
-          # Função limpa: usa a lógica nativa do Bash ${ip//./,} para trocar pontos por vírgulas
           format_ip() {
             local ip="$1"
             if [ -z "$ip" ]; then
@@ -66,7 +64,6 @@ jobs:
             fi
           }
 
-          # Formata os blocos de IP
           W_IP=$(format_ip "$W_IP")
           W_MASK=$(format_ip "$W_MASK")
           W_GATE=$(format_ip "$W_GATE")
