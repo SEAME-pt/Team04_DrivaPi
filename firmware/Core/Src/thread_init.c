@@ -39,15 +39,15 @@ void ThreadInit(void)
 	if (status == TX_THREAD_ERROR)
 		HAL_UART_Transmit(&huart1, (uint8_t *)err_msg, strlen(err_msg), UART_INIT_TIMEOUT_MS);
 
-	// SRF08 ULTRASONIC SENSOR THREAD
-//	if (tx_thread_create(&g_threads[ultrasonic_sensor_e].thread_ptr, "ultrasonicS_thread", UltrasonicEntry, 0, g_threads[ultrasonic_sensor_e].thread_Stack, THREAD_STACK_SIZE,
-//	1, 1, TX_NO_TIME_SLICE, TX_AUTO_START) != TX_SUCCESS)
-//		status = TX_THREAD_ERROR;
-//	if (status == TX_THREAD_ERROR)
-//	{
-//		sprintf(err_msg, "FailUS\r\n");
-//		HAL_UART_Transmit(&huart1, (uint8_t *)err_msg, strlen(err_msg), UART_INIT_TIMEOUT_MS);
-//	}
+	SRF08 ULTRASONIC SENSOR THREAD
+	if (tx_thread_create(&g_threads[ultrasonic_sensor_e].thread_ptr, "ultrasonicS_thread", UltrasonicEntry, 0, g_threads[ultrasonic_sensor_e].thread_Stack, THREAD_STACK_SIZE,
+	1, 1, TX_NO_TIME_SLICE, TX_AUTO_START) != TX_SUCCESS)
+		status = TX_THREAD_ERROR;
+	if (status == TX_THREAD_ERROR)
+	{
+		sprintf(err_msg, "FailUS\r\n");
+		HAL_UART_Transmit(&huart1, (uint8_t *)err_msg, strlen(err_msg), UART_INIT_TIMEOUT_MS);
+	}
 
 	// DC MOTOR THREAD
 	if (tx_thread_create(&g_threads[dc_motor_e].thread_ptr, "motor_thread", DcMotor, 0, g_threads[dc_motor_e].thread_Stack, THREAD_STACK_SIZE,
