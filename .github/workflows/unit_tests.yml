@@ -20,7 +20,7 @@ jobs:
     env:
       BUILD_DIR: build/host
       COVERAGE_DIR: build/coverage
-      # Tells GCC where to find dummy header files like MQTTClient.h
+      # Tells GCC to look in our custom shims directory first for forced includes
       CPATH: ${{ github.workspace }}/tests/unit/shims
 
     steps:
@@ -51,8 +51,8 @@ jobs:
           lcov --version
           gcovr --version
 
-      # Generate credentials & only supplement the missing types
-      - name: Generate Mock/Secrets Header & Type Shims
+      # Step 1: Generate real wifi credentials file
+      - name: Generate Mock/Secrets Header
         run: |
           mkdir -p firmware/Core/Inc/MX_WIFI
           
@@ -114,12 +114,34 @@ jobs:
           #define MQTT_USERNAME       "$M_USER"
           #define MQTT_PASSWORD       "$M_PASS"
 
-          /* Host Shims for Unit Testing */
-          /* Only supplementing types missing from your common/support/ mocks */
-          #ifdef TEST
-          #ifndef HOST_SHIMS_H
-          #define HOST_SHIMS_H
+          #endif /* WIFI_CREDENTIALS_H */
+          EOF
 
+      # Step 2: Set up global test shims
+      - name: Create Host Shims for Unit Tests
+        run: |
+          mkdir -p tests/unit/shims/MX_WIFI
+          
+          # Copy credentials to the shim path so they are universally resolvable
+          cp firmware/Core/Inc/MX_WIFI/wifi_credentials.h tests/unit/shims/MX_WIFI/wifi_credentials.h
+
+          # Create a dummy MQTTClient.h to satisfy host-side includes
+          cat <<EOF > tests/unit/shims/MQTTClient.h
+          #ifndef MQTTCLIENT_H
+          #define MQTTCLIENT_H
+          
+          typedef int MQTTClient;
+          typedef int Network;
+          
+          #endif
+          EOF
+
+          # Create unity_shims.h containing ONLY missing hardware handles and custom types
+          cat <<EOF > tests/unit/shims/unity_shims.h
+          #ifndef UNITY_SHIMS_H
+          #define UNITY_SHIMS_H
+
+          #ifdef TEST
           // Missing STM32 HAL Hardware Handles
           typedef int SPI_HandleTypeDef;
           typedef int DMA_HandleTypeDef;
@@ -133,29 +155,19 @@ jobs:
               int topic;
               int message;
           } MessageData;
-
-          #endif /* HOST_SHIMS_H */
-          #endif /* TEST */
-
-          #endif /* WIFI_CREDENTIALS_H */
-          EOF
-          
-          grep -q 'MX_WIFI/wifi_credentials.h' firmware/Core/Inc/main.h || echo '#include "MX_WIFI/wifi_credentials.h"' >> firmware/Core/Inc/main.h
-
-      - name: Create Host Shims for Unit Tests
-        run: |
-          mkdir -p tests/unit/shims
-          
-          # Dummy MQTTClient.h to prevent missing file error
-          cat <<EOF > tests/unit/shims/MQTTClient.h
-          #ifndef MQTTCLIENT_H
-          #define MQTTCLIENT_H
-          
-          typedef int MQTTClient;
-          typedef int Network;
-          
           #endif
+
+          #endif /* UNITY_SHIMS_H */
           EOF
+
+      # Step 3: Inject the shims into all instances of main.h (production and test-mock environments)
+      - name: Inject Shims into all main.h Files
+        run: |
+          find firmware tests -name "main.h" -exec sh -c '
+            echo "Injecting shims into: $1"
+            grep -q "unity_shims.h" "$1" || echo "#include <unity_shims.h>" >> "$1"
+            grep -q "wifi_credentials.h" "$1" || echo "#include \"MX_WIFI/wifi_credentials.h\"" >> "$1"
+          ' _ {} \;
 
       - name: Run Tests (Master Script)
         run: |
