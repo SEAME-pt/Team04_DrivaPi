@@ -15,5 +15,8 @@ extern I2C_HandleTypeDef hi2c3;
 #define TTC_THRESHOLD_MS    450 // Predictive Stop
 #define DT_SECONDS          0.057f
 #define BACKSPIN_THRESHOLD	70
+#ifndef ULTRASONIC_DEBUG
+#define ULTRASONIC_DEBUG	(0)
+#endif
 
 #endif /* __ULTRASONIC_H */
