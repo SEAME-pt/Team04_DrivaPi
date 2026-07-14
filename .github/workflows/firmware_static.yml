@@ -49,7 +49,6 @@ jobs:
         run: |
           mkdir -p firmware/Core/Inc/MX_WIFI
           
-          # Captura os secrets em variáveis Bash
           W_SSID="${{ secrets.WIFI_SSID }}"
           W_PASS="${{ secrets.WIFI_PASSWORD }}"
           W_IP="${{ secrets.WIFI_STATIC_IP }}"
