@@ -20,7 +20,7 @@ jobs:
     env:
       BUILD_DIR: build/host
       COVERAGE_DIR: build/coverage
-      # CPATH tells GCC to check our shims folder for missing headers globally
+      # Tells GCC where to find dummy header files like MQTTClient.h
       CPATH: ${{ github.workspace }}/tests/unit/shims
 
     steps:
@@ -51,7 +51,8 @@ jobs:
           lcov --version
           gcovr --version
 
-      - name: Generate Mock/Secrets Header for Compilation
+      # --- UPDATED STEP: GENERATE CREDENTIALS & TYPE SHIMS ---
+      - name: Generate Mock/Secrets Header & Type Shims
         run: |
           mkdir -p firmware/Core/Inc/MX_WIFI
           
@@ -113,44 +114,59 @@ jobs:
           #define MQTT_USERNAME       "$M_USER"
           #define MQTT_PASSWORD       "$M_PASS"
 
-          #endif
-          EOF
-          
-          grep -q 'MX_WIFI/wifi_credentials.h' firmware/Core/Inc/main.h || echo '#include "MX_WIFI/wifi_credentials.h"' >> firmware/Core/Inc/main.h
+          /* Host Shims for Unit Testing */
+          #ifdef TEST
+          #ifndef HOST_SHIMS_H
+          #define HOST_SHIMS_H
 
-      # --- NEW STEP: GENERATE HOST SHIMS ---
-      - name: Create Host Shims for Unit Tests
-        run: |
-          mkdir -p tests/unit/shims
-          
-          # 1. Shadow stm32u5xx_hal.h to supply dummy handle types on Host
-          cat <<EOF > tests/unit/shims/stm32u5xx_hal.h
-          #ifndef STM32U5XX_HAL_H
-          #define STM32U5XX_HAL_H
-          
+          // 1. STM32 HAL Hardware Handles
           typedef int SPI_HandleTypeDef;
           typedef int UART_HandleTypeDef;
+          typedef int USART_HandleTypeDef;
           typedef int TIM_HandleTypeDef;
           typedef int I2C_HandleTypeDef;
-          
-          #endif
-          EOF
+          typedef int DMA_HandleTypeDef;
 
-          # 2. Shadow tx_api.h to supply ThreadX RTOS types on Host
-          cat <<EOF > tests/unit/shims/tx_api.h
-          #ifndef TX_API_H
-          #define TX_API_H
-          
+          // 2. Azure RTOS ThreadX Handles
           typedef int TX_SEMAPHORE;
           typedef int TX_MUTEX;
           typedef int TX_QUEUE;
           typedef int TX_THREAD;
           typedef int TX_EVENT_FLAGS_GROUP;
+
+          // 3. MQTT Structs
+          typedef struct MessageData {
+              int topic;
+              int message;
+          } MessageData;
+
+          #endif /* HOST_SHIMS_H */
+          #endif /* TEST */
+
+          #endif /* WIFI_CREDENTIALS_H */
+          EOF
           
+          grep -q 'MX_WIFI/wifi_credentials.h' firmware/Core/Inc/main.h || echo '#include "MX_WIFI/wifi_credentials.h"' >> firmware/Core/Inc/main.h
+
+      - name: Create Host Shims for Unit Tests
+        run: |
+          mkdir -p tests/unit/shims
+          
+          # Shadow stm32u5xx_hal.h to satisfy mock generation
+          cat <<EOF > tests/unit/shims/stm32u5xx_hal.h
+          #ifndef STM32U5XX_HAL_H
+          #define STM32U5XX_HAL_H
           #endif
           EOF
 
-          # 3. Create a dummy MQTTClient.h to satisfy compiling MQTT dependencies
+          # Shadow tx_api.h to satisfy mock generation
+          cat <<EOF > tests/unit/shims/tx_api.h
+          #ifndef TX_API_H
+          #define TX_API_H
+          #endif
+          EOF
+
+          # Dummy MQTTClient.h to prevent missing file error
           cat <<EOF > tests/unit/shims/MQTTClient.h
           #ifndef MQTTCLIENT_H
           #define MQTTCLIENT_H
@@ -160,7 +176,6 @@ jobs:
           
           #endif
           EOF
-      # -------------------------------------
 
       - name: Run Tests (Master Script)
         run: |
@@ -176,7 +191,7 @@ jobs:
             --min-line-rate 90.0
 
       - name: Upload Verification Artifacts (TSF)
-        uses: actions/upload-artifact@v7
+        uses: actions/always()
         if: always()
         with:
           name: verification-artifacts
