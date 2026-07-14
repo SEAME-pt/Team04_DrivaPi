@@ -20,6 +20,8 @@ jobs:
     env:
       BUILD_DIR: build/host
       COVERAGE_DIR: build/coverage
+      # Tells GCC to look inside our custom shims directory for system-level includes
+      CPATH: ${{ github.workspace }}/tests/unit/shims
 
     steps:
       - name: Checkout repository
@@ -48,41 +50,94 @@ jobs:
           lcov --version
           gcovr --version
 
-      # ==========================================
-      #  THE "ONCE AND FOR ALL" SHIM INJECTION STEP
-      # ==========================================
-      - name: Inject Type Shims into DC & Servo Test Files
+      # Step 1: Generate the credential file containing both mock credentials and our type shims
+      - name: Generate Mock/Secrets Header with Type Shims
         run: |
-          inject_shims() {
-            local file="$1"
-            if [ -f "$file" ]; then
-              echo "Injecting compiler shims into $file..."
-              # Create a temporary file with the shims, followed by the original content
-              cat << 'EOF' > temp_file
-          #ifndef DC_SERVO_SHIMS_H
-          #define DC_SERVO_SHIMS_H
+          mkdir -p firmware/Core/Inc/MX_WIFI
+          mkdir -p tests/unit/shims/MX_WIFI
           
-          // Injected shims to bypass deep firmware includes
+          W_SSID="${{ secrets.WIFI_SSID }}"
+          W_PASS="${{ secrets.WIFI_PASSWORD }}"
+          W_IP="${{ secrets.WIFI_STATIC_IP }}"
+          W_MASK="${{ secrets.WIFI_NETMASK }}"
+          W_GATE="${{ secrets.WIFI_GATEWAY }}"
+          W_DNS="${{ secrets.WIFI_DNS_SERVER }}"
+          
+          M_IP0="${{ secrets.MQTT_BROKER_IP_0 }}"
+          M_IP1="${{ secrets.MQTT_BROKER_IP_1 }}"
+          M_IP2="${{ secrets.MQTT_BROKER_IP_2 }}"
+          M_IP3="${{ secrets.MQTT_BROKER_IP_3 }}"
+          M_USER="${{ secrets.MQTT_USERNAME }}"
+          M_PASS="${{ secrets.MQTT_PASSWORD }}"
+
+          [ -z "$W_SSID" ] && W_SSID="dummy_ssid"
+          [ -z "$W_PASS" ] && W_PASS="dummy_password"
+          [ -z "$M_USER" ] && M_USER="dummy_user"
+          [ -z "$M_PASS" ] && M_PASS="dummy_password"
+          
+          [ -z "$M_IP0" ]  && M_IP0="0"
+          [ -z "$M_IP1" ]  && M_IP1="0"
+          [ -z "$M_IP2" ]  && M_IP2="0"
+          [ -z "$M_IP3" ]  && M_IP3="0"
+
+          format_ip() {
+            local ip="$1"
+            if [ -z "$ip" ]; then
+              echo "{0}"
+            elif [[ "$ip" == *.* ]]; then
+              echo "{${ip//./,}}"
+            else
+              echo "$ip"
+            fi
+          }
+
+          W_IP=$(format_ip "$W_IP")
+          W_MASK=$(format_ip "$W_MASK")
+          W_GATE=$(format_ip "$W_GATE")
+          W_DNS=$(format_ip "$W_DNS")
+
+          # Create a single unified header containing mock values AND the missing platform types
+          cat <<EOF > unified_credentials.h
+          #ifndef WIFI_CREDENTIALS_H
+          #define WIFI_CREDENTIALS_H
+
+          // ========================================================
+          //  HOST-SIDE TEST SHIMS (Bypasses deep hardware includes)
+          // ========================================================
+          #ifndef __arm__
           typedef int SPI_HandleTypeDef;
           typedef int TX_SEMAPHORE;
           typedef struct MessageData {
               int topic;
               int message;
           } MessageData;
-          
-          #endif // DC_SERVO_SHIMS_H
-          
+          #endif
+
+          // ========================================================
+          //  WIFI & MQTT CONFIGURATIONS
+          // ========================================================
+          #define WIFI_SSID           "$W_SSID"
+          #define WIFI_PASSWORD       "$W_PASS"
+          #define WIFI_STATIC_IP      $W_IP
+          #define WIFI_NETMASK        $W_MASK
+          #define WIFI_GATEWAY        $W_GATE
+          #define WIFI_DNS_SERVER     $W_DNS
+
+          #define MQTT_BROKER_IP_0    $M_IP0
+          #define MQTT_BROKER_IP_1    $M_IP1
+          #define MQTT_BROKER_IP_2    $M_IP2
+          #define MQTT_BROKER_IP_3    $M_IP3
+          #define MQTT_USERNAME       "$M_USER"
+          #define MQTT_PASSWORD       "$M_PASS"
+
+          #endif /* WIFI_CREDENTIALS_H */
           EOF
-              cat "$file" >> temp_file
-              mv temp_file "$file"
-              echo "Successfully shimmed $file"
-            else
-              echo "Warning: $file not found!"
-            fi
-          }
+
+          # Copy to production firmware location
+          cp unified_credentials.h firmware/Core/Inc/MX_WIFI/wifi_credentials.h
           
-          inject_shims "tests/unit/dc-motor/test/test_dc_motor.c"
-          inject_shims "tests/unit/servo-motor/test/test_servo_motor.c"
+          # Copy to the testing shim location (which is matched by CPATH)
+          cp unified_credentials.h tests/unit/shims/MX_WIFI/wifi_credentials.h
 
       - name: Run Tests (Master Script)
         run: |
