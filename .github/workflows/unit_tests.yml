@@ -95,7 +95,6 @@ jobs:
           W_GATE=$(format_ip "$W_GATE")
           W_DNS=$(format_ip "$W_DNS")
 
-          # Create a single unified header containing mock values AND the missing platform types
           cat <<EOF > unified_credentials.h
           #ifndef WIFI_CREDENTIALS_H
           #define WIFI_CREDENTIALS_H
@@ -128,10 +127,8 @@ jobs:
           #endif /* WIFI_CREDENTIALS_H */
           EOF
 
-          # Copy to production firmware location
           cp unified_credentials.h firmware/Core/Inc/MX_WIFI/wifi_credentials.h
           
-          # Copy to the testing shim location (which is matched by CPATH)
           cp unified_credentials.h tests/unit/shims/MX_WIFI/wifi_credentials.h
 
       - name: Run Tests (Master Script)
