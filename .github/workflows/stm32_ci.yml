@@ -94,7 +94,7 @@ jobs:
           EOF
           
           grep -q 'MX_WIFI/wifi_credentials.h' firmware/Core/Inc/main.h || echo '#include "MX_WIFI/wifi_credentials.h"' >> firmware/Core/Inc/main.h
-      
+
       - name: Build project (full STM32 firmware)
         working-directory: firmware/Debug
         run: |

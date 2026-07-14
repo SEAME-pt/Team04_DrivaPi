@@ -20,7 +20,6 @@ jobs:
     env:
       BUILD_DIR: build/host
       COVERAGE_DIR: build/coverage
-      # Tells GCC to look inside our custom shims directory for system-level includes
       CPATH: ${{ github.workspace }}/tests/unit/shims
 
     steps:
@@ -50,7 +49,6 @@ jobs:
           lcov --version
           gcovr --version
 
-      # Step 1: Generate the credential file containing both mock credentials and our type shims
       - name: Generate Mock/Secrets Header with Type Shims
         run: |
           mkdir -p firmware/Core/Inc/MX_WIFI
