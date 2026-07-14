@@ -119,7 +119,7 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
 	InitAllDevices();
 	MotorControlInit(&g_motorControlState);
 	AppThreadX_LogThreadInitMessage();
-	tx_thread_create(&mqtt_thread, "MQTT Thread", mqtt_thread_fc, 0,
+	tx_thread_create(&mqtt_thread, "MQTT Thread", MqttThreadFc, 0,
 	mqtt_thread_stack, sizeof(mqtt_thread_stack), 1, 1, TX_NO_TIME_SLICE, TX_AUTO_START);
 	ThreadInit();
 

@@ -107,12 +107,12 @@ int WIFIStartup(void)
     /* 2. MODULE PROBE & RESET                                                */
     /* ---------------------------------------------------------------------- */
     if (MX_WIFI_DEBUG)
-    	UartPrint("[INIT] Probing WiFi...\r\n");
+        UartPrint("[INIT] Probing WiFi...\r\n");
 
     if (mxwifi_probe(&ll_drv_context) != 0)
     {
         if (MX_WIFI_DEBUG)
-        	UartPrint("[INIT] Probe FAILED!\r\n");
+            UartPrint("[INIT] Probe FAILED!\r\n");
         return 1;
     }
 
@@ -122,18 +122,18 @@ int WIFIStartup(void)
     if (wifi_obj == NULL)
     {
         if (MX_WIFI_DEBUG)
-        	UartPrint("[INIT] ERROR: wifi_obj is NULL\r\n");
+            UartPrint("[INIT] ERROR: wifi_obj is NULL\r\n");
         return 1;
     }
 
     if (MX_WIFI_DEBUG)
-    	UartPrint("[INIT] Hard resetting module...\r\n");
+        UartPrint("[INIT] Hard resetting module...\r\n");
 
     status = MX_WIFI_HardResetModule(wifi_obj);
     if (status != MX_WIFI_STATUS_OK)
     {
         if (MX_WIFI_DEBUG)
-        	UartPrint("[INIT] Hard reset FAILED!\r\n");
+            UartPrint("[INIT] Hard reset FAILED!\r\n");
         return 1;
     }
 
@@ -196,7 +196,7 @@ int WIFIStartup(void)
         if ((g_mx_wifi_init_step == -60) && (flow_seen_high == 0U) && (notify_seen_high == 0U))
         {
             if (MX_WIFI_DEBUG)
-            	UartPrint("[INIT] Fallback: force WKUP_B high and retry\r\n");
+                UartPrint("[INIT] Fallback: force WKUP_B high and retry\r\n");
 
             gpio_cfg.Pin = WRLS_WKUP_B_Pin;
             gpio_cfg.Mode = GPIO_MODE_OUTPUT_PP;
@@ -229,19 +229,19 @@ int WIFIStartup(void)
         if (status != MX_WIFI_STATUS_OK)
         {
             if (MX_WIFI_DEBUG)
-            	UartPrint("[INIT] MX_WIFI_Init FAILED!\r\n");
+                UartPrint("[INIT] MX_WIFI_Init FAILED!\r\n");
             return 1;
         }
     }
 
     if (MX_WIFI_DEBUG)
-    	UartPrint("[INIT] MX_WIFI_Init OK\r\n");
+        UartPrint("[INIT] MX_WIFI_Init OK\r\n");
 
     /* ---------------------------------------------------------------------- */
     /* 5. NETWORK CONNECTION & IP CONFIGURATION                               */
     /* ---------------------------------------------------------------------- */
     if (MX_WIFI_DEBUG)
-    	UartPrint("[INIT] Connecting to AP...\r\n");
+        UartPrint("[INIT] Connecting to AP...\r\n");
 
     status = MX_WIFI_Connect(wifi_obj, ssid, password, MX_WIFI_SEC_AUTO);
     if (status != MX_WIFI_STATUS_OK)

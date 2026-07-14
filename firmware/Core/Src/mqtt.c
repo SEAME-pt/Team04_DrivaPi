@@ -24,14 +24,14 @@ static Network       n;
 int32_t              mqtt_tls_id = 0;
 
 /* Private Helper Function Prototypes */
-static int publish_emergency_status(uint8_t status);
+static int PublishEmergencyStatus(uint8_t status);
 
 /**
  * @brief Initializes the Wi-Fi module, establishes a TLS connection, and connects to the MQTT broker.
  *
  * @return int 0 on success, negative value on failure.
  */
-int mqtt_init(void)
+int MqttInit(void)
 {
     MX_WIFIObject_t* wifi_ptr = WIFI_Get_Object();
 
@@ -68,8 +68,8 @@ int mqtt_init(void)
     tx_thread_sleep(500); /* Mantido o sleep original de 500 ticks */
 
     /* Bind low-level network operations */
-    n.mqttread = stm32_mqtt_recv;
-    n.mqttwrite = stm32_mqtt_send;
+    n.mqttread = MqttRecv;
+    n.mqttwrite = MqttSend;
     n.my_socket = mqtt_tls_id;
 
     MQTTClientInit(&client, &n, 15000, send_buf, sizeof(send_buf), recv_buf, sizeof(recv_buf));
@@ -102,7 +102,7 @@ int mqtt_init(void)
  *
  * @param thread_input Unused ThreadX initialization input parameter.
  */
-void mqtt_thread_fc(ULONG thread_input)
+void MqttThreadFc(ULONG thread_input)
 {
     ULONG          actual_flags;
     t_can_message  msg;
@@ -115,7 +115,7 @@ void mqtt_thread_fc(ULONG thread_input)
         UartPrint("\r\n===== MQTT APPLICATION START =====\r\n");
     tx_thread_sleep(500);
 
-    while (mqtt_init() != 0)
+    while (MqttInit() != 0)
         tx_thread_sleep(500);
 
     while (1)
@@ -143,7 +143,7 @@ void mqtt_thread_fc(ULONG thread_input)
 
         if (g_emergency_cmd == 1)
         {
-            publish_emergency_status(1);
+            PublishEmergencyStatus(1);
 
             __HAL_TIM_SET_AUTORELOAD(&htim3, 1040);
             __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 520);
@@ -158,7 +158,7 @@ void mqtt_thread_fc(ULONG thread_input)
         else
         {
             HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_3);
-            publish_emergency_status(0);
+            PublishEmergencyStatus(0);
             tx_thread_sleep(50);
         }
     }
@@ -173,7 +173,7 @@ void mqtt_thread_fc(ULONG thread_input)
  * @param timeout_ms Connection timeout duration.
  * @return int Total bytes transmitted, or negative error code.
  */
-int stm32_mqtt_send(Network* net, unsigned char* buffer, int len, int timeout_ms)
+int MqttSend(Network* net, unsigned char* buffer, int len, int timeout_ms)
 {
     return MX_WIFI_TLS_send(WIFI_Get_Object(), (mtls_t)(intptr_t)net->my_socket, buffer, len);
 }
@@ -187,7 +187,7 @@ int stm32_mqtt_send(Network* net, unsigned char* buffer, int len, int timeout_ms
  * @param timeout_ms Maximum time to wait for data arrival.
  * @return int Total bytes successfully read into the buffer.
  */
-int stm32_mqtt_recv(Network* net, unsigned char* buffer, int len, int timeout_ms)
+int MqttRecv(Network* net, unsigned char* buffer, int len, int timeout_ms)
 {
     int			bytes_read = 0;
     uint32_t	start_time = tx_time_get();
@@ -230,7 +230,7 @@ int stm32_mqtt_recv(Network* net, unsigned char* buffer, int len, int timeout_ms
  * @param status Binary integer representing active (1) or inactive (0) states.
  * @return int Return code of the MQTT Publish function.
  */
-static int publish_emergency_status(uint8_t status)
+static int PublishEmergencyStatus(uint8_t status)
 {
     MQTTMessage msg;
     char 		payload[64];
