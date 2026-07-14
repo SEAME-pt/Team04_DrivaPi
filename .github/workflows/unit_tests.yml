@@ -45,6 +45,7 @@ jobs:
         run: |
           echo "=== Tool Versions ==="
           gcc --version
+          cmake --version
           ceedling version
           lcov --version
           gcovr --version
