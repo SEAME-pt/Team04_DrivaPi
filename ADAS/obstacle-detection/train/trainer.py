@@ -35,7 +35,7 @@ class ObstacleTrainer:
         """Export best checkpoint to ONNX and return the output path."""
         weights_path = (best_weights or self._config.best_weights or self._default_best_weights_path()).resolve()
         model = YOLO(str(weights_path))
-        model.export(format="onnx", imgsz=640, opset=12)
+        model.export(format="onnx", imgsz=640, opset=12, simplify=True)
         return weights_path.with_suffix(".onnx")
 
     def _default_best_weights_path(self) -> Path:

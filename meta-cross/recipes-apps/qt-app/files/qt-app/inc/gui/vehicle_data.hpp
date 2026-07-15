@@ -45,6 +45,15 @@ class VehicleData : public QObject
     Q_PROPERTY(bool autonomousMode READ getAutonomousMode WRITE setAutonomousMode NOTIFY autonomousModeChanged)
     Q_PROPERTY(int temperature READ getTemperature WRITE setTemperature NOTIFY temperatureChanged)
 
+    Q_PROPERTY(int odometer READ getOdometer NOTIFY odometerChanged)
+	Q_PROPERTY(int trafficSignClassId READ getTrafficSignClassId WRITE setTrafficSignClassId NOTIFY trafficSignClassIdChanged)
+    Q_PROPERTY(bool emergencyPriorityActive READ getEmergencyPriorityActive NOTIFY emergencyPriorityActiveChanged)
+    Q_PROPERTY(int emergencyPriorityLevel READ getEmergencyPriorityLevel NOTIFY emergencyPriorityLevelChanged)
+    Q_PROPERTY(QString emergencyMessage READ getEmergencyMessage NOTIFY emergencyMessageChanged)
+    Q_PROPERTY(QString emergencyIconSource READ getEmergencyIconSource NOTIFY emergencyIconSourceChanged)
+    Q_PROPERTY(int speedLimitValue READ getSpeedLimitValue NOTIFY speedLimitValueChanged)
+    Q_PROPERTY(bool speedLimitActive READ getSpeedLimitActive NOTIFY speedLimitActiveChanged)
+
 public:
     /// @brief Construct VehicleData.
     explicit VehicleData(QObject *parent = nullptr);
@@ -68,6 +77,13 @@ public:
     int     getTemperature() const;
     QString getGear() const;
     bool    getAutonomousMode() const;
+    int     getTrafficSignClassId() const;
+    bool    getEmergencyPriorityActive() const;
+    int     getEmergencyPriorityLevel() const;
+    QString getEmergencyMessage() const;
+    QString getEmergencyIconSource() const;
+    int     getSpeedLimitValue() const;
+    bool    getSpeedLimitActive() const;
 
     // ===== Setters =====
     void    setSpeed(float mps);
@@ -90,12 +106,17 @@ public:
     Q_INVOKABLE void toggleAutonomousMode();
     Q_INVOKABLE void resetValues();
     Q_INVOKABLE void resetTrip();
+    Q_INVOKABLE void requestOdometerReset();
+
 
     void handleCurrentGearUpdate(int currentGear); ///< Maps VSS int (0=N, neg=R, pos=D) to gear string.
 
 public slots:
     /// @brief Process CAN frame and update vehicle data.
     void handleCanMessage(const QByteArray &payload, uint32_t canId);
+	void updateEmergencyAlert(int priorityLevel);
+    void setTrafficSignClassId(int classId);
+    void updateTrafficSign(int classId);
 
 signals:
     void speedChanged();
@@ -115,9 +136,22 @@ signals:
     void gearChanged();
     void autonomousModeChanged();
 
+	void emergencyAlertChanged(int priorityLevel);
+    void emergencyPriorityActiveChanged();
+    void emergencyPriorityLevelChanged();
+    void emergencyMessageChanged();
+    void emergencyIconSourceChanged();
+    void speedLimitValueChanged();
+    void speedLimitActiveChanged();
+
+    void trafficSignClassIdChanged();
+	void trafficSignChanged(int classId);
+
 private slots:
     /// @brief Check all properties for staleness (timestamps exceed threshold).
     void checkStaleProperties();
+    void clearAlert();
+    void clearSpeedLimit();
 
 private:
     // ===== Member Variables =====
@@ -138,6 +172,18 @@ private:
     int     m_temperature;
     bool    m_autonomousMode;
 
+    int     m_trafficSignClassId = 0;
+
+    bool    m_emergencyPriorityActive;
+    int     m_emergencyPriorityLevel;
+    QString m_emergencyMessage;
+    QString m_emergencyIconSource;
+    int     m_speedLimitValue;
+    bool    m_speedLimitActive;
+
+    QTimer *m_emergencyTimeoutTimer;
+    QTimer *m_speedLimitTimeoutTimer;
+
     // ===== Persistence =====
     QSettings *m_settings;
     void loadOdometerFromSettings();
@@ -147,6 +193,9 @@ private:
     void    updateTimestamp(const QString &propName);
     qint64  lastUpdate(const QString &propName) const;
     void    markPropertyStale(const QString &propName);
+    void    showAdasSign(const QString &fileName, int priorityLevel, const QString &message);
+    void    showSpeedLimit(int limitValue);
+    void    showTextAlert(const QString &message, int priorityLevel);
 
     QHash<QString, qint64> m_lastUpdateMs;  ///< Property → last update time (ms).
     QTimer *m_watchdogTimer;                 ///< Stale detection timer.

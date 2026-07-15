@@ -1,7 +1,7 @@
 /**
  * @file main.cpp
  * @brief KUKSA CAN Feeder - Main entry point
- * 
+ *
  * Orchestrates initialization and runs the CAN-to-KUKSA feed loop.
  * Frame dispatch and signal handling delegated to specialized modules.
  */
@@ -14,6 +14,23 @@
 #include "feeder_can.hpp"
 #include <iostream>
 #include <linux/can.h>
+
+// --- O(1) CAN Dispatch Table ---
+// Blueprint for the handler functions. They all take a frame and the publisher.
+using CanHandlerFunc = void (*)(const can_frame&, feeder::Publisher&);
+
+// Flat array for standard 11-bit CAN IDs (0x000 to 0x7FF). Initialized to null.
+CanHandlerFunc dispatchTable[2048] = {nullptr};
+
+// Map the specific hardware IDs to their memory addresses.
+void InitDispatchTable() {
+    dispatchTable[can::ID_SPEED]         = handlers::HandleSpeed;
+    dispatchTable[can::ID_STM32_BATTERY] = handlers::HandleStm32Battery;
+    dispatchTable[can::ID_RPI_BATTERY]   = handlers::HandleRpiBattery;
+    dispatchTable[can::ID_GEAR]          = handlers::HandleGear;
+    dispatchTable[can::ID_ENV]           = handlers::HandleEnv;
+    dispatchTable[can::ID_EMERGENCY_VEHICLE] = handlers::HandleV2XEmergency;
+}
 
 int main(int argc, char** argv)
 {
@@ -42,6 +59,8 @@ int main(int argc, char** argv)
         // --- 4. Install signal handlers for graceful shutdown ---
         feeder::InstallSignalHandlers();
         std::cout << "[Feeder] Running. Press Ctrl+C to stop." << std::endl;
+
+        InitDispatchTable();
 
         // --- 5. Main read-dispatch loop ---
         while (!feeder::g_stopRequested.load()) {
@@ -87,6 +106,9 @@ int main(int argc, char** argv)
                     break;
                 case can::ID_ENV:
                     handlers::HandleEnv(frame, publisher);
+                    break;
+                case can::ID_EMERGENCY_VEHICLE:
+                    handlers::HandleV2XEmergency(frame, publisher);
                     break;
                 default:
                     // Ignore unknown CAN IDs silently
