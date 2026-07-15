@@ -7,7 +7,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Shapes
-import QtQuick.Controls
+import QtQuick.Controls // Necessário para usar IconImage nativo em vez de ColorOverlay
 import "../../../theme"
 
 Item {
@@ -25,7 +25,7 @@ Item {
     readonly property color gradientEnd: "#E6050505"
     readonly property int pulseDuration: priorityLevel >= 2 ? 400 : 800 // Faster pulse for higher priority
 
-    width: 520 * s
+    width: 520 * s // Ligeiramente mais largo para acomodar mensagens maiores
     height: 70 * s
 
     anchors.horizontalCenter: parent.horizontalCenter
@@ -76,6 +76,7 @@ Item {
         anchors.rightMargin: 40 * root.s
         spacing: 20 * root.s
 
+        // Substituído Image genérico por IconImage que suporta mudança de cor nativamente (sem bibliotecas de efeitos)
         IconImage {
             source: "qrc:/icons/common/alert.svg"
             color: root.mainColor

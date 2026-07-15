@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
-import QtQuick.Shapes
+import QtQuick.Shapes // Essencial para desenhar a geometria vetorial
 import "../../components/cluster"
 import "../../components/battery"
 import "../../theme"
@@ -163,7 +163,7 @@ Rectangle {
                 }
 
                 // =========================================================
-                // ROAD CONTAINER
+                // ROAD CONTAINER: Convergência Central Restrita à "Zona Rosa"
                 // =========================================================
                 Item {
                     id: roadContainer
@@ -174,9 +174,11 @@ Rectangle {
                     height: 380 * root.sy
                     z: 1
 
+                    // Captura dos dados en bruto do Stanley
                     property real currentLateralOffset: (root.vehicleDataAvailable && vehicleData.laneOffset !== undefined) ? (vehicleData.laneOffset * -1.5 * root.sx) : 0
                     property real currentCurveOffset: (root.vehicleDataAvailable && vehicleData.laneHeading !== undefined) ? (vehicleData.laneHeading * -400 * root.sx) : 0
 
+                    // A animação garante a fluidez a 60 FPS
                     Behavior on currentLateralOffset { NumberAnimation { duration: 150; easing.type: Easing.OutSine } }
                     Behavior on currentCurveOffset { NumberAnimation { duration: 150; easing.type: Easing.OutSine } }
 
@@ -185,8 +187,9 @@ Rectangle {
                     // Garante que o horizonte (a zona rosa) nunca foge do centro!
                     // =========================================================================
                     property real horizonXShift: Math.max(-40 * root.sx, Math.min(40 * root.sx, (currentCurveOffset * 0.1) + (currentLateralOffset * 0.1)))
-                    property real horizonY: roadContainer.height * 0.65
+                    property real horizonY: roadContainer.height * 0.65 // 65% para baixo, impedindo-o de ir "acima"
 
+                    // Apenas a "barriga" das linhas (o meio da curva) se deforma agressivamente
                     property real curveBellyShift: (currentCurveOffset * 0.8) + (currentLateralOffset * 0.6)
 
                     Image {
@@ -194,15 +197,21 @@ Rectangle {
                         anchors.fill: parent
                         opacity: AppTheme.isDark ? 0.35 : 0.10
 
+                        // O tapete base torce ligeiramente, mas não desliza
                         transform: Rotation {
                             origin.x: roadContainer.width / 2; origin.y: roadContainer.height
                             angle: (roadContainer.currentCurveOffset / 20)
                         }
                     }
 
+                    // Linhas convergentes 3D
                     Shape {
                         anchors.fill: parent
 
+                        // Efeitos de sombra removidos por questões de performance/compatibilidade AGL
+                        // As cores néon são vibrantes o suficiente contra o fundo.
+
+                        // 1. "Tapete" Virtual (Área de condução segura)
                         ShapePath {
                             strokeWidth: 0
                             fillGradient: LinearGradient {
@@ -212,9 +221,11 @@ Rectangle {
                                 GradientStop { position: 1.0; color: "transparent" }
                             }
 
+                            // BASE FIXA ESQUERDA
                             startX: (roadContainer.width / 2) - (500 * root.sx)
                             startY: roadContainer.height
 
+                            // HORIZONTE ESQUERDO (Bloqueado à zona rosa)
                             PathQuad {
                                 x: (roadContainer.width / 2) - (80 * root.sx) + roadContainer.horizonXShift
                                 y: roadContainer.horizonY
@@ -222,11 +233,13 @@ Rectangle {
                                 controlY: roadContainer.height * 0.8
                             }
 
+                            // HORIZONTE DIREITO (Bloqueado à zona rosa)
                             PathLine {
                                 x: (roadContainer.width / 2) + (80 * root.sx) + roadContainer.horizonXShift
                                 y: roadContainer.horizonY
                             }
 
+                            // BASE FIXA DIREITA
                             PathQuad {
                                 x: (roadContainer.width / 2) + (500 * root.sx)
                                 y: roadContainer.height
@@ -234,21 +247,25 @@ Rectangle {
                                 controlY: roadContainer.height * 0.8
                             }
 
+                            // Fechar o tapete na base
                             PathLine {
                                 x: (roadContainer.width / 2) - (500 * root.sx)
                                 y: roadContainer.height
                             }
                         }
 
+                        // 2. Linha Lateral Esquerda (Verde Néon)
                         ShapePath {
                             strokeWidth: 8 * root.s
                             strokeColor: "#39FF14"
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap
 
+                            // Base FIXA Esquerda
                             startX: (roadContainer.width / 2) - (500 * root.sx)
                             startY: roadContainer.height
 
+                            // Horizonte (Bloqueado à zona rosa)
                             PathQuad {
                                 x: (roadContainer.width / 2) - (80 * root.sx) + roadContainer.horizonXShift
                                 y: roadContainer.horizonY
@@ -257,15 +274,18 @@ Rectangle {
                             }
                         }
 
+                        // 3. Linha Lateral Direita (Amarelo Néon)
                         ShapePath {
                             strokeWidth: 8 * root.s
                             strokeColor: "#FFD700"
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap
 
+                            // Base FIXA Direita
                             startX: (roadContainer.width / 2) + (500 * root.sx)
                             startY: roadContainer.height
 
+                            // Horizonte (Bloqueado à zona rosa)
                             PathQuad {
                                 x: (roadContainer.width / 2) + (80 * root.sx) + roadContainer.horizonXShift
                                 y: roadContainer.horizonY
