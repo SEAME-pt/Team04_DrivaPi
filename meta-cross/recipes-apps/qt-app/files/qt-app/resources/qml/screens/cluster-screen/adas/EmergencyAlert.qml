@@ -15,6 +15,7 @@ Item {
     property bool isActive: false
     property int priorityLevel: 2 // 1 = Warning (Orange), 2 = High Priority (Red)
     property string alertMessage: "EMERGENCY VEHICLE"
+    property url iconSource: "qrc:/icons/common/alert.svg" // <-- PROPRIEDADE ADICIONADA AQUI
     property real s: 1.0
 
     // Dynamic styling based on priority level
@@ -72,9 +73,9 @@ Item {
         anchors.rightMargin: 40 * root.s
         spacing: 20 * root.s
 
-        // Substituído IconImage por Image nativo para garantir compatibilidade no Yocto/AGL
         Image {
-            source: "qrc:/icons/common/alert.svg"
+            // Usa a propriedade iconSource (e tem um fallback de segurança)
+            source: root.iconSource.toString() !== "" ? root.iconSource : "qrc:/icons/common/alert.svg"
             sourceSize.width: 30 * root.s
             sourceSize.height: 30 * root.s
             Layout.preferredWidth: 30 * root.s
