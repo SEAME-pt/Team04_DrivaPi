@@ -174,7 +174,7 @@ Rectangle {
                     height: 380 * root.sy
                     z: 1
 
-                    // Captura dos dados en bruto do Stanley
+                    // Captura dos dados em bruto do Stanley
                     property real currentLateralOffset: (root.vehicleDataAvailable && vehicleData.laneOffset !== undefined) ? (vehicleData.laneOffset * -1.5 * root.sx) : 0
                     property real currentCurveOffset: (root.vehicleDataAvailable && vehicleData.laneHeading !== undefined) ? (vehicleData.laneHeading * -400 * root.sx) : 0
 
@@ -184,7 +184,7 @@ Rectangle {
 
                     // =========================================================================
                     // MATEMÁTICA DE BLOQUEIO (Clamping)
-                    // Garante que o horizonte (a zona rosa) nunca foge do centro!
+                    // Garante que o horizonte nunca foge do centro!
                     // =========================================================================
                     property real horizonXShift: Math.max(-40 * root.sx, Math.min(40 * root.sx, (currentCurveOffset * 0.1) + (currentLateralOffset * 0.1)))
                     property real horizonY: roadContainer.height * 0.65 // 65% para baixo, impedindo-o de ir "acima"
@@ -208,16 +208,13 @@ Rectangle {
                     Shape {
                         anchors.fill: parent
 
-                        // Efeitos de sombra removidos por questões de performance/compatibilidade AGL
-                        // As cores néon são vibrantes o suficiente contra o fundo.
-
-                        // 1. "Tapete" Virtual (Área de condução segura)
+                        // 1. "Tapete" Virtual (Área de condução segura com tom Ciano a condizer)
                         ShapePath {
                             strokeWidth: 0
                             fillGradient: LinearGradient {
                                 y1: 0; y2: roadContainer.height
                                 GradientStop { position: 0.0; color: "transparent" }
-                                GradientStop { position: 0.8; color: Qt.rgba(0.2, 0.6, 1.0, 0.15) }
+                                GradientStop { position: 0.8; color: Qt.rgba(0.0, 0.82, 1.0, 0.12) } // Ciano/Azul suave e subtil
                                 GradientStop { position: 1.0; color: "transparent" }
                             }
 
@@ -225,7 +222,7 @@ Rectangle {
                             startX: (roadContainer.width / 2) - (500 * root.sx)
                             startY: roadContainer.height
 
-                            // HORIZONTE ESQUERDO (Bloqueado à zona rosa)
+                            // HORIZONTE ESQUERDO (Bloqueado à zona limite, 80px de largura)
                             PathQuad {
                                 x: (roadContainer.width / 2) - (80 * root.sx) + roadContainer.horizonXShift
                                 y: roadContainer.horizonY
@@ -233,7 +230,7 @@ Rectangle {
                                 controlY: roadContainer.height * 0.8
                             }
 
-                            // HORIZONTE DIREITO (Bloqueado à zona rosa)
+                            // HORIZONTE DIREITO
                             PathLine {
                                 x: (roadContainer.width / 2) + (80 * root.sx) + roadContainer.horizonXShift
                                 y: roadContainer.horizonY
@@ -254,10 +251,10 @@ Rectangle {
                             }
                         }
 
-                        // 2. Linha Lateral Esquerda (Verde Néon)
+                        // 2. Linha Lateral Esquerda (Estilo BMW Assist - Ciano Premium)
                         ShapePath {
                             strokeWidth: 8 * root.s
-                            strokeColor: "#39FF14"
+                            strokeColor: "#00D2FF" // Premium Tech Cyan
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap
 
@@ -265,7 +262,7 @@ Rectangle {
                             startX: (roadContainer.width / 2) - (500 * root.sx)
                             startY: roadContainer.height
 
-                            // Horizonte (Bloqueado à zona rosa)
+                            // Horizonte
                             PathQuad {
                                 x: (roadContainer.width / 2) - (80 * root.sx) + roadContainer.horizonXShift
                                 y: roadContainer.horizonY
@@ -274,10 +271,10 @@ Rectangle {
                             }
                         }
 
-                        // 3. Linha Lateral Direita (Amarelo Néon)
+                        // 3. Linha Lateral Direita (Estilo BMW Assist - Ciano Premium)
                         ShapePath {
                             strokeWidth: 8 * root.s
-                            strokeColor: "#FFD700"
+                            strokeColor: "#00D2FF" // Premium Tech Cyan (Simetria limpa e elegante)
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap
 
@@ -285,7 +282,7 @@ Rectangle {
                             startX: (roadContainer.width / 2) + (500 * root.sx)
                             startY: roadContainer.height
 
-                            // Horizonte (Bloqueado à zona rosa)
+                            // Horizonte
                             PathQuad {
                                 x: (roadContainer.width / 2) + (80 * root.sx) + roadContainer.horizonXShift
                                 y: roadContainer.horizonY
