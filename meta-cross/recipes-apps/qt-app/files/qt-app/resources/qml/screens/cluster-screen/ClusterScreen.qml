@@ -1,7 +1,8 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
-import QtQuick.Shapes // Essencial para desenhar a geometria vetorial
+import QtQuick.Shapes // Import adicionado APENAS para Shapes, sem Efeitos pesados
+import Qt5Compat.GraphicalEffects
 import "../../components/cluster"
 import "../../components/battery"
 import "../../theme"
@@ -35,15 +36,6 @@ Rectangle {
     property bool vehicleDataAvailable: vehicleData !== null && vehicleData !== undefined
 
     property bool demoEmergencyAlert: false
-
-    // V2X & ADAS Emergency State
-    property bool emergencyPriorityActive: false
-    property int emergencyPriorityLevel: 0
-    property string emergencyMessage: ""
-    property url emergencyIconSource: ""
-
-    property int speedLimitValue: 0
-    property bool speedLimitActive: false
     property real currentSpeed: vehicleDataAvailable && vehicleData.speed ? vehicleData.speed : 0
     property int stm32Battery: vehicleDataAvailable && vehicleData.stm32Battery !== undefined ? vehicleData.stm32Battery : 0
     property int rpiBattery: vehicleDataAvailable && vehicleData.rpiBattery !== undefined ? vehicleData.rpiBattery : 0
@@ -163,7 +155,7 @@ Rectangle {
                 }
 
                 // =========================================================
-                // ROAD CONTAINER: Convergência Central Restrita à "Zona Rosa"
+                // ROAD CONTAINER: Geometria Vetorial Sem Efeitos Pesados
                 // =========================================================
                 Item {
                     id: roadContainer
@@ -174,7 +166,7 @@ Rectangle {
                     height: 380 * root.sy
                     z: 1
 
-                    // Captura dos dados em bruto do Stanley
+                    // Captura dos dados KUKSA do Stanley
                     property real currentLateralOffset: (root.vehicleDataAvailable && vehicleData.laneOffset !== undefined) ? (vehicleData.laneOffset * -1.5 * root.sx) : 0
                     property real currentCurveOffset: (root.vehicleDataAvailable && vehicleData.laneHeading !== undefined) ? (vehicleData.laneHeading * -400 * root.sx) : 0
 
@@ -182,87 +174,70 @@ Rectangle {
                     Behavior on currentLateralOffset { NumberAnimation { duration: 150; easing.type: Easing.OutSine } }
                     Behavior on currentCurveOffset { NumberAnimation { duration: 150; easing.type: Easing.OutSine } }
 
-                    // =========================================================================
-                    // MATEMÁTICA DE BLOQUEIO (Clamping)
-                    // Garante que o horizonte nunca foge do centro!
-                    // =========================================================================
+                    // Bloqueios matemáticos (Clamp) para a "Zona Rosa"
                     property real horizonXShift: Math.max(-40 * root.sx, Math.min(40 * root.sx, (currentCurveOffset * 0.1) + (currentLateralOffset * 0.1)))
-                    property real horizonY: roadContainer.height * 0.65 // 65% para baixo, impedindo-o de ir "acima"
-
-                    // Apenas a "barriga" das linhas (o meio da curva) se deforma agressivamente
+                    property real horizonY: roadContainer.height * 0.65
                     property real curveBellyShift: (currentCurveOffset * 0.8) + (currentLateralOffset * 0.6)
 
                     Image {
                         source: "qrc:/assets/cluster/floor-grid.svg"
                         anchors.fill: parent
                         opacity: AppTheme.isDark ? 0.35 : 0.10
-
-                        // O tapete base torce ligeiramente, mas não desliza
                         transform: Rotation {
                             origin.x: roadContainer.width / 2; origin.y: roadContainer.height
                             angle: (roadContainer.currentCurveOffset / 20)
                         }
                     }
 
-                    // Linhas convergentes 3D
+                    // Linhas convergentes 3D usando Shapes Nativas
                     Shape {
                         anchors.fill: parent
 
-                        // 1. "Tapete" Virtual (Área de condução segura com tom Ciano a condizer)
+                        // 1. "Tapete" Virtual
                         ShapePath {
                             strokeWidth: 0
                             fillGradient: LinearGradient {
                                 y1: 0; y2: roadContainer.height
                                 GradientStop { position: 0.0; color: "transparent" }
-                                GradientStop { position: 0.8; color: Qt.rgba(0.0, 0.82, 1.0, 0.12) } // Ciano/Azul suave e subtil
+                                GradientStop { position: 0.8; color: Qt.rgba(0.0, 0.82, 1.0, 0.12) } // Ciano suave
                                 GradientStop { position: 1.0; color: "transparent" }
                             }
 
-                            // BASE FIXA ESQUERDA
                             startX: (roadContainer.width / 2) - (500 * root.sx)
                             startY: roadContainer.height
 
-                            // HORIZONTE ESQUERDO (Bloqueado à zona limite, 80px de largura)
                             PathQuad {
                                 x: (roadContainer.width / 2) - (80 * root.sx) + roadContainer.horizonXShift
                                 y: roadContainer.horizonY
                                 controlX: (roadContainer.width / 2) - (200 * root.sx) + roadContainer.curveBellyShift
                                 controlY: roadContainer.height * 0.8
                             }
-
-                            // HORIZONTE DIREITO
                             PathLine {
                                 x: (roadContainer.width / 2) + (80 * root.sx) + roadContainer.horizonXShift
                                 y: roadContainer.horizonY
                             }
-
-                            // BASE FIXA DIREITA
                             PathQuad {
                                 x: (roadContainer.width / 2) + (500 * root.sx)
                                 y: roadContainer.height
                                 controlX: (roadContainer.width / 2) + (200 * root.sx) + roadContainer.curveBellyShift
                                 controlY: roadContainer.height * 0.8
                             }
-
-                            // Fechar o tapete na base
                             PathLine {
                                 x: (roadContainer.width / 2) - (500 * root.sx)
                                 y: roadContainer.height
                             }
                         }
 
-                        // 2. Linha Lateral Esquerda (Estilo BMW Assist - Ciano Premium)
+                        // 2. Linha Lateral Esquerda (BMW Cyan)
                         ShapePath {
                             strokeWidth: 8 * root.s
-                            strokeColor: "#00D2FF" // Premium Tech Cyan
+                            strokeColor: "#00D2FF"
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap
 
-                            // Base FIXA Esquerda
                             startX: (roadContainer.width / 2) - (500 * root.sx)
                             startY: roadContainer.height
 
-                            // Horizonte
                             PathQuad {
                                 x: (roadContainer.width / 2) - (80 * root.sx) + roadContainer.horizonXShift
                                 y: roadContainer.horizonY
@@ -271,18 +246,16 @@ Rectangle {
                             }
                         }
 
-                        // 3. Linha Lateral Direita (Estilo BMW Assist - Ciano Premium)
+                        // 3. Linha Lateral Direita (BMW Cyan)
                         ShapePath {
                             strokeWidth: 8 * root.s
-                            strokeColor: "#00D2FF" // Premium Tech Cyan (Simetria limpa e elegante)
+                            strokeColor: "#00D2FF"
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap
 
-                            // Base FIXA Direita
                             startX: (roadContainer.width / 2) + (500 * root.sx)
                             startY: roadContainer.height
 
-                            // Horizonte
                             PathQuad {
                                 x: (roadContainer.width / 2) + (80 * root.sx) + roadContainer.horizonXShift
                                 y: roadContainer.horizonY
@@ -372,11 +345,11 @@ Rectangle {
                                     Layout.alignment: Qt.AlignVCenter
                                     z: 1
 
-                                    visible: root.speedLimitActive
-                                    opacity: root.speedLimitActive ? 1.0 : 0.0
+                                    visible: root.vehicleDataAvailable && vehicleData.speedLimitActive
+                                    opacity: root.vehicleDataAvailable && vehicleData.speedLimitActive ? 1.0 : 0.0
 
                                     vehicleDataAvailable: root.vehicleDataAvailable
-                                    speedLimitValue: root.speedLimitValue
+                                    speedLimitValue: root.vehicleDataAvailable ? vehicleData.speedLimitValue : 0
                                     s: root.s
 
                                     Behavior on opacity {
@@ -390,7 +363,6 @@ Rectangle {
                             }
                         }
 
-                        // CARRO (Sempre fixo no centro. Apenas simula a trepidação do motor no eixo Y)
                         Image {
                             id: carImg
                             source: "qrc:/assets/cluster/car.png"
@@ -400,11 +372,8 @@ Rectangle {
                             anchors.bottom: parent.bottom
                             anchors.bottomMargin: -50 * root.sy
                             opacity: 1.0
-
                             transform: [
-                                Translate {
-                                    y: Math.sin(root.motionPhase * 6.28318530718 * 2.0) * (1.2 * root.sy) * root.motionIntensity
-                                },
+                                Translate { y: Math.sin(root.motionPhase * 6.28318530718 * 2.0) * (1.2 * root.sy) * root.motionIntensity },
                                 Rotation {
                                     origin.x: carImg.width / 2; origin.y: carImg.height / 2
                                     angle: Math.sin(root.motionPhase * 6.28318530718) * (0.35 * root.motionIntensity) * root.motionDir
@@ -450,167 +419,6 @@ Rectangle {
         }
     }
 
-    function adasSign(fileName) {
-        return Qt.resolvedUrl("../../../assets/adas-signs/" + fileName);
-    }
-
-    function showAdasSign(fileName, priorityLevel, message) {
-        root.emergencyIconSource = adasSign(fileName);
-        root.emergencyMessage = message || "";
-        root.emergencyPriorityLevel = priorityLevel;
-        root.emergencyPriorityActive = true;
-
-        console.log("[ClusterScreen] ADAS SIGN ALERT:",
-                    fileName,
-                    root.emergencyIconSource,
-                    "priority=",
-                    priorityLevel,
-                    "message=",
-                    root.emergencyMessage);
-
-        emergencyTimeoutTimer.restart();
-    }
-
-    function showSpeedLimit(limitValue) {
-        root.speedLimitValue = limitValue;
-        root.speedLimitActive = true;
-
-        console.log("[ClusterScreen] SPEED LIMIT ALERT:", limitValue);
-
-        speedLimitTimeoutTimer.restart();
-    }
-
-    function showTextAlert(message, priorityLevel) {
-        root.emergencyIconSource = "";
-        root.emergencyMessage = message;
-        root.emergencyPriorityLevel = priorityLevel;
-        root.emergencyPriorityActive = true;
-
-        console.log("[ClusterScreen] TEXT ALERT:",
-                    message,
-                    "priority=",
-                    priorityLevel);
-
-        emergencyTimeoutTimer.restart();
-    }
-
-    function clearAlert() {
-        root.emergencyIconSource = "";
-        root.emergencyMessage = "";
-        root.emergencyPriorityLevel = 0;
-        root.emergencyPriorityActive = false;
-    }
-
-    // ==========================================================
-    // BACKEND SIGNAL CONNECTIONS (C++ to QML Bridge)
-    // ==========================================================
-    Connections {
-        target: vehicleData
-        enabled: vehicleDataAvailable
-
-        function onEmergencyAlertChanged(priorityLevel) {
-            console.log("[ClusterScreen] V2X Emergency Alert Received. Priority:", priorityLevel);
-
-            if (priorityLevel >= 2) {
-                showTextAlert("PULL OVER - EMERGENCY", 2);
-                return;
-            }
-
-            if (priorityLevel === 1) {
-                showTextAlert("EMERGENCY VEHICLE AHEAD", 1);
-                return;
-            }
-
-            clearAlert();
-            emergencyTimeoutTimer.stop();
-        }
-
-        function onTrafficSignChanged(classId) {
-            console.log("[ClusterScreen] Traffic Sign/Obstacle ID:", classId);
-
-            // 0 = Clear.
-            if (classId === 0) {
-                return;
-            }
-
-            if (classId === 1) {
-                showSpeedLimit(50);
-                return;
-            }
-            if (classId === 2) {
-                showSpeedLimit(80);
-                return;
-            }
-            if (classId === 3) {
-                showAdasSign("gate-sign.png", 1, "GATE AHEAD");
-                return;
-            }
-            if (classId === 4) {
-                showAdasSign("crosswalk-sign.png", 1, "CROSSWALK AHEAD");
-                return;
-            }
-            if (classId === 5) {
-                showAdasSign("stop-sign.png", 2, "STOP SIGN");
-                return;
-            }
-            if (classId === 6) {
-                showAdasSign("yield-sign.svg", 1, "YIELD SIGN");
-                return;
-            }
-            if (classId === 7) {
-                showAdasSign("obstacle-sign.png", 2, "CAR AHEAD");
-                return;
-            }
-            if (classId === 8) {
-                showAdasSign("danger-sign.png", 1, "DANGER SIGN");
-                return;
-            }
-            if (classId === 9) {
-                showAdasSign("obstacle-sign.png", 2, "OBSTACLE AHEAD");
-                return;
-            }
-            if (classId === 10) {
-                showAdasSign("traffic-light-green.svg", 1, "GREEN LIGHT");
-                return;
-            }
-            if (classId === 11) {
-                showAdasSign("traffic-light-off.svg", 1, "TRAFFIC LIGHT OFF");
-                return;
-            }
-            if (classId === 12) {
-                showAdasSign("traffic-light-red.svg", 2, "RED LIGHT");
-                return;
-            }
-            if (classId === 13) {
-                showAdasSign("traffic-light-yellow.svg", 1, "YELLOW LIGHT");
-                return;
-            }
-        }
-    }
-
-    Timer {
-        id: emergencyTimeoutTimer
-        interval: 3000
-        running: false
-        repeat: false
-        onTriggered: {
-            console.log("[ClusterScreen] ADAS / V2X Alert Auto-Cleared (Timeout)");
-            clearAlert();
-        }
-    }
-    Timer {
-        id: speedLimitTimeoutTimer
-        interval: 3000
-        running: false
-        repeat: false
-
-        onTriggered: {
-            console.log("[ClusterScreen] Speed limit auto-cleared");
-            root.speedLimitActive = false;
-            root.speedLimitValue = 0;
-        }
-    }
-
     // ==========================================================
     // V2X EMERGENCY OVERLAY
     // ==========================================================
@@ -618,10 +426,10 @@ Rectangle {
         id: adasEmergencyAlert
         z: 2000
         s: root.s
-        isActive: root.emergencyPriorityActive
-        priorityLevel: root.emergencyPriorityLevel
-        alertMessage: root.emergencyMessage
-        iconSource: root.emergencyIconSource
+        isActive: root.vehicleDataAvailable ? vehicleData.emergencyPriorityActive : false
+        priorityLevel: root.vehicleDataAvailable ? vehicleData.emergencyPriorityLevel : 0
+        alertMessage: root.vehicleDataAvailable ? vehicleData.emergencyMessage : ""
+        iconSource: root.vehicleDataAvailable ? vehicleData.emergencyIconSource : ""
     }
 
     BatteryPopup {
