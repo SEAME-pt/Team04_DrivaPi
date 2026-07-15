@@ -7,7 +7,6 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Shapes
-import QtQuick.Controls // Necessário para usar IconImage nativo em vez de ColorOverlay
 import "../../../theme"
 
 Item {
@@ -41,9 +40,6 @@ Item {
         NumberAnimation { duration: 400; easing.type: Easing.OutQuad }
     }
 
-    // Removido o DropShadow aqui para não depender de módulos extra.
-    // O Angular Background (com gradiente) já se destaca o suficiente na interface do dashboard.
-
     // Angular background shape
     Shape {
         id: angularBackground
@@ -76,12 +72,14 @@ Item {
         anchors.rightMargin: 40 * root.s
         spacing: 20 * root.s
 
-        // Substituído Image genérico por IconImage que suporta mudança de cor nativamente (sem bibliotecas de efeitos)
-        IconImage {
+        // Substituído IconImage por Image nativo para garantir compatibilidade no Yocto/AGL
+        Image {
             source: "qrc:/icons/common/alert.svg"
-            color: root.mainColor
+            sourceSize.width: 30 * root.s
+            sourceSize.height: 30 * root.s
             Layout.preferredWidth: 30 * root.s
             Layout.preferredHeight: 30 * root.s
+            fillMode: Image.PreserveAspectFit
 
             SequentialAnimation on opacity {
                 running: root.isActive
