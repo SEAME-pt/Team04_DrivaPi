@@ -1,8 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
-import QtQuick.Shapes // Import adicionado APENAS para Shapes, sem Efeitos pesados
-import Qt5Compat.GraphicalEffects
+import QtQuick.Shapes // Fornece o LinearGradient correto para os Shapes
 import "../../components/cluster"
 import "../../components/battery"
 import "../../theme"
