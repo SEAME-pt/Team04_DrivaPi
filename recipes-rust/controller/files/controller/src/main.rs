@@ -9,8 +9,6 @@ use std::io::{ErrorKind, Read};
 use std::os::unix::io::AsRawFd;
 use std::path::Path;
 use std::{sync::mpsc, thread, time::Duration};
-use std::net::UdpSocket;
-use std::time::Instant;
 
 /* CAN Protocol Constants */
 const CAN_ID_MOTOR: u16 = 44;
@@ -526,6 +524,7 @@ fn run_autonomous_mode(
     let mut prev_delta = 0.0;
     let dt = 0.025; // 40Hz
 
+    let mut filtered_angle: Option<f64> = None;
     const TIMEOUT_MS: u128 = 100;
 
     let mut last_servo: Option<u32> = None;
@@ -619,7 +618,7 @@ fn run_autonomous_mode(
                         filtered_angle = Some(raw_angle);
                         raw_angle
                     }
-                    Some => {
+                    Some(prev_angle) => {
                         let smoothed_value = (ALPHA * raw_angle) + ((1.0 - ALPHA) * prev_angle);
                         filtered_angle = Some(smoothed_value);
                         smoothed_value
