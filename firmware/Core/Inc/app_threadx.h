@@ -42,6 +42,7 @@ extern "C" {
 #include "motor_utils.h"
 #include "motor_control.h"
 #include "sensors.h"
+#include "soft_i2c.h"
 #include "init_devices.h"
 #include "../../Middlewares/SystemView/SEGGER_SYSVIEW.h"
 #include "../../Middlewares/SystemView/SEGGER_RTT.h"

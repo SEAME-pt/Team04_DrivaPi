@@ -9,6 +9,7 @@
 "./Core/Src/motor_utils.o"
 "./Core/Src/sensors.o"
 "./Core/Src/servo_motor.o"
+"./Core/Src/soft_i2c.o"
 "./Core/Src/speed_sensor.o"
 "./Core/Src/stm32u5xx_hal_msp.o"
 "./Core/Src/stm32u5xx_it.o"

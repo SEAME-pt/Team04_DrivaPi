@@ -106,7 +106,7 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
 	tx_mutex_create(&g_servoMutex, "Servo Mutex", TX_INHERIT);
 	tx_mutex_create(&g_gearMutex, "Gear Mutex", TX_INHERIT);
 
-	//InitAllDevices();
+	InitAllDevices();
 	MotorControlInit(&g_motorControlState);
 	AppThreadX_LogThreadInitMessage();
 	ThreadInit();
