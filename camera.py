@@ -5,7 +5,7 @@ import numpy as np
 import cv2
 
 class CameraStream:
-    def __init__(self, source=None, cam_w=640, cam_h=360):
+    def __init__(self, source=None, cam_w=1280, cam_h=720):
         self.source = source
         self.cam_w = cam_w
         self.cam_h = cam_h
@@ -21,8 +21,18 @@ class CameraStream:
             self.cap = cv2.VideoCapture(self.source)
         else:
             self.proc = subprocess.Popen(
-                ["rpicam-vid", "-t", "0", "--codec", "yuv420", "--width", str(self.cam_w),
-                 "--height", str(self.cam_h), "--framerate", "30", "-o", "-", "--nopreview", "--rotation", "180"],
+                ["rpicam-vid",
+                 "-t", "0", 
+                 "--codec", "yuv420", 
+                 "--width", str(self.cam_w),
+                 "--height", str(self.cam_h), 
+                 "--framerate", "40",
+                 "--denoise", "cdn_off" ,
+                 "--flush", "1",
+                 "--nopreview", 
+                 "--rotation", "180",
+                 "--tuning-file", "/usr/share/libcamera/ipa/rpi/pisp/imx708_wide_noir.json",
+                 "-o", "-"], 
                 stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
             )
             time.sleep(0.5)

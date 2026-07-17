@@ -92,7 +92,7 @@ def systemd_notify_ready():
         print(f"[-] Native notify failed: {e}")
 
 # ── Config ────────────────────────────────────────────────────────────────────
-CAM_W, CAM_H = 640, 360
+CAM_W, CAM_H = 1280, 720
 
 def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, in_p, out_p, thread_nbr):
     print("LANE THREAD STARTED")
@@ -105,7 +105,7 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
     global latest_debug_frame
     batch_start_time = time.time()
 
-    width, height = 640, 360
+    width, height = CAM_W, CAM_H
 #     src = np.float32([
 #         [200, 720],
 #         [1080, 720],
@@ -180,7 +180,7 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                     # 1. Far Lookahead Horizontal Line (pp.LOOKAHEAD_FRAC * h)
                     y_far = int(pp.LOOKAHEAD_FRAC * h)
                     cv2.line(debug_frame, (0, y_far), (w, y_far), purple_color, 2, cv2.LINE_AA)
-                    cv2.putText(debug_frame, "FAR LOOKAHEAD (0.40)", (15, y_far - 8),
+                    cv2.putText(debug_frame, "FAR LOOKAHEAD (0.70)", (15, y_far - 8),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, purple_color, 1, cv2.LINE_AA)
 
                     # 2. Near Bumper Horizontal Line (0.95 * h)

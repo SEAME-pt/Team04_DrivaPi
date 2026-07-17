@@ -6,6 +6,9 @@ class StanleyController:
     def __init__(self):
         self.prev_center_x = None
 
+        self.CLEARANCE_NEAR_PX = 160.0  # Clearance from line at 95% height
+        self.CLEARANCE_FAR_PX  = 90.0
+
     def compute_stanley_errors(self, lane_lines, w, h):
 
         image_center = w / 2
@@ -34,6 +37,7 @@ class StanleyController:
             for pts in lines:
                 ys = pts[:, 1]
                 xs = pts[:, 0]
+
                 order = np.argsort(ys)
 
                 y_sorted = ys[order]
@@ -42,6 +46,7 @@ class StanleyController:
                 near_x = float(np.interp(near_row, y_sorted,x_sorted))
                 far_x = float(np.interp(far_row, y_sorted,x_sorted))
 
+                
                 lane_candidates.append((near_x, far_x))
 
         if not lane_candidates:
@@ -72,13 +77,20 @@ class StanleyController:
         left_candidates = []
         right_candidates = []
 
-
-
         for near_x, far_x in filtered:
-            if near_x < image_center:
+
+            dx = far_x - near_x
+
+            if near_x < (image_center - 20) or (near_x < image_center and dx > -10):
                 left_candidates.append((near_x, far_x))
-            else:
+            elif near_x > (image_center + 20) or (near_x >= image_center and dx < 10):
                 right_candidates.append((near_x, far_x))
+            else:
+                if near_x < image_center:
+                    left_candidates.append((near_x, far_x))
+                else:
+                    right_candidates.append((near_x, far_x))
+        
 
         def score(x):
             return abs(x - image_center)
@@ -93,26 +105,19 @@ class StanleyController:
             lane_center_far_x  = (left[1] + right[1]) * 0.5
 
         elif left_candidates:
-            lane = min(left_candidates, key=lambda x: x[0])
+            print("left candidate")
+            left = max(left_candidates, key=lambda x: x[0])
 
-            if self.prev_center_x is not None:
-                alpha = 0.8
-                lane_center_near_x = alpha * lane[0] + (1 - alpha) * self.prev_center_x
-                lane_center_far_x  = alpha * lane[1] + (1 - alpha) * self.prev_center_x
-            else:
-                lane_center_near_x = lane[0] + (w - lane[0]) * 0.5
-                lane_center_far_x  = lane[1] + (w - lane[1]) * 0.5
+            
+            lane_center_near_x = left[0] + self.CLEARANCE_NEAR_PX
+            lane_center_far_x  = left[1] + self.CLEARANCE_FAR_PX
 
         elif right_candidates:
-            lane = min(right_candidates, key=lambda x: x[0])
+            print("RIGHT candidate")
+            right = min(right_candidates, key=lambda x: x[0])
 
-            if self.prev_center_x is not None:
-                alpha = 0.8
-                lane_center_near_x = alpha * lane[0] + (1 - alpha) * self.prev_center_x
-                lane_center_far_x  = alpha * lane[1] + (1 - alpha) * self.prev_center_x
-            else:
-                lane_center_near_x = lane[0] * 0.5
-                lane_center_far_x  = lane[1] * 0.5
+            lane_center_near_x = right[0] - self.CLEARANCE_NEAR_PX
+            lane_center_far_x  = right[1] - self.CLEARANCE_FAR_PX
 
         else:
             print("None from lanes")
@@ -126,6 +131,8 @@ class StanleyController:
         lane_dy = near_row - far_row
 
         path_heading = math.atan2(-lane_dx, lane_dy)
+        if math.isnan(path_heading) or math.isinf(path_heading):
+            path_heading = 0.0
         # print(f"path_heading = {path_heading} lane_center_far_x = {lane_center_far_x} lane_center_near_x = {lane_center_near_x}")
 
         self.prev_center_x = lane_center_near_x
