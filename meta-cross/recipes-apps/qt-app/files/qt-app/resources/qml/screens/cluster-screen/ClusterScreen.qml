@@ -165,6 +165,10 @@ Rectangle {
                     height: 380 * root.sy
                     z: 1
 
+                    // Cores dinâmicas para perfeito contraste em Dark/Light mode (Estilo BMW)
+                    property color themeLaneColor: AppTheme.isDark ? "#00D2FF" : "#0055CC" // Ciano no escuro, Azul forte no claro
+                    property color themeLaneFill: AppTheme.isDark ? Qt.rgba(0.0, 0.82, 1.0, 0.12) : Qt.rgba(0.0, 0.33, 0.8, 0.15)
+
                     // Captura dos dados KUKSA do Stanley
                     property real currentLateralOffset: (root.vehicleDataAvailable && vehicleData.laneOffset !== undefined) ? (vehicleData.laneOffset * -1.5 * root.sx) : 0
                     property real currentCurveOffset: (root.vehicleDataAvailable && vehicleData.laneHeading !== undefined) ? (vehicleData.laneHeading * -400 * root.sx) : 0
@@ -181,7 +185,7 @@ Rectangle {
                     Image {
                         source: "qrc:/assets/cluster/floor-grid.svg"
                         anchors.fill: parent
-                        opacity: AppTheme.isDark ? 0.35 : 0.10
+                        opacity: AppTheme.isDark ? 0.35 : 0.20 // Ligeiramente mais forte no Light Mode
                         transform: Rotation {
                             origin.x: roadContainer.width / 2; origin.y: roadContainer.height
                             angle: (roadContainer.currentCurveOffset / 20)
@@ -198,7 +202,7 @@ Rectangle {
                             fillGradient: LinearGradient {
                                 y1: 0; y2: roadContainer.height
                                 GradientStop { position: 0.0; color: "transparent" }
-                                GradientStop { position: 0.8; color: Qt.rgba(0.0, 0.82, 1.0, 0.12) } // Ciano suave
+                                GradientStop { position: 0.8; color: roadContainer.themeLaneFill }
                                 GradientStop { position: 1.0; color: "transparent" }
                             }
 
@@ -227,10 +231,10 @@ Rectangle {
                             }
                         }
 
-                        // 2. Linha Lateral Esquerda (BMW Cyan)
+                        // 2. Linha Lateral Esquerda (BMW Cyan / Deep Blue)
                         ShapePath {
                             strokeWidth: 8 * root.s
-                            strokeColor: "#00D2FF"
+                            strokeColor: roadContainer.themeLaneColor
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap
 
@@ -245,10 +249,10 @@ Rectangle {
                             }
                         }
 
-                        // 3. Linha Lateral Direita (BMW Cyan)
+                        // 3. Linha Lateral Direita (BMW Cyan / Deep Blue)
                         ShapePath {
                             strokeWidth: 8 * root.s
-                            strokeColor: "#00D2FF"
+                            strokeColor: roadContainer.themeLaneColor
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap
 
@@ -338,17 +342,20 @@ Rectangle {
                                 anchors.margins: 16 * root.s
                                 spacing: 14 * root.s
 
+                                // =========================================================
+                                // INDICADOR DE LIMITE DE VELOCIDADE (Mantido e Assegurado)
+                                // =========================================================
                                 SpeedLimitIndicator {
                                     Layout.preferredWidth: 105 * root.s
                                     Layout.preferredHeight: 105 * root.s
                                     Layout.alignment: Qt.AlignVCenter
                                     z: 1
 
-                                    visible: root.vehicleDataAvailable && vehicleData.speedLimitActive
-                                    opacity: root.vehicleDataAvailable && vehicleData.speedLimitActive ? 1.0 : 0.0
+                                    visible: root.speedLimitActive
+                                    opacity: root.speedLimitActive ? 1.0 : 0.0
 
                                     vehicleDataAvailable: root.vehicleDataAvailable
-                                    speedLimitValue: root.vehicleDataAvailable ? vehicleData.speedLimitValue : 0
+                                    speedLimitValue: root.speedLimitValue
                                     s: root.s
 
                                     Behavior on opacity {
@@ -415,6 +422,170 @@ Rectangle {
                 }
 
             }
+        }
+    }
+
+    // ==========================================================
+    // BACKEND SIGNAL CONNECTIONS (C++ to QML Bridge)
+    // ==========================================================
+    Connections {
+        target: vehicleData
+        enabled: vehicleDataAvailable
+
+        function onEmergencyAlertChanged(priorityLevel) {
+            console.log("[ClusterScreen] V2X Emergency Alert Received. Priority:", priorityLevel);
+
+            if (priorityLevel >= 2) {
+                showTextAlert("PULL OVER - EMERGENCY", 2);
+                return;
+            }
+
+            if (priorityLevel === 1) {
+                showTextAlert("EMERGENCY VEHICLE AHEAD", 1);
+                return;
+            }
+
+            clearAlert();
+            emergencyTimeoutTimer.stop();
+        }
+
+        function onTrafficSignChanged(classId) {
+            console.log("[ClusterScreen] Traffic Sign/Obstacle ID:", classId);
+
+            // 0 = Clear.
+            if (classId === 0) {
+                return;
+            }
+
+            // O indicador de velocidade continua a ser despoletado aqui corretamente
+            if (classId === 1) {
+                showSpeedLimit(50);
+                return;
+            }
+            if (classId === 2) {
+                showSpeedLimit(80);
+                return;
+            }
+
+            // Outros sinais...
+            if (classId === 3) {
+                showAdasSign("gate-sign.png", 1, "GATE AHEAD");
+                return;
+            }
+            if (classId === 4) {
+                showAdasSign("crosswalk-sign.png", 1, "CROSSWALK AHEAD");
+                return;
+            }
+            if (classId === 5) {
+                showAdasSign("stop-sign.png", 2, "STOP SIGN");
+                return;
+            }
+            if (classId === 6) {
+                showAdasSign("yield-sign.svg", 1, "YIELD SIGN");
+                return;
+            }
+            if (classId === 7) {
+                showAdasSign("obstacle-sign.png", 2, "CAR AHEAD");
+                return;
+            }
+            if (classId === 8) {
+                showAdasSign("danger-sign.png", 1, "DANGER SIGN");
+                return;
+            }
+            if (classId === 9) {
+                showAdasSign("obstacle-sign.png", 2, "OBSTACLE AHEAD");
+                return;
+            }
+            if (classId === 10) {
+                showAdasSign("traffic-light-green.svg", 1, "GREEN LIGHT");
+                return;
+            }
+            if (classId === 11) {
+                showAdasSign("traffic-light-off.svg", 1, "TRAFFIC LIGHT OFF");
+                return;
+            }
+            if (classId === 12) {
+                showAdasSign("traffic-light-red.svg", 2, "RED LIGHT");
+                return;
+            }
+            if (classId === 13) {
+                showAdasSign("traffic-light-yellow.svg", 1, "YELLOW LIGHT");
+                return;
+            }
+        }
+    }
+
+    function adasSign(fileName) {
+        return Qt.resolvedUrl("../../../assets/adas-signs/" + fileName);
+    }
+
+    function showAdasSign(fileName, priorityLevel, message) {
+        root.emergencyIconSource = adasSign(fileName);
+        root.emergencyMessage = message || "";
+        root.emergencyPriorityLevel = priorityLevel;
+        root.emergencyPriorityActive = true;
+
+        console.log("[ClusterScreen] ADAS SIGN ALERT:",
+                    fileName,
+                    root.emergencyIconSource,
+                    "priority=",
+                    priorityLevel,
+                    "message=",
+                    root.emergencyMessage);
+
+        emergencyTimeoutTimer.restart();
+    }
+
+    function showSpeedLimit(limitValue) {
+        root.speedLimitValue = limitValue;
+        root.speedLimitActive = true;
+
+        console.log("[ClusterScreen] SPEED LIMIT ALERT:", limitValue);
+
+        speedLimitTimeoutTimer.restart();
+    }
+
+    function showTextAlert(message, priorityLevel) {
+        root.emergencyIconSource = "";
+        root.emergencyMessage = message;
+        root.emergencyPriorityLevel = priorityLevel;
+        root.emergencyPriorityActive = true;
+
+        console.log("[ClusterScreen] TEXT ALERT:",
+                    message,
+                    "priority=",
+                    priorityLevel);
+
+        emergencyTimeoutTimer.restart();
+    }
+
+    function clearAlert() {
+        root.emergencyIconSource = "";
+        root.emergencyMessage = "";
+        root.emergencyPriorityLevel = 0;
+        root.emergencyPriorityActive = false;
+    }
+
+    Timer {
+        id: emergencyTimeoutTimer
+        interval: 3000
+        running: false
+        repeat: false
+        onTriggered: {
+            console.log("[ClusterScreen] ADAS / V2X Alert Auto-Cleared (Timeout)");
+            clearAlert();
+        }
+    }
+
+    Timer {
+        id: speedLimitTimeoutTimer
+        interval: 3000
+        running: false
+        repeat: false
+        onTriggered: {
+            console.log("[ClusterScreen] Speed limit auto-cleared");
+            root.speedLimitActive = false;
+            root.speedLimitValue = 0;
         }
     }
 
