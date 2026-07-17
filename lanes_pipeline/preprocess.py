@@ -1,6 +1,6 @@
 
 import cv2
-ROI_RATIO   = 0.50
+ROI_RATIO   = 0.45
 MODEL_SIZE  = 640
 WORK_SIZE   = MODEL_SIZE // 4
 import numpy as np

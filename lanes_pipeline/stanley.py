@@ -6,8 +6,8 @@ class StanleyController:
     def __init__(self):
         self.prev_center_x = None
 
-        self.CLEARANCE_NEAR_PX = 160.0  # Clearance from line at 95% height
-        self.CLEARANCE_FAR_PX  = 90.0
+        self.CLEARANCE_NEAR_PX = 140.0  # Clearance from line at 95% height
+        self.CLEARANCE_FAR_PX  = 80.0
 
     def compute_stanley_errors(self, lane_lines, w, h):
 
@@ -81,19 +81,29 @@ class StanleyController:
 
             dx = far_x - near_x
 
-            if near_x < (image_center - 20) or (near_x < image_center and dx > -10):
+            if near_x < (image_center - 40) or (near_x < image_center and dx > -5):
                 left_candidates.append((near_x, far_x))
-            elif near_x > (image_center + 20) or (near_x >= image_center and dx < 10):
+            elif near_x > (image_center + 40) or (near_x >= image_center and dx < 5):
                 right_candidates.append((near_x, far_x))
             else:
                 if near_x < image_center:
                     left_candidates.append((near_x, far_x))
                 else:
                     right_candidates.append((near_x, far_x))
+
+
+
+
+        global_dx = 0
+        if filtered:
+            global_dx = np.mean([far_x - near_x for near_x, far_x in filtered])
+
+
         
 
         def score(x):
             return abs(x - image_center)
+
 
 
         if left_candidates and right_candidates:
@@ -104,20 +114,89 @@ class StanleyController:
             lane_center_near_x = (left[0] + right[0]) * 0.5
             lane_center_far_x  = (left[1] + right[1]) * 0.5
 
-        elif left_candidates:
-            print("left candidate")
-            left = max(left_candidates, key=lambda x: x[0])
+
+        elif len(filtered) == 1:
+            near_x, far_x = filtered[0]
+        
+            lane_center_near_x = near_x
+            lane_center_far_x = far_x
+
+
+            left_bound_x = -9999.0
+            right_bound_x = 9999.0
+
+            for lines in lane_lines.values():
+                for pts in lines:
+                    for pt_x, pt_y in pts:
+                        if pt_y > 0.60 * h:
+                            if pt_x < image_center and pt_x > left_bound_x:
+                                left_bound_x = pt_x  # Closest obstacle on the left
+                            elif pt_x >= image_center and pt_x < right_bound_x:
+                                right_bound_x = pt_x # Closest obstacle on the right
+
+            is_right_line = near_x >= image_center or (filtered[0] in right_candidates and filtered[0] not in left_candidates)
+
+            if is_right_line:
+                if left_bound_x > -9999.0:
+                    lane_center_near_x = (left_bound_x + near_x) * 0.5
+                    shift_offset = near_x - lane_center_near_x
+                    lane_center_far_x = far_x - shift_offset
+                elif self.prev_center_x is not None:
+                    # Dynamically reuse the last lane offset distance instead of a hardcoded 110px
+                    dynamic_offset = max(60.0, min(160.0, abs(near_x - self.prev_center_x)))
+                    lane_center_near_x = near_x - dynamic_offset
+                    lane_center_far_x  = far_x - (dynamic_offset * 0.6)
+                else:
+                    lane_center_near_x = near_x - 120.0
+                    lane_center_far_x  = far_x - 70.0
+            else:
+                if right_bound_x < 9999.0:
+                    lane_center_near_x = (near_x + right_bound_x) * 0.5
+                    shift_offset = lane_center_near_x - near_x
+                    lane_center_far_x = far_x + shift_offset
+                elif self.prev_center_x is not None:
+                    dynamic_offset = max(60.0, min(160.0, abs(self.prev_center_x - near_x)))
+                    lane_center_near_x = near_x + dynamic_offset
+                    lane_center_far_x  = far_x + (dynamic_offset * 0.6)
+                else:
+                    lane_center_near_x = near_x + 120.0
+                    lane_center_far_x  = far_x + 70.0
+
+
+
+
+
+
+
+
 
             
-            lane_center_near_x = left[0] + self.CLEARANCE_NEAR_PX
-            lane_center_far_x  = left[1] + self.CLEARANCE_FAR_PX
 
-        elif right_candidates:
-            print("RIGHT candidate")
-            right = min(right_candidates, key=lambda x: x[0])
+#         elif len(filtered) == 1:
+#             near_x, far_x = filtered[0]
+# 
+#             lane_center_near_x = near_x
+#             lane_center_far_x = far_x
 
-            lane_center_near_x = right[0] - self.CLEARANCE_NEAR_PX
-            lane_center_far_x  = right[1] - self.CLEARANCE_FAR_PX
+        # else:
+        #     near_x, far_x = filtered[0]
+        #     lane_center_near_x = near_x
+        #     lane_center_far_x  = far_x
+
+#         elif left_candidates:
+#             print("left candidate")
+#             left = max(left_candidates, key=lambda x: x[0])
+# 
+#             
+#             lane_center_near_x = left[0]
+#             lane_center_far_x  = left[1]
+# 
+#         elif right_candidates:
+#             print("RIGHT candidate")
+#             right = min(right_candidates, key=lambda x: x[0])
+# 
+#             lane_center_near_x = right[0]
+#             lane_center_far_x  = right[1]
 
         else:
             print("None from lanes")
@@ -134,6 +213,7 @@ class StanleyController:
         if math.isnan(path_heading) or math.isinf(path_heading):
             path_heading = 0.0
         # print(f"path_heading = {path_heading} lane_center_far_x = {lane_center_far_x} lane_center_near_x = {lane_center_near_x}")
+
 
         self.prev_center_x = lane_center_near_x
         return closes_front_point_y, float(path_heading)

@@ -171,6 +171,7 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                         steering_vis = (target_x, cte)
 
                     import lanes_pipeline.post_process as pp
+                    pp.LOOKNEAR_FRAC = 0.95
                     pp.LOOKAHEAD_FRAC = 0.70
                     
                     draw_debug(debug_frame, class_masks, lane_lines, steering_vis)
@@ -184,7 +185,7 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, purple_color, 1, cv2.LINE_AA)
 
                     # 2. Near Bumper Horizontal Line (0.95 * h)
-                    y_near = int(0.95 * h)
+                    y_near = int(pp.LOOKNEAR_FRAC * h)
                     cv2.line(debug_frame, (0, y_near), (w, y_near), purple_color, 1, cv2.LINE_4)
                     cv2.putText(debug_frame, "NEAR BUMPER (0.95)", (15, y_near - 8),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, purple_color, 1, cv2.LINE_AA)
