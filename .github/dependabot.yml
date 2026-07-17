@@ -4,8 +4,7 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "daily"
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
@@ -13,10 +12,9 @@ updates:
 
   # Rust/Cargo
   - package-ecosystem: "cargo"
-    directory: "/"
+    directory: "/meta-cross/recipes-rust/controller/files/controller/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "daily"
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
