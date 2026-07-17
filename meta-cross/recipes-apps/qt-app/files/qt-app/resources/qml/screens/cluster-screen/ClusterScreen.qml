@@ -154,7 +154,7 @@ Rectangle {
 				}
 
 				// =========================================================
-				// ROAD CONTAINER: Geometria Vetorial Sem Efeitos Pesados
+				// ROAD CONTAINER: Geometria Vetorial Limpa
 				// =========================================================
 				Item {
 					id: roadContainer
@@ -165,9 +165,9 @@ Rectangle {
 					height: 380 * root.sy
 					z: 1
 
-					// Cores dinâmicas para perfeito contraste em Dark/Light mode (Estilo BMW)
+					// Cores dinâmicas para perfeito contraste
 					property color themeLaneColor: AppTheme.isDark ? "#00D2FF" : "#0055CC"
-					property color themeLaneFill: AppTheme.isDark ? Qt.rgba(0.0, 0.82, 1.0, 0.12) : Qt.rgba(0.0, 0.33, 0.8, 0.08) // Mais subtil no claro
+					property color themeLaneFill: AppTheme.isDark ? Qt.rgba(0.0, 0.82, 1.0, 0.12) : Qt.rgba(0.0, 0.33, 0.8, 0.15)
 
 					// Captura dos dados KUKSA do Stanley
 					property real currentLateralOffset: (root.vehicleDataAvailable && vehicleData.laneOffset !== undefined) ? (vehicleData.laneOffset * -1.5 * root.sx) : 0
@@ -182,22 +182,9 @@ Rectangle {
 					property real horizonY: roadContainer.height * 0.65
 					property real curveBellyShift: (currentCurveOffset * 0.8) + (currentLateralOffset * 0.6)
 
-					Image {
-						source: "qrc:/assets/cluster/floor-grid.svg"
-						anchors.fill: parent
-						// A opacidade precisa de ser muito baixa no modo claro para não criar "sombras pretas" estranhas
-						opacity: AppTheme.isDark ? 0.35 : 0.08
-						transform: Rotation {
-							origin.x: roadContainer.width / 2; origin.y: roadContainer.height
-							angle: (roadContainer.currentCurveOffset / 20)
-						}
-					}
-
 					// Linhas convergentes 3D usando Shapes Nativas
 					Shape {
 						anchors.fill: parent
-
-						// NOTA: Removidas propriedades layer.* que causavam o erro de renderização no Light Mode.
 
 						// 1. "Tapete" Virtual
 						ShapePath {
@@ -234,7 +221,7 @@ Rectangle {
 							}
 						}
 
-						// 2. Linha Lateral Esquerda (BMW Cyan / Deep Blue)
+						// 2. Linha Lateral Esquerda
 						ShapePath {
 							strokeWidth: 8 * root.s
 							strokeColor: roadContainer.themeLaneColor
@@ -252,7 +239,7 @@ Rectangle {
 							}
 						}
 
-						// 3. Linha Lateral Direita (BMW Cyan / Deep Blue)
+						// 3. Linha Lateral Direita
 						ShapePath {
 							strokeWidth: 8 * root.s
 							strokeColor: roadContainer.themeLaneColor
@@ -346,7 +333,7 @@ Rectangle {
 								spacing: 14 * root.s
 
 								// =========================================================
-								// INDICADOR DE LIMITE DE VELOCIDADE (Mantido e Assegurado)
+								// INDICADOR DE LIMITE DE VELOCIDADE
 								// =========================================================
 								SpeedLimitIndicator {
 									Layout.preferredWidth: 105 * root.s
@@ -354,11 +341,11 @@ Rectangle {
 									Layout.alignment: Qt.AlignVCenter
 									z: 1
 
-									visible: root.speedLimitActive
-									opacity: root.speedLimitActive ? 1.0 : 0.0
+									visible: root.vehicleDataAvailable && vehicleData.speedLimitActive
+									opacity: root.vehicleDataAvailable && vehicleData.speedLimitActive ? 1.0 : 0.0
 
 									vehicleDataAvailable: root.vehicleDataAvailable
-									speedLimitValue: root.speedLimitValue
+									speedLimitValue: root.vehicleDataAvailable ? vehicleData.speedLimitValue : 0
 									s: root.s
 
 									Behavior on opacity {
@@ -460,7 +447,6 @@ Rectangle {
 				return;
 			}
 
-			// O indicador de velocidade continua a ser despoletado aqui corretamente
 			if (classId === 1) {
 				showSpeedLimit(50);
 				return;
@@ -469,8 +455,6 @@ Rectangle {
 				showSpeedLimit(80);
 				return;
 			}
-
-			// Outros sinais...
 			if (classId === 3) {
 				showAdasSign("gate-sign.png", 1, "GATE AHEAD");
 				return;
