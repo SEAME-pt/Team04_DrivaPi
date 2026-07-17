@@ -43,7 +43,7 @@ const JS_EVENT_INIT: u8 = 0x80;
 
 /* EMA Constants */
 const MAX_ALLOWED_CTE: f64 = 1.5;
-const SPIKE_THRESHOLD_RAD: f64 = 0.15;
+const SPIKE_THRESHOLD_RAD: f64 = 0.45; //original 0.15
 const ALPHA: f64 = 0.25;
 
 #[derive(Default, Debug, Clone, Copy)]
@@ -529,8 +529,8 @@ fn run_autonomous_mode(
 
     let mut last_servo: Option<u32> = None;
 
-    controller.send_motor_command(10, FORWARD)?;
-    let speed_mps = 10.0 * (100.0 / 3600.0);
+    controller.send_motor_command(15, FORWARD)?;
+    let speed_mps = 15.0 * (100.0 / 3600.0);
 
 
 // =================================================================================
@@ -579,19 +579,28 @@ fn run_autonomous_mode(
         if perception.valid == 1 {
 
             let mut raw_cte = perception.closest_front_point as f64;
+            let mut raw_heading = perception.heading_error as f64;
             println!(
                 "[PERCEPTION] cte={:.5} heading={:.5} speed={speed_mps}",
                 raw_cte,
                 perception.heading_error
             );
 
-            if raw_cte.abs() > MAX_ALLOWED_CTE {
-                raw_cte = raw_cte.clamp(-MAX_ALLOWED_CTE, MAX_ALLOWED_CTE);
-            }
+
+            // if (-50f64..=50f64).contains(&raw_cte) && raw_heading == 0f64{
+            //     raw_cte = 0f64;
+            // }
+
+
+            
+            // if raw_cte.abs() > MAX_ALLOWED_CTE {
+               // raw_cte = raw_cte.clamp(-MAX_ALLOWED_CTE, MAX_ALLOWED_CTE);
+            // }
 
             let observation = stanley::CameraLaneObservation {
                 closest_front_point_m: raw_cte,
-                heading_error_rad: stanley::normalize_heading(perception.heading_error as f64),
+                heading_error_rad: stanley::normalize_heading(raw_heading),
+                // heading_error_rad: stanley::normalize_heading(perception.heading_error as f64),
                 confidence: perception.confidence as f64,
             };
             
