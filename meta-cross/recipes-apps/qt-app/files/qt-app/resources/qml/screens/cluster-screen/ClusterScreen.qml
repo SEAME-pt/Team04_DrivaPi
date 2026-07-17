@@ -197,6 +197,8 @@ Rectangle {
 					Shape {
 						anchors.fill: parent
 
+						// NOTA: Removidas propriedades layer.* que causavam o erro de renderização no Light Mode.
+
 						// 1. "Tapete" Virtual
 						ShapePath {
 							strokeWidth: 0
@@ -615,5 +617,6 @@ Rectangle {
 		var colors = ["#FF6B35", "#004E89", "#1AE5BE"];
 		return colors[index % colors.length];
 	}
+
 
 }
