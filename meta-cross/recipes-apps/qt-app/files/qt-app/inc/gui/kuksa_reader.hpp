@@ -65,6 +65,10 @@ signals:
 
 	void trafficSignReceived(int classId);
 
+	// Lane detection
+    void laneOffsetReceived(float offset);
+    void laneHeadingReceived(float heading);
+
 private:
     /// @brief Run one subscribe-read loop for the given VSS paths.
     /// @return true if stopped cleanly, false if the subscription failed with an error.
