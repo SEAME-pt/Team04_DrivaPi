@@ -79,4 +79,4 @@
 
 ---
 
-**Previous:** [octoberDD.md](octoberDD.md) | **Next:** [octoberDD.md](octoberDD.md)
+**Previous:** [YYYY-MM-DD.md](YYYY-MM-DD.md) | **Next:** [YYYY-MM-DD.md](YYYY-MM-DD.md)

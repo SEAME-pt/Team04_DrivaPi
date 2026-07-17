@@ -37,7 +37,7 @@ jobs:
 
       - name: Install Ceedling and gcovr
         run: |
-          sudo gem install ceedling
+          sudo gem install ceedling --no-document
           pip3 install gcovr
 
       - name: Verify tool versions
