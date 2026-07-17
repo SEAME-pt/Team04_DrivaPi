@@ -618,5 +618,4 @@ Rectangle {
 		return colors[index % colors.length];
 	}
 
-
 }
