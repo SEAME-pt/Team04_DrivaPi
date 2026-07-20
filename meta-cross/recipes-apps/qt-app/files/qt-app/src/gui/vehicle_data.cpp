@@ -26,6 +26,11 @@ namespace drivaui {
 		uint64_t timestamp;
 	};
 
+	struct ObstacleOutput {
+		int class_id;
+		uint64_t timestamp;
+	};
+
 	// CAN IDs
 	static constexpr uint32_t SPEED_CAN_ID         = 0x100;
 	static constexpr uint32_t STM32_BATTERY_CAN_ID = 0x200;
@@ -69,16 +74,16 @@ namespace drivaui {
 		, m_laneHeading(0.0f)
 		, m_shm_fd(-1)
 		, m_shm_ptr(MAP_FAILED)
+		, m_obs_fd(-1)
+		, m_obs_ptr(MAP_FAILED)
 		, m_shmTimer(new QTimer(this))
 	{
 		loadOdometerFromSettings();
 
-		// Watchdog period for CAN
 		m_watchdogTimer->setInterval(200);
 		connect(m_watchdogTimer, &QTimer::timeout, this, &VehicleData::checkStaleProperties);
 		m_watchdogTimer->start();
 
-		// Timers for UI
 		m_emergencyTimeoutTimer->setSingleShot(true);
 		m_emergencyTimeoutTimer->setInterval(3000);
 		connect(m_emergencyTimeoutTimer, &QTimer::timeout, this, &VehicleData::clearAlert);
@@ -87,7 +92,6 @@ namespace drivaui {
 		m_speedLimitTimeoutTimer->setInterval(3000);
 		connect(m_speedLimitTimeoutTimer, &QTimer::timeout, this, &VehicleData::clearSpeedLimit);
 
-		// Timers for Shared Memory
 		m_shmTimer->setInterval(33);
 		connect(m_shmTimer, &QTimer::timeout, this, &VehicleData::readSharedMemory);
 		m_shmTimer->start();
@@ -100,14 +104,16 @@ namespace drivaui {
 		if (m_shm_fd >= 0) {
 			close(m_shm_fd);
 		}
+		if (m_obs_ptr != MAP_FAILED) {
+			munmap(m_obs_ptr, sizeof(ObstacleOutput));
+		}
+		if (m_obs_fd >= 0) {
+			close(m_obs_fd);
+		}
 	}
 
-	// ====================================================================================
-	// Shared Memory Reading for Lane Detection
-	// ====================================================================================
 	void VehicleData::readSharedMemory()
 	{
-		// 1. Try to open the shared memory file if not already opened
 		if (m_shm_fd < 0) {
 			m_shm_fd = open("/dev/shm/perception.buf", O_RDONLY);
 			if (m_shm_fd >= 0) {
@@ -117,17 +123,30 @@ namespace drivaui {
 					m_shm_fd = -1;
 				}
 			}
-			return; // Return if the shared memory file could not be opened
-		}
-
-		// 2. Try to read the shared memory
-		if (m_shm_ptr != MAP_FAILED) {
+		} else if (m_shm_ptr != MAP_FAILED) {
 			auto* data = static_cast<PerceptionOutput*>(m_shm_ptr);
-
-			// Verify if the inference has been updated with valid data
 			if (data->valid == 1) {
 				setLaneOffset(data->cte);
 				setLaneHeading(data->heading_error);
+			}
+		}
+
+		if (m_obs_fd < 0) {
+			m_obs_fd = open("/dev/shm/obstacle.buf", O_RDONLY);
+			if (m_obs_fd >= 0) {
+				m_obs_ptr = mmap(0, sizeof(ObstacleOutput), PROT_READ, MAP_SHARED, m_obs_fd, 0);
+				if (m_obs_ptr == MAP_FAILED) {
+					close(m_obs_fd);
+					m_obs_fd = -1;
+				}
+			}
+		} else if (m_obs_ptr != MAP_FAILED) {
+			auto* obs_data = static_cast<ObstacleOutput*>(m_obs_ptr);
+			static uint64_t last_obs_ts = 0;
+
+			if (obs_data->timestamp != last_obs_ts) {
+				last_obs_ts = obs_data->timestamp;
+				updateTrafficSign(obs_data->class_id);
 			}
 		}
 	}
@@ -135,12 +154,10 @@ namespace drivaui {
 	// ===== Getters =====
 	float VehicleData::getSpeed() const { return m_speed; }
 	double VehicleData::getEnergy() const { return m_energy; }
-
 	int VehicleData::getStm32Battery() const { return m_stm32Battery; }
 	float VehicleData::getStm32BatteryVoltage() const { return m_stm32BatteryVoltage; }
 	float VehicleData::getStm32Temperature() const { return m_stm32Temperature; }
 	float VehicleData::getStm32Humidity() const { return m_stm32Humidity; }
-
 	int VehicleData::getRpiBattery() const { return m_rpiBattery; }
 	double VehicleData::getRpiBatteryVoltage() const { return m_rpiBatteryVoltage; }
 	double VehicleData::getRpiBatteryCurrent() const { return m_rpiBatteryCurrent; }
@@ -149,7 +166,6 @@ namespace drivaui {
 	int VehicleData::getTemperature() const { return m_temperature; }
 	QString VehicleData::getGear() const { return m_gear; }
 	bool VehicleData::getAutonomousMode() const { return m_autonomousMode; }
-
 	int VehicleData::getTrafficSignClassId() const { return m_trafficSignClassId; }
 	bool VehicleData::getEmergencyPriorityActive() const { return m_emergencyPriorityActive; }
 	int VehicleData::getEmergencyPriorityLevel() const { return m_emergencyPriorityLevel; }
@@ -161,7 +177,6 @@ namespace drivaui {
 	float VehicleData::getLaneHeading() const { return m_laneHeading; }
 
 	// ===== Setters =====
-
 	void VehicleData::setSpeed(float mps)
 	{
 		if (!qFuzzyCompare(m_speed, mps)) {
@@ -323,53 +338,25 @@ namespace drivaui {
 		setTrafficSignClassId(classId);
 		emit trafficSignChanged(classId);
 
-		// classId 0 means clear from detector stream; ignore to avoid rapid flicker.
 		if (classId == 0) {
 			return;
 		}
 
 		switch (classId) {
-		case 1: // 50_sign
-			showSpeedLimit(50);
-			return;
-		case 2: // 80_sign
-			showSpeedLimit(80);
-			return;
-		case 3: // gate
-			showAdasSign("gate-sign.png", 1, "GATE AHEAD");
-			return;
-		case 4: // crosswalk_sign
-			showAdasSign("crosswalk-sign.png", 1, "CROSSWALK AHEAD");
-			return;
-		case 5: // stop_sign
-			showAdasSign("stop-sign.png", 2, "STOP SIGN");
-			return;
-		case 6: // yield_sign
-			showAdasSign("yield-sign.svg", 1, "YIELD SIGN");
-			return;
-		case 7: // car
-			showAdasSign("obstacle-sign.png", 2, "CAR AHEAD");
-			return;
-		case 8: // danger_sign
-			showAdasSign("danger-sign.png", 1, "DANGER SIGN");
-			return;
-		case 9: // obstacle
-			showAdasSign("obstacle-sign.png", 2, "OBSTACLE AHEAD");
-			return;
-		case 10: // traffic_light_green
-			showAdasSign("traffic-light-green.svg", 1, "GREEN LIGHT");
-			return;
-		case 11: // traffic_light_off
-			showAdasSign("traffic-light-off.svg", 1, "TRAFFIC LIGHT OFF");
-			return;
-		case 12: // traffic_light_red
-			showAdasSign("traffic-light-red.svg", 2, "RED LIGHT");
-			return;
-		case 13: // traffic_light_yellow
-			showAdasSign("traffic-light-yellow.svg", 1, "YELLOW LIGHT");
-			return;
-		default:
-			return;
+		case 1: showSpeedLimit(50); return;
+		case 2: showSpeedLimit(80); return;
+		case 3: showAdasSign("gate-sign.png", 1, "GATE AHEAD"); return;
+		case 4: showAdasSign("crosswalk-sign.png", 1, "CROSSWALK AHEAD"); return;
+		case 5: showAdasSign("stop-sign.png", 2, "STOP SIGN"); return;
+		case 6: showAdasSign("yield-sign.svg", 1, "YIELD SIGN"); return;
+		case 7: showAdasSign("obstacle-sign.png", 2, "CAR AHEAD"); return;
+		case 8: showAdasSign("danger-sign.png", 1, "DANGER SIGN"); return;
+		case 9: showAdasSign("obstacle-sign.png", 2, "OBSTACLE AHEAD"); return;
+		case 10: showAdasSign("traffic-light-green.svg", 1, "GREEN LIGHT"); return;
+		case 11: showAdasSign("traffic-light-off.svg", 1, "TRAFFIC LIGHT OFF"); return;
+		case 12: showAdasSign("traffic-light-red.svg", 2, "RED LIGHT"); return;
+		case 13: showAdasSign("traffic-light-yellow.svg", 1, "YELLOW LIGHT"); return;
+		default: return;
 		}
 	}
 
@@ -447,6 +434,7 @@ namespace drivaui {
 			return;
 		}
 
+		// *** AQUI ESTÁ A CORREÇÃO QUE TINHA DESAPARECIDO ***
 		if (canId == EMERGENCY_VEHICLE_CAN_ID) {
 			if (dlc < 1) return;
 			const int priorityLevel = static_cast<int>(data[0]);
