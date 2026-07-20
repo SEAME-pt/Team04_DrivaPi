@@ -34,7 +34,7 @@ pub struct StanleyConfig {
 impl Default for StanleyConfig {
     fn default() -> Self {
         Self {
-            k: 0.28, //orginal is 0.4
+            k: 0.4, //orginal is 0.4
             k_soft: 0.20,
             wheelbase_m: 0.15,
             max_steer_rad: 0.5,
@@ -62,7 +62,7 @@ pub fn compute_steering(
     cfg: &StanleyConfig,
 ) -> f64 {
     let pixel_to_meter = 0.00258;
-    let mut cte_meters = observation.closest_front_point_m * pixel_to_meter;
+    let cte_meters = observation.closest_front_point_m * pixel_to_meter;
     
     let crosstrack_error = ((cfg.k * cte_meters) / (speed_mps + cfg.k_soft)).atan();
 

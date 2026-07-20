@@ -1,0 +1,8 @@
+[package]
+name = "vehicle_control"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+memmap2 = "0.9.11"
+socketcan = "3.6.2"
