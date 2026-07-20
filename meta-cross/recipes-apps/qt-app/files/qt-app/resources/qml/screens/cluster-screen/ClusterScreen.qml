@@ -170,8 +170,8 @@ Rectangle {
 					property color themeLaneFill: AppTheme.isDark ? Qt.rgba(0.0, 0.82, 1.0, 0.12) : Qt.rgba(0.0, 0.33, 0.8, 0.15)
 
 					// Captura dos dados KUKSA do Stanley
-					property real currentLateralOffset: (root.vehicleDataAvailable && vehicleData.laneOffset !== undefined) ? (vehicleData.laneOffset * -1.5 * root.sx) : 0
-					property real currentCurveOffset: (root.vehicleDataAvailable && vehicleData.laneHeading !== undefined) ? (vehicleData.laneHeading * -400 * root.sx) : 0
+					property real currentLateralOffset: (root.vehicleDataAvailable && vehicleData.laneOffset !== undefined) ? (vehicleData.laneOffset * 1.5 * root.sx) : 0
+					property real currentCurveOffset: (root.vehicleDataAvailable && vehicleData.laneHeading !== undefined) ? (vehicleData.laneHeading * 400 * root.sx) : 0
 
 					// A animação garante a fluidez a 60 FPS
 					Behavior on currentLateralOffset { NumberAnimation { duration: 150; easing.type: Easing.OutSine } }
