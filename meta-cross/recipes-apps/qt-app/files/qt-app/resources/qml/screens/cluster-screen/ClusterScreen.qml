@@ -173,10 +173,6 @@ Rectangle {
 					property real currentLateralOffset: (root.vehicleDataAvailable && vehicleData.laneOffset !== undefined) ? (vehicleData.laneOffset * 1.5 * root.sx) : 0
 					property real currentCurveOffset: (root.vehicleDataAvailable && vehicleData.laneHeading !== undefined) ? (vehicleData.laneHeading * 400 * root.sx) : 0
 
-					// A animação garante a fluidez a 60 FPS
-					Behavior on currentLateralOffset { NumberAnimation { duration: 150; easing.type: Easing.OutSine } }
-					Behavior on currentCurveOffset { NumberAnimation { duration: 150; easing.type: Easing.OutSine } }
-
 					// Bloqueios matemáticos (Clamp) para a "Zona Rosa"
 					property real horizonXShift: Math.max(-40 * root.sx, Math.min(40 * root.sx, (currentCurveOffset * 0.1) + (currentLateralOffset * 0.1)))
 					property real horizonY: roadContainer.height * 0.65

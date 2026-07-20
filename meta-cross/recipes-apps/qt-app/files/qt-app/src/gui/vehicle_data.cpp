@@ -88,7 +88,7 @@ namespace drivaui {
 		connect(m_speedLimitTimeoutTimer, &QTimer::timeout, this, &VehicleData::clearSpeedLimit);
 
 		// Timers for Shared Memory
-		m_shmTimer->setInterval(16);
+		m_shmTimer->setInterval(33);
 		connect(m_shmTimer, &QTimer::timeout, this, &VehicleData::readSharedMemory);
 		m_shmTimer->start();
 	}
