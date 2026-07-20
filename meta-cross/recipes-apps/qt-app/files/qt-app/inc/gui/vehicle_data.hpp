@@ -215,6 +215,12 @@ private:
 
     static constexpr qint64 SPEED_STALE_MS = 500;     // High-frequency timeout
     static constexpr qint64 OTHER_STALE_MS = 2000;    // Low-frequency timeout
+
+	// ===== Shared Memory =====
+	int m_shm_fd = -1;
+    void* m_shm_ptr = nullptr;
+    QTimer* m_shmTimer = nullptr;
+    void readSharedMemory();
 };
 
 }  // namespace drivaui
