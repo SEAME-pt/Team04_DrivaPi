@@ -12,7 +12,7 @@ import cv2
 import numpy as np
 from lanes_pipeline.stanley import StanleyController
 from lanes_pipeline.post_process import build_class_masks, decode, extract_lane_lines, draw_debug
-from lanes_pipeline.preprocess import preprocess
+from lanes_pipeline.preprocess import preprocess, MODEL_SIZE, ROI_RATIO
 from lanes_pipeline.lane_memory import LaneMemory
 from obstacle_inference import DrivaPiInference
 from ipc import SharedMemoryPublisher
