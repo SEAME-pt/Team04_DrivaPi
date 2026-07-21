@@ -37,11 +37,13 @@ int MqttInit(void)
 
     if (wifi_ptr == NULL)
     {
-        if (MX_WIFI_DEBUG) UartPrint("[FATAL] Wi-Fi Object is NULL\r\n");
+        if (MX_WIFI_DEBUG) 
+            UartPrint("[FATAL] Wi-Fi Object is NULL\r\n");
         return -1;
     }
 
-    if (MX_WIFI_DEBUG) UartPrint("[TLS] Connecting to secure broker...\r\n");
+    if (MX_WIFI_DEBUG) 
+        UartPrint("[TLS] Connecting to secure broker...\r\n");
 
     struct mx_sockaddr addr;
     memset(&addr, 0, sizeof(addr));
@@ -60,12 +62,14 @@ int MqttInit(void)
 
     if (mqtt_tls_id < 0)
     {
-        if (MX_WIFI_DEBUG) UartPrint("[ERROR] TLS connection failed\r\n");
+        if (MX_WIFI_DEBUG)
+            UartPrint("[ERROR] TLS connection failed\r\n");
         return -2;
     }
 
-    if (MX_WIFI_DEBUG) UartPrint("[TLS] Connection & Handshake OK\r\n");
-    tx_thread_sleep(500); /* Mantido o sleep original de 500 ticks */
+    if (MX_WIFI_DEBUG) 
+        UartPrint("[TLS] Connection & Handshake OK\r\n");
+    tx_thread_sleep(500);
 
     /* Bind low-level network operations */
     n.mqttread = MqttRecv;
@@ -82,18 +86,22 @@ int MqttInit(void)
     data.username.cstring = MQTT_USERNAME;
     data.password.cstring = MQTT_PASSWORD;
 
-    if (MX_WIFI_DEBUG) UartPrint("[MQTT] Connecting to broker...\r\n");
+    if (MX_WIFI_DEBUG)
+        UartPrint("[MQTT] Connecting to broker...\r\n");
 
     int rc = MQTTConnect(&client, &data);
-    if (MX_WIFI_DEBUG) UartPrintf("MQTT Connect return code: %d\r\n", rc);
+    if (MX_WIFI_DEBUG) 
+        UartPrintf("MQTT Connect return code: %d\r\n", rc);
         
     if (rc != 0)
     {
-        if (MX_WIFI_DEBUG) UartPrint("[ERROR] MQTT connection failed.\r\n");
+        if (MX_WIFI_DEBUG) 
+            UartPrint("[ERROR]MQTT connection failed.\r\n");
         return -3;
     }
 
-    if (MX_WIFI_DEBUG) UartPrint("[MQTT] OK\r\n");
+    if (MX_WIFI_DEBUG) 
+        UartPrint("[MQTT] OK\r\n");
     return 0;
 }
 
