@@ -109,13 +109,31 @@ def fit_lane_lines(mask):
     xs = np.asarray(xs, dtype=np.float32)
     ys = np.asarray(ys, dtype=np.float32)
 
-    if len(xs) > 8:
+    y_span = ys.max() - ys.min()
+    
+    # 1. Degree selection: 2nd-degree only for long, close lines
+    if y_span > 0.4 * mask.shape[0] and len(xs) >= 12:
         coeffs = np.polyfit(ys, xs, 2)
-        yy = np.linspace(ys.min(), mask.shape[0] - 1, 50)
-        xx = np.polyval(coeffs, yy)
-        pts = np.stack((xx, yy), axis=1)
     else:
-        pts = np.stack((xs, ys), axis=1)
+        coeffs = np.polyfit(ys, xs, 1)
+
+    # 2. Controlled Extrapolation
+    # If the line reaches lower half of screen (e.g. y > 0.6 * height), extend to bottom.
+    # If it's high up (top horizon), ONLY extend slightly so it doesn't sweep across the screen.
+    if ys.max() > 0.6 * mask.shape[0]:
+        max_y = mask.shape[0] - 1
+    else:
+        max_y = min(ys.max() + 20, mask.shape[0] - 1)  # Cap extension for distant lines
+
+    yy = np.linspace(ys.min(), max_y, 40)
+    xx = np.polyval(coeffs, yy)
+
+    # 3. Discard points that fly out of the image bounds
+    valid = (xx >= 0) & (xx < mask.shape[1])
+    if not np.any(valid):
+        return []
+
+    pts = np.stack((xx[valid], yy[valid]), axis=1)
 
     return [pts]
 
