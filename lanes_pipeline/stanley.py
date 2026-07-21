@@ -43,6 +43,8 @@ class StanleyController:
                 y_sorted = ys[order]
                 x_sorted = xs[order]
 
+                # extend lines here
+
                 near_x = float(np.interp(near_row, y_sorted,x_sorted))
                 far_x = float(np.interp(far_row, y_sorted,x_sorted))
 

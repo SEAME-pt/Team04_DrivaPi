@@ -111,7 +111,7 @@ def fit_lane_lines(mask):
 
     if len(xs) > 8:
         coeffs = np.polyfit(ys, xs, 2)
-        yy = np.linspace(ys.min(), ys.max(), 40)
+        yy = np.linspace(ys.min(), mask.shape[0] - 1, 50)
         xx = np.polyval(coeffs, yy)
         pts = np.stack((xx, yy), axis=1)
     else:

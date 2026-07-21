@@ -106,21 +106,6 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
     batch_start_time = time.time()
 
     width, height = CAM_W, CAM_H
-#     src = np.float32([
-#         [200, 720],
-#         [1080, 720],
-#         [820, 450],
-#         [460, 450]
-#     ])
-# 
-#     dst = np.float32([
-#         [350, height],
-#         [930, height],
-#         [930, 0],
-#         [350, 0],
-#     ])
-# 
-#     M = cv2.getPerspectiveTransform(src, dst)
 
     time.sleep(1)
     try:
@@ -136,7 +121,7 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                     h, w = frame.shape[:2]
 
                     t1 = time.time()
-                    preprocessed_frame = preprocess(frame, 640, 0.35)
+                    preprocessed_frame = preprocess(frame, MODEL_SIZE, ROI_RATIO)
 
 
                     t2 = time.time()
