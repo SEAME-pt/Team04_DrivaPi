@@ -30,6 +30,5 @@ pub const JS_EVENT_AXIS: u8 = 0x02;
 pub const JS_EVENT_INIT: u8 = 0x80;
 
 /* EMA pub constants */
-pub const MAX_ALLOWED_CTE: f64 = 1.5;
 pub const SPIKE_THRESHOLD_RAD: f64 = 0.45; //original 0.15
-pub const ALPHA: f64 = 0.25;
+pub const ALPHA: f64 = 0.80;

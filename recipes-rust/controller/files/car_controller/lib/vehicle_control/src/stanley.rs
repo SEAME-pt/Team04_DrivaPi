@@ -34,12 +34,12 @@ pub struct StanleyConfig {
 impl Default for StanleyConfig {
     fn default() -> Self {
         Self {
-            k: 0.4, //orginal is 0.4
+            k: 0.15, //orginal is 0.4
             k_soft: 0.20,
             wheelbase_m: 0.15,
             max_steer_rad: 0.5,
             max_steer_rate: 2.0,
-            steer_to_servo_gain: 45.0,
+            steer_to_servo_gain: 20.0,
         }
     }
 }

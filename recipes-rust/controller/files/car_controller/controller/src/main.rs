@@ -219,44 +219,51 @@ fn run_autonomous_mode(
 ) -> Result<Option<DriveMode>, Box<dyn std::error::Error>> {
     println!("AUTONOMOUS MODE - Move sticks to OVERRIDE - Press B to exit");
     let mut next_mode: Option<DriveMode> = None;
-
+    let mut prev_d_pad = false;
+    
     // Stanley configuration
     let config = stanley::StanleyConfig::default();
     
     let mut prev_delta = 0.0;
     let dt = 0.025; // 40Hz
-
+    
     let mut filtered_angle: Option<f64> = None;
     const TIMEOUT_MS: u128 = 100;
-
-    let mut last_servo: Option<u32> = None;
-
-    controller.send_motor_command(15, FORWARD)?;
-    let speed_mps = 15.0 * (100.0 / 3600.0);
-
-
-// =================================================================================
-
     
-// =================================================================================
-//                      AUTONOMOUS LOOP
+    let mut last_servo: Option<u32> = None;
+    let mut speed: u32 = 15;
+    controller.send_motor_command(speed, FORWARD)?;
+    let mut speed_mps: f64 = speed as f64 * (100.0 / 3600.0);
+    
+    
+    // =================================================================================
+    
+    
+    // =================================================================================
+    //                      AUTONOMOUS LOOP
     
     loop {
         // OVERRIDE: if human move joystick it overrides
-        if let Some(input) = recv_latest_input(input_rx, Duration::from_millis(10)) {
-            if input.analog_stick_left.y.abs() > 0.2 || input.analog_stick_right.x.abs() > 0.2 {
-                println!("(!) MANUEL OVERRIDE");
-                next_mode = Some(DriveMode::Manual);
-				break;
-            }
-            if input.button_b {
-                println!("Exiting AUTONOMOUS mode");
-                controller.stop_dc_motors()?;
-                controller.reset_servo_motors()?;
-                break;
-            }
-        }
+        let Some(input) = recv_latest_input(input_rx, Duration::from_millis(25)) else {
+            eprintln!("Gamepad input thread disconnected");
+            controller.stop_dc_motors()?;
+            controller.reset_servo_motors()?;
+            break;
+        };
 
+        if input.analog_stick_left.y.abs() > 0.2 || input.analog_stick_right.x.abs() > 0.2 {
+            println!("(!) MANUEL OVERRIDE");
+            next_mode = Some(DriveMode::Manual);
+            break;
+        }
+        if input.button_b {
+            println!("Exiting AUTONOMOUS mode");
+            controller.stop_dc_motors()?;
+            controller.reset_servo_motors()?;
+            break;
+        }
+        
+        let d_pad: bool = input.d_pad.y as i8 != 0;
         let perception = perception_reader.read();
         
         // Watchdog: check timestamp age
@@ -276,9 +283,23 @@ fn run_autonomous_mode(
             // controller.reset_servo_motors()?;
             // break;
         }
+
+        if d_pad && !prev_d_pad {
+            if input.d_pad.y < 0.0 {
+                speed = speed.saturating_sub(STEP_CRUISE).max(MIN_CRUISE);
+                controller.send_motor_command(speed, FORWARD)?;
+
+            }
+            else if input.d_pad.y > 0.0 {
+                speed = speed.saturating_add(STEP_CRUISE).min(MAX_CRUISE);
+                controller.send_motor_command(speed, FORWARD)?;
+            }
+        }
+        prev_d_pad = d_pad;
+        speed_mps = speed as f64 * (100.0 / 3600.0);
         
 
-        if perception.valid == 1 {
+        if perception.valid > 0 {
 
             let mut raw_cte = perception.closest_front_point as f64;
             let mut raw_heading = perception.heading_error as f64;
@@ -288,16 +309,6 @@ fn run_autonomous_mode(
                 perception.heading_error
             );
 
-
-            // if (-50f64..=50f64).contains(&raw_cte) && raw_heading == 0f64{
-            //     raw_cte = 0f64;
-            // }
-
-
-            
-            // if raw_cte.abs() > MAX_ALLOWED_CTE {
-               // raw_cte = raw_cte.clamp(-MAX_ALLOWED_CTE, MAX_ALLOWED_CTE);
-            // }
 
             let observation = stanley::CameraLaneObservation {
                 closest_front_point_m: raw_cte,
@@ -314,51 +325,30 @@ fn run_autonomous_mode(
                 &config
             );
 
+            let angle = match filtered_angle {
+                None => raw_angle,
+                Some(prev_angle) => (ALPHA * raw_angle) + ((1.0 - ALPHA) * prev_angle)
+            };
 
-            let mut skip_frame = false;
-            if let Some(prev_angle) = filtered_angle{
-                if (raw_angle - prev_angle).abs() > SPIKE_THRESHOLD_RAD{
-                    skip_frame = true;
-                }
+            filtered_angle = Some(angle);
+            prev_delta = raw_angle;
+
+            let servo_deg = stanley::steering_to_servo_deg(raw_angle, &config) as u32;
+
+            if last_servo != Some(servo_deg) {
+                controller.send_servo_command(servo_deg)?;
+                last_servo = Some(servo_deg);
+                println!(
+                    "[STANLEY] CTE={:.3} Heading={:.3} Angle={:.3} -> Servo={}°",
+                    raw_cte, observation.heading_error_rad, raw_angle, servo_deg
+                );
             }
-
-
-            if !skip_frame {
-                let angle = match filtered_angle {
-                    None => {
-                        filtered_angle = Some(raw_angle);
-                        raw_angle
-                    }
-                    Some(prev_angle) => {
-                        let smoothed_value = (ALPHA * raw_angle) + ((1.0 - ALPHA) * prev_angle);
-                        filtered_angle = Some(smoothed_value);
-                        smoothed_value
-                    }
-                };
-
-                prev_delta = angle;
-                
-                let servo_deg = stanley::steering_to_servo_deg(angle, &config) as u32;
-
-                if last_servo != Some(servo_deg) {
-                    controller.send_servo_command(servo_deg)?;
-                    last_servo = Some(servo_deg);
-                
-                }
-                println!("[CAN] servo={}", servo_deg);
-            } else {
-                if let Some(prev_angle) = filtered_angle {
-                    filtered_angle = Some(prev_angle * 0.95);
-                    prev_delta = prev_angle * 0.95;
-                }
-            }
-        }
-        // } else {
+        } else {
             // Low confidence or invalid detection
             // controller.stop_dc_motors()?;
             // Keep servo at last position or center? 
             // controller.reset_servo_motors()?;
-        // }
+        }
 
         thread::sleep(Duration::from_millis(25)); // 40Hz control loop
     }
