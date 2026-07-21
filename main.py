@@ -148,6 +148,8 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                     t3 = time.time()
                     detections, proto = decode(raw)
                     class_masks = build_class_masks(detections, proto)
+
+                    # image_shape = frame.shape[:2]
                     class_masks = memory.update(class_masks)
                     lane_lines = extract_lane_lines(class_masks, w, h)
 
