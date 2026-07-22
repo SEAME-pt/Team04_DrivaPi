@@ -39,7 +39,7 @@ void ThreadInit(void)
 	if (status == TX_THREAD_ERROR)
 		HAL_UART_Transmit(&huart1, (uint8_t *)err_msg, strlen(err_msg), UART_INIT_TIMEOUT_MS);
 
-	//SRF08 ULTRASONIC SENSOR THREAD
+	// SRF08 ULTRASONIC SENSOR THREAD
 	if (tx_thread_create(&g_threads[ultrasonic_sensor_e].thread_ptr, "ultrasonicS_thread", UltrasonicEntry, 0, g_threads[ultrasonic_sensor_e].thread_Stack, THREAD_STACK_SIZE,
 	1, 1, TX_NO_TIME_SLICE, TX_AUTO_START) != TX_SUCCESS)
 		status = TX_THREAD_ERROR;
