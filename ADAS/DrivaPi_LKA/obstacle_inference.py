@@ -82,8 +82,10 @@ class DrivaPiInference:
                     input_data = np.expand_dims(resized.astype(np.float32) / 255.0, axis=0)
 
                     # Protect the physical hardware transit loop
-                    t2  = time.time()
-                    results = pipeline.infer({in_name: input_data})
+                    with npu_lock:
+                        with network_group.activate():
+                            t2  = time.time()
+                            results = pipeline.infer({in_name: input_data})
 
                     # Process the raw results inside the class context
                     slice1 = results['yolo26_v9/slice1'][0, 0]
