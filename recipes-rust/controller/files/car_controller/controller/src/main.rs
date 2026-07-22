@@ -331,16 +331,16 @@ fn run_autonomous_mode(
             };
 
             filtered_angle = Some(angle);
-            prev_delta = raw_angle;
+            prev_delta = angle;
 
-            let servo_deg = stanley::steering_to_servo_deg(raw_angle, &config) as u32;
+            let servo_deg = stanley::steering_to_servo_deg(angle, &config) as u32;
 
             if last_servo != Some(servo_deg) {
                 controller.send_servo_command(servo_deg)?;
                 last_servo = Some(servo_deg);
                 println!(
                     "[STANLEY] CTE={:.3} Heading={:.3} Angle={:.3} -> Servo={}°",
-                    raw_cte, observation.heading_error_rad, raw_angle, servo_deg
+                    raw_cte, observation.heading_error_rad, angle, servo_deg
                 );
             }
         } else {

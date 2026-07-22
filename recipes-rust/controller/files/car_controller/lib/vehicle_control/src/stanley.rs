@@ -62,11 +62,26 @@ pub fn compute_steering(
     cfg: &StanleyConfig,
 ) -> f64 {
     let pixel_to_meter = 0.00258;
-    let cte_meters = observation.closest_front_point_m * pixel_to_meter;
-    
-    let crosstrack_error = ((cfg.k * cte_meters) / (speed_mps + cfg.k_soft)).atan();
+    let cte_meters_raw = observation.closest_front_point_m * pixel_to_meter;
 
-    let angle_raw = observation.heading_error_rad + crosstrack_error;
+
+    let deadband_m = 0.08;
+    let cte_meters = if cte_meters_raw.abs() < deadband_m {
+        0.0
+    } else if cte_meters_raw > 0.0 {
+        cte_meters_raw - deadband_m
+    } else {
+        cte_meters_raw + deadband_m
+    };
+
+    let effective_speed = speed_mps.max(0.5);
+
+
+
+
+    let crosstrack_error = ((cfg.k * cte_meters) / (effective_speed + cfg.k_soft)).atan();
+
+    let angle_raw = (0.7 * observation.heading_error_rad) + crosstrack_error;
 
     let max_change = cfg.max_steer_rate * dt;
     let rate_limited_angle = angle_raw.clamp(prev_delta - max_change, prev_delta + max_change);
