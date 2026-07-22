@@ -3,6 +3,17 @@ DESCRIPTION = "Rust controller service"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=2775a5a334c1cd9ba058a1374ee37a25"
 
+<<<<<<< HEAD
+SRC_URI = "file://controller"
+
+S = "${WORKDIR}/controller"
+
+inherit cargo
+inherit cargo-update-recipe-crates
+include controller-crates.inc
+
+CARGO_BUILD_FLAGS += "--locked"
+=======
 DEPENDS += "pkgconfig-native systemd"
 
 SRC_URI = "file://car_controller"
@@ -17,10 +28,16 @@ include controller-crates.inc
 FETCHCMD_wget = "/usr/bin/env wget --user-agent='cargo 1.81.0' -t 2 -T 100"
 
 CARGO_BUILD_FLAGS += "--locked --package controller"
+>>>>>>> 5c84267e (feat: renamed stuff)
 
 do_install() {
     install -d ${D}${bindir}
     install -m 0755 \
+<<<<<<< HEAD
+        target/${RUST_TARGET_SYS}/release/controller \
+        ${D}${bindir}
+=======
         ${B}/target/${CARGO_TARGET_SUBDIR}/controller \
         ${D}${bindir}/controller
+>>>>>>> 5c84267e (feat: renamed stuff)
 }
