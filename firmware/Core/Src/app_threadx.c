@@ -64,7 +64,7 @@ float 					g_currentSpeed;
 int16_t 				g_currentPWM;
 MotorControlState		g_motorControlState;
 uint16_t				g_targetSpeed;
-uint8_t					g_emergency_cmd;
+uint8_t		volatile	g_emergency_cmd;
 unsigned char			trace_buffer[TRACE_BUFFER_SIZE];
 /* USER CODE END PV */
 
