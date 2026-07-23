@@ -114,7 +114,7 @@ namespace drivaui {
 
     void VehicleData::readSharedMemory()
     {
-        // --- 1. LER FAIXAS DE RODAGEM ---
+        // --- 1. Read Lane Data ---
         if (m_shm_fd < 0) {
             m_shm_fd = open("/dev/shm/perception.buf", O_RDONLY);
             if (m_shm_fd >= 0) {
@@ -126,13 +126,17 @@ namespace drivaui {
             }
         } else if (m_shm_ptr != MAP_FAILED) {
             auto* data = static_cast<PerceptionOutput*>(m_shm_ptr);
-            if (data->valid == 1) {
+            static uint64_t last_lane_ts = 0; // Memória do último frame recebido
+
+            // only update if there is a new frame
+            if (data->valid == 1 && data->timestamp != last_lane_ts) {
+                last_lane_ts = data->timestamp;
                 setLaneOffset(data->cte);
                 setLaneHeading(data->heading_error);
             }
         }
 
-        // --- 2. LER SINAIS E OBSTÁCULOS ADAS ---
+        // --- 2. Read Obstacles Data and update traffic sign ---
         if (m_obs_fd < 0) {
             m_obs_fd = open("/dev/shm/obstacle.buf", O_RDONLY);
             if (m_obs_fd >= 0) {
