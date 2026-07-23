@@ -572,31 +572,41 @@ namespace drivaui {
         m_lastUpdateMs[propName] = QDateTime::currentMSecsSinceEpoch();
     }
 
-    qint64 VehicleData::lastUpdate(const QString &propName) const
+	qint64 VehicleData::lastUpdate(const QString &propName) const
     {
         return m_lastUpdateMs.value(propName, 0);
     }
 
     void VehicleData::markPropertyStale(const QString &propName)
     {
-        Q_UNUSED(propName);
+        if (propName == "laneOffset") {
+            if (m_laneOffset != 0.0f) setLaneOffset(0.0f);
+        } else if (propName == "laneHeading") {
+            if (m_laneHeading != 0.0f) setLaneHeading(0.0f);
+        } else if (propName == "speed") {
+            if (m_speed != 0.0f) setSpeed(0.0f);
+        }
     }
 
     void VehicleData::checkStaleProperties()
     {
         const qint64 now = QDateTime::currentMSecsSinceEpoch();
 
-        if (now - lastUpdate("speed") > SPEED_STALE_MS) {
-            markPropertyStale("speed");
+        // TIMEOUT RÁPIDO (500ms) - Dados de Segurança e ADAS Dinâmico
+        const QStringList fastProps = {"speed", "laneOffset", "laneHeading"};
+        for (const QString& p : fastProps) {
+            if (now - lastUpdate(p) > SPEED_STALE_MS) {
+                markPropertyStale(p);
+            }
         }
 
-        const QStringList others = {
+        // TIMEOUT LENTO (2000ms) - Baterias e Telemetria Estática
+        const QStringList slowProps = {
             "energy", "stm32Battery", "stm32BatteryVoltage", "stm32Temperature", "stm32Humidity",
-            "rpiBattery", "rpiBatteryVoltage", "rpiBatteryCurrent", "distance", "odo", "gear", "temperature", "autonomousMode",
-            "laneOffset", "laneHeading"
+            "rpiBattery", "rpiBatteryVoltage", "rpiBatteryCurrent", "distance", "odo", "gear", "temperature", "autonomousMode"
         };
 
-        for (const QString& p : others) {
+        for (const QString& p : slowProps) {
             if (now - lastUpdate(p) > OTHER_STALE_MS) {
                 markPropertyStale(p);
             }

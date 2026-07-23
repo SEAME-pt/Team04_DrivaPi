@@ -167,27 +167,36 @@ Rectangle {
 				}
 
 				// Vetorial Shape
-				Item {
-					id: roadContainer
-					anchors.horizontalCenter: parent.horizontalCenter
-					anchors.bottom: parent.bottom
-					anchors.bottomMargin: -10 * root.sy
-					width: 1200 * root.sx
-					height: 380 * root.sy
-					z: 1
+                Item {
+                    id: roadContainer
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: -10 * root.sy
+                    width: 1200 * root.sx
+                    height: 380 * root.sy
+                    z: 1
 
-					property color themeLaneColor: AppTheme.isDark ? "#00D2FF" : "#0055CC"
-					property color themeLaneFill: AppTheme.isDark ? Qt.rgba(0.0, 0.82, 1.0, 0.12) : Qt.rgba(0.0, 0.33, 0.8, 0.15)
+                    property color themeLaneColor: AppTheme.isDark ? "#00D2FF" : "#0055CC"
+                    property color themeLaneFill: AppTheme.isDark ? Qt.rgba(0.0, 0.82, 1.0, 0.12) : Qt.rgba(0.0, 0.33, 0.8, 0.15)
 
-					property real currentLateralOffset: (root.vehicleDataAvailable && vehicleData.laneOffset !== undefined) ? (vehicleData.laneOffset * 1.5 * root.sx) : 0
-					property real currentCurveOffset: (root.vehicleDataAvailable && vehicleData.laneHeading !== undefined) ? (vehicleData.laneHeading * 400 * root.sx) : 0
+                    property real targetLateral: (root.vehicleDataAvailable && vehicleData.laneOffset !== undefined)
+                                                 ? root.clamp(vehicleData.laneOffset * 1.5 * root.sx, -180 * root.sx, 180 * root.sx) : 0
 
-					property real horizonXShift: Math.max(-40 * root.sx, Math.min(40 * root.sx, (currentCurveOffset * 0.1) + (currentLateralOffset * 0.1)))
-					property real horizonY: roadContainer.height * 0.65
-					property real curveBellyShift: (currentCurveOffset * 0.8) + (currentLateralOffset * 0.6)
+                    property real targetCurve: (root.vehicleDataAvailable && vehicleData.laneHeading !== undefined)
+                                               ? root.clamp(vehicleData.laneHeading * 260 * root.sx, -320 * root.sx, 320 * root.sx) : 0
 
-					Shape {
-						anchors.fill: parent
+                    property real currentLateralOffset: targetLateral
+                    property real currentCurveOffset: targetCurve
+
+                    Behavior on currentLateralOffset { NumberAnimation { duration: 350; easing.type: Easing.OutSine } }
+                    Behavior on currentCurveOffset { NumberAnimation { duration: 350; easing.type: Easing.OutSine } }
+
+                    property real horizonXShift: Math.max(-40 * root.sx, Math.min(40 * root.sx, (currentCurveOffset * 0.1) + (currentLateralOffset * 0.1)))
+                    property real horizonY: roadContainer.height * 0.65
+                    property real curveBellyShift: (currentCurveOffset * 0.8) + (currentLateralOffset * 0.6)
+
+                    Shape {
+                        anchors.fill: parent
 
 						ShapePath {
 							strokeWidth: 0
