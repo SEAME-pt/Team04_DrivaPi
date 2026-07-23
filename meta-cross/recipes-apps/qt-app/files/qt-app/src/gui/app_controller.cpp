@@ -97,11 +97,9 @@ int AppController::run(QGuiApplication& app)
             const double t = (QDateTime::currentMSecsSinceEpoch() - demoStartMs) / 1000.0;
             const float speed = 8.0f + 2.5f * static_cast<float>(qSin(t * 0.55));
 
-            // Stanley Offset vem em píxeis reais da imagem (ex: -150 a +150)
             const float laneOffset = 120.0f * static_cast<float>(qSin(t * 0.42))
                                    + 30.0f * static_cast<float>(qSin(t * 1.70 + 0.8));
 
-            // Stanley Heading vem em radianos da trigonometria atan2 (ex: -0.4 a +0.4)
             const float laneHeading = 0.35f * static_cast<float>(qSin(t * 0.31 + 1.1))
                                     + 0.08f * static_cast<float>(qSin(t * 1.25));
 

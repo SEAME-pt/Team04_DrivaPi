@@ -126,7 +126,7 @@ namespace drivaui {
             }
         } else if (m_shm_ptr != MAP_FAILED) {
             auto* data = static_cast<PerceptionOutput*>(m_shm_ptr);
-            static uint64_t last_lane_ts = 0; // Memória do último frame recebido
+            static uint64_t last_lane_ts = 0;
 
             // only update if there is a new frame
             if (data->valid == 1 && data->timestamp != last_lane_ts) {
@@ -596,7 +596,6 @@ namespace drivaui {
     {
         const qint64 now = QDateTime::currentMSecsSinceEpoch();
 
-        // TIMEOUT RÁPIDO (500ms) - Dados de Segurança e ADAS Dinâmico
         const QStringList fastProps = {"speed", "laneOffset", "laneHeading"};
         for (const QString& p : fastProps) {
             if (now - lastUpdate(p) > SPEED_STALE_MS) {
@@ -604,7 +603,6 @@ namespace drivaui {
             }
         }
 
-        // TIMEOUT LENTO (2000ms) - Baterias e Telemetria Estática
         const QStringList slowProps = {
             "energy", "stm32Battery", "stm32BatteryVoltage", "stm32Temperature", "stm32Humidity",
             "rpiBattery", "rpiBatteryVoltage", "rpiBatteryCurrent", "distance", "odo", "gear", "temperature", "autonomousMode"
