@@ -1,9 +1,14 @@
-[![Unit Tests](https://github.com/SEAME-pt/Team04_DrivaPi/actions/workflows/unit_tests.yml/badge.svg)](https://github.com/SEAME-pt/Team04_DrivaPi/actions/workflows/unit_tests.yml)
-
-[![TSF Validation](https://github.com/SEAME-pt/Team04_DrivaPi/actions/workflows/tsf_validation.yml/badge.svg)](https://github.com/SEAME-pt/Team04_DrivaPi/actions/workflows/tsf_validation.yml)
-
-[![Static Analysis](https://github.com/SEAME-pt/Team04_DrivaPi/actions/workflows/firmware_static.yml/badge.svg)](https://github.com/SEAME-pt/Team04_DrivaPi/actions/workflows/firmware_static.yml)
-
+<p align="center">
+  <a href="https://github.com/SEAME-pt/Team04_DrivaPi/actions/workflows/unit_tests.yml">
+    <img src="https://github.com/SEAME-pt/Team04_DrivaPi/actions/workflows/unit_tests.yml/badge.svg" alt="Unit Tests">
+  </a>
+  <a href="https://github.com/SEAME-pt/Team04_DrivaPi/actions/workflows/tsf_validation.yml">
+    <img src="https://github.com/SEAME-pt/Team04_DrivaPi/actions/workflows/tsf_validation.yml/badge.svg" alt="TSF Validation">
+  </a>
+  <a href="https://github.com/SEAME-pt/Team04_DrivaPi/actions/workflows/firmware_static.yml">
+    <img src="https://github.com/SEAME-pt/Team04_DrivaPi/actions/workflows/firmware_static.yml/badge.svg" alt="Static Analysis">
+  </a>
+</p>
 
 # SEAME Automotive Journey
 
