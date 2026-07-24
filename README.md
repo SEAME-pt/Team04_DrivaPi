@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="docs/logos/drivapi_logo_v3_white.png" alt="DrivaPi Autonomous Vehicle Demo" width="700">
+</p>
+
+<p align="center">
   <a href="https://github.com/SEAME-pt/Team04_DrivaPi/actions/workflows/unit_tests.yml">
     <img src="https://github.com/SEAME-pt/Team04_DrivaPi/actions/workflows/unit_tests.yml/badge.svg" alt="Unit Tests">
   </a>
@@ -12,7 +16,10 @@
 
 # SEAME Automotive Journey
 
-Autonomous vehicle using PiRacer as part of the SEAME automotive program.
+Autonomous vehicle platform developed using PiRacer as part of the SEAME Automotive Program.
+<video>
+src=https://github.com/user-attachments/assets/936b89e9-0787-454b-b90c-a8ffa02f6ebc
+</video>
 ---
 
 ## 🚀 Quick Start
