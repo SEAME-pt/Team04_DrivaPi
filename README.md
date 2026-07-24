@@ -103,6 +103,37 @@ Running the script without any arguments displays the available commands and the
 ```
 ---
 
+## 🧪 Unit Testing & Quality Gates
+
+The repository includes a **Master Unit Test Automation Script** that runs all component unit tests, aggregates code coverage, and generates standardized test reports for CI/CD validation.
+
+### How to Run
+
+Execute the master test runner from the root of your repository:
+
+    ./tests/unit/run_all_tests.sh
+
+### What It Does
+
+1. **Executes Component Test Suites:** Automatically runs individual test scripts for:
+   - **DC Motor** (`tests/unit/dc-motor/`)
+   - **Servo Motor** (`tests/unit/servo-motor/`)
+   - **Speed Sensor** (`tests/unit/speed-sensor/`)
+2. **Aggregates Code Coverage:** Collects and merges gcov coverage filters across all subsystems.
+3. **Enforces Quality Gates:** Validates that all test suites pass successfully. Exits with status `0` on full success or `1` if any test fails.
+
+### What It Generates
+
+All reports and verification artifacts are automatically outputted to **`artifacts/verification/`**:
+
+| Path | Description |
+| :--- | :--- |
+| **`artifacts/verification/tests/junit_results.xml`** | Merged JUnit XML test report (used by CI/CD pipelines). |
+| **`artifacts/verification/tests/summary.json`** | JSON summary file containing individual test statuses and timestamps. |
+| **`artifacts/verification/tests/`** | Individual component XML reports (`dc-motor.xml`, `servo-motor.xml`, `speed-sensor.xml`). |
+| **`artifacts/verification/coverage/`** | Aggregated code coverage XML and info reports for quality analysis. |
+---
+
 ## 👥 Team Practices
 
 ### Daily Stand-Ups
@@ -174,7 +205,7 @@ All PRs must pass:
   - `fix(firmware): correct servo calibration logic`
   - `docs(tsf): update workflow documentation`
   - `test(unit): add speed sensor test coverage`
-
+ 
 ---
 
 ## 📊 Traceability Status
@@ -236,4 +267,4 @@ Educational project - SEAME Automotive Program
 
 ---
 
-*Last update: January 14, 2025 | Active development*
+*Last update: July, 2026 | Active development*
