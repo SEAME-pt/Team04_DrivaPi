@@ -6,9 +6,6 @@ class StanleyController:
     def __init__(self):
         self.prev_center_x = None
 
-        self.CLEARANCE_NEAR_PX = 140.0  # Clearance from line at 95% height
-        self.CLEARANCE_FAR_PX  = 80.0
-
     def compute_stanley_errors(self, lane_lines, w, h):
 
         image_center = w / 2
@@ -43,8 +40,6 @@ class StanleyController:
                 y_sorted = ys[order]
                 x_sorted = xs[order]
 
-                # extend lines here
-
                 near_x = float(np.interp(near_row, y_sorted,x_sorted))
                 far_x = float(np.interp(far_row, y_sorted,x_sorted))
 
@@ -62,7 +57,6 @@ class StanleyController:
 
             dx = far_x - near_x
             slope = dx / y_diff
-            # print(f"far_x = {far_x} near_x = {near_x} slope = {slope:.6} dx = {dx:.6}")
 
             if abs(dx) < 1.5:
                 continue
@@ -165,47 +159,10 @@ class StanleyController:
                     lane_center_far_x  = far_x + 70.0
 
 
-
-
-
-
-
-
-
-            
-
-#         elif len(filtered) == 1:
-#             near_x, far_x = filtered[0]
-# 
-#             lane_center_near_x = near_x
-#             lane_center_far_x = far_x
-
-        # else:
-        #     near_x, far_x = filtered[0]
-        #     lane_center_near_x = near_x
-        #     lane_center_far_x  = far_x
-
-#         elif left_candidates:
-#             print("left candidate")
-#             left = max(left_candidates, key=lambda x: x[0])
-# 
-#             
-#             lane_center_near_x = left[0]
-#             lane_center_far_x  = left[1]
-# 
-#         elif right_candidates:
-#             print("RIGHT candidate")
-#             right = min(right_candidates, key=lambda x: x[0])
-# 
-#             lane_center_near_x = right[0]
-#             lane_center_far_x  = right[1]
-
         else:
             print("None from lanes")
             return None
 
-        #closes_front_point_y = (lane_center_near_x - image_center) / image_center
-        # closes_front_point_y = image_center - lane_center_near_x
         closes_front_point_y = lane_center_near_x - image_center
 
         lane_dx = lane_center_far_x - lane_center_near_x
@@ -214,8 +171,6 @@ class StanleyController:
         path_heading = math.atan2(-lane_dx, lane_dy)
         if math.isnan(path_heading) or math.isinf(path_heading):
             path_heading = 0.0
-        # print(f"path_heading = {path_heading} lane_center_far_x = {lane_center_far_x} lane_center_near_x = {lane_center_near_x}")
-
 
         self.prev_center_x = lane_center_near_x
         return closes_front_point_y, float(path_heading)
