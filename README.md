@@ -57,28 +57,29 @@ cd Team04_DrivaPi
 ## 📁 Repository Structure
 
 ```
-├── ADAS/
-├── archive/
-├── docs/
-│   ├── CI/
-│   ├── data-transfer/
-│   ├── genAI/
-│   ├── hardware/
-│   ├── obstacle-detection/
-│   ├── presentations/
-│   ├── software/
-│   ├── sprints/
-│   ├── standards/
-│   ├── standups/
-│   ├── TSF/
-│   └── verification-toolchain/
-├── dotstop/
-├── firmware/
-├── meta-cross/
-├── rust/
-├── scripts/
-├── tests/
-└── TSF/
+.
+├── ADAS/                  # Advanced Driver Assistance Systems & perception logic
+├── archive/               # Historical work and legacy files
+├── docs/                  # Comprehensive project documentation
+│   ├── CI/                # Continuous integration configurations & guides
+│   ├── data-transfer/     # Protocol and data exchange documentation
+│   ├── genAI/             # AI-assisted development notes and prompts
+│   ├── hardware/          # PiRacer assembly, schematics, and hardware specs
+│   ├── obstacle-detection/# Collision avoidance and sensing design
+│   ├── presentations/     # Team slide decks and milestone reviews
+│   ├── software/          # Software architecture and guidelines
+│   ├── sprints/           # Sprint planning logs and retrospectives
+│   ├── standards/         # ISO 26262 compliance and safety manuals
+│   ├── standups/          # Daily stand-up meeting logs
+│   ├── TSF/               # TSF workflow and theory guides
+│   └── verification-toolchain/# Verification and test tools reference
+├── dotstop/               # TSF traceability graph configurations
+├── firmware/              # STM32 ThreadX RTOS real-time control code & build scripts
+├── meta-cross/            # Cross-compilation and Automotive Grade Linux build tools
+├── rust/                  # Rust component evaluations and implementations
+├── scripts/               # Automation, setup, and deployment shell scripts
+├── tests/                 # Unit, integration, and system test suites
+└── TSF/                   # Trustable Software Framework (Requirements & Artifacts)
 ```
 ---
 
