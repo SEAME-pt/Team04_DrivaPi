@@ -18,7 +18,7 @@
 
 Autonomous vehicle platform developed using PiRacer as part of the SEAME Automotive Program.
 
-https://github.com/user-attachments/assets/936b89e9-0787-454b-b90c-a8ffa02f6ebc"
+https://github.com/user-attachments/assets/936b89e9-0787-454b-b90c-a8ffa02f6ebc
 
 ---
 
