@@ -98,7 +98,7 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
     print("LANE THREAD STARTED")
     print(f"Lane Thread{thread_nbr} started | mode: {'DEBUG' if debug else 'HEADLESS'}", flush=True)
     publisher = SharedMemoryPublisher()
-    memory = LaneMemory(max_age=8, width=width, height=height)
+    memory = LaneMemory(max_age=8, width=CAM_W, height=CAM_H)
     stanley = StanleyController()
     writer = None
     n = 0
