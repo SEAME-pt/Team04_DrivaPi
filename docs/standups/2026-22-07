@@ -1,0 +1,64 @@
+# Day 174 - SEAME Automotive Journey
+
+**Date:** Wednesday, July 22, 2026
+
+**Team:** Afonso, Bernardo, Gaspar, Hugo, Melanie, Miguel
+
+---
+
+## What We Did Today
+
+Today's focus was on system optimization, UI deployment, and presentation preparations. Melanie successfully deployed the Qt application, which now visually renders lanes, obstacles, and traffic signs using real-time data from the AI models. Gaspar made significant improvements to the Rust controller, resulting in smoother track performance and achieving a stable 12 FPS with both models running simultaneously. On the administrative side, Afonso prepared the sprint retrospective, while Hugo addressed requested code changes and began crafting the final presentation.
+
+---
+
+## Team Progress
+
+### Afonso - Code Review & Agile/Scrum
+
+* ✅ Prepared the sprint retrospective presentation.
+
+### Bernardo - Project Coordination
+
+* 🔄 Provided feedback and requested changes on Hugo's recent work.
+
+### Gaspar - LKA Development & Rust
+
+* ✅ Improved and optimized the Rust controller code to achieve smoother vehicle handling.
+* ✅ Validated better performance on the track, successfully running both AI models simultaneously at 12 FPS.
+
+### Hugo - Software Development
+
+* ✅ Implemented the code changes requested by Bernardo.
+* ✅ Started preparing material and content for the final project presentation.
+
+### Melanie - GUI & Perception
+
+* ✅ Fixed remaining errors in the Qt application and successfully performed a deployment.
+* ✅ Integrated real-time model data into the UI, enabling dynamic drawing of lanes, obstacles, and traffic signs on the dashboard.
+
+### Miguel - Autonomous Driving
+
+* ✅ Shadowed Gaspar's work to observe and understand the Rust controller optimizations and track performance improvements.
+
+---
+
+## Hardware
+
+**What was done:**
+
+* No hardware modifications were recorded today. The focus was entirely on software optimization and deployment.
+
+---
+
+## Software
+
+**Progress:**
+
+* ✅ Qt interface fully deployed with real-time AI model data integration (visualizing lanes, signs, and obstacles).
+* ✅ Rust controller logic optimized for smoother autonomous driving.
+* ✅ Dual-model inference (object and lane detection) validated on the track at a stable 12 FPS.
+
+---
+
+**Previous:** [2026-07-21.md](2026-07-21.md) | **Next:** [2026-07-23.md](2026-07-23.md)
