@@ -17,9 +17,13 @@
 # SEAME Automotive Journey
 
 Autonomous vehicle platform developed using PiRacer as part of the SEAME Automotive Program.
-<video>
-src=https://github.com/user-attachments/assets/936b89e9-0787-454b-b90c-a8ffa02f6ebc
+
+
+<video controls>
+  <source src="https://github.com/user-attachments/assets/936b89e9-0787-454b-b90c-a8ffa02f6ebc" type="video/mp4">
+  Your browser does not support the video tag.
 </video>
+
 ---
 
 ## 🚀 Quick Start
