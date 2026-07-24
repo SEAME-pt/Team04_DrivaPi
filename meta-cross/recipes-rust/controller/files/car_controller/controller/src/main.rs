@@ -39,14 +39,13 @@ fn recv_latest_input(
 
 
 /*
-    MANUAL MODE
-    also known as MANUEL MODE
+     MODE
 */
 fn run_manual_mode(
     input_rx: &mpsc::Receiver<GamepadInput>,
     controller: &MotorController,
 ) -> Result<Option<DriveMode>, Box<dyn std::error::Error>> {
-    println!("MANUEL MODE - Press B to exit");
+    println!("MODE - Press B to exit");
 // =================================================================================
 //                              INIT HELPER VARIABLES
     // previous values
@@ -81,10 +80,10 @@ fn run_manual_mode(
     
 
     // =================================================================================
-    //                          EXITING MANUEL MODE
+    //                          EXITING MODE
     
         if input.button_b {
-            println!("Exiting MANUEL mode");
+            println!("Exiting mode");
             controller.stop_dc_motors()?;
             controller.reset_servo_motors()?;
             break;
@@ -197,13 +196,11 @@ fn run_manual_mode(
             controller.send_motor_command(final_motor_speed, final_direction)?;
             prev_motor_speed = final_motor_speed;
             prev_direction = final_direction;
-            println!("Motor updated: {}\nDirection {}", final_motor_speed, final_direction);
         }
 
         if servo_angle != prev_servo_angle {
             controller.send_servo_command(servo_angle)?;
             prev_servo_angle = servo_angle;
-            println!("Servo updated: {:.1}°\n Steering value: {steering}", servo_angle);
         }
         
     // =================================================================================
@@ -216,6 +213,7 @@ fn run_autonomous_mode(
     input_rx: &mpsc::Receiver<GamepadInput>,
     controller: &MotorController,
     perception_reader: &perception::PerceptionReader,
+    obstacle_reader: &obstacle::ObstacleReader,
 ) -> Result<Option<DriveMode>, Box<dyn std::error::Error>> {
     println!("AUTONOMOUS MODE - Move sticks to OVERRIDE - Press B to exit");
     let mut next_mode: Option<DriveMode> = None;
@@ -232,6 +230,8 @@ fn run_autonomous_mode(
     
     let mut last_servo: Option<u32> = None;
     let mut speed: u32 = 15;
+    let mut obstacle_last: bool = false;
+    let mut obstacle_time: u128 = 0;
     controller.send_motor_command(speed, FORWARD)?;
     let mut speed_mps: f64 = speed as f64 * (100.0 / 3600.0);
     
@@ -252,7 +252,7 @@ fn run_autonomous_mode(
         };
 
         if input.analog_stick_left.y.abs() > 0.2 || input.analog_stick_right.x.abs() > 0.2 {
-            println!("(!) MANUEL OVERRIDE");
+            println!("(!)  OVERRIDE");
             next_mode = Some(DriveMode::Manual);
             break;
         }
@@ -265,6 +265,7 @@ fn run_autonomous_mode(
         
         let d_pad: bool = input.d_pad.y as i8 != 0;
         let perception = perception_reader.read();
+        let obstacle = obstacle_reader.read();
         
         // Watchdog: check timestamp age
         let now_ns = std::time::SystemTime::now()
@@ -284,13 +285,35 @@ fn run_autonomous_mode(
             break;
         }
 
+        if obstacle_last == false {
+            println!("obstacle: {:?}", obstacle.sign_detected);
+            if obstacle.sign_detected == 5 {
+                controller.send_motor_command(0, BRAKE)?;
+                obstacle_last = true;
+            } else if obstacle.sign_detected != 0 && age_ms == 0 {
+                speed = speed.saturating_sub(STEP_CRUISE).max(MIN_CRUISE);
+                controller.send_motor_command(speed, FORWARD)?;
+                obstacle_time = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)?
+                    .as_nanos()
+                    / 1_000_000;
+                obstacle_last = true;
+            }
+        } else if obstacle_last == false {
+            if obstacle.sign_detected == 0 && age_ms - obstacle_time > 1500 {
+                speed = speed.saturating_add(STEP_CRUISE).min(MAX_CRUISE);
+                controller.send_motor_command(speed, FORWARD)?;
+                obstacle_last = false;
+                obstacle_time = 0;
+            }
+        }
+
         if d_pad && !prev_d_pad {
             if input.d_pad.y < 0.0 {
                 speed = speed.saturating_sub(STEP_CRUISE).max(MIN_CRUISE);
                 controller.send_motor_command(speed, FORWARD)?;
 
-            }
-            else if input.d_pad.y > 0.0 {
+            } else if input.d_pad.y > 0.0 {
                 speed = speed.saturating_add(STEP_CRUISE).min(MAX_CRUISE);
                 controller.send_motor_command(speed, FORWARD)?;
             }
@@ -303,12 +326,6 @@ fn run_autonomous_mode(
 
             let mut raw_cte = perception.closest_front_point as f64;
             let mut raw_heading = perception.heading_error as f64;
-            println!(
-                "[PERCEPTION] cte={:.5} heading={:.5} speed={speed_mps}",
-                raw_cte,
-                perception.heading_error
-            );
-
 
             let observation = stanley::CameraLaneObservation {
                 closest_front_point_m: raw_cte,
@@ -322,12 +339,12 @@ fn run_autonomous_mode(
                 speed_mps, // speed
                 prev_delta,
                 dt,
-                &config
+                &config,
             );
 
             let angle = match filtered_angle {
                 None => raw_angle,
-                Some(prev_angle) => (ALPHA * raw_angle) + ((1.0 - ALPHA) * prev_angle)
+                Some(prev_angle) => (ALPHA * raw_angle) + ((1.0 - ALPHA) * prev_angle),
             };
 
             filtered_angle = Some(angle);
@@ -338,10 +355,6 @@ fn run_autonomous_mode(
             if last_servo != Some(servo_deg) {
                 controller.send_servo_command(servo_deg)?;
                 last_servo = Some(servo_deg);
-                println!(
-                    "[STANLEY] CTE={:.3} Heading={:.3} Angle={:.3} -> Servo={}°",
-                    raw_cte, observation.heading_error_rad, angle, servo_deg
-                );
             }
         } else {
             continue;
@@ -362,8 +375,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut requested_mode: Option<DriveMode> = None;
 
     let perception_reader = perception::PerceptionReader::new("/dev/shm/perception.buf")?;
+    let obstacle_reader = obstacle::ObstacleReader::new("/dev/shm/obstacle.buf")?;
 
-    println!("Controller ready. Press START to enter MANUEL mode, SELECT for Autonomous, HOME to exit.");
+    println!("Controller ready. Press START to enter  mode, SELECT for Autonomous, HOME to exit.");
 
     loop {
         let Some(input) = recv_latest_input(&input_rx, Duration::from_millis(50)) else {
@@ -397,7 +411,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     requested_mode = run_manual_mode(&input_rx, &controller)?;
                 }
                 DriveMode::Autonomous => {
-                    requested_mode = run_autonomous_mode(&input_rx, &controller, &perception_reader)?;
+                    requested_mode = run_autonomous_mode(&input_rx, &controller, &perception_reader, &obstacle_reader)?;
                 }
             }
         }
