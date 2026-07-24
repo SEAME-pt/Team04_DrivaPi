@@ -10,7 +10,12 @@ import socket
 import time
 from dataclasses import dataclass
 from typing import Iterable
+from pathlib import Path
 from .hailo_config import HailoConfig as cfg
+
+# KUKSA Imports
+from kuksa_client.grpc import VSSClient
+from kuksa_client.grpc import Datapoint
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +63,7 @@ class Detection:
 
 
 class DrivaPiBrain:
-    """Translates detections into PWM commands for the vehicle controller."""
+    """Translates detections into PWM commands for the vehicle controller and publishes to UI."""
 
     def __init__(self) -> None:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -85,6 +90,20 @@ class DrivaPiBrain:
                 else cfg.TRACKER_HOLD_FRAMES_DEFAULT
             )
             self.trackers[label] = PersistenceTracker(hold_frames=hold_frames)
+
+        # --- KUKSA Databroker Init ---
+        self.last_published_class = -1
+        try:
+            self.vss_client = VSSClient(
+                '127.0.0.1',
+                55555,
+                root_certificates=Path("/etc/kuksa/ca.crt")
+            )
+            self.vss_client.connect()
+            logger.info("Successfully connected to KUKSA Databroker via gRPC.")
+        except Exception as e:
+            logger.error(f"Failed to connect to KUKSA Databroker: {e}")
+            self.vss_client = None
 
         self.accel_rate = cfg.ACCEL_RATE
         self.decel_rate = cfg.DECEL_RATE
@@ -251,6 +270,10 @@ class DrivaPiBrain:
         final = int(self.current_pwm)
         self.send_command(final, cfg.FORWARD if final > 0 else cfg.BRAKE, temp_target, reason)
 
+        # 5. --- Publish UI State to KUKSA Databroker ---
+        self.publish_adas_to_kuksa(confirmed_detections)
+
+
     def send_command(self, speed: float, direction: int, target_frame: float, reason: str) -> None:
         """Send a UDP command if required by rate, change, or emergency."""
         now = time.time()
@@ -275,3 +298,47 @@ class DrivaPiBrain:
                 reason,
             )
             self.last_log = now
+
+    def publish_adas_to_kuksa(self, confirmed_detections: list[Detection]) -> None:
+        """Determines the most critical UI element to display and publishes it to KUKSA."""
+        if not self.vss_client:
+            return
+
+        target_class_id = 0 # Default: 0 = Clear/No Hazard
+        best_det = None
+
+        if confirmed_detections:
+            # UI priority list (index 0 = most important to show on screen)
+            # Imminent hazards > Traffic lights > Speed limits
+            ui_priority = [
+                "stop_sign", "car", "obstacle", "gate", "danger_sign", "traffic_light_red",
+                "crosswalk_sign", "yield_sign", "traffic_light_yellow",
+                "50_sign", "80_sign", "traffic_light_green", "traffic_light_off"
+            ]
+
+            # Sort active detections according to the visual priority defined above
+            sorted_dets = sorted(
+                confirmed_detections,
+                key=lambda d: ui_priority.index(d.label) if d.label in ui_priority else 99
+            )
+
+            best_det = sorted_dets[0]
+
+            try:
+                # +1 to avoid conflict with 0 = Clear/No Hazard in the UI.
+                target_class_id = cfg.CLASSES.index(best_det.label) + 1
+            except ValueError:
+                pass
+
+        # Only publish if there is a change to prevent gRPC flooding
+        if target_class_id != self.last_published_class:
+            try:
+                self.vss_client.set_current_values({
+                    'Vehicle.ADAS.TrafficSignRecognition.CurrentSign': Datapoint(target_class_id),
+                })
+                self.last_published_class = target_class_id
+
+                status_msg = best_det.label if target_class_id > 0 else 'Clear'
+                logger.info(f"Published to KUKSA: ADAS Class ID {target_class_id} ({status_msg})")
+            except Exception as e:
+                logger.error(f"Failed to publish ADAS state to KUKSA: {e}")
