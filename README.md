@@ -54,8 +54,37 @@ Autonomous vehicle using PiRacer as part of the SEAME automotive program.
 ├── scripts/
 ├── tests/
 └── TSF/
-
 ```
+---
+
+## 📐 System Architecture
+
+```mermaid
+graph TD
+    subgraph RPi ["Raspberry Pi 5 (Automotive Grade Linux)"]
+        Remote["Remote Controller <br/>(Manual Mode)"] --> Decision["Control & Decision Logic"]
+        Camera["Camera / Perception"] --> Hailo["Hailo AI Accelerator <br/>- Lane Keep Assist <br/>- Object & Sign Detection"]
+        Hailo --> Decision
+        Decision --> CanTx["CAN Bus Transmitter"]
+    end
+
+    subgraph CAN ["Communication Layer"]
+        CanTx <-->|"CAN Protocol"| CanRx["CAN Bus Receiver"]
+    end
+
+    subgraph STM32 ["STM32 Microcontroller (Real-Time Firmware)"]
+        CanRx --> MCU["Core Control Firmware"]
+        Speed["Speed Sensor"] --> MCU
+        Ultrasonic["Ultrasonic Sensor <br/>(Emergency Brake)"] --> MCU
+        MCU --> DCMotor["DC Motor <br/>(Propulsion)"]
+        MCU --> Servo["Servo Motor <br/>(Steering)"]
+    end
+
+    style RPi fill:#f9f,stroke:#333,stroke-width:2px
+    style STM32 fill:#bbf,stroke:#333,stroke-width:2px
+    style CAN fill:#fbb,stroke:#333,stroke-width:2px
+```
+---
 
 ## 📋 TSF Documentation
 
