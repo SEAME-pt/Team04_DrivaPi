@@ -112,18 +112,6 @@ graph TD
 ```
 ---
 
-## 📋 TSF Documentation
-
-| Doc | When to Use | Time |
-|-----|-------------|------|
-| **[start.md](docs/TSF/start.md)** | First time, setup | 15 min |
-| **[reference.md](docs/TSF/reference.md)** | Cheat sheet, commands | Reference |
-| **[workflow.md](docs/TSF/workflow.md)** | Create requirements, review | Reference |
-| **[training.md](docs/TSF/training.md)** | Understand TSF/ISO 26262 theory | 1-2h |
-| **[evidence.md](docs/TSF/evidence.md)** | Link artifacts | Reference |
-
----
-
 ## 🔨 Building & Flashing the STM32 Firmware
 
 The firmware build script can be run from the repository root:
@@ -187,6 +175,18 @@ All reports and verification artifacts are automatically outputted to **`artifac
 | **`artifacts/verification/tests/summary.json`** | JSON summary file containing individual test statuses and timestamps. |
 | **`artifacts/verification/tests/`** | Individual component XML reports (`dc-motor.xml`, `servo-motor.xml`, `speed-sensor.xml`). |
 | **`artifacts/verification/coverage/`** | Aggregated code coverage XML and info reports for quality analysis. |
+---
+
+## 📋 TSF Documentation
+
+| Doc | When to Use | Time |
+|-----|-------------|------|
+| **[start.md](docs/TSF/start.md)** | First time, setup | 15 min |
+| **[reference.md](docs/TSF/reference.md)** | Cheat sheet, commands | Reference |
+| **[workflow.md](docs/TSF/workflow.md)** | Create requirements, review | Reference |
+| **[training.md](docs/TSF/training.md)** | Understand TSF/ISO 26262 theory | 1-2h |
+| **[evidence.md](docs/TSF/evidence.md)** | Link artifacts | Reference |
+
 ---
 
 ## 👥 Team Practices
