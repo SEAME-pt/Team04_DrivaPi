@@ -41,18 +41,6 @@ class SharedMemoryPublisher:
         self.mm = mmap.mmap(self.fd, SIZE)
         self.preview_shm = None  # or existing shm system
 
-    def publish_preview(self, frame):
-        # encode to JPEG (IMPORTANT for performance)
-        import cv2
-        ok, jpg = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
-        if not ok:
-            return
-
-        data = jpg.tobytes()
-
-        # write to shared memory (example logic)
-        self.preview_shm.write(data)
-
     def publish(self, cte, heading_error, confidence, valid):
         payload = struct.pack(
             FMT,
