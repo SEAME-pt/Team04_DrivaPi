@@ -11,4 +11,9 @@ typedef struct {
     uint64_t timestamp;
 } PerceptionOutput;
 
+typedef struct {
+    uint8_t sign_detected;
+    float   confidence;
+} ObstacleOutput;
+
 #endif // PERCEPTION_OUTPUT_H
