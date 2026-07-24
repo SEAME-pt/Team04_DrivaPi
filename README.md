@@ -18,11 +18,12 @@
 
 Autonomous vehicle platform developed using PiRacer as part of the SEAME Automotive Program.
 
+<p align="center">
+  <a href="https://github.com/user-attachments/assets/936b89e9-0787-454b-b90c-a8ffa02f6ebc">
+    <img src="docs/images/drivapi_demo_thumbnail.png" alt="DrivaPi Autonomous Vehicle Demo" width="700">
+  </a>
+</p>
 
-<video controls>
-  <source src="https://github.com/user-attachments/assets/936b89e9-0787-454b-b90c-a8ffa02f6ebc" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
 
 ---
 
