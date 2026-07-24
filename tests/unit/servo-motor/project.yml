@@ -18,6 +18,11 @@
   :include:
     - ../common/support
     - ../../../firmware/Core/Inc/**
+    - ../../../firmware/Core/Inc/MX_WIFI/**
+    - ../../../firmware/Middlewares/MQTT/MQTTClient**
+    - ../../../firmware/Middlewares/MQTT/MQTTPacket**
+    - ../../../firmware/Middlewares/MX_WIFI/core**
+    - ../../../firmware/Middlewares/MX_WIFI/io_pattern**
   :support:
     - ../common/support
   :libraries: []

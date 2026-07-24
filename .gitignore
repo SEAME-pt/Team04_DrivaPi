@@ -176,3 +176,6 @@ ADAS/obstacle-detection/train/runs/
 ADAS/obstacle-detection/*.pt
 ADAS/obstacle-detection/*.onnx
 ADAS/obstacle-detection/inference/*.hef
+
+# Wi-Fi credentials
+wifi_credentials.h

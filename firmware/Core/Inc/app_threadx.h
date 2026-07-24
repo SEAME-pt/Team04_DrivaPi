@@ -38,6 +38,7 @@ extern "C" {
 #include <stdlib.h>
 #include "main.h"
 #include "dc_motor.h"
+#include "mqtt.h"
 #include "servo_motor.h"
 #include "motor_utils.h"
 #include "motor_control.h"
@@ -92,9 +93,11 @@ typedef struct can_message_s
 #define FLAG_CAN_STEER_CMD	(1 << 1)
 #define FLAG_SENSOR_UPDATE	(1 << 2)
 #define FLAG_EMERGENCY_STOP (1 << 3)
+#define FLAG_CAN_EMERGENCY_CMD (1 << 4)
 #define THREAD_STACK_SIZE	1024
 #define QUEUE_SIZE         	10
 #define MUTEX_WAIT_TICKS    20u
+#define CMD_EMERGENCY       10u
 #define CMD_SPEED           44u
 #define CMD_STEERING        45u
 
@@ -154,6 +157,7 @@ extern bool					g_emergencyBrake;
 extern thread_t				g_threads[9];
 extern TX_QUEUE             g_queueSpeedCmd;
 extern TX_QUEUE             g_queueSteerCmd;
+extern TX_QUEUE             g_queueEmergencyCmd;
 extern TX_EVENT_FLAGS_GROUP	g_eventFlags;
 extern TX_MUTEX             g_speedDataMutex;
 extern TX_MUTEX             g_emergencyMutex;

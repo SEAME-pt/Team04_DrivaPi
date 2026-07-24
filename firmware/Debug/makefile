@@ -12,6 +12,11 @@ RM := rm -rf
 -include Middlewares/SystemView/subdir.mk
 -include Middlewares/ST/threadx/ports/cortex_m33/gnu/src/subdir.mk
 -include Middlewares/ST/threadx/common/src/subdir.mk
+-include Middlewares/MX_WIFI/io_pattern/subdir.mk
+-include Middlewares/MX_WIFI/core/subdir.mk
+-include Middlewares/MX_WIFI/subdir.mk
+-include Middlewares/MQTT/MQTTPacket/subdir.mk
+-include Middlewares/MQTT/MQTTClient/subdir.mk
 -include Drivers/STM32U5xx_HAL_Driver/Src/subdir.mk
 -include Core/Startup/subdir.mk
 -include Core/Src/subdir.mk

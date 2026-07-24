@@ -9,6 +9,7 @@ S_SRCS :=
 C_SRCS := 
 S_UPPER_SRCS := 
 O_SRCS := 
+CYCLO_FILES := 
 SIZE_OUTPUT := 
 OBJDUMP_LIST := 
 SU_FILES := 
@@ -25,6 +26,11 @@ AZURE_RTOS/App \
 Core/Src \
 Core/Startup \
 Drivers/STM32U5xx_HAL_Driver/Src \
+Middlewares/MQTT/MQTTClient \
+Middlewares/MQTT/MQTTPacket \
+Middlewares/MX_WIFI/core \
+Middlewares/MX_WIFI/io_pattern \
+Middlewares/MX_WIFI \
 Middlewares/ST/threadx/common/src \
 Middlewares/ST/threadx/ports/cortex_m33/gnu/src \
 Middlewares/SystemView \
