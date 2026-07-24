@@ -13,7 +13,20 @@
 # SEAME Automotive Journey
 
 Autonomous vehicle using PiRacer as part of the SEAME automotive program.
+---
 
+## 🚀 Quick Start
+
+```bash
+git clone git@github.com:SEAME-pt/Team04_DrivaPi.git
+cd Team04_DrivaPi
+
+# Build firmware
+./firmware/build_and_flash.sh build
+
+# Run unit tests
+./tests/unit/run_all_tests.sh
+```
 ---
 
 ## 🎯 What We're Building
@@ -307,5 +320,3 @@ All PRs must pass:
 Educational project - SEAME Automotive Program
 
 ---
-
-*Last update: July, 2026 | Active development*
