@@ -279,9 +279,9 @@ fn run_autonomous_mode(
 
         if age_ms > TIMEOUT_MS {
             eprintln!("(!) PERCEPTION WATCHDOG TIMEOUT: {}ms", age_ms);
-            // controller.stop_dc_motors()?;
-            // controller.reset_servo_motors()?;
-            // break;
+            controller.stop_dc_motors()?;
+            controller.reset_servo_motors()?;
+            break;
         }
 
         if d_pad && !prev_d_pad {
@@ -344,10 +344,7 @@ fn run_autonomous_mode(
                 );
             }
         } else {
-            // Low confidence or invalid detection
-            // controller.stop_dc_motors()?;
-            // Keep servo at last position or center? 
-            // controller.reset_servo_motors()?;
+            continue;
         }
 
         thread::sleep(Duration::from_millis(25)); // 40Hz control loop
