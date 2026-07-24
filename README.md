@@ -1,3 +1,7 @@
+[![Unit Tests](https://github.com/SEAME-Team/drivapi/actions/workflows/unit_tests.yml/badge.svg)](https://github.com/SEAME-Team/drivapi/actions/workflows/unit_tests.yml)
+[![TSF Validation](https://github.com/SEAME-Team/drivapi/actions/workflows/tsf_validation.yml/badge.svg)](https://github.com/SEAME-Team/drivapi/actions/workflows/tsf_validation.yml)
+[![Static Analysis](https://github.com/SEAME-Team/drivapi/actions/workflows/firmware_static.yml/badge.svg)](https://github.com/SEAME-Team/drivapi/actions/workflows/firmware_static.yml)
+
 # SEAME Automotive Journey
 
 Autonomous vehicle using PiRacer as part of the SEAME automotive program.
