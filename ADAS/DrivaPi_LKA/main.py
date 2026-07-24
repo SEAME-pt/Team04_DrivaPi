@@ -98,7 +98,7 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
     print("LANE THREAD STARTED")
     print(f"Lane Thread{thread_nbr} started | mode: {'DEBUG' if debug else 'HEADLESS'}", flush=True)
     publisher = SharedMemoryPublisher()
-    memory = LaneMemory()
+    memory = LaneMemory(max_age=8)
     stanley = StanleyController()
     writer = None
     n = 0
@@ -193,9 +193,9 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
 
                     n += 1
 
-                    elapsed_time = time.time() - t0
-                    if elapsed_time < FRAME_BUDGET:
-                        time.sleep(FRAME_BUDGET - elapsed_time)
+                    # elapsed_time = time.time() - t0
+                    # if elapsed_time < FRAME_BUDGET:
+                    #     time.sleep(FRAME_BUDGET - elapsed_time)
 
                     t_last = time.time()
 

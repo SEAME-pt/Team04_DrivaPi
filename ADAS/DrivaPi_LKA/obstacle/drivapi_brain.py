@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import Iterable
 from pathlib import Path
 from .hailo_config import HailoConfig as cfg
+from .shared_memory import ObstaclePublisher
 
 # KUKSA Imports
 from kuksa_client.grpc import VSSClient
@@ -107,6 +108,8 @@ class DrivaPiBrain:
 
         self.accel_rate = cfg.ACCEL_RATE
         self.decel_rate = cfg.DECEL_RATE
+        self.publisher = ObstaclePublisher()
+
 
     def process_detections(self, detections: Iterable[Detection]) -> None:
         """Update hazard state and emit PWM commands based on detections."""
@@ -273,32 +276,31 @@ class DrivaPiBrain:
         # 5. --- Publish UI State to KUKSA Databroker ---
         self.publish_adas_to_kuksa(confirmed_detections)
 
-
     def send_command(self, speed: float, direction: int, target_frame: float, reason: str) -> None:
-        """Send a UDP command if required by rate, change, or emergency."""
+        """Publish the current control state to shared memory."""
         now = time.time()
-        msg = f"{int(speed)},{int(direction)},{cfg.MID_SERVO}"
 
-        is_emergency = "STOP" in reason or "EMERGENCY" in reason or speed == 0
-        time_passed = (now - self.last_udp_send_time) >= cfg.UDP_INTERVAL
-        msg_changed = msg != self.last_sent_msg
+        # Map reason -> sign_detected status code for shared memory.
+        # 0=none, 1=caution, 2=following, 3=stop_approach, 4=stop_timer, 5=emergency
+        if reason == "NORMAL":
+            signal_type = 0
+        elif reason.startswith("EMERGENCY") or reason.startswith("STOP("):
+            signal_type = 5
+        elif reason == "STOP_TIMER_ACTIVE":
+            signal_type = 4
+        elif reason in ("STOP_SIGN_DETECTED", "APPROACHING_STOP_LINE"):
+            signal_type = 3
+        elif reason.startswith("FOLLOWING"):
+            signal_type = 2
+        elif reason.startswith("CAUTION") or reason == "LEAVING_STOP_ZONE":
+            signal_type = 1
+        else:
+            signal_type = 0
 
-        # Send immediately on emergency or when the command changes.
-        if is_emergency or msg_changed or time_passed:
-            self.sock.sendto(msg.encode("utf-8"), self.target)
-            self.last_udp_send_time = now
-            self.last_sent_msg = msg
+        # Publish to shared memory (ObstacleOutput: sign_detected u8 status code, confidence f32).
+        self.publisher.publish(signal_type, 1.0)
 
         # Telemetry throttle to avoid flooding the Pi 5 terminal.
-        if now - self.last_log > cfg.TELEMETRY_INTERVAL_SEC:
-            logger.info(
-                "metrics state=control pwm=%d target=%d reason=%s",
-                int(speed),
-                int(target_frame),
-                reason,
-            )
-            self.last_log = now
-
     def publish_adas_to_kuksa(self, confirmed_detections: list[Detection]) -> None:
         """Determines the most critical UI element to display and publishes it to KUKSA."""
         if not self.vss_client:
