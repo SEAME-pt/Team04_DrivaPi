@@ -2,9 +2,6 @@
 
 Autonomous vehicle using PiRacer as part of the SEAME automotive program.
 
-## Team: DrivaPi (Team04)
-Bernardo, Gaspar, Hugo, Melanie, Miguel
-
 ---
 
 ## 🎯 What We're Building
@@ -35,38 +32,29 @@ Bernardo, Gaspar, Hugo, Melanie, Miguel
 ## 📁 Repository Structure
 
 ```
-.
-├── TSF/                   # Trustable Software Framework
-│   ├── reqs/             # TSF Requirements
-│   │   ├── urd/         # User Requirements
-│   │   ├── srd/         # System Requirements
-│   │   ├── swd/         # Software Design
-│   │   └── lltc/        # Low-Level Test Cases
-│   ├── artifacts/       # Evidence & reports
-│   └── .dotstop.dot     # TSF traceability graph
-│
-├── qt-app/               # Qt-based GUI application
-│   ├── src/             # Application source code
-│   ├── include/         # Header files
-│   ├── resources/       # UI resources
-│   └── proto/           # Protocol buffers
-│
-├── rust/                 # Rust implementations
-├── firmware/             # ThreadX RTOS integration
-├── meta-cross/          # Cross-compilation & build system
-│
-├── docs/                # Documentation
-│   ├── standups/       # Daily stand-up logs
-│   ├── sprints/        # Sprint planning & retrospectives
-│   ├── hardware/       # Hardware documentation
-│   ├── software/       # Software documentation
-│   ├── standards/      # Standards & compliance
-│   ├── presentations/  # Team presentations
-│   └── TSF/            # TSF workflow documentation
-│
-├── tests/              # Test suites
-├── scripts/            # Automation scripts
-└── archive/            # Historical work & labs
+├── ADAS/
+├── archive/
+├── docs/
+│   ├── CI/
+│   ├── data-transfer/
+│   ├── genAI/
+│   ├── hardware/
+│   ├── obstacle-detection/
+│   ├── presentations/
+│   ├── software/
+│   ├── sprints/
+│   ├── standards/
+│   ├── standups/
+│   ├── TSF/
+│   └── verification-toolchain/
+├── dotstop/
+├── firmware/
+├── meta-cross/
+├── rust/
+├── scripts/
+├── tests/
+└── TSF/
+
 ```
 
 ## 📋 TSF Documentation
@@ -79,6 +67,40 @@ Bernardo, Gaspar, Hugo, Melanie, Miguel
 | **[training.md](docs/TSF/training.md)** | Understand TSF/ISO 26262 theory | 1-2h |
 | **[evidence.md](docs/TSF/evidence.md)** | Link artifacts | Reference |
 
+---
+
+## 🔨 Building & Flashing the STM32 Firmware
+
+The firmware build script can be run from the repository root:
+
+```bash
+./firmware/build_and_flash.sh <command>
+```
+
+Available commands:
+
+| Command | Description |
+|---------|-------------|
+| `build` | Build the firmware and generate the `.bin` file. |
+| `flash` | Flash the existing firmware binary to the STM32. |
+| `deploy` | Build the firmware and flash it to the STM32. |
+| `clean` | Remove build artifacts and the generated binary. |
+
+Examples:
+
+```bash
+# Build the firmware
+./firmware/build_and_flash.sh build
+
+# Build and flash the firmware
+./firmware/build_and_flash.sh deploy
+```
+
+Running the script without any arguments displays the available commands and their usage:
+
+```bash
+./firmware/build_and_flash.sh
+```
 ---
 
 ## 👥 Team Practices
@@ -152,30 +174,6 @@ All PRs must pass:
   - `fix(firmware): correct servo calibration logic`
   - `docs(tsf): update workflow documentation`
   - `test(unit): add speed sensor test coverage`
-
----
-
-## 📈 Progress & Status
-
-### Completed
-- ✅ Hardware assembly and integration
-- ✅ PiRacer setup with Raspberry Pi 5
-- ✅ Qt application foundation
-- ✅ ThreadX RTOS integration
-- ✅ AGL deployment
-- ✅ TSF framework integrated
-- ✅ Unit test framework with 90% coverage minimum
-- ✅ CI/CD pipeline with automated validation
-- ✅ Static analysis with CodeQL
-- ✅ Automated evidence generation
-- ✅ Doxygen documentation generation
-
-### In Progress
-- 🔄 Firmware refactoring and naming conventions
-- 🔄 Motor/servo requirements and test suites
-- 🔄 Qt application development
-- 🔄 Computer vision integration
-- 🔄 Autonomous driving capabilities
 
 ---
 
