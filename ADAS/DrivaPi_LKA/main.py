@@ -28,48 +28,6 @@ from globals import npu_lock, REPORT_EVERY, FRAME_BUDGET
 import os
 import socket
 
-latest_debug_frame = None
-debug_lock = threading.Lock()
-
-app = Flask(__name__)
-
-def generate():
-    global latest_debug_frame
-
-    while True:
-        with debug_lock:
-            frame = latest_debug_frame
-
-        if frame is None:
-            time.sleep(0.01)
-            continue
-
-        frame = frame.copy()
-
-        encode_params = [int(cv2.IMWRITE_JPEG_QUALITY), 70]
-        _, jpeg = cv2.imencode('.jpg', frame, encode_params)
-
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' +
-               jpeg.tobytes() +
-               b'\r\n')
-
-@app.route('/video')
-def video():
-    return Response(generate(),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
-
-@app.route('/')
-def index():
-    return """
-    <html>
-        <body>
-            <h2>Lane Stream</h2>
-            <img src="/video"/>
-        </body>
-    </html>
-    """
-
 def systemd_notify_ready():
     """
     Sends a native READY=1 signal to systemd via the Unix notification socket.
@@ -149,53 +107,8 @@ def lanes_thread(source, debug, record_path, in_name, get_frame, network_group, 
                     else:
                         publisher.publish(0.0, 0.0, confidence=0.0, valid=0)
 
-                    
-                    debug_frame = frame.copy()
-
-                    steering_vis = None
-                    if cte is not None:
-                        target_x = (w // 2) - cte
-                        steering_vis = (target_x, cte)
-
-                    import lanes_pipeline.post_process as pp
-                    pp.LOOKNEAR_FRAC = 0.95
-                    pp.LOOKAHEAD_FRAC = 0.70
-                    
-                    draw_debug(debug_frame, class_masks, lane_lines, steering_vis)
-
-                    purple_color = (180, 105, 255)
-                                        
-                    # 1. Far Lookahead Horizontal Line (pp.LOOKAHEAD_FRAC * h)
-                    y_far = int(pp.LOOKAHEAD_FRAC * h)
-                    cv2.line(debug_frame, (0, y_far), (w, y_far), purple_color, 2, cv2.LINE_AA)
-                    cv2.putText(debug_frame, "FAR LOOKAHEAD (0.70)", (15, y_far - 8),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, purple_color, 1, cv2.LINE_AA)
-
-                    # 2. Near Bumper Horizontal Line (0.95 * h)
-                    y_near = int(pp.LOOKNEAR_FRAC * h)
-                    cv2.line(debug_frame, (0, y_near), (w, y_near), purple_color, 1, cv2.LINE_4)
-                    cv2.putText(debug_frame, "NEAR BUMPER (0.95)", (15, y_near - 8),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, purple_color, 1, cv2.LINE_AA)
-                                
-                    # 3. Draw intercepts on the lines if a tracking solution is valid
-                    if stanley_result is not None:
-                        # Reconstruct where the centerline calculation sits on both planes
-                        cv2.circle(debug_frame, (int((w // 2) - cte), y_near), 5, purple_color, -1)
-                        
-                        # Calculate where the far lookahead projected point is sitting
-                        lane_dx = lane_center_far_x - lane_center_near_x if 'lane_center_far_x' in locals() else 0
-                        cv2.circle(debug_frame, (int((w // 2) - cte + lane_dx), y_far), 5, purple_color, -1)
-
-                        
-                    with debug_lock:
-                        latest_debug_frame = debug_frame
                     t5 = time.time()
-
                     n += 1
-
-                    # elapsed_time = time.time() - t0
-                    # if elapsed_time < FRAME_BUDGET:
-                    #     time.sleep(FRAME_BUDGET - elapsed_time)
 
                     t_last = time.time()
 
@@ -262,9 +175,6 @@ def main():
 
     args = arg_parser()
 
-    cv2.namedWindow("Lane", cv2.WINDOW_NORMAL)
-    cv2.setWindowProperty("Lane", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-
     lane_hef = HEF(str(args.lane_hef))
     lane_in_name = lane_hef.get_input_vstream_infos()[0].name
     lane_cfg = ConfigureParams.create_from_hef(lane_hef, interface=HailoStreamInterface.PCIe)
@@ -319,13 +229,4 @@ def main():
 
 
 if __name__ == "__main__":
-    threading.Thread(
-        target=lambda: app.run(
-            host="0.0.0.0",
-            port=5000,
-            threaded=True,
-            use_reloader=False
-        ),
-        daemon=True
-    ).start()
     main()

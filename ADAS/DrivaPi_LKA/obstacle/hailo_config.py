@@ -27,7 +27,7 @@ class HailoConfig:
     # ========================================================
     # INFERENCE THRESHOLDS
     # ========================================================
-    CONFIDENCE_THRESHOLD = 0.20
+    CONFIDENCE_THRESHOLD = 0.80
     NMS_SCORE_THRESHOLD = 0.20
     NMS_IOU_THRESHOLD = 0.40
 

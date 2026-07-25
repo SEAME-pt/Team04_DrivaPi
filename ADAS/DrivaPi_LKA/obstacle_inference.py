@@ -58,7 +58,7 @@ class DrivaPiInference:
         print(f"Obstacle Thread {thread_nbr} started | mode: {'DEBUG' if debug else 'HEADLESS'}")
         global output_frame
 
-        frame_budget = 1.0 / 10.0  # ~33.3ms budget per frame
+        frame_budget = 1.0 / 5.0 
         last_metrics_time = time.time()
         frames_since_metrics = 0
         last_detection_count = 0
