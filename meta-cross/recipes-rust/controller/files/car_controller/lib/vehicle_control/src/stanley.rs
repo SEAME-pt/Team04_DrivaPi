@@ -34,7 +34,7 @@ pub struct StanleyConfig {
 impl Default for StanleyConfig {
     fn default() -> Self {
         Self {
-            k: 0.15, //orginal is 0.4
+            k: 0.15,
             k_soft: 0.20,
             wheelbase_m: 0.15,
             max_steer_rad: 0.5,
@@ -65,7 +65,7 @@ pub fn compute_steering(
     let cte_meters_raw = observation.closest_front_point_m * pixel_to_meter;
 
 
-    let deadband_m = 0.08;
+    let deadband_m = 0.02;
     let cte_meters = if cte_meters_raw.abs() < deadband_m {
         0.0
     } else if cte_meters_raw > 0.0 {
@@ -74,14 +74,15 @@ pub fn compute_steering(
         cte_meters_raw + deadband_m
     };
 
-    let effective_speed = speed_mps.max(0.5);
+    let effective_speed = speed_mps.max(0.3);
+
+    let speed_factor = (1.0 + 0.08 * speed_mps).min(1.8);
+    let dynamic_k = cfg.k * speed_factor;
 
 
+    let crosstrack_error = ((dynamic_k * cte_meters) / (effective_speed + cfg.k_soft)).atan();
 
-
-    let crosstrack_error = ((cfg.k * cte_meters) / (effective_speed + cfg.k_soft)).atan();
-
-    let angle_raw = (0.7 * observation.heading_error_rad) + crosstrack_error;
+    let angle_raw = observation.heading_error_rad + crosstrack_error;
 
     let max_change = cfg.max_steer_rate * dt;
     let rate_limited_angle = angle_raw.clamp(prev_delta - max_change, prev_delta + max_change);

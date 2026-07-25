@@ -30,10 +30,32 @@ fn recv_latest_input(
     input_rx: &mpsc::Receiver<GamepadInput>,
     timeout: Duration,
 ) -> Option<GamepadInput> {
-    let mut latest = input_rx.recv_timeout(timeout).ok()?;
+    // If timeout is 0, use blocking recv_timeout with a safe 10ms floor so it 
+    // actually waits for a frame instead of instantly returning Err(Timeout) -> None.
+    let effective_timeout = if timeout.is_zero() {
+        Duration::from_millis(10)
+    } else {
+        timeout
+    };
+
+    let mut latest = match input_rx.recv_timeout(effective_timeout) {
+        Ok(msg) => msg,
+        // Channel disconnected -> ONLY now return None!
+        Err(mpsc::RecvTimeoutError::Disconnected) => return None,
+        // Channel was temporarily empty -> retry once so we don't return None on a healthy channel
+        Err(mpsc::RecvTimeoutError::Timeout) => {
+            match input_rx.recv_timeout(Duration::from_millis(50)) {
+                Ok(msg) => msg,
+                _ => return None, // Truly disconnected or dead
+            }
+        }
+    };
+
+    // Drain queued inputs to stay on the newest frame
     while let Ok(newer) = input_rx.try_recv() {
         latest = newer;
     }
+
     Some(latest)
 }
 
@@ -244,7 +266,7 @@ fn run_autonomous_mode(
     
     loop {
         // OVERRIDE: if human move joystick it overrides
-        let Some(input) = recv_latest_input(input_rx, Duration::from_millis(25)) else {
+        let Some(input) = recv_latest_input(input_rx, Duration::from_millis(0)) else {
             eprintln!("Gamepad input thread disconnected");
             controller.stop_dc_motors()?;
             controller.reset_servo_motors()?;
@@ -285,21 +307,20 @@ fn run_autonomous_mode(
             break;
         }
 
-        if obstacle_last == false {
+        let now_ms = now_ns / 1_000_000;
+
+        if !obstacle_last {
             println!("obstacle: {:?}", obstacle.sign_detected);
             if obstacle.sign_detected == 5 {
                 controller.send_motor_command(0, BRAKE)?;
                 obstacle_last = true;
-            } else if obstacle.sign_detected != 0 && age_ms == 0 {
+            } else if obstacle.sign_detected != 0 && age_ms < TIMEOUT_MS {
                 speed = speed.saturating_sub(STEP_CRUISE).max(MIN_CRUISE);
                 controller.send_motor_command(speed, FORWARD)?;
-                obstacle_time = std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)?
-                    .as_nanos()
-                    / 1_000_000;
+                obstacle_time = now_ms;
                 obstacle_last = true;
             }
-        } else if obstacle_last == false {
+        } else {
             if obstacle.sign_detected == 0 && age_ms - obstacle_time > 1500 {
                 speed = speed.saturating_add(STEP_CRUISE).min(MAX_CRUISE);
                 controller.send_motor_command(speed, FORWARD)?;
@@ -319,35 +340,40 @@ fn run_autonomous_mode(
             }
         }
         prev_d_pad = d_pad;
+        
         speed_mps = speed as f64 * (100.0 / 3600.0);
         
 
         if perception.valid > 0 {
 
-            let mut raw_cte = perception.closest_front_point as f64;
+            let raw_cte = perception.closest_front_point as f64;
             let mut raw_heading = perception.heading_error as f64;
+            raw_heading = if raw_heading.abs() < 0.030 {
+                0.0
+            } else {
+                raw_heading
+            };
 
             let observation = stanley::CameraLaneObservation {
                 closest_front_point_m: raw_cte,
                 heading_error_rad: stanley::normalize_heading(raw_heading),
-                // heading_error_rad: stanley::normalize_heading(perception.heading_error as f64),
                 confidence: perception.confidence as f64,
             };
             
-            let raw_angle = stanley::compute_steering(
+            let angle = stanley::compute_steering(
                 &observation,
-                speed_mps, // speed
+                speed_mps,
                 prev_delta,
                 dt,
                 &config,
             );
 
-            let angle = match filtered_angle {
-                None => raw_angle,
-                Some(prev_angle) => (ALPHA * raw_angle) + ((1.0 - ALPHA) * prev_angle),
-            };
+            // let angle = match filtered_angle {
+            //     None => raw_angle,
+            //     Some(prev_angle) => (ALPHA * raw_angle) + ((1.0 - ALPHA) * prev_angle),
+            // };
 
-            filtered_angle = Some(angle);
+            // filtered_angle = Some(angle);
             prev_delta = angle;
 
             let servo_deg = stanley::steering_to_servo_deg(angle, &config) as u32;
