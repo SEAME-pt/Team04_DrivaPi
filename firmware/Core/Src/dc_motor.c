@@ -95,7 +95,7 @@ VOID DcMotor(ULONG initial_input)
 			}
 		}
 
-		tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
+    	tx_mutex_get(&g_emergencyMutex, TX_WAIT_FOREVER);
 		if(g_emergencyBrake && g_motorControlState.direction == FORWARD)
 		{
 			tx_mutex_put(&g_emergencyMutex);

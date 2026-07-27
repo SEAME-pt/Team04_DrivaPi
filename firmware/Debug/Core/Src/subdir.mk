@@ -16,7 +16,6 @@ C_SRCS += \
 ../Core/Src/mqtt.c \
 ../Core/Src/sensors.c \
 ../Core/Src/servo_motor.c \
-../Core/Src/soft_i2c.c \
 ../Core/Src/speed_sensor.c \
 ../Core/Src/stm32u5xx_hal_msp.c \
 ../Core/Src/stm32u5xx_it.c \
@@ -43,7 +42,6 @@ OBJS += \
 ./Core/Src/mqtt.o \
 ./Core/Src/sensors.o \
 ./Core/Src/servo_motor.o \
-./Core/Src/soft_i2c.o \
 ./Core/Src/speed_sensor.o \
 ./Core/Src/stm32u5xx_hal_msp.o \
 ./Core/Src/stm32u5xx_it.o \
@@ -71,7 +69,6 @@ C_DEPS += \
 ./Core/Src/mqtt.d \
 ./Core/Src/sensors.d \
 ./Core/Src/servo_motor.d \
-./Core/Src/soft_i2c.d \
 ./Core/Src/speed_sensor.d \
 ./Core/Src/stm32u5xx_hal_msp.d \
 ./Core/Src/stm32u5xx_it.d \

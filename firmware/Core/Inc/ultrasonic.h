@@ -3,6 +3,11 @@
 
 #include "app_threadx.h"
 
+#define SRF08_I2C_ADDR        0xE0
+#define SRF08_CMD_REG         0x00
+#define SRF08_ECHO_HIGH_REG   0x02
+#define SRF08_RANGING_CM      0x51
+
 // SRF08 Commands
 #define SRF08_ADDR          0xE0
 #define CMD_REG             0x00
