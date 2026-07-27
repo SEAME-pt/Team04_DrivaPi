@@ -44,7 +44,7 @@ impl Default for StanleyConfig {
     }
 }
 
-/// Normalizes an angle to the range [-PI, PI]
+// Normalizes an angle to the range [-PI, PI]
 pub fn normalize_heading(heading: f64) -> f64 {
     let mut h = (heading + std::f64::consts::PI) % (2.0 * std::f64::consts::PI);
     if h < 0.0 {
@@ -53,7 +53,7 @@ pub fn normalize_heading(heading: f64) -> f64 {
     h - std::f64::consts::PI
 }
 
-/// Computes steering angle using Stanley Controller
+// Computes steering angle using Stanley Controller
 pub fn compute_steering(
     observation: &CameraLaneObservation,
     speed_mps: f64,
@@ -98,7 +98,7 @@ pub fn compute_steering(
     angle
 }
 
-/// Converts steering radians to servo degrees
+// Converts steering radians to servo degrees
 pub fn steering_to_servo_deg(angle: f64, cfg: &StanleyConfig) -> f64 {
      let protocol_gain = 90.0 / cfg.max_steer_rad;
      let can_payload = 90.0 - (protocol_gain * angle);

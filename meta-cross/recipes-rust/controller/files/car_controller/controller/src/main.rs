@@ -247,7 +247,6 @@ fn run_autonomous_mode(
     let mut prev_delta = 0.0;
     let dt = 0.025; // 40Hz
     
-    let mut filtered_angle: Option<f64> = None;
     const TIMEOUT_MS: u128 = 100;
     
     let mut last_servo: Option<u32> = None;
@@ -255,7 +254,7 @@ fn run_autonomous_mode(
     let mut obstacle_last: bool = false;
     let mut obstacle_time: u128 = 0;
     controller.send_motor_command(speed, FORWARD)?;
-    let mut speed_mps: f64 = speed as f64 * (100.0 / 3600.0);
+    let mut speed_mps: f64;
     
     
     // =================================================================================
@@ -368,12 +367,6 @@ fn run_autonomous_mode(
                 &config,
             );
 
-            // let angle = match filtered_angle {
-            //     None => raw_angle,
-            //     Some(prev_angle) => (ALPHA * raw_angle) + ((1.0 - ALPHA) * prev_angle),
-            // };
-
-            // filtered_angle = Some(angle);
             prev_delta = angle;
 
             let servo_deg = stanley::steering_to_servo_deg(angle, &config) as u32;
@@ -382,8 +375,6 @@ fn run_autonomous_mode(
                 controller.send_servo_command(servo_deg)?;
                 last_servo = Some(servo_deg);
             }
-        } else {
-            continue;
         }
 
         thread::sleep(Duration::from_millis(25)); // 40Hz control loop
