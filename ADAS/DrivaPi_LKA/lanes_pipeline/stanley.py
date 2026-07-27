@@ -13,7 +13,6 @@ class StanleyController:
         camera_heading = np.pi / 2
         near_row = 0.95 * h   # bottom of road (closest to car)
         far_row  = 0.70 * h   # mid-road (lookahead)
-        #print(f"near_row = {near_row} far_row = {far_row} height = {h}")
         all_y = []
 
         for lines in lane_lines.values():
@@ -21,7 +20,6 @@ class StanleyController:
                 all_y.extend(pts[:, 1])
 
         if not all_y:
-            print("No lane points")
             return None
 
         max_lane_y = max(all_y)
@@ -47,7 +45,6 @@ class StanleyController:
                 lane_candidates.append((near_x, far_x))
 
         if not lane_candidates:
-            print("None from lane_candidates")
             return None
 
 
@@ -65,7 +62,6 @@ class StanleyController:
 
 
         if not filtered:
-            print("None from filtered")
             return None
 
 
@@ -87,20 +83,12 @@ class StanleyController:
                 else:
                     right_candidates.append((near_x, far_x))
 
-
-
-
         global_dx = 0
         if filtered:
             global_dx = np.mean([far_x - near_x for near_x, far_x in filtered])
 
-
-        
-
         def score(x):
             return abs(x - image_center)
-
-
 
         if left_candidates and right_candidates:
 
@@ -160,7 +148,6 @@ class StanleyController:
 
 
         else:
-            print("None from lanes")
             return None
 
         closes_front_point_y = lane_center_near_x - image_center

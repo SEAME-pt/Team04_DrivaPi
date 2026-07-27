@@ -3,7 +3,6 @@ import struct
 import os
 import time
 
-# float cte, float heading_error, float confidence, uint8_t valid, uint64_t timestamp
 # f: float (4 bytes)
 # B: unsigned char (1 byte)
 # Q: unsigned long long (8 bytes)

@@ -174,14 +174,7 @@ class DrivaPiInference:
 
                         t_frame  = (t1 - t0) * 1000
                         t_pre = (t2 - t1) * 1000
-                        #t_npu = (t3 - t2) * 1000
-                        #t_post = (t4 - t3) * 1000
-                        #t_stanley = (t5 - t4) * 1000
                         t_total = (t_last - t0) * 1000
-
-                        #print(f"Thread {thread_nbr} | {fps:5.1f} AVG FPS | total current time {t_total:.1f}ms "
-                        #    f"| Frame {t_frame:.1f} | Pre {t_pre:.1f}")
-                            #| Infer {t_npu:.1f} | Post {t_post:.1f} | Stanley {t_stanley:.1f}")
 
                         batch_start_time = time.time()
 
