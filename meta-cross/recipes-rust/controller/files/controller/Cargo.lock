@@ -304,9 +304,9 @@ checksum = "2874a2af47a2325c2001a6e6fad9b16a53b802102b528163885171cf92b15976"
 
 [[package]]
 name = "linux-embedded-hal"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8d566b726e1b6810f66c6f1c769889248439c27f06a59df2881a735454cfa02"
+checksum = "2a8a605c95f708c78554738a12153b213f107d3bd5323f7ce32d6deb3faafb40"
 dependencies = [
  "cast",
  "embedded-hal",
@@ -750,9 +750,9 @@ dependencies = [
 
 [[package]]
 name = "socketcan"
-version = "3.5.0"
+version = "3.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7654092b2859221c29ac4b43dc502a8e156a7f2533e8617aaaa056b664d1230e"
+checksum = "ea24328be148eea05f36bc3991b1c174c586853e04d1480b92429b2df6aea865"
 dependencies = [
  "bitflags 2.10.0",
  "embedded-can",
@@ -769,9 +769,9 @@ dependencies = [
 
 [[package]]
 name = "spidev"
-version = "0.6.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2800c129338c77998c1dcb6d4200447e018beb7d29959eb104cba2d45f83c1a"
+checksum = "32dadd0a877f0652fa52dbc4d2ed9f4877bea5cd30725507b36e1970a5ef0519"
 dependencies = [
  "bitflags 2.10.0",
  "libc",

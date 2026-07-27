@@ -7,6 +7,7 @@
  */
 
 #include "systemview_threadx_hooks.h"
+#include "tx_thread.h"
 
 /**
  * @brief Initializes execution profiling hooks used by ThreadX. Empty but needed to satisfy 

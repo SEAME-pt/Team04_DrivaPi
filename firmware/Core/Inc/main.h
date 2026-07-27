@@ -171,6 +171,8 @@ void Error_Handler(void);
 #define USB_VBUS_SENSE_GPIO_Port GPIOF
 #define AIN1_Pin GPIO_PIN_7
 #define AIN1_GPIO_Port GPIOE
+#define Buzz_Pin GPIO_PIN_13
+#define Buzz_GPIO_Port GPIOE
 #define OCTOSPI_R_NCS_Pin GPIO_PIN_11
 #define OCTOSPI_R_NCS_GPIO_Port GPIOB
 #define WRLS_SPI2_NSS_Pin GPIO_PIN_12

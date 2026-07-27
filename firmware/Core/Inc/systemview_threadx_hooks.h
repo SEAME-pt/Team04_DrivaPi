@@ -14,8 +14,10 @@ extern "C" {
 #endif
 
 #include "tx_api.h"
-#include "tx_thread.h"
-#include "app_threadx.h"
+#include "../../Middlewares/SystemView/SEGGER_SYSVIEW.h"
+#include "../../Middlewares/SystemView/SEGGER_RTT.h"
+#include "../../Middlewares/SystemView/SEGGER_SYSVIEW_ThreadX.h"
+
 
 VOID _tx_execution_initialize(VOID);
 VOID _tx_execution_thread_enter(VOID);
