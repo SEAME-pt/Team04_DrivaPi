@@ -24,6 +24,20 @@ Autonomous vehicle platform developed using PiRacer as part of the SEAME Automot
 
 ---
 
+## 📦 Hardware Prerequisites & Bill of Materials
+
+Before diving into the software, ensure your hardware platform is assembled and wired correctly. The platform is built around a **PiRacer** chassis with a **Raspberry Pi 5** and an **STM32 microcontroller**.
+
+* **Electrical Schematics:** [DrivaPi_scheme_v2.pdf](docs/hardware/electric-scheme/DrivaPi_scheme_v2.pdf) *(KiCad source files available in `docs/hardware/electric-scheme/`)*
+* **Hardware Assembly Guide:** [hardware_assembly.md](docs/hardware/hardware_assembly.md)
+* **Pinout Usage & Mapping:** [PiRacer_pin_usage.xlsx](docs/hardware/PiRacer_pin_usage.xlsx)
+* **Subsystem Specs:**
+  * [BMS & Power Management](docs/hardware/bms.md)
+  * [Power Consumption Details](docs/hardware/power_consumption.md)
+  * [Sensor Selection & Features](docs/hardware/sensor_selection.md)
+
+---
+
 ## 🚀 Quick Start
 
 ```bash
