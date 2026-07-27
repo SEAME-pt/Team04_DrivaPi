@@ -20,6 +20,7 @@ jobs:
     env:
       BUILD_DIR: build/host
       COVERAGE_DIR: build/coverage
+      CPATH: ${{ github.workspace }}/tests/unit/shims
 
     steps:
       - name: Checkout repository
@@ -37,7 +38,7 @@ jobs:
 
       - name: Install Ceedling and gcovr
         run: |
-          sudo gem install ceedling
+          sudo gem install ceedling --no-document
           pip3 install gcovr
 
       - name: Verify tool versions
@@ -48,6 +49,87 @@ jobs:
           ceedling version
           lcov --version
           gcovr --version
+
+      - name: Generate Mock/Secrets Header with Type Shims
+        run: |
+          mkdir -p firmware/Core/Inc/MX_WIFI
+          mkdir -p tests/unit/shims/MX_WIFI
+          
+          W_SSID="${{ secrets.WIFI_SSID }}"
+          W_PASS="${{ secrets.WIFI_PASSWORD }}"
+          W_IP="${{ secrets.WIFI_STATIC_IP }}"
+          W_MASK="${{ secrets.WIFI_NETMASK }}"
+          W_GATE="${{ secrets.WIFI_GATEWAY }}"
+          W_DNS="${{ secrets.WIFI_DNS_SERVER }}"
+          
+          M_IP0="${{ secrets.MQTT_BROKER_IP_0 }}"
+          M_IP1="${{ secrets.MQTT_BROKER_IP_1 }}"
+          M_IP2="${{ secrets.MQTT_BROKER_IP_2 }}"
+          M_IP3="${{ secrets.MQTT_BROKER_IP_3 }}"
+          M_USER="${{ secrets.MQTT_USERNAME }}"
+          M_PASS="${{ secrets.MQTT_PASSWORD }}"
+
+          [ -z "$W_SSID" ] && W_SSID="dummy_ssid"
+          [ -z "$W_PASS" ] && W_PASS="dummy_password"
+          [ -z "$M_USER" ] && M_USER="dummy_user"
+          [ -z "$M_PASS" ] && M_PASS="dummy_password"
+          
+          [ -z "$M_IP0" ]  && M_IP0="0"
+          [ -z "$M_IP1" ]  && M_IP1="0"
+          [ -z "$M_IP2" ]  && M_IP2="0"
+          [ -z "$M_IP3" ]  && M_IP3="0"
+
+          format_ip() {
+            local ip="$1"
+            if [ -z "$ip" ]; then
+              echo "{0}"
+            elif [[ "$ip" == *.* ]]; then
+              echo "{${ip//./,}}"
+            else
+              echo "$ip"
+            fi
+          }
+
+          W_IP=$(format_ip "$W_IP")
+          W_MASK=$(format_ip "$W_MASK")
+          W_GATE=$(format_ip "$W_GATE")
+          W_DNS=$(format_ip "$W_DNS")
+
+          cat <<EOF > unified_credentials.h
+          #ifndef WIFI_CREDENTIALS_H
+          #define WIFI_CREDENTIALS_H
+
+          // ========================================================
+          //  HOST-SIDE TEST SHIMS (Bypasses deep hardware includes)
+          // ========================================================
+          #ifndef __arm__
+          typedef int SPI_HandleTypeDef;
+          typedef int TX_SEMAPHORE;
+          #endif
+
+          // ========================================================
+          //  WIFI & MQTT CONFIGURATIONS
+          // ========================================================
+          #define WIFI_SSID           "$W_SSID"
+          #define WIFI_PASSWORD       "$W_PASS"
+          #define WIFI_STATIC_IP      $W_IP
+          #define WIFI_NETMASK        $W_MASK
+          #define WIFI_GATEWAY        $W_GATE
+          #define WIFI_DNS_SERVER     $W_DNS
+
+          #define MQTT_BROKER_IP_0    $M_IP0
+          #define MQTT_BROKER_IP_1    $M_IP1
+          #define MQTT_BROKER_IP_2    $M_IP2
+          #define MQTT_BROKER_IP_3    $M_IP3
+          #define MQTT_USERNAME       "$M_USER"
+          #define MQTT_PASSWORD       "$M_PASS"
+
+          #endif /* WIFI_CREDENTIALS_H */
+          EOF
+
+          cp unified_credentials.h firmware/Core/Inc/MX_WIFI/wifi_credentials.h
+          
+          cp unified_credentials.h tests/unit/shims/MX_WIFI/wifi_credentials.h
 
       - name: Run Tests (Master Script)
         run: |

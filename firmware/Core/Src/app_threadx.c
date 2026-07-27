@@ -45,8 +45,11 @@
 /* USER CODE BEGIN PV */
 bool					g_emergencyBrake;
 thread_t				g_threads[9];
+TX_THREAD 				mqtt_thread;
+ULONG 					mqtt_thread_stack[4096];
 TX_QUEUE                g_queueSpeedCmd;
 TX_QUEUE                g_queueSteerCmd;
+TX_QUEUE                g_queueEmergencyCmd;
 TX_EVENT_FLAGS_GROUP    g_eventFlags;
 TX_MUTEX                g_speedDataMutex;
 TX_MUTEX                g_emergencyMutex;
@@ -54,12 +57,14 @@ TX_MUTEX                g_canMutex;
 TX_MUTEX                g_motorMutex;
 TX_MUTEX                g_servoMutex;
 TX_MUTEX             	g_gearMutex;
+TX_MUTEX 				mx_wifi_api_mutex;
 RNDGear_t				g_currentGear;
 float                   g_vehicleSpeed;
 float 					g_currentSpeed;
 int16_t 				g_currentPWM;
 MotorControlState		g_motorControlState;
 uint16_t				g_targetSpeed;
+uint8_t		volatile	g_emergency_cmd;
 unsigned char			trace_buffer[TRACE_BUFFER_SIZE];
 /* USER CODE END PV */
 
@@ -97,6 +102,10 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
 	memory_ptr, QUEUE_SIZE * sizeof(t_can_message));
 	memory_ptr += QUEUE_SIZE * sizeof(t_can_message);
 
+	tx_queue_create(&g_queueEmergencyCmd, "Emergency Queue", sizeof(t_can_message)/sizeof(ULONG),
+	memory_ptr, QUEUE_SIZE * sizeof(t_can_message));
+	memory_ptr += QUEUE_SIZE * sizeof(t_can_message);
+
 	tx_event_flags_create(&g_eventFlags, "System Events");
 
 	tx_mutex_create(&g_speedDataMutex, "Speed Data Mutex", TX_INHERIT);
@@ -105,10 +114,13 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
 	tx_mutex_create(&g_motorMutex, "Motor Mutex", TX_INHERIT);
 	tx_mutex_create(&g_servoMutex, "Servo Mutex", TX_INHERIT);
 	tx_mutex_create(&g_gearMutex, "Gear Mutex", TX_INHERIT);
+	tx_mutex_create(&mx_wifi_api_mutex, "My Mutex", TX_INHERIT);
 
 	InitAllDevices();
 	MotorControlInit(&g_motorControlState);
 	AppThreadX_LogThreadInitMessage();
+	tx_thread_create(&mqtt_thread, "MQTT Thread", MqttThreadFc, 0,
+	mqtt_thread_stack, sizeof(mqtt_thread_stack), 1, 1, TX_NO_TIME_SLICE, TX_AUTO_START);
 	ThreadInit();
 
   /* USER CODE END App_ThreadX_Init */
