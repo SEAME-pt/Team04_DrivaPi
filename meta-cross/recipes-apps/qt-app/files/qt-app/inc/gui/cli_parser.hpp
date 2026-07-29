@@ -25,6 +25,8 @@ struct CliOptions {
     QCommandLineOption canIfOption{QStringList() << "c" << "can-if",
         "CAN interface name", "ifname", "can0"};
 #endif
+    QCommandLineOption demoLanesOption{QStringList() << "demo-lanes",
+        "Inject synthetic laneOffset and laneHeading data for the lane mask demo"};
     QCommandLineOption kuksaAddrOption{QStringList() << "kuksa-addr" << "kuksa-address",
         "Kuksa databroker address (host:port)", "addr"};
     QCommandLineOption kuksaTlsOption{QStringList() << "kuksa-tls",

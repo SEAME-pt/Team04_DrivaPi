@@ -123,10 +123,12 @@ void KuksaReader::start()
         return;
     }
 
-    // Required paths (guaranteed by kuksa_feeder — must exist in the databroker VSS).
+    // Required paths (guaranteed to exist or fallback to core ADAS + speed/gear).
     const std::vector<std::string> requiredPaths = {
         PATH_SPEED,
         PATH_CURRENT_GEAR,
+        PATH_TRAFFIC_SIGN,
+        PATH_V2X_EMERGENCY_PRIORITY
     };
     // Optional paths (custom VSS extensions — may not be registered in every deployment).
     const std::vector<std::string> allPaths = {
@@ -138,13 +140,10 @@ void KuksaReader::start()
     while (!m_stopRequested.load()) {
         bool ok = subscribeLoop(allPaths);
         if (!ok && !m_stopRequested.load()) {
-            // Optional paths likely not registered in the databroker's VSS; fall back to
-            // required paths so speed/gear/battery still reach the dashboard.
-            qWarning("[KUKSA] Full subscription failed — retrying with required paths only");
+            qWarning("[KUKSA] Full subscription failed — retrying with required paths (Speed, Gear, ADAS) only");
             ok = subscribeLoop(requiredPaths);
         }
         if (m_stopRequested.load()) break;
-        // Brief pause before reconnect attempt to avoid busy-looping on persistent errors.
         for (int i = 0; i < 20 && !m_stopRequested.load(); ++i)
             QThread::msleep(100);
     }
@@ -152,7 +151,6 @@ void KuksaReader::start()
 
 bool KuksaReader::subscribeLoop(const std::vector<std::string>& paths)
 {
-    // Guard the assignment: stop() may call TryCancel() concurrently from another thread.
     {
         std::lock_guard<std::mutex> lock(m_contextMutex);
         m_context = std::make_unique<grpc::ClientContext>();
@@ -166,9 +164,6 @@ bool KuksaReader::subscribeLoop(const std::vector<std::string>& paths)
     auto reader = m_stub->Subscribe(m_context.get(), request);
     SubscribeResponse response;
 
-    // m_stopRequested is std::atomic<bool>: load() is lock-free and data-race free.
-    // A separate mutex is not required here; stop() uses m_contextMutex only to guard
-    // m_context (the gRPC ClientContext), not the atomic flag itself.
     while (!m_stopRequested.load() && reader->Read(&response)) {
         const auto& entries = response.entries();
 

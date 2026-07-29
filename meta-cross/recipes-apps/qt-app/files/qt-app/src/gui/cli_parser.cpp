@@ -16,6 +16,7 @@ QString buildDescription()
     desc += "  myqtapp --can --can-if can1\n";
 #endif
     desc += "  myqtapp --kuksa --kuksa-addr localhost:55555\n";
+    desc += "  myqtapp --demo-lanes\n";
     desc += "  myqtapp --kuksa --kuksa-tls --kuksa-ca /path/to/ca.crt";
     return desc;
 }
@@ -28,6 +29,7 @@ void configureParser(QCommandLineParser& parser, const CliOptions& opts)
     parser.addOption(opts.canModeOption);
     parser.addOption(opts.canIfOption);
 #endif
+    parser.addOption(opts.demoLanesOption);
     parser.addOption(opts.kuksaAddrOption);
     parser.addOption(opts.kuksaTlsOption);
     parser.addOption(opts.kuksaInsecureOption);
@@ -40,6 +42,11 @@ void configureParser(QCommandLineParser& parser, const CliOptions& opts)
 RunConfig buildRunConfig(const QCommandLineParser& parser, const CliOptions& opts)
 {
     RunConfig config;
+#ifdef ENABLE_CAN_MODE
+    config.demoLanes = parser.isSet(opts.demoLanesOption);
+#else
+    config.demoLanes = parser.isSet(opts.demoLanesOption);
+#endif
 #ifdef ENABLE_CAN_MODE
     config.useKuksa = !parser.isSet(opts.canModeOption);
     config.canInterface = parser.value(opts.canIfOption);

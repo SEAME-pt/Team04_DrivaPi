@@ -46,13 +46,17 @@ class VehicleData : public QObject
     Q_PROPERTY(int temperature READ getTemperature WRITE setTemperature NOTIFY temperatureChanged)
 
     Q_PROPERTY(int odometer READ getOdometer NOTIFY odometerChanged)
-	Q_PROPERTY(int trafficSignClassId READ getTrafficSignClassId WRITE setTrafficSignClassId NOTIFY trafficSignClassIdChanged)
+    Q_PROPERTY(int trafficSignClassId READ getTrafficSignClassId WRITE setTrafficSignClassId NOTIFY trafficSignClassIdChanged)
     Q_PROPERTY(bool emergencyPriorityActive READ getEmergencyPriorityActive NOTIFY emergencyPriorityActiveChanged)
     Q_PROPERTY(int emergencyPriorityLevel READ getEmergencyPriorityLevel NOTIFY emergencyPriorityLevelChanged)
     Q_PROPERTY(QString emergencyMessage READ getEmergencyMessage NOTIFY emergencyMessageChanged)
     Q_PROPERTY(QString emergencyIconSource READ getEmergencyIconSource NOTIFY emergencyIconSourceChanged)
     Q_PROPERTY(int speedLimitValue READ getSpeedLimitValue NOTIFY speedLimitValueChanged)
     Q_PROPERTY(bool speedLimitActive READ getSpeedLimitActive NOTIFY speedLimitActiveChanged)
+
+    // Lane detection properties
+    Q_PROPERTY(float laneOffset READ getLaneOffset WRITE setLaneOffset NOTIFY laneOffsetChanged)
+    Q_PROPERTY(float laneHeading READ getLaneHeading WRITE setLaneHeading NOTIFY laneHeadingChanged)
 
 public:
     /// @brief Construct VehicleData.
@@ -78,6 +82,8 @@ public:
     QString getGear() const;
     bool    getAutonomousMode() const;
     int     getTrafficSignClassId() const;
+    float   getLaneOffset() const;
+    float   getLaneHeading() const;
     bool    getEmergencyPriorityActive() const;
     int     getEmergencyPriorityLevel() const;
     QString getEmergencyMessage() const;
@@ -101,6 +107,8 @@ public:
     void    setGear(const QString &gear);
     void    setTemperature(int temperature);
     void    setAutonomousMode(bool mode);
+    void    setLaneOffset(float offset);
+    void    setLaneHeading(float heading);
 
     // ===== QML-Invokable Methods =====
     Q_INVOKABLE void toggleAutonomousMode();
@@ -114,7 +122,7 @@ public:
 public slots:
     /// @brief Process CAN frame and update vehicle data.
     void handleCanMessage(const QByteArray &payload, uint32_t canId);
-	void updateEmergencyAlert(int priorityLevel);
+    void updateEmergencyAlert(int priorityLevel);
     void setTrafficSignClassId(int classId);
     void updateTrafficSign(int classId);
 
@@ -136,7 +144,7 @@ signals:
     void gearChanged();
     void autonomousModeChanged();
 
-	void emergencyAlertChanged(int priorityLevel);
+    void emergencyAlertChanged(int priorityLevel);
     void emergencyPriorityActiveChanged();
     void emergencyPriorityLevelChanged();
     void emergencyMessageChanged();
@@ -145,7 +153,10 @@ signals:
     void speedLimitActiveChanged();
 
     void trafficSignClassIdChanged();
-	void trafficSignChanged(int classId);
+    void trafficSignChanged(int classId);
+
+    void laneOffsetChanged();
+    void laneHeadingChanged();
 
 private slots:
     /// @brief Check all properties for staleness (timestamps exceed threshold).
@@ -183,6 +194,8 @@ private:
 
     QTimer *m_emergencyTimeoutTimer;
     QTimer *m_speedLimitTimeoutTimer;
+    float   m_laneOffset;
+    float   m_laneHeading;
 
     // ===== Persistence =====
     QSettings *m_settings;
@@ -202,6 +215,14 @@ private:
 
     static constexpr qint64 SPEED_STALE_MS = 500;     // High-frequency timeout
     static constexpr qint64 OTHER_STALE_MS = 2000;    // Low-frequency timeout
+
+    // ===== Shared Memory =====
+    int m_shm_fd = -1;
+    void* m_shm_ptr = nullptr;
+    int m_obs_fd = -1;
+    void* m_obs_ptr = nullptr;
+    QTimer* m_shmTimer = nullptr;
+    void readSharedMemory();
 };
 
 }  // namespace drivaui

@@ -28,15 +28,15 @@ Item {
     readonly property color gradientStart: priorityLevel >= 2 ? "#D91A0000" : "#D9331A00"
     readonly property color gradientEnd: "#E6050505"
     readonly property int pulseDuration: priorityLevel >= 2 ? 400 : 800
-	readonly property bool hasIconMessage: root.hasIcon && root.alertMessage.length > 0
+    readonly property bool hasIconMessage: root.hasIcon && root.alertMessage.length > 0
 
     width: hasIcon ? (hasIconMessage ? (220 * s) : (115 * s)) : (560 * s)
-	height: hasIcon ? (hasIconMessage ? (145 * s) : (115 * s)) : (70 * s)
+    height: hasIcon ? (hasIconMessage ? (145 * s) : (115 * s)) : (70 * s)
 
-	anchors.horizontalCenter: parent.horizontalCenter
-	anchors.horizontalCenterOffset: hasIcon ? (90 * s) : 0
-	anchors.top: parent.top
-	anchors.topMargin: isActive ? (hasIcon ? (82 * s) : (70 * s)) : (-height - 40)
+    anchors.horizontalCenter: parent.horizontalCenter
+    anchors.horizontalCenterOffset: hasIcon ? (90 * s) : 0
+    anchors.top: parent.top
+    anchors.topMargin: isActive ? (hasIcon ? (82 * s) : (70 * s)) : (-height - 40)
 
     opacity: isActive ? 1.0 : 0.0
     visible: opacity > 0.01
@@ -70,64 +70,64 @@ Item {
     // ADAS IMAGE MODE
     // ==========================================================
     Item {
-		anchors.fill: parent
-		visible: root.hasIcon
+        anchors.fill: parent
+        visible: root.hasIcon
 
-		Image {
-			id: signIcon
-			source: root.iconSource
-			width: 105 * root.s
-			height: 105 * root.s
-			fillMode: Image.PreserveAspectFit
-			smooth: true
-			mipmap: true
-			cache: false
+        Image {
+            id: signIcon
+            source: root.iconSource
+            width: 105 * root.s
+            height: 105 * root.s
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+            mipmap: true
+            cache: false
 
-			anchors.horizontalCenter: parent.horizontalCenter
-			anchors.top: parent.top
-			anchors.topMargin: root.hasIconMessage ? 0 : ((parent.height - height) / 2)
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+            anchors.topMargin: root.hasIconMessage ? 0 : ((parent.height - height) / 2)
 
-			SequentialAnimation on scale {
-				running: root.isActive && root.hasIcon
-				loops: Animation.Infinite
+            SequentialAnimation on scale {
+                running: root.isActive && root.hasIcon
+                loops: Animation.Infinite
 
-				NumberAnimation {
-					to: 0.92
-					duration: root.pulseDuration
-					easing.type: Easing.InOutSine
-				}
+                NumberAnimation {
+                    to: 0.92
+                    duration: root.pulseDuration
+                    easing.type: Easing.InOutSine
+                }
 
-				NumberAnimation {
-					to: 1.0
-					duration: root.pulseDuration
-					easing.type: Easing.InOutSine
-				}
-			}
-		}
+                NumberAnimation {
+                    to: 1.0
+                    duration: root.pulseDuration
+                    easing.type: Easing.InOutSine
+                }
+            }
+        }
 
-		Text {
-			visible: root.hasIconMessage
-			text: root.alertMessage
-			color: "#FFFFFF"
-			font.family: AppTheme.typography.fontFamily
-			font.pixelSize: 18 * root.s
-			font.weight: Font.Black
-			font.letterSpacing: 1.5
-			horizontalAlignment: Text.AlignHCenter
+        Text {
+            visible: root.hasIconMessage
+            text: root.alertMessage
+            color: "#FFFFFF"
+            font.family: AppTheme.typography.fontFamily
+            font.pixelSize: 18 * root.s
+            font.weight: Font.Black
+            font.letterSpacing: 1.5
+            horizontalAlignment: Text.AlignHCenter
 
-			anchors.top: signIcon.bottom
-			anchors.topMargin: 4 * root.s
-			anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: signIcon.bottom
+            anchors.topMargin: 4 * root.s
+            anchors.horizontalCenter: parent.horizontalCenter
 
-			layer.enabled: true
-			layer.effect: Effects.DropShadow {
-				radius: 4
-				samples: 8
-				color: "#000000"
-				verticalOffset: 2
-			}
-		}
-	}
+            layer.enabled: true
+            layer.effect: Effects.DropShadow {
+                radius: 4
+                samples: 8
+                color: "#000000"
+                verticalOffset: 2
+            }
+        }
+    }
 
     // ==========================================================
     // V2X TEXT FALLBACK MODE

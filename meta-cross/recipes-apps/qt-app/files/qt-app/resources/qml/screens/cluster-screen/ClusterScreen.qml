@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick.Shapes
 import "../../components/cluster"
 import "../../components/battery"
 import "../../theme"
@@ -15,329 +15,424 @@ Rectangle {
 
     property real motionPhase: 0
 
-    // Speed used by motion simulation (supports reverse if negative)
-    readonly property real motionSpeedKmh: currentSpeed
-    readonly property real motionSpeedAbs: Math.abs(motionSpeedKmh)
-    readonly property real motionDir: {
-        if (currentGear === "R") return -1;
-        return 1;
-    }
+	// Speed used by motion simulation (supports reverse if negative)
+	readonly property real motionSpeedKmh: currentSpeed
+	readonly property real motionSpeedAbs: Math.abs(motionSpeedKmh)
+	readonly property real motionDir: {
+		if (currentGear === "R") return -1;
+		return 1;
+	}
 
-    readonly property real realMaxSpeedKmh: 14.4
-    readonly property real motionIntensity: clamp(motionSpeedAbs / realMaxSpeedKmh, 0, 1)
+	readonly property real realMaxSpeedKmh: 14.4
+	readonly property real motionIntensity: clamp(motionSpeedAbs / realMaxSpeedKmh, 0, 1)
 
-    function wrap01(t) {
-        t = t % 1;
-        return t < 0 ? (t + 1) : t;
-    }
+	function wrap01(t) {
+		t = t % 1;
+		return t < 0 ? (t + 1) : t;
+	}
 
-    // ISO 26262 Fail-Safe: Null/Invalid Data Handling
-    property bool vehicleDataAvailable: vehicleData !== null && vehicleData !== undefined
+	// ISO 26262 Fail-Safe: Null/Invalid Data Handling
+	property bool vehicleDataAvailable: vehicleData !== null && vehicleData !== undefined
 
-    property bool demoEmergencyAlert: false
-    property real currentSpeed: vehicleDataAvailable && vehicleData.speed ? vehicleData.speed : 0
-    property int stm32Battery: vehicleDataAvailable && vehicleData.stm32Battery !== undefined ? vehicleData.stm32Battery : 0
-    property int rpiBattery: vehicleDataAvailable && vehicleData.rpiBattery !== undefined ? vehicleData.rpiBattery : 0
-    property string currentGear: vehicleDataAvailable && vehicleData.gear ? vehicleData.gear : "P"
-    property real tripDistance: vehicleDataAvailable && vehicleData.trip ? vehicleData.trip : 568
-    property real powerOutput: vehicleDataAvailable && vehicleData.power ? vehicleData.power : 98
+	property real currentSpeed: vehicleDataAvailable && vehicleData.speed ? vehicleData.speed : 0
+	property int stm32Battery: vehicleDataAvailable && vehicleData.stm32Battery !== undefined ? vehicleData.stm32Battery : 0
+	property int rpiBattery: vehicleDataAvailable && vehicleData.rpiBattery !== undefined ? vehicleData.rpiBattery : 0
+	property string currentGear: vehicleDataAvailable && vehicleData.gear ? vehicleData.gear : "P"
+	property real tripDistance: vehicleDataAvailable && vehicleData.trip ? vehicleData.trip : 568
+	property real powerOutput: vehicleDataAvailable && vehicleData.power ? vehicleData.power : 98
 
-    // ====== Odometer State ======
-    property real odometerDistance: 0
-    property real accumulatedDistance: 0
-    property real lastTimestamp: 0
-    property bool showOdometerReset: false
+	// ====== Odometer State ======
+	property real odometerDistance: 0
+	property real accumulatedDistance: 0
+	property real lastTimestamp: 0
+	property bool showOdometerReset: false
 
-    Component.onCompleted: {
-        if (vehicleDataAvailable && vehicleData.odo > 0) {
-            odometerDistance = vehicleData.odo;
-        }
-    }
+	Component.onCompleted: {
+		if (vehicleDataAvailable && vehicleData.odo > 0) {
+			odometerDistance = vehicleData.odo;
+		}
+	}
 
-    Timer {
-        id: odometerUpdateTimer
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            if (!vehicleDataAvailable) return;
-            var currentTime = new Date().getTime();
-            if (lastTimestamp === 0) {
-                lastTimestamp = currentTime;
-                return;
-            }
-            var elapsedSeconds = (currentTime - lastTimestamp) / 1000;
-            lastTimestamp = currentTime;
-            var speedKmh = currentSpeed;
-            var timeHours = elapsedSeconds / 3600;
-            var distanceTraveled = speedKmh * timeHours;
+	Connections {
+		target: vehicleData
+		enabled: vehicleDataAvailable
+		function onOdometerChanged() {
+			if (vehicleData.odo > odometerDistance) {
+				odometerDistance = vehicleData.odo;
+			}
+		}
+	}
 
-            accumulatedDistance += distanceTraveled;
-            if (accumulatedDistance >= 0.01 && speedKmh > 0.5) {
-                odometerDistance += accumulatedDistance;
-                accumulatedDistance = 0;
-            }
-        }
-    }
+	Timer {
+		id: odometerUpdateTimer
+		interval: 100
+		running: true
+		repeat: true
+		onTriggered: {
+			if (!vehicleDataAvailable) return;
+			var currentTime = new Date().getTime();
+			if (lastTimestamp === 0) { lastTimestamp = currentTime; return; }
+			var elapsedSeconds = (currentTime - lastTimestamp) / 1000;
+			lastTimestamp = currentTime;
 
-    Timer {
-        id: resetOdometerTimer
-        interval: 500
-        running: false
-        repeat: false
-        onTriggered: showOdometerReset = false
-    }
+			var distanceTraveled = currentSpeed * (elapsedSeconds / 3600);
+			accumulatedDistance += distanceTraveled;
 
-    // Design Constants
-    property int fontSizeXL: 132
-    property int fontSizeLarge: 44
-    property int fontSizeMedium: 22
-    property int fontSizeSmall: 18
-    property int fontSizeXSmall: 13
+			if (accumulatedDistance >= 0.01 && currentSpeed > 0.5) {
+				odometerDistance += accumulatedDistance;
+				accumulatedDistance = 0;
+			}
+		}
+	}
 
-    property real roadWidthFactor: 0.85
-    property real roadHeightFactor: 3.5
-    property real roadBaseOffset: -0.8
-    property real horizonMarginRatio: 0.15
+	function resetOdometer() {
+		odometerDistance = 0;
+		accumulatedDistance = 0;
+		if (vehicleDataAvailable) vehicleData.odo = 0;
+		showOdometerReset = true;
+		resetOdometerTimer.start();
+	}
 
-    property real refW: 1200
-    property real refH: 480
-    property real sx: width / refW
-    property real sy: height / refH
-    property real s: Math.min(sx, sy)
+	Timer {
+		id: resetOdometerTimer
+		interval: 500
+		running: false
+		repeat: false
+		onTriggered: showOdometerReset = false
+	}
 
-    function clamp(v, a, b) { return Math.max(a, Math.min(v, b)); }
+	// Design Constants
+	property int fontSizeXL: 132
+	property int fontSizeLarge: 44
+	property int fontSizeMedium: 22
+	property int fontSizeSmall: 18
+	property int fontSizeXSmall: 13
 
-    gradient: Gradient {
-        GradientStop { position: 0.0; color: AppTheme.colors.surfaceVariant }
-        GradientStop { position: 0.5; color: AppTheme.colors.surface }
-        GradientStop { position: 1.0; color: AppTheme.colors.surfaceVariant }
-    }
+	property real roadWidthFactor: 0.85
+	property real roadHeightFactor: 3.5
+	property real roadBaseOffset: -0.8
+	property real horizonMarginRatio: 0.15
 
-    Background { anchors.fill: parent; z: 0 }
+	property real refW: 1200
+	property real refH: 480
+	property real sx: width / refW
+	property real sy: height / refH
+	property real s: Math.min(sx, sy)
 
-    Item {
-        id: uiLayer
-        anchors.fill: parent
-        z: 10
+	function clamp(v, a, b) { return Math.max(a, Math.min(v, b)); }
 
-        ColumnLayout {
-            anchors.fill: parent
-            spacing: 2
-            z: 10
+	gradient: Gradient {
+		GradientStop { position: 0.0; color: AppTheme.colors.surfaceVariant }
+		GradientStop { position: 0.5; color: AppTheme.colors.surface }
+		GradientStop { position: 1.0; color: AppTheme.colors.surfaceVariant }
+	}
 
-            ClusterTopBar {
-                id: topBar
-                Layout.fillWidth: true
-                z: 20
-                currentGear: root.currentGear
-                batteryLevel: vehicleData.rpiBattery < vehicleData.stm32Battery ? vehicleData.rpiBattery : vehicleData.stm32Battery
-                onBatteryClicked: batteryPopup.open()
-            }
+	Background { anchors.fill: parent; z: 0 }
 
-            Item {
-                id: contentArea
-                Layout.fillWidth: true
-                Layout.fillHeight: true
+	Item {
+		id: uiLayer
+		anchors.fill: parent
+		z: 10
 
-                Timer {
-                    id: motionTimer
-                    interval: 16
-                    running: true
-                    repeat: true
-                    onTriggered: {
-                        if (root.motionSpeedAbs < 0.5) return;
-                        var normalizedSpeed = root.clamp(root.motionSpeedAbs / root.realMaxSpeedKmh, 0, 1);
-                        var step = (interval / 1000.0) * normalizedSpeed * 2.0;
-                        root.motionPhase = root.wrap01(root.motionPhase + root.motionDir * step);
-                    }
-                }
+		ColumnLayout {
+			anchors.fill: parent
+			spacing: 2
+			z: 10
 
-                Image {
-                    source: "qrc:/assets/cluster/floor-grid.svg"
+			ClusterTopBar {
+				id: topBar
+				Layout.fillWidth: true
+				z: 20
+				currentGear: root.currentGear
+				batteryLevel: vehicleData.rpiBattery < vehicleData.stm32Battery ? vehicleData.rpiBattery : vehicleData.stm32Battery
+				onBatteryClicked: batteryPopup.open()
+			}
+
+			Item {
+				id: contentArea
+				Layout.fillWidth: true
+				Layout.fillHeight: true
+
+				Timer {
+					id: motionTimer
+					interval: 33
+					running: true
+					repeat: true
+					onTriggered: {
+						if (root.motionSpeedAbs < 0.5) return;
+						var normalizedSpeed = root.clamp(root.motionSpeedAbs / root.realMaxSpeedKmh, 0, 1);
+						var step = (interval / 1000.0) * normalizedSpeed * 2.0;
+						root.motionPhase = root.wrap01(root.motionPhase + root.motionDir * step);
+					}
+				}
+
+				// Vetorial Shape
+                Item {
+                    id: roadContainer
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 26 * root.sy
-                    sourceSize.width: 1200
-                    opacity: AppTheme.isDark ? 0.55 : 0.15
+                    anchors.bottomMargin: -10 * root.sy
+                    width: 1200 * root.sx
+                    height: 380 * root.sy
                     z: 1
-                }
 
-                Image {
-                    source: "qrc:/assets/cluster/car-glow.svg"
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 74 * root.sy
-                    sourceSize.width: 900
-                    opacity: AppTheme.isDark ? 0.9 : 0.4
-                    z: 2
-                }
+                    property color themeLaneColor: AppTheme.isDark ? "#00D2FF" : "#0055CC"
+                    property color themeLaneFill: AppTheme.isDark ? Qt.rgba(0.0, 0.82, 1.0, 0.12) : Qt.rgba(0.0, 0.33, 0.8, 0.15)
 
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: 52 * root.s
-                    spacing: 46 * root.s
-                    z: 30
+                    property real targetLateral: (root.vehicleDataAvailable && vehicleData.laneOffset !== undefined)
+                                                 ? root.clamp(vehicleData.laneOffset * 1.5 * root.sx, -180 * root.sx, 180 * root.sx) : 0
 
-                    Item {
-                        Layout.fillHeight: true
-                        Layout.preferredWidth: 400 * root.s
+                    property real targetCurve: (root.vehicleDataAvailable && vehicleData.laneHeading !== undefined)
+                                               ? root.clamp(vehicleData.laneHeading * 260 * root.sx, -320 * root.sx, 320 * root.sx) : 0
 
-                        ColumnLayout {
-                            anchors.centerIn: parent
-                            anchors.verticalCenterOffset: -18 * root.sy
-                            spacing: 6 * root.s
+                    property real currentLateralOffset: targetLateral
+                    property real currentCurveOffset: targetCurve
 
-                            Text {
-                                text: {
-                                    if (!root.vehicleDataAvailable) return "--";
-                                    let speedVal = root.currentSpeed;
-                                    if (settingsManager.speedUnit === "m/s") speedVal = speedVal / 3.6;
-                                    else if (settingsManager.speedUnit === "mph") speedVal = speedVal * 0.621371;
-                                    return Math.round(speedVal).toString();
-                                }
-                                color: root.vehicleDataAvailable ? AppTheme.colors.text : AppTheme.colors.textSecondary
-                                font.pixelSize: root.fontSizeXL * root.s
-                                font.weight: Font.ExtraBold
-                                Layout.alignment: Qt.AlignHCenter
-                                style: root.vehicleDataAvailable && AppTheme.isDark ? Text.Outline : Text.Normal
-                                styleColor: AppTheme.colors.primary
-                            }
+                    Behavior on currentLateralOffset { NumberAnimation { duration: 350; easing.type: Easing.OutSine } }
+                    Behavior on currentCurveOffset { NumberAnimation { duration: 350; easing.type: Easing.OutSine } }
 
-                            Text {
-                                text: settingsManager.speedUnit
-                                color: AppTheme.colors.textSecondary
-                                font.pixelSize: 22 * root.s
-                                font.weight: Font.DemiBold
-                                Layout.alignment: Qt.AlignHCenter
-                            }
-                        }
-                    }
+                    property real horizonXShift: Math.max(-40 * root.sx, Math.min(40 * root.sx, (currentCurveOffset * 0.1) + (currentLateralOffset * 0.1)))
+                    property real horizonY: roadContainer.height * 0.65
+                    property real curveBellyShift: (currentCurveOffset * 0.8) + (currentLateralOffset * 0.6)
 
-                    Item {
-                        z: 40
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
+                    Shape {
+                        anchors.fill: parent
 
-                        Rectangle {
-                            id: adasZone
-                            width: 560 * root.s
-                            height: 175 * root.s
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.verticalCenterOffset: 74 * root.sy
-                            radius: 28 * root.s
-                            color: "transparent"
-                            border.width: 0
+						ShapePath {
+							strokeWidth: 0
+							fillGradient: LinearGradient {
+								y1: 0; y2: roadContainer.height
+								GradientStop { position: 0.0; color: "transparent" }
+								GradientStop { position: 0.8; color: roadContainer.themeLaneFill }
+								GradientStop { position: 1.0; color: "transparent" }
+							}
 
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.margins: 16 * root.s
-                                spacing: 14 * root.s
+							startX: (roadContainer.width / 2) - (500 * root.sx)
+							startY: roadContainer.height
 
-                                SpeedLimitIndicator {
+							PathQuad {
+								x: (roadContainer.width / 2) - (80 * root.sx) + roadContainer.horizonXShift
+								y: roadContainer.horizonY
+								controlX: (roadContainer.width / 2) - (200 * root.sx) + roadContainer.curveBellyShift
+								controlY: roadContainer.height * 0.8
+							}
+							PathLine {
+								x: (roadContainer.width / 2) + (80 * root.sx) + roadContainer.horizonXShift
+								y: roadContainer.horizonY
+							}
+							PathQuad {
+								x: (roadContainer.width / 2) + (500 * root.sx)
+								y: roadContainer.height
+								controlX: (roadContainer.width / 2) + (200 * root.sx) + roadContainer.curveBellyShift
+								controlY: roadContainer.height * 0.8
+							}
+							PathLine {
+								x: (roadContainer.width / 2) - (500 * root.sx)
+								y: roadContainer.height
+							}
+						}
+
+						ShapePath {
+							strokeWidth: 8 * root.s
+							strokeColor: roadContainer.themeLaneColor
+							fillColor: "transparent"
+							capStyle: ShapePath.RoundCap
+
+							startX: (roadContainer.width / 2) - (500 * root.sx)
+							startY: roadContainer.height
+
+							PathQuad {
+								x: (roadContainer.width / 2) - (80 * root.sx) + roadContainer.horizonXShift
+								y: roadContainer.horizonY
+								controlX: (roadContainer.width / 2) - (200 * root.sx) + roadContainer.curveBellyShift
+								controlY: roadContainer.height * 0.8
+							}
+						}
+
+						ShapePath {
+							strokeWidth: 8 * root.s
+							strokeColor: roadContainer.themeLaneColor
+							fillColor: "transparent"
+							capStyle: ShapePath.RoundCap
+
+							startX: (roadContainer.width / 2) + (500 * root.sx)
+							startY: roadContainer.height
+
+							PathQuad {
+								x: (roadContainer.width / 2) + (80 * root.sx) + roadContainer.horizonXShift
+								y: roadContainer.horizonY
+								controlX: (roadContainer.width / 2) + (200 * root.sx) + roadContainer.curveBellyShift
+								controlY: roadContainer.height * 0.8
+							}
+						}
+					}
+				}
+
+				Image {
+					source: "qrc:/assets/cluster/car-glow.svg"
+					anchors.horizontalCenter: parent.horizontalCenter
+					anchors.bottom: parent.bottom
+					anchors.bottomMargin: 74 * root.sy
+					sourceSize.width: 900
+					opacity: AppTheme.isDark ? 0.9 : 0.4
+					z: 2
+				}
+
+				RowLayout {
+					anchors.fill: parent
+					anchors.margins: 52 * root.s
+					spacing: 46 * root.s
+					z: 30
+
+					// LEFT: Speed
+					Item {
+						Layout.fillHeight: true
+						Layout.preferredWidth: 400 * root.s
+
+						ColumnLayout {
+							anchors.centerIn: parent
+							anchors.verticalCenterOffset: -18 * root.sy
+							spacing: 6 * root.s
+
+							Text {
+								text: {
+									if (!root.vehicleDataAvailable) return "--";
+									let speedVal = root.currentSpeed;
+									if (settingsManager.speedUnit === "m/s") speedVal = speedVal / 3.6;
+									else if (settingsManager.speedUnit === "mph") speedVal = speedVal * 0.621371;
+									return Math.round(speedVal).toString();
+								}
+								color: root.vehicleDataAvailable ? AppTheme.colors.text : AppTheme.colors.textSecondary
+								font.pixelSize: root.fontSizeXL * root.s
+								font.weight: Font.ExtraBold
+								Layout.alignment: Qt.AlignHCenter
+								style: root.vehicleDataAvailable && AppTheme.isDark ? Text.Outline : Text.Normal
+								styleColor: AppTheme.colors.primary
+							}
+
+							Text {
+								text: settingsManager.speedUnit
+								color: AppTheme.colors.textSecondary
+								font.pixelSize: 22 * root.s
+								font.weight: Font.DemiBold
+								Layout.alignment: Qt.AlignHCenter
+							}
+						}
+					}
+
+					// CENTER: ADAS
+					Item {
+						z: 40
+						Layout.fillWidth: true
+						Layout.fillHeight: true
+
+						Rectangle {
+							id: adasZone
+							width: 560 * root.s
+							height: 175 * root.s
+							anchors.horizontalCenter: parent.horizontalCenter
+							anchors.verticalCenter: parent.verticalCenter
+							anchors.verticalCenterOffset: 74 * root.sy
+							radius: 28 * root.s
+							color: "transparent"
+
+							RowLayout {
+								anchors.fill: parent
+								anchors.margins: 16 * root.s
+								spacing: 14 * root.s
+
+								SpeedLimitIndicator {
 									Layout.preferredWidth: 105 * root.s
 									Layout.preferredHeight: 105 * root.s
 									Layout.alignment: Qt.AlignVCenter
 									z: 1
 
-                                    visible: root.vehicleDataAvailable && vehicleData.speedLimitActive
-                                    opacity: root.vehicleDataAvailable && vehicleData.speedLimitActive ? 1.0 : 0.0
+									visible: root.vehicleDataAvailable && vehicleData.speedLimitActive
+									opacity: root.vehicleDataAvailable && vehicleData.speedLimitActive ? 1.0 : 0.0
 
 									vehicleDataAvailable: root.vehicleDataAvailable
-                                    speedLimitValue: root.vehicleDataAvailable ? vehicleData.speedLimitValue : 0
+									speedLimitValue: root.vehicleDataAvailable ? vehicleData.speedLimitValue : 0
 									s: root.s
 
-									Behavior on opacity {
-										NumberAnimation {
-											duration: 180
-											easing.type: Easing.OutQuad
-										}
-									}
+									Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutQuad } }
 								}
-                                Item { Layout.fillWidth: true }
-                            }
-                        }
+								Item { Layout.fillWidth: true }
+							}
+						}
 
-                        Image {
-                            id: carImg
-                            source: "qrc:/assets/cluster/car.png"
-                            sourceSize.width: 150 * root.s
-                            sourceSize.height: 150 * root.s
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.bottom: parent.bottom
-                            anchors.bottomMargin: -50 * root.sy
-                            opacity: 1.0
-                            transform: [
-                                Translate { y: Math.sin(root.motionPhase * 6.28318530718 * 2.0) * (1.2 * root.sy) * root.motionIntensity },
-                                Rotation {
-                                    origin.x: carImg.width / 2; origin.y: carImg.height / 2
-                                    angle: Math.sin(root.motionPhase * 6.28318530718) * (0.35 * root.motionIntensity) * root.motionDir
-                                }
-                            ]
-                        }
-                    }
+						Image {
+							id: carImg
+							source: "qrc:/assets/cluster/car.png"
+							sourceSize.width: 150 * root.s
+							sourceSize.height: 150 * root.s
+							anchors.horizontalCenter: parent.horizontalCenter
+							anchors.bottom: parent.bottom
+							anchors.bottomMargin: -50 * root.sy
+							transform: [
+								Translate { y: Math.sin(root.motionPhase * 6.28318530718 * 2.0) * (1.2 * root.sy) * root.motionIntensity },
+								Rotation {
+									origin.x: carImg.width / 2; origin.y: carImg.height / 2
+									angle: Math.sin(root.motionPhase * 6.28318530718) * (0.35 * root.motionIntensity) * root.motionDir
+								}
+							]
+						}
+					}
 
-                    RightInfoPanel {
-                        Layout.fillHeight: true
-                        Layout.preferredWidth: 400 * root.s
-                        s: root.s
-                        sy: root.sy
-                        fontSizeSmall:  root.fontSizeSmall
-                        fontSizeXSmall: root.fontSizeXSmall
-                        albumColor: getAlbumColor(musicPlayerController.currentTrackIndex)
-                        weatherData: weatherScreen?.weatherDataModel
-                    }
-                }
-            }
+					// ====== RIGHT: Swipe ======
+					RightInfoPanel {
+						Layout.fillHeight: true
+						Layout.preferredWidth: 400 * root.s
+						s: root.s
+						sy: root.sy
+						fontSizeSmall:  root.fontSizeSmall
+						fontSizeXSmall: root.fontSizeXSmall
+						albumColor: getAlbumColor(musicPlayerController.currentTrackIndex)
+						weatherData: weatherScreen?.weatherDataModel
+					}
+				}
+			}
 
-            BottomBar {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 52 * root.sy
-                Layout.leftMargin: 40 * root.s
-                Layout.rightMargin: 40 * root.s
-                Layout.bottomMargin: 6 * root.sy
-                s: root.s
-                sy: root.sy
-                fontSizeMedium: root.fontSizeMedium
-                vehicleDataAvailable: root.vehicleDataAvailable
-                tripDistance: root.tripDistance
-                powerOutput: root.powerOutput
-                odometerDistance: root.odometerDistance
-                onResetRequested: {
-                    vehicleData.requestOdometerReset();
-                    showOdometerReset = true;
-                    resetOdometerTimer.start();
-                    console.log("[ClusterScreen] Odometer reset to 0 km");
-                }
+			BottomBar {
+				Layout.fillWidth: true
+				Layout.preferredHeight: 52 * root.sy
+				Layout.leftMargin: 40 * root.s
+				Layout.rightMargin: 40 * root.s
+				Layout.bottomMargin: 6 * root.sy
+				s: root.s
+				sy: root.sy
+				fontSizeMedium: root.fontSizeMedium
+				vehicleDataAvailable: root.vehicleDataAvailable
+				tripDistance: root.tripDistance
+				powerOutput: root.powerOutput
+				odometerDistance: root.odometerDistance
+				onResetRequested: root.resetOdometer()
+			}
+		}
+	}
 
-            }
-        }
-    }
-
-    // ==========================================================
-    // V2X EMERGENCY OVERLAY
-    // ==========================================================
-    EmergencyAlert {
+	// ==========================================================
+	// V2X / ADAS EMERGENCY OVERLAY
+	// ==========================================================
+	EmergencyAlert {
 		id: adasEmergencyAlert
 		z: 2000
 		s: root.s
-        isActive: root.vehicleDataAvailable ? vehicleData.emergencyPriorityActive : false
-        priorityLevel: root.vehicleDataAvailable ? vehicleData.emergencyPriorityLevel : 0
-        alertMessage: root.vehicleDataAvailable ? vehicleData.emergencyMessage : ""
-        iconSource: root.vehicleDataAvailable ? vehicleData.emergencyIconSource : ""
+		isActive: root.vehicleDataAvailable ? vehicleData.emergencyPriorityActive : false
+		priorityLevel: root.vehicleDataAvailable ? vehicleData.emergencyPriorityLevel : 0
+		alertMessage: root.vehicleDataAvailable ? vehicleData.emergencyMessage : ""
+		iconSource: root.vehicleDataAvailable ? vehicleData.emergencyIconSource : ""
 	}
 
-    BatteryPopup {
-        id: batteryPopup
-        anchors.fill: parent
-        stm32BatteryLevel: root.stm32Battery
-        rpiBatteryLevel: root.rpiBattery
-        z: 1000
-    }
+	BatteryPopup {
+		id: batteryPopup
+		anchors.fill: parent
+		stm32BatteryLevel: root.stm32Battery
+		rpiBatteryLevel: root.rpiBattery
+		z: 1000
+	}
 
-    function getAlbumColor(index) {
-        var colors = ["#FF6B35", "#004E89", "#1AE5BE"];
-        return colors[index % colors.length];
-    }
+	function getAlbumColor(index) {
+		var colors = ["#FF6B35", "#004E89", "#1AE5BE"];
+		return colors[index % colors.length];
+	}
 }
