@@ -38,7 +38,7 @@ jobs:
         run: arm-none-eabi-gcc --version
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@v4.37.3
         with:
           languages: cpp
           queries: security-and-quality
@@ -113,7 +113,7 @@ jobs:
           echo "✅ Build successful"
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@v4.37.3
         with:
           category: '/language:cpp'
           output: results
@@ -168,6 +168,6 @@ jobs:
           path: sarif
 
       - name: Upload SARIF to GitHub Security
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@v4.37.3
         with:
           sarif_file: sarif/cpp.sarif
